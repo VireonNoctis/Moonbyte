@@ -16,9 +16,7 @@ impl Config {
         Self::from_lookup(|key| env::var(key).ok())
     }
 
-    fn from_lookup(
-        mut lookup: impl FnMut(&str) -> Option<String>,
-    ) -> Result<Self, ConfigError> {
+    fn from_lookup(mut lookup: impl FnMut(&str) -> Option<String>) -> Result<Self, ConfigError> {
         let discord_token = lookup("DISCORD_TOKEN")
             .filter(|value| !value.trim().is_empty())
             .map(|value| value.trim().to_owned())
@@ -130,21 +128,21 @@ mod tests {
 
     #[test]
     fn rejects_invalid_prefixes_and_empty_database_paths() {
-        assert!(load(&[
-            ("DISCORD_TOKEN", "test-token"),
-            ("DEFAULT_PREFIX", "prefix-too-long"),
-        ])
-        .is_err());
-        assert!(load(&[
-            ("DISCORD_TOKEN", "test-token"),
-            ("DEFAULT_PREFIX", "bad prefix"),
-        ])
-        .is_err());
-        assert!(load(&[
-            ("DISCORD_TOKEN", "test-token"),
-            ("DATABASE_PATH", "  "),
-        ])
-        .is_err());
+        assert!(
+            load(&[
+                ("DISCORD_TOKEN", "test-token"),
+                ("DEFAULT_PREFIX", "prefix-too-long"),
+            ])
+            .is_err()
+        );
+        assert!(
+            load(&[
+                ("DISCORD_TOKEN", "test-token"),
+                ("DEFAULT_PREFIX", "bad prefix"),
+            ])
+            .is_err()
+        );
+        assert!(load(&[("DISCORD_TOKEN", "test-token"), ("DATABASE_PATH", "  "),]).is_err());
     }
 
     #[test]
