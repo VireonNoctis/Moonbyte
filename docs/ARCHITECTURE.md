@@ -14,7 +14,7 @@ This document describes intended boundaries and constraints. It must be revised 
 | Discord API | Serenity |
 | Command framework | Poise |
 | Persistent storage | SQLite |
-| Database access | SQLx with SQLite support only |
+| Database access | SQLx with SQLite support only |\n| Visual library | Next.js + React + TypeScript |\n| Discord Activity bridge | Official Discord Embedded App SDK |
 | Logging and diagnostics | Structured tracing |
 | Art pipeline | Original pixel-art source assets and cached rendered output |
 
@@ -54,7 +54,7 @@ The runtime should be one deployable bot process first. Separate services, queue
 | Player/progression services | Profiles, statistics, achievements, inventory, and reward policy. | Guild-private configuration. |
 | Privacy service | Data inventory, export, deletion orchestration, retention requests, and privacy command responses. | Bypassing repositories or claiming deletion before it completes. |
 | Persistence layer | SQLite repositories, migrations, transactions, and state serialisation. | Discord API calls. |
-| Rendering layer | Convert game view models and assets into cached image output. | Mutating game state. |
+| Rendering layer | Convert game view models and assets into cached image output or frontend-ready view models. | Mutating game state. |\n| Visual library frontend | Next.js pages, React components, catalogue, lobbies, and Activity UI. | Authoritative rules, balances, permissions, or direct database access. |\n| Activity bridge | Embedded App SDK handshake and Discord client capabilities. | Owning player identity or trusted game state. |
 | Operations layer | Configuration, structured diagnostics, graceful shutdown, and health signals. | Game-specific decisions. |
 
 The primary dependency direction is from adapters toward application services and domain rules. Game logic must remain testable without a live Discord connection.
@@ -162,7 +162,23 @@ Pixel art is a first-class part of the product.
 
 Do not commit generated caches. Do not use third-party assets unless their licence allows the intended distribution.
 
-## 10. Security and trust boundaries
+## 10. Visual library and Discord Activity boundary
+
+The visual library is a separate **Next.js + React + TypeScript** application. It can run as a normal HTTPS web app and, where configured, as a Discord Activity embedded in the Discord client.
+
+- Use Discord's official Embedded App SDK for Activity handshake and supported client integration.
+- Keep Discord-native bot commands and ordinary embeds available as the baseline/fallback interface.
+- The frontend requests authorised view models and sends intent/action requests to the Rust application API.
+- The Rust backend validates the Discord identity/session context, guild, membership, permissions, game phase, and turn ownership for every state-changing action.
+- Never trust client-side validation, client-supplied balances, client-supplied item ownership, or client-generated game outcomes.
+- Do not expose the bot token, SQLite file, server seed before reveal, or backend credentials to browser code.
+- Use HTTPS, strict origin/CORS policy, secure session handling, Content Security Policy appropriate to Discord Activity hosting, and bounded API requests.
+- Treat Activity startup, reload, participant changes, and disconnects as normal lifecycle events. The backend remains authoritative if the frontend reloads.
+- Do not duplicate game rules in TypeScript. Share schemas/types where useful, but keep game outcomes and state transitions in Rust.
+
+Official references: [Discord Activities](https://discord.com/developers/docs/activities/overview) and [Embedded App SDK](https://discord.com/developers/docs/developer-tools/embedded-app-sdk).
+
+## 11. Security and trust boundaries
 
 - Discord user and guild identifiers are untrusted until checked against interaction context.
 - Authorise every action server-side.
@@ -174,7 +190,7 @@ Do not commit generated caches. Do not use third-party assets unless their licen
 - Avoid logging raw message content, tokens, private export contents, or unnecessary user data.
 - Make profile deletion and retention explicit.
 
-## 11. Reliability and observability
+## 12. Reliability and observability
 
 Initial operational signals:
 - Gateway connection and reconnect state.
@@ -190,7 +206,13 @@ Use structured logs with correlation identifiers for command and session flows. 
 
 Shutdown should stop new session creation, cancel or drain active work within a defined policy, persist resumable state, close the database pool, and exit. Startup should validate configuration and migrations before accepting play.
 
-## 12. Scaling policy
+## Fairness transcript boundary
+
+Random outcomes requiring verification use the commit–reveal protocol in [FAIRNESS.md](FAIRNESS.md). Generate secrets using OS-backed CSPRNG entropy; use SHA-512 only as the commitment hash and documented derivation primitive. Store append-only transcript events, do not permit hidden rerolls, and make aborts verifiable. The web UI may display verification state but cannot generate or certify results.
+
+The economy ledger, Bazaar transactions, and Vault rewards are deterministic and cannot depend on a random draw.
+
+## 14. Scaling policy
 
 1. Start with one process, one SQLite file, and bounded concurrency.
 2. Measure latency, database contention, memory use, and active-session volume.

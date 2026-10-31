@@ -1,97 +1,153 @@
 # Moonbyte Game Catalogue
 
-- Status: Candidate catalogue; no listed game is implemented by this specification alone.
-- The catalogue should grow through polished releases, not a target number of games.
+- Status: **Approved product catalogue.** These are the user's approved game selections; none are implemented merely by being listed here.
+- The catalogue contains **39 unique approved new-game titles**. Minesweeper and Mastermind are intentionally cross-listed in two categories but have one canonical implementation each.
+- The two standard Lunar baseline games, **Akinator** and **8-ball**, remain inherited baseline experiences and were not part of the new-game approval list.
+- Release in polished, tested groups. Approval of the catalogue is not a promise that every title ships in the first release.
 
-## 1. Required categories
+## 1. Existing Lunar baseline
 
-### Existing Lunar games
+The following are inherited baseline experiences, separate from the approved new-game catalogue:
 
-Migration candidates from [Lunar](https://github.com/VireonNoctis/Lunar), subject to source, dependency, and licence review.
+| Game | Moonbyte treatment |
+| --- | --- |
+| Akinator | Preserve the standard guessing experience after reviewing the implementation, upstream service/API terms, dependencies, and privacy behavior. |
+| 8-ball | Preserve the standard casual response experience. Keep it for entertainment and never connect it to wagers, stakes, or prizes. |
 
-| Candidate | Likely Moonbyte role | Migration notes |
-| --- | --- | --- |
-| Akinator-style guessing | Guided yes/no guessing session. | Audit external service/API dependency and terms. |
-| Coin flip | Short solo or party game. | Non-wagering only; test outcome generation and session handling. |
-| Dice | Quick randomised mini-game. | Define supported formats and validate inputs. No stakes or betting. |
-| 8-ball | Casual party interaction. | Keep age-appropriate and clearly for fun. |
-| Rating interaction | Lightweight social prompt. | Review abuse, targeting, and privacy risks before porting. |
-| Card collection | Collection and progression. | Audit data model, odds, rewards, and dependencies. No paid pulls or wagering. |
+Other Lunar features are migration candidates only after source, dependency, privacy, and licence review. Do not assume that every Lunar command is automatically approved for migration.
 
-### Original mini-games
+## 2. Approved game catalogue
 
-- **Memory Match:** flip a board of symbols and find pairs.
-- **Word Scramble:** solve a short word puzzle with validated word lists.
-- **Sequence Recall:** remember and repeat a growing sequence.
-- **Pattern Finder:** identify a rule in a visual or numeric sequence.
-- **Quick Quiz:** answer a small set of themed questions.
-- **Pixel Clue:** identify an original object or scene from a gradually revealed pixel-art clue.
+### Original mini-games — 12
 
-Keep rounds short, rules visible, and scoring deterministic. Do not use reaction windows so tight that normal Discord latency decides the winner.
+1. **Memory Match** — flip symbols and find matching pairs.
+2. **Word Scramble** — solve scrambled words using curated, age-appropriate word lists.
+3. **Sequence Recall** — repeat progressively longer visual or audio-free sequences.
+4. **Minesweeper** — reveal safe cells, mark suspected hazards, and solve the board.
+5. **2048** — combine matching numbered tiles to reach the target.
+6. **Hangman** — solve a word through limited letter guesses; use inclusive, non-graphic presentation.
+7. **Mastermind** — deduce a hidden code from structured feedback.
+8. **Reaction Challenge** — respond to a prompt with latency-tolerant timing; do not let Discord/network delay decide close matches.
+9. **Trivia** — answer curated questions across selectable categories and difficulty.
+10. **Pixel Clue** — identify an original pixel-art object or scene from clues.
+11. **Snake** — guide a growing snake through a compact board with turn-based or carefully bounded input.
+12. **Tetris-style Puzzle** — fit falling or queued shapes into a board; adapt input to Discord's interaction model rather than requiring frame-perfect controls.
 
-### Multiplayer
+### Multiplayer — 10
 
-Candidate order:
-1. **Tic-tac-toe:** reference game for validation and turn order.
-2. **Connect Four:** board state and win detection.
-3. **Team Quiz:** lobby, answer windows, scoring, and tie handling.
-4. **Co-op Puzzle:** players contribute to a shared objective.
-5. **Turn-based strategy:** add after session reliability is proven.
+1. **Tic-tac-toe** — foundational turn-order and state-validation game.
+2. **Connect Four** — shared board with strict turn ownership.
+3. **Battleship** — private player boards and carefully separated hidden information.
+4. **Chess** — legal move validation, clocks only where fair, and optional spectator mode.
+5. **Checkers** — full move validation and clear draw rules.
+6. **Uno-style Card Game** — original or properly licensed rules/assets; do not copy protected branding or artwork.
+7. **Team Quiz** — team lobbies, answer windows, and transparent scoring.
+8. **Werewolf / Social Deduction** — private role delivery, phase controls, moderation-safe text, and clear host tools.
+9. **Co-op Puzzle** — players combine clues or actions toward a shared objective.
+10. **Drawing & Guessing** — drawing prompts and guess turns with reporting, content limits, and moderation tools.
 
-Every multiplayer game must specify player limits, lobby rules, host permissions, turn order, timeout behavior, leave/rejoin, spectator rules, and host-disconnect behavior.
+Every multiplayer game must define player limits, public/private lobby mode, invites, host permissions, turn/phase order, timeout rules, reconnect/rejoin behavior, spectator permissions, cancellation, and host-disconnect behavior.
 
-### Adventure / RPG
+### Adventure / RPG — 9
 
-Longer-running experiences can include an original world map, explorable locations, quests, branching choices, NPC dialogue, inventory, collectible items, crafting, deterministic upgrades, party progression, cooperative objectives, and turn-based encounters.
+1. **Persistent Fantasy RPG** — an original world, persistent characters, quests, and story choices.
+2. **Dungeon Crawler** — room-by-room exploration with turn-based encounters and discoverable routes.
+3. **Monster Collector** — discover, catalogue, befriend, and develop original creatures.
+4. **Creature Battler** — strategic turn-based encounters with readable, deterministic rules.
+5. **Farming & Life Simulator** — grow crops, improve a home, meet NPCs, and take part in seasonal activities without punitive real-time pressure.
+6. **Exploration & Discovery** — reveal maps, locations, lore, collectibles, and environmental puzzles.
+7. **Text Adventure** — branching narrative with saved choices and replayable paths.
+8. **Guild Adventure** — cooperative guild objectives, shared milestones, and opt-in parties.
+9. **Crafting & Survival** — gather, craft, build, and explore in a forgiving turn-based world; no real-world dangerous activity instructions.
 
-The first RPG should be a compact vertical slice: one area, a few NPCs, a short quest chain, a small inventory, and a clear save/resume loop. Do not begin with a giant open world.
+### Puzzle / Strategy — 10 catalogue entries, 8 unique titles
 
-### Puzzle / strategy
+1. **Sudoku** — validated puzzles with difficulty tiers.
+2. **Nonograms** — picture logic with verified solutions.
+3. **Word Search** — themed word-finding boards.
+4. **Crossword** — original clue packs with editorial review.
+5. **Logic Grid** — deduction puzzles with verified unique or explicitly enumerated solutions.
+6. **Minesweeper** — the same canonical game as Original Mini-games.
+7. **Mastermind** — the same canonical game as Original Mini-games.
+8. **Tower Defense** — strategic placement and wave resolution adapted to turn-based Discord controls.
+9. **Chess Puzzles** — curated positions with validated solutions and explanations.
+10. **Daily Logic Challenge** — optional rotating puzzle; missing a day never removes progress or causes a punitive reset.
 
-Candidate experiences:
-- Sudoku and compact logic grids.
-- Nonograms and picture logic.
-- Word and number puzzles.
-- Mastermind-style deduction.
-- Chess and checkers where a robust rules implementation is available.
-- Daily and weekly puzzle variants with clear reset rules.
+Puzzle generation must validate solvability, solution count, clue quality, and difficulty before a puzzle is published.
 
-Puzzle generation must validate solvability and solution quality before publication.
+## 3. Catalogue identifiers and cross-listing
 
-## 2. Standard game definition
+Every title receives one stable game ID independent of its display name. Category membership is metadata, not a second implementation.
+
+Suggested IDs:
+
+| Game | Canonical ID |
+| --- | --- |
+| Minesweeper | `minesweeper` |
+| Mastermind | `mastermind` |
+| 2048 | `2048` |
+| Tetris-style Puzzle | `tetris_puzzle` |
+| Werewolf / Social Deduction | `social_deduction` |
+| Uno-style Card Game | `card_party` |
+| Persistent Fantasy RPG | `fantasy_rpg` |
+| Farming & Life Simulator | `life_sim` |
+
+IDs for the remaining games should follow the same stable snake_case convention. Display names may change without breaking saved records.
+
+## 4. Standard game definition
 
 Every game should declare:
-- Stable identifier that does not change with display name.
-- Name, description, category, and tags.
-- Player limits and session mode.
+
+- Stable ID, display name, description, category, tags, and version.
+- Player limits, solo/multiplayer mode, and expected session length.
 - Rules and help shown before play.
 - State version and persistence requirements.
-- Legal actions for each game phase.
-- Public board and private per-player view models.
+- Legal actions for every phase and actor.
+- Public board/view model and private per-player view model.
 - End conditions: completion, failure, draw, timeout, or cancellation.
 - Result schema and eligible progression events.
-- Expected session length and supported pause/resume behavior.
+- Pause, leave, save, resume, reconnect, and expiry behavior.
+- Accessibility labels and a text fallback when visual rendering fails.
+- Randomness requirements and whether a verifiable fairness transcript is needed.
 
-## 3. Shared lifecycle
+## 5. Shared lifecycle
 
 Games use the platform lifecycle: Created, Waiting for players, Active, Paused (only when supported), Completed, Aborted, and Expired.
 
-Every action must be validated against state, membership, actor permissions, and turn ownership. Duplicate interactions must not award duplicate results or rewards.
+Every action is validated against current state, membership, actor permissions, guild scope, and turn/phase ownership. Duplicate interactions must not award duplicate results or progression.
 
-## 4. Visual standards
+## 6. Visual and interaction standards
 
-- Original full-colour pixel art is the default visual language.
-- Each game has its own icon and consistent board presentation.
-- Reuse sprites, palette tokens, layout components, and render caches.
-- Use text labels, shape differences, or symbols as well as colour to communicate status.
-- Keep board images suitable for Discord.
-- Provide text rules and results if images fail to load.
-- Record asset provenance and licences.
+- Original full-colour pixel art is the default art direction.
+- The visual library is a Next.js + React + TypeScript frontend.
+- Discord-native messages, embeds, buttons, select menus, and modals remain the command bot's baseline interaction surface.
+- A richer embedded experience may be delivered as a Discord Activity using the official Embedded App SDK; the same frontend should retain a browser fallback.
+- Do not assume React components can be rendered inside an ordinary Discord embed.
+- Give each game its own icon, board presentation, readable status, and accessible text alternative.
+- Use symbols and labels as well as colour to communicate state.
+- Keep image dimensions and payload sizes suitable for Discord.
+- Record asset provenance and licences. Art must be original or properly licensed.
 
-## 5. Healthy replayability
+## 7. Fair randomness
 
-Give players reasons to return through new content, learning, mastery, social play, and personal choice. Daily challenges are optional. Missing a day must not break a streak, remove rewards, or place a player behind. Avoid artificial scarcity, endless pressure loops, or punitive timers.
+For random outcomes where fairness needs to be independently checked, use the SHA-512 commit–reveal protocol described in [Fairness and Randomness](FAIRNESS.md).
 
-## 6. Game quality gate
+SHA-512 is a cryptographic hash, not a random-number generator. The implementation must use operating-system-backed cryptographic entropy, publish a commitment before an outcome can be influenced, use an unbiased mapping from random bytes to game outcomes, and reveal enough transcript data to verify the result afterward. Never claim that “SHA-512 makes it fair” by itself.
 
-A game enters the public catalogue only when rules and legal actions are documented; tests cover wins, losses, draws, invalid moves, and edge cases; multiplayer tests cover turn order, membership, deadlines, retries, and reconnect; persisted state is versioned; UI states are accessible; rewards are non-wagering; and failure, cancellation, and cleanup paths are tested.
+No fairness protocol enables betting or wagering. Random games are for play and scores only; no stakes, cash-out, prize pools, or currency/item transfers based on chance.
+
+## 8. Healthy replayability
+
+Give players reasons to return through content variety, skill mastery, discovery, cooperation, and personal choice. Daily challenges are optional. Missing a day never destroys progress, removes earned rewards, or puts a player behind. Avoid artificial scarcity, punitive timers, endless pressure loops, and mechanics designed to make stopping difficult.
+
+## 9. Game quality gate
+
+A game enters the public catalogue only when:
+
+- Rules and legal actions are documented.
+- Tests cover wins, losses, draws, invalid moves, retries, and edge cases.
+- Multiplayer tests cover turn order, membership, deadlines, reconnect, and cancellation.
+- Persisted state is versioned and recoverable.
+- Visual and text fallback states are accessible.
+- Rewards are transparent, deterministic where possible, and non-wagering.
+- Failure, cancellation, timeout, cleanup, and privacy paths are tested.

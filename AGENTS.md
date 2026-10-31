@@ -16,7 +16,7 @@ These instructions apply across this repository. More specific instructions in a
 - Primary application language: Rust.
 - Async runtime: Tokio.
 - Discord API: Serenity.
-- Command framework: Poise.
+- Command framework: Poise.\n- Visual library: Next.js + React + TypeScript.\n- Discord Activity integration: official Discord Embedded App SDK.
 - Initial persistent database: SQLite, accessed through SQLx configured for SQLite only.
 - PostgreSQL and ScyllaDB are explicitly excluded.
 - Do not introduce Redis, message brokers, separate services, or distributed storage without measured requirements and a new accepted decision.
@@ -45,7 +45,11 @@ These instructions apply across this repository. More specific instructions in a
 - Handle Discord rate limits, expired interactions, deleted messages, and partial failures without losing durable game state.
 - Keep secrets, personal data, and production data out of source control and logs.
 - Do not add fake data, placeholder implementations, silent fallbacks, or success messages for unfinished behavior.
-- Do not build betting, wagering, staking, paid random rolls, loot-box monetisation, or pay-to-win progression.
+- Do not build betting, wagering, staking, paid random rolls, loot-box monetisation, cash-out, or pay-to-win progression.
+- Use the SHA-512 commit–reveal protocol in docs/FAIRNESS.md for outcomes that require public verification. SHA-512 is a hash, not an entropy source; use OS-backed cryptographic randomness and unbiased result mapping.
+- Keep the Next.js/React frontend presentation-only. Rust owns authoritative game rules, session state, economy ledger, trade execution, fairness transcripts, permissions, and persistence.
+- Never expose bot tokens, database credentials, private seeds before reveal, or privileged backend secrets in frontend bundles.
+- Use Discord's Embedded App SDK only for Activity integration; ordinary Discord embeds do not host React components.
 
 ## Healthy engagement requirements
 

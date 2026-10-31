@@ -89,7 +89,18 @@ Do not implement fake scarcity, manipulative FOMO, loss-aversion streaks, infini
 
 Candidates are not promises that every title will ship. See [GAME_CATALOGUE.md](GAME_CATALOGUE.md).
 
-## 7. Progression and economy
+## 7. Visual library and rich Discord experiences
+
+Moonbyte's visual library uses **Next.js + React + TypeScript**. It provides a browsable catalogue, detailed game pages, richer lobby views, and interfaces for games that benefit from a full web surface.
+
+The visual library is a frontend, not a second game engine:
+- Rust/Tokio remains authoritative for game rules, validation, randomness, session state, progression, economy, and SQLite persistence.
+- The frontend receives authorised view models and submits player actions to the backend.
+- Discord-native commands continue to use messages, embeds, buttons, menus, and modals.
+- When running inside Discord, the frontend can integrate the official Embedded App SDK as an Activity. An HTTPS browser fallback supports discovery and compatible views.
+- React is not injected into normal Discord embeds. The Activity is a separate web app embedded within the Discord client.
+
+## 8. Progression, Vaults and Bazaar
 
 Progression should recognise participation and mastery through experience, achievements, cosmetic collection, profile customisation, optional rotating challenges, and server leaderboards where administrators enable them.
 
@@ -124,13 +135,13 @@ Slash-command equivalents should be available where practical. Prefix parsing us
 
 Public game boards are suitable for multiplayer. Personal information, profile data, and exports should be delivered privately where supported. Participants must be told whether a session is public or private.
 
-## 9. Server and community experience
+## 10. Server and community experience
 
 Moonbyte should work in multiple Discord guilds without mixing server configuration. Planned server features include enabled game categories, channel preferences, guild-scoped leaderboards, optional server challenges, independent sessions, moderation controls, and reasonable per-user/per-guild rate limits.
 
 A user's core Moonbyte identity can remain consistent across servers, while guild-specific settings and rankings stay scoped to the relevant guild.
 
-## 10. Privacy and trust
+## 11. Privacy and trust
 
 Privacy is a core product feature. The complete intended policy is in [PRIVACY.md](PRIVACY.md).
 
@@ -147,17 +158,17 @@ Core stance:
 
 The policy is a target commitment and must be implemented and verified before production release. Documentation must change if actual behavior differs.
 
-## 11. What Moonbyte is not
+## 12. What Moonbyte is not
 
 - Not a replacement for Lunar's anime/manga or general community features.
 - Not a wrapper that calls Lunar at runtime.
-- Not a frame-based real-time game engine disguised as a Discord bot.
+- Not a frame-based real-time game engine disguised as a Discord bot. Rich game views use a separate Next.js/React Activity-capable frontend.
 - Not a monochrome console clone or copy of protected Nintendo branding.
 - Not a betting, wagering, or paid chance platform.
 - Not designed to make players unable to stop.
 - Not a promise to ship every game idea in the catalogue.
 - Not a reason to add distributed infrastructure before workload requires it.
 
-## 12. First-release definition
+## 13. First-release definition
 
 A first public release is ready when the bot connects, recovers, and shuts down cleanly; prefix and slash commands work; a curated set of solo and multiplayer games completes reliably; sessions enforce membership and state transitions; profiles persist in SQLite; pixel-art UI is readable; privacy controls accurately describe data, export it, and delete it; retention and log redaction are tested; and documentation matches production behavior.

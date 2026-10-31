@@ -32,7 +32,7 @@ Deliverables:
 - Help, about, privacy overview, and minimal diagnostics.
 - Structured logging, graceful shutdown, and clear startup errors.
 - SQLite connection, migration runner, and backup path.
-- CI for formatting, Clippy, compilation, and tests.
+- CI for formatting, Clippy, compilation, and tests.\n- Next.js + React + TypeScript visual-library workspace.\n- Discord Activity integration spike using the Embedded App SDK, with browser fallback.
 
 Exit criteria:
 - Bot connects and reconnects without leaking tasks.
@@ -140,7 +140,40 @@ Exit criteria:
 - Content and reward rules are documented and fair.
 - Story progress can be paused without penalty.
 
-## Phase 7 — Production readiness and measured scale
+## Phase 7 — Visual library and richer interaction
+
+Deliverables:
+- Next.js + React + TypeScript visual library for the approved catalogue.
+- Responsive game pages, lobby views, player-facing game view models, and pixel-art asset integration.
+- Discord Activity integration through the official Embedded App SDK.
+- HTTPS browser fallback for catalogue discovery and compatible game views.
+- Authenticated Rust API boundary; the frontend never owns game outcomes, inventory, balances, or persistence.
+
+Exit criteria:
+- Ordinary bot embeds and commands remain functional without the frontend.
+- Activity launch, refresh, reconnect, participant changes, and close behavior are tested.
+- Frontend cannot mutate state without backend authorisation.
+- Bot credentials and private seeds never enter frontend bundles.
+- Mobile, web, and desktop Activity behavior is tested against current Discord requirements.
+
+## Phase 8 — Vaults, Bazaar and economy
+
+Deliverables:
+- Earned-only Moonbits ledger with idempotent entries and transparent reward definitions.
+- Personal Vault and collectible archive.
+- Puzzle Vault vertical slice with fixed, published rewards and save checkpoints.
+- Crafting recipes and item provenance.
+- Fixed-price Bazaar listings, barter, escrow, receipts, and trade history.
+- Moderation, reporting, rate limits, and guild-scoped controls.
+
+Exit criteria:
+- Every balance mutation has an immutable ledger entry in the same SQLite transaction.
+- Double-spend, duplicate interaction, race, rollback, and self-trade tests pass.
+- No real-money value, wagering, paid random reward, or cash-out feature exists.
+- Profile export/deletion and guild-isolation tests cover the new records.
+- Every Vault reward and Bazaar price/fee is shown before confirmation.
+
+## Phase 9 — Production readiness and measured scale
 
 Deliverables:
 - Load and soak tests for concurrent sessions.

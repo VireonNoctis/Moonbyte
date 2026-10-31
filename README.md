@@ -40,6 +40,15 @@ Every listed title is a candidate, not a promise that it already exists. The cat
 - Leave or pause supported sessions without being nagged or punished.
 - Find a different experience when a game is completed.
 
+## Visual Library
+
+The visual library is a dedicated **Next.js + React + TypeScript** frontend for browsing the catalogue, viewing detailed game cards, creating/joining richer lobbies, and displaying game interfaces that benefit from a full web UI.
+
+- In Discord, the frontend can be launched as a Discord Activity using the official Embedded App SDK, subject to application configuration and Activity requirements.
+- A normal HTTPS browser fallback remains available for catalogue discovery and supported views.
+- The Rust/Tokio backend remains authoritative for game rules, session state, fairness, player progression, and SQLite persistence.
+- Standard bot commands still use Discord messages, embeds, buttons, select menus, and modals. React is not rendered inside an ordinary Discord embed.
+
 ## Command model
 
 The default prefix is a single period: **.**
@@ -91,16 +100,22 @@ Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The poli
 | Command framework | **Poise** | Shared prefix and slash command definitions. |
 | Persistent storage | **SQLite** | Embedded database for the initial single-instance deployment. |
 | Database access | **SQLx with SQLite only** | Async database access and migration support. |
-| Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
+| Visual library | **Next.js + React + TypeScript** | Catalogue browsing, responsive game UI, and Activity-capable views. |\n| Discord embedded UI | **Discord Embedded App SDK** | Connects the web frontend to Discord when running as an Activity. |\n| Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
 
 SQLite will use migrations, indexes, short transactions, and write-ahead logging where appropriate.
+
+## Economy, Vaults and Bazaar
+
+Moonbyte's planned progression system includes a personal Vault, cooperative Puzzle/Expedition/Guild Vaults, collectible Archives, crafting, and a player Bazaar with fixed-price listings, transparent barter, escrow, and trade history. Rewards and prices are disclosed and deterministic.
+
+Moonbyte will not implement gambling, betting, wagering, staking, paid random rewards, cash-out, or chance-based tradable rewards. Casual random games are score-only and never risk or award currency/items. See [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) and [Fairness and Randomness](docs/FAIRNESS.md).
 
 ## Documentation
 
 - [Product vision](docs/PRODUCT_VISION.md) — detailed product goals, engagement principles, systems, safety, and non-goals.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits, and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering, and operations.
-- [Game catalogue](docs/GAME_CATALOGUE.md) — all five categories, candidate games, shared contracts, and release quality gates.
+- [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts, and release quality gates.\n- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — player inventory, vault experiences, fixed-price trading, and non-wagering economy rules.\n- [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation, and verification requirements.
 - [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — what may be reused conceptually and what must be rebuilt or audited.
 - [Roadmap](docs/ROADMAP.md) — phased implementation, deliverables, and exit criteria.
 - [Architecture decisions](docs/DECISIONS/README.md) — accepted decisions and trade-offs.
