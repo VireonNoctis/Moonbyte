@@ -87,7 +87,11 @@ mod tests {
         for command in ["help", "about", "ping", "privacy"] {
             assert!(message.contains(&format!(".{command} / /{command}")));
         }
-        assert!(message.contains("Game, profile, economy, and data-control commands are not available yet."));
+        assert!(
+            message.contains(
+                "Game, profile, economy, and data-control commands are not available yet."
+            )
+        );
     }
 
     #[test]

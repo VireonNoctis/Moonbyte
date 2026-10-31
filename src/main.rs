@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use moonbyte::{commands, config::Config, Data, Error};
+use moonbyte::{Data, Error, commands, config::Config};
 use poise::serenity_prelude as serenity;
 
 #[tokio::main]
