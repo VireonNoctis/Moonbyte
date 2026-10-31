@@ -14,7 +14,9 @@ This document describes intended boundaries and constraints. It must be revised 
 | Discord API | Serenity |
 | Command framework | Poise |
 | Persistent storage | SQLite |
-| Database access | SQLx with SQLite support only |\n| Visual library | Next.js + React + TypeScript |\n| Discord Activity bridge | Official Discord Embedded App SDK |
+| Database access | SQLx with SQLite support only |
+| Visual library | Next.js + React + TypeScript |
+| Discord Activity bridge | Official Discord Embedded App SDK |
 | Logging and diagnostics | Structured tracing |
 | Art pipeline | Original pixel-art source assets and cached rendered output |
 
@@ -54,7 +56,9 @@ The runtime should be one deployable bot process first. Separate services, queue
 | Player/progression services | Profiles, statistics, achievements, inventory, and reward policy. | Guild-private configuration. |
 | Privacy service | Data inventory, export, deletion orchestration, retention requests, and privacy command responses. | Bypassing repositories or claiming deletion before it completes. |
 | Persistence layer | SQLite repositories, migrations, transactions, and state serialisation. | Discord API calls. |
-| Rendering layer | Convert game view models and assets into cached image output or frontend-ready view models. | Mutating game state. |\n| Visual library frontend | Next.js pages, React components, catalogue, lobbies, and Activity UI. | Authoritative rules, balances, permissions, or direct database access. |\n| Activity bridge | Embedded App SDK handshake and Discord client capabilities. | Owning player identity or trusted game state. |
+| Rendering layer | Convert game view models and assets into cached image output or frontend-ready view models. | Mutating game state. |
+| Visual library frontend | Next.js pages, React components, catalogue, lobbies, and Activity UI. | Authoritative rules, balances, permissions, or direct database access. |
+| Activity bridge | Embedded App SDK handshake and Discord client capabilities. | Owning player identity or trusted game state. |
 | Operations layer | Configuration, structured diagnostics, graceful shutdown, and health signals. | Game-specific decisions. |
 
 The primary dependency direction is from adapters toward application services and domain rules. Game logic must remain testable without a live Discord connection.

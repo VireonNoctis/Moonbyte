@@ -32,7 +32,9 @@ Deliverables:
 - Help, about, privacy overview, and minimal diagnostics.
 - Structured logging, graceful shutdown, and clear startup errors.
 - SQLite connection, migration runner, and backup path.
-- CI for formatting, Clippy, compilation, and tests.\n- Next.js + React + TypeScript visual-library workspace.\n- Discord Activity integration spike using the Embedded App SDK, with browser fallback.
+- CI for formatting, Clippy, compilation, and tests.
+- Next.js + React + TypeScript visual-library workspace.
+- Discord Activity integration spike using the Embedded App SDK, with browser fallback.
 
 Exit criteria:
 - Bot connects and reconnects without leaking tasks.
