@@ -16,6 +16,10 @@ edition.workspace = true
 rust-version.workspace = true
 publish = false
 
+[dependencies]
+poise = { version = "0.7.1", default-features = false, features = ["serenity/rustls_backend"] }
+tokio = { version = "~1.53.1", features = ["macros", "rt-multi-thread"] }
+
 [lib]
 path = "src/lib.rs"
 

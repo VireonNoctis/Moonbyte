@@ -28,10 +28,11 @@ Exit criteria:
 Deliverables:
 - [x] Cargo application workspace and committed lockfile.
 - [x] Configuration loading and validation from environment variables.
-- Serenity client with Tokio runtime and Poise command framework.
-- Default period prefix and slash-command registration.
-- Help, about, privacy overview, and minimal diagnostics.
-- Structured logging, graceful shutdown, and clear startup errors.
+- [x] Serenity client with Tokio runtime and Poise command framework.
+- [x] Default period prefix and global slash-command registration.
+- [x] Help, about, privacy overview, and minimal diagnostics (`ping`).
+- [x] Clear configuration and startup errors.
+- [ ] Structured logging and graceful shutdown.
 - SQLite connection, migration runner, and backup path.
 - [x] CI for formatting, Clippy, compilation, and tests.
 - Next.js + React + TypeScript visual-library workspace.

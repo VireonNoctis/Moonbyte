@@ -1,6 +1,6 @@
 # Moonbyte Architecture
 
-- Status: Target architecture with an initial Rust workspace and configuration bootstrap implemented; Discord, database, and game runtime adapters remain unimplemented.
+- Status: Target architecture with the Rust workspace, configuration bootstrap, and first Discord runtime slice implemented; SQLite and game/session runtime adapters remain unimplemented.
 - Last updated: 2026-10-31.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
@@ -20,7 +20,7 @@ This document describes intended boundaries and constraints. It must be revised 
 | Logging and diagnostics | Structured tracing |
 | Art pipeline | Original pixel-art source assets and cached rendered output |
 
-Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The initial executable uses the Rust standard library only, with the workspace and Cargo.lock committed. Add Tokio, Serenity, Poise, and SQLx when their first real runtime/database slices are implemented; commit the resolved lockfile with those dependencies.
+Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable now uses Tokio, Serenity through Poise, and a committed dependency lockfile. The first implemented commands are help, about, ping, and a privacy overview. Add SQLx and SQLite only with the first real persistence slice; keep game rules independent of Discord types.
 
 References: [Poise documentation](https://docs.rs/poise/latest/poise/), [Serenity documentation](https://docs.rs/serenity/latest/serenity/), [Tokio documentation](https://docs.rs/tokio/latest/tokio/).
 

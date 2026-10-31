@@ -36,12 +36,22 @@ Environment variable names are listed in .env.example:
 | DATABASE_PATH | Path to SQLite database file. |
 | RUST_LOG | Structured log filter. |
 
-The executable configuration bootstrap now exists, but it does not connect to Discord or open SQLite yet. Set variables in the process environment; the current bootstrap does not load .env files. The example environment file does not mean the bot already runs.
+The executable now connects to Discord through Tokio, Serenity, and Poise. It registers global slash commands at startup and supports the default period prefix. Set variables in the process environment; Moonbyte does not load .env files automatically. `DATABASE_PATH` is reserved for the future SQLite adapter and is not opened by the current runtime.
 
-## Implemented bootstrap checks
+## Run the Discord bot
 
-The initial workspace supports `cargo fmt --all -- --check`, `cargo test --workspace --locked`, and `cargo clippy --workspace --all-targets --locked -- -D warnings`. CI runs these checks with a committed lockfile.
+With `DISCORD_TOKEN` set in the process environment, run:
+
+```bash
+cargo run --locked
+```
+
+The runtime requests `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`. Enable Message Content in the Discord developer settings for prefix commands, and invite the application with the `applications.commands` OAuth scope for slash commands. Global slash-command registration can take up to an hour to propagate. See [Command reference](COMMANDS.md).
+
+## Implemented checks
+
+The workspace supports `python3 scripts/validate.py`, `cargo fmt --all -- --check`, `cargo test --workspace --locked`, and `cargo clippy --workspace --all-targets --locked -- -D warnings`. CI runs these checks with the committed lockfile.
 
 ## Remaining runtime checks
 
-As the Discord and SQLite adapters are implemented, add migration validation, privacy export/deletion tests, and a local Discord smoke test that does not expose credentials. Add integration tests for reconnect, graceful shutdown, command registration, and recoverable startup failures.
+SQLite, migrations, structured logging, graceful shutdown, privacy export/deletion, and a development-guild Discord smoke test remain unimplemented or unverified. Add integration tests for reconnect, shutdown, command registration, and recoverable startup failures as those capabilities are built.

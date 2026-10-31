@@ -1,7 +1,7 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Intended product policy; Moonbyte is not yet implemented or in production.
+- Status: Intended product policy; the first Discord command runtime exists, but persistent profiles and privacy controls are not implemented.
 - Last updated: 2026-10-31.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. This repository currently contains the specification, not a running bot; the commitments must be verified before production release.
+These are requirements for implementation. The current runtime can answer help, about, ping, and privacy-overview commands, but it does not connect to SQLite or persist profiles, sessions, or game records. The `.privacy` command does not yet provide a data inventory, export, or deletion flow. These limited facts describe this code slice only; the broader commitments must be verified before production release.
 
 ## 2. Data Moonbyte needs
 
