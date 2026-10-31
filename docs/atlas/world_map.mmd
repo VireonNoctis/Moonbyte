@@ -1,0 +1,361 @@
+# Mermaid source for the complete Moonbyte World Loom
+
+> The first diagram is the 200-idea hierarchy. The second shows the cross-domain flow. `world_graph.json` is the machine-readable source of truth for node IDs and typed edges.
+
+```mermaid
+mindmap
+  root((Moonbyte World Loom))
+    The Hearth and Tavern
+      The Lantern and Ladle · hearth_main_room
+      The Notice Wall · hearth_notice_wall
+      The Rumour Circle · hearth_rumour_circle
+      The Common Tables · hearth_table_games
+      The Host's Bench · hearth_hosts_bench
+      The Story Stage · hearth_bard_stage
+      The Hearth Kitchen · hearth_kitchen
+      The Regulars' Circle · hearth_regulars
+      The Common Room Project · hearth_renovation
+      The Tavern Wayfinder · hearth_routes
+    The Bazaar and Exchange
+      Player Stallfronts · bazaar_stallfronts
+      Fixed-Price Listings · bazaar_fixed_listings
+      The Barter Desk · bazaar_barter_desk
+      The Wanted Board · bazaar_wanted_board
+      Crafting Work Orders · bazaar_work_orders
+      The Price Reference Ledger · bazaar_price_ledger
+      The Escrow Vault · bazaar_escrow_vault
+      Item Provenance Cards · bazaar_provenance
+      The Delivery Board · bazaar_delivery_board
+      The Trade Review Desk · bazaar_review_court
+    Guilds and Long-Form Cooperation
+      Guild Charters · guild_charters
+      The Guild Hall · guild_hall
+      Guild Role Charter · guild_roles
+      The Great Works Board · guild_projects
+      Guild Story Contracts · guild_quests
+      The Guild Vault · guild_vault
+      The Guild Cartography Room · guild_map
+      Guild Neighbourhoods · guild_alliances
+      Guild Trust Record · guild_reputation
+      The Guild Chronicle · guild_archive
+    Server Culture and Community Layer
+      Server World Identity · server_identity
+      Community Calendar · server_calendar
+      Channel Wayfinding · server_channels
+      Server Challenge Board · server_challenges
+      The Community Museum · server_museum
+      Neighbourhood Goals · server_goals
+      Scoped Scoreboards · server_leaderboards
+      Server Steward Desk · server_moderation
+      Server Data Boundary · server_privacy
+      The Quiet Community Digest · server_digest
+    Atlas, Regions and World Discovery
+      The Grand Atlas · atlas_world_index
+      Discovery Layers · atlas_discovery_fog
+      Biome Ecology · atlas_biomes
+      Landmark Network · atlas_landmarks
+      Known Passage Network · atlas_shortcuts
+      Environmental Logic Sites · atlas_environment_puzzles
+      Atlas Overlays · atlas_map_layers
+      Cartographer's Desk · atlas_cartographer
+      The Route Planner · atlas_route_planner
+      Living World State · atlas_world_state
+    Expeditions and Exploration Sessions
+      Expedition Planner · expedition_planner
+      Route Encounters · expedition_route_events
+      Expedition Roles · expedition_roles
+      Prepared Supply Kit · expedition_supplies
+      Waystation Checkpoints · expedition_camps
+      The Expedition Journal · expedition_journal
+      Return and Recovery Routes · expedition_recovery
+      Explorer Contracts · expedition_contracts
+      Discovery Scorecard · expedition_score
+      Expedition Route Archive · expedition_replay
+    Quests, Mystery and Story
+      The Quest Board · quest_board
+      Chapter Arcs · quest_arcs
+      Choice and Consequence Graph · quest_branches
+      The Investigation Desk · quest_mysteries
+      Dialogue Routes · quest_dialogue
+      Faction Storylines · quest_factions
+      Local Tales · quest_side_stories
+      Shared Story Decisions · quest_coop_story
+      The Chapter Chronicle · quest_chronicle
+      Story Remix Paths · quest_remix
+    Vaults, Dungeons and Puzzle Spaces
+      Vault Blueprint Library · vault_blueprints
+      Puzzle Chambers · vault_chambers
+      Logic Key Mechanisms · vault_logic_keys
+      Relic Galleries · vault_relic_rooms
+      Mastery Trial Rooms · vault_mastery_trials
+      The Grand Mechanism · vault_boss_logic
+      Split-Path Chambers · vault_parallel_rooms
+      Vault Save Stones · vault_checkpoints
+      Fair Difficulty Profiles · vault_difficulty
+      Verified Puzzle Registry · vault_solution_registry
+    Gathering, Crafting and Workshops
+      Field Gathering · craft_gathering
+      The Recipe Codex · craft_recipe_book
+      The Maker's Workshop · craft_workshop
+      Known Quality Grades · craft_quality
+      Commission Bench · craft_commissions
+      Material Reclaim · craft_recycling
+      Workshop Repair · craft_repair
+      Pattern and Set Assembly · craft_sets
+      Guild Workshop · craft_shared_bench
+      Recipe Research · craft_discovery
+    Collections, Bestiary and Museum
+      The Grand Collection Index · archive_catalogue
+      The Field Bestiary · archive_bestiary
+      The Relic Archive · archive_relics
+      The Illustrated Compendium · archive_cards
+      The Museum Hall · archive_museum
+      Collection Sets · archive_sets
+      The Cosmetic Gallery · archive_cosmetics
+      The Living Lore Index · archive_lore
+      Collection Milestones · archive_milestones
+      Collector's Provenance View · archive_provenance
+    Arcade and Original Mini-Games
+      The Pocket Arcade · arcade_library
+      Optional Daily Logic Desk · arcade_daily_logic
+      The Practice School · arcade_skill_school
+      Puzzle Generator and Validator · arcade_puzzle_factory
+      The Party Game Shelf · arcade_party_collection
+      Asynchronous Challenge Cards · arcade_async_challenges
+      Friendly Arcade League · arcade_league
+      Replay and Review Desk · arcade_replays
+      Arcade Control Profiles · arcade_accessibility
+      Curated Game Routes · arcade_playlists
+    Parties, Lobbies and Multiplayer Rules
+      Universal Lobby Contract · multiplayer_lobby
+      Party Formation Desk · multiplayer_party
+      Friend-First Match Finder · multiplayer_matchmaking
+      Shared Turn Engine · multiplayer_turn_engine
+      Simultaneous Choice Windows · multiplayer_simultaneous
+      Spectator Gallery · multiplayer_spectators
+      Friendly Tournament Brackets · multiplayer_brackets
+      Shared Cooperative Boards · multiplayer_coop_boards
+      Reconnect and Rejoin · multiplayer_reconnect
+      Table Votes and Host Controls · multiplayer_table_votes
+    Characters, Companions and Tactical Identity
+      Player Character Sheet · character_identity
+      Archetype Codex · character_archetypes
+      Skill Path Map · character_skill_paths
+      Adventure Loadouts · character_loadouts
+      Companion Chronicle · character_companions
+      Role Synergy Board · character_party_synergy
+      Equipment Ledger · character_equipment
+      Titles and Identity Marks · character_titles
+      Pixel Persona Studio · character_appearance
+      Non-Combat Talents · character_utility
+    Progression, Mastery and Recognition
+      Experience and Milestone Ledger · mastery_experience
+      Skill Mastery Tracks · mastery_tracks
+      Achievement Registry · mastery_achievements
+      Player Honour Record · mastery_reputation
+      Personal Milestone Contracts · mastery_contracts
+      Milestone Route Planner · mastery_routes
+      Earned Cosmetic Unlocks · mastery_cosmetics
+      Skill Badge Portfolio · mastery_badges
+      Personal Best Registry · mastery_records
+      Account-Bound Recognition · mastery_account_rewards
+    Festivals, Chapters and World Events
+      World Fairs · festival_world_fairs
+      Seasonal Story Chapters · festival_chapters
+      Server Celebration Kits · festival_server_events
+      World Restoration Projects · festival_world_projects
+      Puzzle Rotation Archive · festival_rotating_puzzles
+      The Celebration Wall · festival_celebration_wall
+      Neighbourhood Festival Circuit · festival_cross_server
+      Open Archive Routes · festival_return_paths
+      Festival Chronicle · festival_chronicles
+      Moonbyte Anniversary · festival_anniversary
+    Homes, Gardens and Personal Spaces
+      Personal Home Plot · homestead_plot
+      Room Layout Studio · homestead_editor
+      Display Shelves · homestead_display
+      The Pocket Garden · homestead_garden
+      Home Workshop Extension · homestead_workshop
+      Companion Nook · homestead_companion_nook
+      Decorative Collections · homestead_decor_sets
+      Friend Visit Rooms · homestead_visits
+      Shared Neighbourhood Square · homestead_neighbourhood
+      Home Design Snapshots · homestead_snapshots
+    Player Creation and Community Content
+      Puzzle Studio · creator_puzzle_studio
+      Quest Workshop · creator_quest_editor
+      Vault Layout Workshop · creator_vault_builder
+      Game Rule Templates · creator_rule_templates
+      Original Card Set Builder · creator_deck_builder
+      Pixel Sticker Workshop · creator_pixel_editor
+      Community Playtest Queue · creator_playtest
+      Content Review Pipeline · creator_review
+      Creator Credit Ledger · creator_attribution
+      Community Pack Publishing · creator_publishing
+    Fair Play, Competition and Verification
+      Published Rulebooks · fairness_rulebooks
+      Commit and Reveal Service · fairness_commit_reveal
+      Scoring Contract Registry · fairness_scoring
+      Optional Skill Rating · fairness_ratings
+      Match Review Transcript · fairness_match_review
+      Integrity Guardrails · fairness_anti_abuse
+      Tournament Rules Desk · fairness_tournament
+      Leaderboard Integrity · fairness_leaderboard
+      Equal Conditions Profiles · fairness_access
+      Result Appeal Desk · fairness_appeals
+    Friends, Community Bonds and Social Play
+      Friend Circle · fellowship_friends
+      Cooperative Role Planner · fellowship_roles
+      Opt-In Mentor Sessions · fellowship_mentor
+      Interest Clubs · fellowship_clubs
+      Thoughtful Gift Exchange · fellowship_gifting
+      Community Message Board · fellowship_mailbox
+      Positive Contribution Notes · fellowship_commendations
+      Shared Session Memories · fellowship_memories
+      Friend Discovery Routes · fellowship_discovery
+      Social Boundaries Panel · fellowship_safety
+    Accessibility, Moderation, Privacy and Operations
+      Universal Control Profiles · trust_control_profiles
+      Visual Comfort Settings · trust_contrast_motion
+      Language and Locale Registry · trust_localisation
+      Text-First Play Mode · trust_text_fallback
+      Moderator Console · trust_moderator_console
+      Report and Review Pipeline · trust_reports
+      Privacy and Data Center · trust_privacy_center
+      Quiet Notification Rules · trust_notification_rules
+      Session Reliability Desk · trust_reliability
+      World Content Policy · trust_content_policy
+```
+
+```mermaid
+flowchart LR
+  core((Moonbyte World Loom))
+  hearth["The Hearth and Tavern"]
+  bazaar["The Bazaar and Exchange"]
+  guild["Guilds and Long-Form Cooperation"]
+  server["Server Culture and Community Layer"]
+  atlas["Atlas, Regions and World Discovery"]
+  expedition["Expeditions and Exploration Sessions"]
+  quest["Quests, Mystery and Story"]
+  vault["Vaults, Dungeons and Puzzle Spaces"]
+  craft["Gathering, Crafting and Workshops"]
+  archive["Collections, Bestiary and Museum"]
+  arcade["Arcade and Original Mini-Games"]
+  multiplayer["Parties, Lobbies and Multiplayer Rules"]
+  character["Characters, Companions and Tactical Identity"]
+  mastery["Progression, Mastery and Recognition"]
+  festival["Festivals, Chapters and World Events"]
+  homestead["Homes, Gardens and Personal Spaces"]
+  creator["Player Creation and Community Content"]
+  fairness["Fair Play, Competition and Verification"]
+  fellowship["Friends, Community Bonds and Social Play"]
+  trust["Accessibility, Moderation, Privacy and Operations"]
+  core --> hearth
+  core --> bazaar
+  core --> guild
+  core --> server
+  core --> atlas
+  core --> expedition
+  core --> quest
+  core --> vault
+  core --> craft
+  core --> archive
+  core --> arcade
+  core --> multiplayer
+  core --> character
+  core --> mastery
+  core --> festival
+  core --> homestead
+  core --> creator
+  core --> fairness
+  core --> fellowship
+  core --> trust
+  hearth -->|routes to| bazaar
+  hearth -->|surfaces| quest
+  hearth -->|hosts| arcade
+  hearth -->|coordinates| fellowship
+  bazaar -->|discovered from| hearth
+  bazaar -->|fulfils| craft
+  bazaar -->|checks provenance| archive
+  bazaar -->|secured by| fairness
+  guild -->|scoped by| server
+  guild -->|organises| expedition
+  guild -->|unlocks cooperative| vault
+  guild -->|recognises| mastery
+  server -->|hosts| guild
+  server -->|schedules| festival
+  server -->|governed by| trust
+  server -->|curates| arcade
+  atlas -->|routes| expedition
+  atlas -->|reveals| quest
+  atlas -->|records| archive
+  atlas -->|hosts world changes| festival
+  expedition -->|uses map| atlas
+  expedition -->|branches into| vault
+  expedition -->|organised by| guild
+  expedition -->|creates records| archive
+  quest -->|anchored at| atlas
+  quest -->|resolves through| vault
+  quest -->|recognises| mastery
+  quest -->|discovered from| hearth
+  vault -->|advances| quest
+  vault -->|uses blueprints| craft
+  vault -->|verifies| fairness
+  vault -->|supports cooperation| guild
+  craft -->|supplies| bazaar
+  craft -->|catalogues| archive
+  craft -->|equips| homestead
+  craft -->|prepares| expedition
+  archive -->|receives discoveries| vault
+  archive -->|records| atlas
+  archive -->|catalogues| craft
+  archive -->|displays| homestead
+  arcade -->|entered from| hearth
+  arcade -->|trains| mastery
+  arcade -->|uses rules from| fairness
+  arcade -->|played with| fellowship
+  multiplayer -->|forms parties for| guild
+  multiplayer -->|hosts games from| arcade
+  multiplayer -->|connects people through| fellowship
+  multiplayer -->|enforces results with| fairness
+  character -->|progresses through| mastery
+  character -->|supports party roles| fellowship
+  character -->|equips| craft
+  character -->|appears in| quest
+  mastery -->|learned in| arcade
+  mastery -->|unlocks options for| character
+  mastery -->|records| archive
+  mastery -->|celebrated by| guild
+  festival -->|scheduled by| server
+  festival -->|co created with| guild
+  festival -->|changes context of| atlas
+  festival -->|announced at| hearth
+  homestead -->|decorated by| craft
+  homestead -->|displays| archive
+  homestead -->|visited by| fellowship
+  homestead -->|supports| guild
+  creator -->|moderated by| trust
+  creator -->|published into| arcade
+  creator -->|extends| quest
+  creator -->|attributed in| archive
+  fairness -->|protects| multiplayer
+  fairness -->|secures| bazaar
+  fairness -->|verifies| arcade
+  fairness -->|validates| vault
+  fellowship -->|meets at| hearth
+  fellowship -->|organises into| guild
+  fellowship -->|plays through| multiplayer
+  fellowship -->|celebrates with| festival
+  trust -->|governs| server
+  trust -->|reviews| creator
+  trust -->|audits| fairness
+  trust -->|keeps discoverable| hearth
+```
+
+## Reading the graph
+
+- The root is the shared game world, not a second application or service.
+- Every idea has a stable ID and belongs to exactly one domain.
+- Every idea connects to four other ideas through typed relationships; the graph records the reason for each edge.
+- Domain links explain larger flows such as exploration → crafting → Bazaar, or Tavern → story → Vault → Archive.
+- Feature documents are descriptive specifications. The graph never changes implementation status.

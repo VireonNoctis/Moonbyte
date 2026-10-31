@@ -206,3 +206,31 @@ Potential additions, deliberately outside the initial commitment:
 - A web companion for public game records, only if Discord UX demonstrates a real need.
 
 Backlog ideas must not delay the runtime, game engine, privacy foundation, or first polished games.
+
+
+## Cross-cutting expansion — Moonbyte World Loom
+
+**Status: Product design proposal only; these systems are not implemented.**
+
+The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into 200 connected system proposals across 20 domains. It is intentionally broader than the approved game catalogue: the Tavern, Bazaar, Guilds, Atlas, Expeditions, story, Vaults, crafting, collections, Arcade, multiplayer, characters, mastery, festivals, homes, player creation, fair play, social systems and trust/accessibility foundations form one graph.
+
+### Integration order
+
+1. Establish the authoritative Rust game/session contract, player identity and SQLite persistence.
+2. Deliver the Tavern as a navigable entry surface with one polished solo game and one cooperative game.
+3. Add Atlas locations, a bounded Expedition and one authored Quest/Vault route.
+4. Add Archive records and deterministic progression so discoveries persist and can be exported/deleted.
+5. Add known-input crafting and item provenance.
+6. Add fixed-price Bazaar listings only after immutable ledger, escrow, idempotency and double-spend tests pass.
+7. Add guild projects, community events and creator tooling only after guild isolation and moderation workflows are complete.
+8. Expand content through validated vertical slices; do not attempt to implement all atlas proposals at once.
+
+### World Loom exit criteria
+
+- Every implemented node has a stable ID, owning domain, documented input/output contract and typed graph relationships.
+- Every cross-system edge is backed by a real service contract or explicitly labelled as a future proposal.
+- Rust remains the sole authority for state, outcomes, economy and permissions; the React Activity remains presentation-only.
+- SQLite migration, recovery, privacy export/deletion and guild-isolation tests cover every new persisted record.
+- Bazaar transactions are atomic and deterministic; no stake, wager, paid chance or cash-value mechanism is introduced.
+- All new game sessions have visible rules, clear stop/pause controls, accessibility fallbacks and duplicate-action protection.
+- Documentation distinguishes proposed, in-development and implemented status at all times.

@@ -14,7 +14,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## The vision
 
-Moonbyte should feel like opening a living, colourful handheld arcade inside Discord: a place to discover something new, master familiar games, invite friends, solve challenges, and return to evolving worlds.
+Moonbyte should feel like opening a living, colourful handheld arcade and connected social adventure world inside Discord: a place to discover something new, master familiar games, invite friends, solve challenges, and return to evolving worlds.
 
 The product should be highly replayable without being manipulative. Depth comes from genuinely different games, skill mastery, discovery, cooperative goals, social play, and meaningful player choice—not from making play compulsive or difficult to leave. Players should always be able to stop, pause, mute reminders, and return without punishment.
 
@@ -121,6 +121,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering, and operations.
 - [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts, and release quality gates.
 - [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — player inventory, vault experiences, fixed-price trading, and non-wagering economy rules.
+- [Moonbyte World Loom](docs/atlas/README.md) — 200 connected system ideas, five design volumes, a 20,000+ line specification and the machine-readable mind-map graph.
 - [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation, and verification requirements.
 - [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — what may be reused conceptually and what must be rebuilt or audited.
 - [Roadmap](docs/ROADMAP.md) — phased implementation, deliverables, and exit criteria.

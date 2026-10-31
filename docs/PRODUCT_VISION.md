@@ -186,3 +186,16 @@ The policy is a target commitment and must be implemented and verified before pr
 ## 13. First-release definition
 
 A first public release is ready when the bot connects, recovers, and shuts down cleanly; prefix and slash commands work; a curated set of solo and multiplayer games completes reliably; sessions enforce membership and state transitions; profiles persist in SQLite; pixel-art UI is readable; privacy controls accurately describe data, export it, and delete it; retention and log redaction are tested; and documentation matches production behavior.
+
+
+## 14. The connected world: Moonbyte World Loom
+
+The long-range product design connects the Tavern, Bazaar, Atlas, Expeditions, Quests, Vaults, crafting, collections, Arcade, guilds, parties, characters, mastery, homes, festivals and community creation into one world graph.
+
+The Tavern is the social home and discovery surface. The Atlas gives every region and landmark a stable identity. Expeditions turn routes into bounded sessions. Quests and Vaults supply authored goals. Gathering and crafting create known, provenance-bearing outputs. The Bazaar circulates eligible earned items through disclosed fixed-price trades, barter and escrow. The Archive preserves discoveries. Guilds and parties coordinate group work. Arcade games provide short sessions and mastery practice. Homes, characters and festivals express the results.
+
+This is specified in the [Moonbyte World Loom master atlas](atlas/README.md): 200 individual proposals across 20 domains, five detailed volumes, a Mermaid map and a machine-readable graph with typed edges and an explanation for every cross-system relationship. The atlas is a product design proposal, not an implementation claim or a promise to ship every idea.
+
+The graph has one governing rule: systems exchange stable domain events and references rather than directly manipulating one another's private state. Rust remains authoritative for rules, sessions, permissions, progression, economy, fairness and SQLite persistence. Next.js + React + TypeScript remain presentation-only. The first release should prove a small connected vertical slice before expanding the catalogue.
+
+The expanded world remains subject to the existing boundaries: earned-only non-redeemable currency, no gambling or paid chance, transparent fixed rewards, original or rights-cleared content, privacy by design, accessible text fallbacks, and replayability without manipulative engagement mechanics.
