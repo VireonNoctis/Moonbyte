@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**Early Discord runtime implemented.** Moonbyte now connects through Tokio, Serenity, and Poise, with working `help`, `about`, `ping`, and privacy-overview commands in both prefix and slash form. The game engine, playable catalogue, SQLite persistence, profiles, and economy are still implementation work. Commands marked planned below are not available yet.
+**First playable runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and now includes four Rust game modules: Tic-tac-toe, Connect Four, Memory Match and Word Scramble. The game rules are transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Sessions currently live in process memory and reset on restart. SQLite persistence, profiles, progression, Vaults, Bazaar and the visual frontend remain implementation work.
 
 ## The vision
 
@@ -59,8 +59,12 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
 | `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
-| `.games` / `/games` | Planned | Browse and filter the game library. |
-| `.play <game>` / `/play` | Planned | Start a game or join a compatible session. |
+| `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
+| `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
+| `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
+| `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
+| `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
+| `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 | `.daily` / `/daily` | Planned | Open the optional daily challenge. |
 | `.profile` / `/profile` | Planned | View a player profile and statistics. |
 | `.collection` / `/collection` | Planned | View collected cards, discoveries, and items. |
@@ -77,7 +81,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The current `.privacy` command is an overview only. It does not provide a data inventory, export, or deletion flow. See [Command reference](docs/COMMANDS.md) for exact behavior and setup notes.
+The current `.privacy` command is an overview only. It does not provide a data inventory, export, or deletion flow. Active sessions are held in process memory and disappear on restart; they are not persisted to SQLite. See [Command reference](docs/COMMANDS.md) and [Game Runtime](docs/GAME_RUNTIME.md) for exact behavior and limitations.
 
 ## Privacy is a product feature
 
@@ -90,7 +94,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - Profile export and deletion controls are part of the planned product, not an afterthought.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime does not connect to SQLite or persist player/game records. Data inventory, export, and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime does not connect to SQLite or persist player profiles, game sessions or results. Active game state is process-local, guild-scoped and participant-readable; it disappears when the process restarts. Data inventory, export and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
 
 ## Technology decisions
 
@@ -130,7 +134,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token and optional prefix/database-path settings without printing secret values, connects to Discord, registers global slash commands, and exposes the four commands documented in [Command reference](docs/COMMANDS.md). SQLite, migrations, game sessions, and player persistence are not connected yet.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token and optional prefix/database-path settings without printing secret values, connects to Discord, registers global slash commands, and exposes the ten commands documented in [Command reference](docs/COMMANDS.md). The first four game rules and in-memory session lifecycle are implemented and unit-tested. SQLite, migrations, durable saves, player profiles and result persistence are not connected yet.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 

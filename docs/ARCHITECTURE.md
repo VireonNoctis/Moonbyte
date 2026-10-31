@@ -1,6 +1,6 @@
 # Moonbyte Architecture
 
-- Status: Target architecture with the Rust workspace, configuration bootstrap, and first Discord runtime slice implemented; SQLite and game/session runtime adapters remain unimplemented.
+- Status: Rust workspace, configuration bootstrap, Discord command adapters and a first transport-independent game/session slice implemented; SQLite persistence, reconnect recovery, Activity and visual rendering remain unimplemented.
 - Last updated: 2026-10-31.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
@@ -20,7 +20,7 @@ This document describes intended boundaries and constraints. It must be revised 
 | Logging and diagnostics | Structured tracing |
 | Art pipeline | Original pixel-art source assets and cached rendered output |
 
-Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable now uses Tokio, Serenity through Poise, and a committed dependency lockfile. The first implemented commands are help, about, ping, and a privacy overview. Add SQLx and SQLite only with the first real persistence slice; keep game rules independent of Discord types.
+Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter now exposes a game catalogue, start/join/action/session/leave operations in addition to help, about, ping and privacy. Four game modules run without Discord types. The current session registry is an in-process adapter; add SQLx and SQLite only with the first durable persistence slice, and keep game rules independent of Discord.
 
 References: [Poise documentation](https://docs.rs/poise/latest/poise/), [Serenity documentation](https://docs.rs/serenity/latest/serenity/), [Tokio documentation](https://docs.rs/tokio/latest/tokio/).
 
@@ -225,3 +225,17 @@ The economy ledger, Bazaar transactions, and Vault rewards are deterministic and
 5. Consider separate workers or a different persistence topology only when measurements show a concrete bottleneck.
 
 Do not distribute the system merely to appear enterprise-grade.
+
+
+## 15. Current implementation snapshot
+
+The current playable slice is deliberately small and honest about its limits:
+
+- Rust domain rules implement Tic-tac-toe, Connect Four, Memory Match and Word Scramble.
+- An in-process session registry provides start, guild-scoped join, validated action, participant-only read and leave operations.
+- Poise exposes the same operations as prefix and slash commands.
+- The registry uses a short synchronous mutex only around in-memory operations. It performs no await, Discord request or disk I/O while holding the lock.
+- Session IDs are process-local references, not durable IDs or authentication credentials.
+- No SQLite connection, migration, session recovery, player profile, achievement, inventory, economy, privacy export/deletion or web frontend is implemented by this slice.
+
+This is a functional vertical slice for domain rules and Discord command invocation, not a production-ready persistence or multiplayer deployment. The next gate is durable SQLite state with versioned migrations, repository isolation tests, export/deletion coverage and restart recovery.

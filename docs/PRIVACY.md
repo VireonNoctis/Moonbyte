@@ -1,7 +1,7 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Intended product policy; the first Discord command runtime exists, but persistent profiles and privacy controls are not implemented.
+- Status: Intended product policy; the current runtime has process-local game sessions but no persistent profiles or privacy export/deletion controls.
 - Last updated: 2026-10-31.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. The current runtime can answer help, about, ping, and privacy-overview commands, but it does not connect to SQLite or persist profiles, sessions, or game records. The `.privacy` command does not yet provide a data inventory, export, or deletion flow. These limited facts describe this code slice only; the broader commitments must be verified before production release.
+These are requirements for implementation. The current runtime supports game discovery and play. It holds session IDs, Discord participant IDs, optional guild IDs, board state and action counters in process memory only. It does not connect to SQLite or persist profiles, sessions or game records. Sessions disappear when the bot process restarts. The `.privacy` command does not provide a data inventory, export or deletion flow. These limited facts describe this code slice only; the broader commitments must be verified before production release.
 
 ## 2. Data Moonbyte needs
 
@@ -40,6 +40,8 @@ The planned bot may process or store these categories when the relevant feature 
 | Security records | Limited identifiers and event metadata associated with an incident. | Protect the bot and investigate abuse. |
 
 Moonbyte should not require Lunar account linking, an email address, real name, or separate website account.
+
+The currently implemented in-memory session fields are the process-local session reference, game ID, player Discord IDs, optional guild ID, phase, board state, action count and short result text. They are used only to run an active session; they are not written to logs or a database by the session runtime. Restarting the process discards them.
 
 ## 3. Message and interaction content
 

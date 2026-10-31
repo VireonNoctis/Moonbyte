@@ -1,22 +1,10 @@
 # Changelog
 
-Notable changes to Moonbyte are documented here.
+## Unreleased
 
-This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and uses [Semantic Versioning](https://semver.org/) where versioning applies.
+- Add transport-independent Rust rules for Tic-tac-toe, Connect Four, Memory Match and Word Scramble.
+- Add an in-process session runtime with guild-scoped lobbies, participant-only reads, turn validation, action validation, completion and leave controls.
+- Add prefix and slash commands for games, play, join, action, session and leave.
+- Add unit coverage for game outcomes, invalid actions, turn order, participant boundaries and guild isolation.
+- Document the process-local persistence boundary and remaining runtime work.
 
-## [Unreleased]
-
-### Added
-- Defined Moonbyte as an independent Discord gaming bot with an original full-colour pixel-art identity.
-- Documented product vision, five game pillars, architecture, Lunar migration candidates, and phased roadmap.
-- Added a detailed privacy stance, planned privacy command, data inventory, retention principles, and user controls.
-- Selected Rust, Tokio, Serenity, Poise, and SQLite as the initial technology direction.
-- Added the first Tokio/Serenity/Poise runtime with shared help, about, ping, and privacy-overview prefix and slash commands.
-
-### Changed
-- Replaced generic template text with Moonbyte-specific product and engineering documentation.
-- Set the intended default command prefix to a period (.).
-
-### Security
-- Defined data minimisation, no raw-message analytics, guild isolation, export/deletion requirements, and honest encryption claims.
-- Defined non-wagering progression and healthy-engagement requirements.

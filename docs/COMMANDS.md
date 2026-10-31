@@ -1,36 +1,53 @@
 # Moonbyte Command Reference
 
-- Status: The first Discord command slice is implemented.
+- Status: The first playable game/runtime slice is implemented.
 - Framework: Poise on Serenity.
-- Default prefix: `.`; override with `DEFAULT_PREFIX`.
+- Default prefix: period; override with DEFAULT_PREFIX.
 
 ## Available commands
 
 | Prefix | Slash | Behavior |
 | --- | --- | --- |
-| `.help` | `/help` | Lists the commands available in this build and the configured prefix. |
-| `.about` | `/about` | Shows the application version and clearly states which product systems are not implemented. |
-| `.ping` | `/ping` | Confirms that a command handler responded and reports process uptime. It is not a Discord network-latency measurement. |
-| `.privacy` | `/privacy` | Explains current interaction handling, the absence of SQLite persistence, and unavailable privacy controls. |
+| .help | /help | Lists commands available in this build and the configured prefix. |
+| .about | /about | Shows the application version and current implementation boundaries. |
+| .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
+| .privacy | /privacy | Explains current in-memory session handling and unavailable persistent privacy controls. |
+| .games | /games | Lists four playable games, player counts and controls. |
+| .play <game> | /play | Starts a solo game or creates a two-player lobby. |
+| .join <session> | /join | Joins an open two-player lobby in its originating server. |
+| .action <session> <input> | /action | Submits a game-specific action after participant, guild, phase and turn validation. |
+| .session <session> | /session | Reads the current snapshot of a session in which the requester participates. |
+| .leave <session> | /leave | Ends a session the requester participates in. |
 
-All four commands use shared Rust handlers for prefix and slash invocation. The help output lists only implemented commands; it does not advertise planned game or economy features as working.
+All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
+
+## Game controls
+
+| Game | Start argument | Action input |
+| --- | --- | --- |
+| Tic-tac-toe | tic-tac-toe | 1-based row,column, for example 2,3 |
+| Connect Four | connect-four | 1-based column from 1 to 7 |
+| Memory Match | memory-match | 1-based position from 1 to 8 |
+| Word Scramble | word-scramble | Answer text; the current starter puzzle is BITOR → ORBIT |
+
+Tic-tac-toe and Connect Four create lobbies for two players. A second participant must join from the same Discord server. Solo games start immediately. Session reads are restricted to participants.
 
 ## Discord setup
 
-1. Set `DISCORD_TOKEN` in the process environment. Never commit the token.
-2. Invite the application with the `bot` and `applications.commands` OAuth scopes.
-3. Enable the Message Content privileged intent in the Discord developer settings if prefix commands are required.
-4. Set `DEFAULT_PREFIX` if the period prefix is not desired.
-5. Start the process with `cargo run --locked`.
+1. Set DISCORD_TOKEN in the process environment. Never commit the token.
+2. Invite the application with bot and applications.commands OAuth scopes.
+3. Enable the Message Content privileged intent in Discord developer settings if prefix commands are required.
+4. Set DEFAULT_PREFIX if the period prefix is not desired.
+5. Start the process with cargo run --locked.
 
-The runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`. The Message Content intent is privileged and must be enabled for the application. Slash commands are registered globally during startup; Discord may take up to an hour to propagate global command changes.
+The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Message Content intent is privileged and must be enabled for the application. Slash commands are registered globally during startup; Discord may take up to an hour to propagate global command changes.
 
-## Privacy boundary
+## Runtime and privacy boundary
 
-The current build processes Discord command interactions in memory and does not connect to SQLite or persist player profiles, game sessions, or results. The privacy command is informational only. Data inventory, private export, and confirmed deletion are not implemented, and the command must not be treated as a deletion request.
+The current session registry is process-local memory. Active sessions and their participant IDs, guild IDs, board states and action counts are held only while the bot process is running. They are not written to SQLite and are lost on restart. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants.
 
-Discord independently processes interactions under its own policies. Moonbyte makes no end-to-end-encryption or database-encryption claim. The project policy and production controls must be revisited when persistence is introduced.
+The privacy command is informational only. SQLite persistence, player profiles, inventory, progression, a stored-data inventory, private export and confirmed deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or database-encryption claim.
 
 ## Planned command groups
 
-Game discovery and play, profiles, collections, inventory, quests, parties, leaderboards, achievements, settings, session stop controls, and privacy data/export/delete flows remain planned. They should be added only with complete validation, authorization, state handling, tests, and documentation.
+Profiles, collections, inventory, quests, parties, leaderboards, achievements, settings, the persistent Vault, Bazaar, privacy data/export/delete and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
