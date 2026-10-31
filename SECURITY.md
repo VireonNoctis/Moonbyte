@@ -10,6 +10,12 @@ Include a concise description, affected versions or commit, impact, and reproduc
 
 ## Scope and response
 
-Security reports are reviewed by the project maintainers. Please allow reasonable time for investigation and remediation. Do not assume a report is accepted as a vulnerability until the maintainers confirm it.
+Security reports are reviewed by project maintainers. Please allow reasonable time for investigation and remediation. Do not assume a report is accepted as a vulnerability until maintainers confirm it.
 
-Before public release, maintainers should enable private vulnerability reporting or publish a dedicated private security contact route. The project should document supported versions, security update expectations, and any coordinated disclosure arrangements here once those policies are established.
+## Privacy and data handling
+
+Read [docs/PRIVACY.md](docs/PRIVACY.md) for Moonbyte's planned data practices and [the product status](README.md) before assuming a described control is already implemented.
+
+Before production release, maintainers must enable private vulnerability reporting, document the actual hosting environment and backup controls, review database access, and verify privacy export/deletion behavior.
+
+Do not claim end-to-end encryption, encryption at rest, anonymity, or zero logging unless the actual code and deployment configuration prove the claim.

@@ -1,33 +1,10 @@
 # Architecture Decision Records
 
-Use an Architecture Decision Record (ADR) for decisions that are expensive to reverse or that affect multiple parts of the project.
+Architecture Decision Records (ADRs) explain decisions that are expensive to reverse or affect multiple parts of Moonbyte.
 
-Keep each record short and include the context, decision, alternatives, and consequences. Do not create an ADR for routine implementation details.
+## Accepted decisions
 
-## Create a record
+- [0001 — Moonbyte product identity and technology foundation](0001-moonbyte-foundation.md)
+- [0002 — Privacy by design and data minimisation](0002-privacy-by-design.md)
 
-Copy the structure below into a new file named `NNNN-short-title.md`.
-
-```markdown
-# NNNN. Decision title
-
-- Status: Proposed | Accepted | Superseded | Deprecated
-- Date: YYYY-MM-DD
-- Owners: Project maintainers
-
-## Context
-
-What problem or constraint requires a decision?
-
-## Decision
-
-What was chosen, and why?
-
-## Alternatives
-
-What realistic alternatives were considered?
-
-## Consequences
-
-What becomes easier, harder, or constrained by this decision?
-```
+Update this index when a decision is added or superseded. Do not silently erase the reasoning behind an earlier choice.

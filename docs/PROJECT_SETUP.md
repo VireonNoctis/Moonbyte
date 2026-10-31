@@ -1,46 +1,43 @@
-# Project Setup Checklist
+# Moonbyte Project Setup
 
-Use this checklist when creating a project from the template. Delete or adapt sections that do not apply.
+## Repository foundation
 
-## Identity and ownership
+- [x] Repository named Moonbyte.
+- [x] Product identity and independence from Lunar documented.
+- [x] Rust, Tokio, Serenity, Poise, and SQLite selected.
+- [x] Default prefix set to a period (.).
+- [x] Full-colour pixel-art direction documented.
+- [x] Product vision, architecture, catalogue, migration plan, and roadmap written.
+- [x] Privacy stance, privacy command, data inventory, and retention targets documented.
+- [ ] Choose and add a project licence before external distribution.
+- [ ] Add Rust application workspace and commit Cargo.lock.
+- [ ] Add Rust-specific CI checks.
 
-- [ ] Set the repository and application name.
-- [ ] Replace the template README with the product's purpose, features, screenshots or examples, and actual usage instructions.
-- [ ] Add the maintainer or organization details.
-- [ ] Choose a license deliberately and add the complete license text. This template does not choose one for you.
-- [ ] Decide whether the project is public, private, or internal.
+## Discord application
 
-## Technology
+Before running the bot:
+- [ ] Create or configure the Moonbyte Discord application and bot user.
+- [ ] Store the bot token in a local environment file or deployment secret store.
+- [ ] Enable Message Content intent because the default prefix is a text prefix.
+- [ ] Request only Gateway intents required by implemented features.
+- [ ] Include the applications.commands OAuth scope when inviting the bot for slash commands.
+- [ ] Test prefix and slash command registration in a development guild.
 
-- [ ] Choose supported language and runtime versions.
-- [ ] Choose one package manager and commit its lockfile.
-- [ ] Add the actual project structure and entry points.
-- [ ] Document reproducible installation, development, build, and test commands.
-- [ ] Add formatting, linting, type checking, and tests for the selected stack.
-- [ ] Update `.devcontainer/devcontainer.json` with project-specific tools, services, ports, and extensions.
-- [ ] Add any required environment variable names to `.env.example`, using safe sample values only.
+Never commit the token or share it in logs, screenshots, issues, or test fixtures.
 
-## Continuous integration
+## Local configuration
 
-- [ ] Extend `.github/workflows/ci.yml` with the real build and test commands.
-- [ ] Test the workflow on a pull request before making it a required check.
-- [ ] Keep third-party Actions pinned to full commit SHAs and let Dependabot propose updates.
-- [ ] Add release, deployment, and artifact workflows only when the project needs them.
+Environment variable names are listed in .env.example:
 
-## Repository security and maintenance
+| Variable | Purpose |
+| --- | --- |
+| DISCORD_TOKEN | Bot token. Secret; never commit its real value. |
+| DEFAULT_PREFIX | Default command prefix; a period. |
+| DATABASE_PATH | Path to SQLite database file. |
+| RUST_LOG | Structured log filter. |
 
-- [ ] Enable Dependabot alerts and dependency updates.
-- [ ] Enable secret scanning and push protection when available for the repository.
-- [ ] Enable private vulnerability reporting.
-- [ ] Review the OpenSSF Scorecard report and address relevant findings.
-- [ ] Protect the default branch with a ruleset or branch protection policy.
-- [ ] Require review and passing checks appropriate to the project's risk.
-- [ ] Store deployment credentials in GitHub Actions or the target platform's secret manager.
-- [ ] Review the permissions granted to every workflow and third-party Action.
+The executable application and runtime-specific setup commands have not yet been added. The example environment file does not mean the bot already runs.
 
-## Remove template-only material
+## First implementation checks
 
-- [ ] Replace this checklist with project-specific onboarding instructions.
-- [ ] Update `AGENTS.md` with real commands, architecture boundaries, and repository-specific constraints.
-- [ ] Remove tools or community files that do not fit the project.
-- [ ] Check links, examples, and badges after renaming the repository.
+When the Rust workspace is introduced, add reproducible commands and CI jobs for rustfmt, Clippy, unit/integration tests, build with committed lockfile, SQLite migration validation, privacy export/deletion tests, and a local Discord smoke test that does not expose credentials.
