@@ -1035,19 +1035,14 @@ checksum = "2f17581b49c7da59e7eb044e55a113a75e9e933647b8616b204de5aa78fa8b7f"
 dependencies = [
  "async-trait",
  "derive-where",
- "fluent",
- "fluent-syntax",
- "futures",
  "futures-util",
  "indexmap",
- "intl-memoizer",
  "parking_lot",
  "poise_macros",
  "regex",
  "serenity",
  "tokio",
  "tracing",
- "tracing-subscriber",
  "trim-in-place",
 ]
 
