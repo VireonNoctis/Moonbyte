@@ -10,8 +10,8 @@
 - [x] Product vision, architecture, catalogue, migration plan, and roadmap written.
 - [x] Privacy stance, privacy command, data inventory, and retention targets documented.
 - [ ] Choose and add a project licence before external distribution.
-- [ ] Add Rust application workspace and commit Cargo.lock.
-- [ ] Add Rust-specific CI checks.
+- [x] Add Rust application workspace and commit Cargo.lock.
+- [x] Add Rust formatting, test, build, and Clippy checks in CI.
 
 ## Discord application
 
@@ -36,8 +36,12 @@ Environment variable names are listed in .env.example:
 | DATABASE_PATH | Path to SQLite database file. |
 | RUST_LOG | Structured log filter. |
 
-The executable application and runtime-specific setup commands have not yet been added. The example environment file does not mean the bot already runs.
+The executable configuration bootstrap now exists, but it does not connect to Discord or open SQLite yet. Set variables in the process environment; the current bootstrap does not load .env files. The example environment file does not mean the bot already runs.
 
-## First implementation checks
+## Implemented bootstrap checks
 
-When the Rust workspace is introduced, add reproducible commands and CI jobs for rustfmt, Clippy, unit/integration tests, build with committed lockfile, SQLite migration validation, privacy export/deletion tests, and a local Discord smoke test that does not expose credentials.
+The initial workspace supports `cargo fmt --all -- --check`, `cargo test --workspace --locked`, and `cargo clippy --workspace --all-targets --locked -- -D warnings`. CI runs these checks with a committed lockfile.
+
+## Remaining runtime checks
+
+As the Discord and SQLite adapters are implemented, add migration validation, privacy export/deletion tests, and a local Discord smoke test that does not expose credentials. Add integration tests for reconnect, graceful shutdown, command registration, and recoverable startup failures.

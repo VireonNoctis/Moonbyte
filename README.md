@@ -127,15 +127,20 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository currently contains the product specification and repository-quality scaffold. A Cargo workspace, executable Discord bot, game engine, migrations, and runtime-specific build commands are future implementation milestones.
+The repository now contains an initial Rust 2024 workspace, a committed lockfile, and an executable configuration bootstrap. Startup validates the required Discord token and the optional prefix/database-path settings without printing secret values. The bootstrap deliberately does not connect to Discord or open SQLite yet; the Tokio/Serenity/Poise runtime, migrations, game engine, and command handlers remain implementation work.
 
-The currently available baseline repository check is:
+Set configuration in the process environment before launching the executable. The `.env.example` file is a reference template; the current standard-library bootstrap does not parse `.env` files automatically.
+
+The repository validation and Rust checks are:
 
 ~~~bash
 python3 scripts/validate.py
+cargo fmt --all -- --check
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
 ~~~
 
-Once the Rust workspace is added, CI must validate formatting, Clippy, compilation, unit and integration tests, and the committed lockfile. Do not document commands as available until they exist and have been run successfully.
+CI runs the repository validator plus Rust formatting, tests, and Clippy. Do not describe the Discord gateway or database as operational until those adapters are implemented and exercised.
 
 ## Data and privacy
 

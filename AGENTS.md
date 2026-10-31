@@ -16,7 +16,9 @@ These instructions apply across this repository. More specific instructions in a
 - Primary application language: Rust.
 - Async runtime: Tokio.
 - Discord API: Serenity.
-- Command framework: Poise.\n- Visual library: Next.js + React + TypeScript.\n- Discord Activity integration: official Discord Embedded App SDK.
+- Command framework: Poise.
+- Visual library: Next.js + React + TypeScript.
+- Discord Activity integration: official Discord Embedded App SDK.
 - Initial persistent database: SQLite, accessed through SQLx configured for SQLite only.
 - PostgreSQL and ScyllaDB are explicitly excluded.
 - Do not introduce Redis, message brokers, separate services, or distributed storage without measured requirements and a new accepted decision.

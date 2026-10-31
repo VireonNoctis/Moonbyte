@@ -1,6 +1,7 @@
 # Moonbyte Roadmap
 
-- Status: Planned.
+- Status: In progress.
+- The initial Rust workspace, configuration bootstrap, and Rust CI checks are implemented; Discord and SQLite runtime work remains.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -25,23 +26,23 @@ Exit criteria:
 ## Phase 1 — Rust and Discord runtime
 
 Deliverables:
-- Cargo application workspace and committed lockfile.
-- Configuration loading from environment variables.
+- [x] Cargo application workspace and committed lockfile.
+- [x] Configuration loading and validation from environment variables.
 - Serenity client with Tokio runtime and Poise command framework.
 - Default period prefix and slash-command registration.
 - Help, about, privacy overview, and minimal diagnostics.
 - Structured logging, graceful shutdown, and clear startup errors.
 - SQLite connection, migration runner, and backup path.
-- CI for formatting, Clippy, compilation, and tests.
+- [x] CI for formatting, Clippy, compilation, and tests.
 - Next.js + React + TypeScript visual-library workspace.
 - Discord Activity integration spike using the Embedded App SDK, with browser fallback.
 
 Exit criteria:
 - Bot connects and reconnects without leaking tasks.
 - Prefix and slash smoke tests work in a development guild.
-- Missing configuration fails clearly.
+- [x] Missing configuration fails clearly.
 - SQLite opens, migrates, and closes safely.
-- CI is reproducible on a clean checkout.
+- [x] CI is reproducible on a clean checkout.
 
 ## Phase 2 — Core game platform
 

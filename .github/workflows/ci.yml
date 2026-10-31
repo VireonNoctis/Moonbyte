@@ -23,5 +23,20 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate starter configuration
+      - name: Validate repository configuration
         run: python3 scripts/validate.py
+
+      - name: Install stable Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master at 2026-10-16
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+      - name: Test Rust workspace
+        run: cargo test --workspace --locked
+
+      - name: Check Rust code with Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
