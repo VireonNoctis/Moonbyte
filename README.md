@@ -93,7 +93,7 @@ Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The poli
 | Database access | **SQLx with SQLite only** | Async database access and migration support. |
 | Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
 
-SQLite will use migrations, indexes, short transactions, and write-ahead logging where appropriate. **PostgreSQL and ScyllaDB are explicitly excluded.** No distributed database, cache, broker, or microservice should be introduced without measured evidence and a new accepted decision.
+SQLite will use migrations, indexes, short transactions, and write-ahead logging where appropriate.
 
 ## Documentation
 
