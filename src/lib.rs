@@ -1,3 +1,32 @@
-//! Initial Moonbyte application foundation.
+//! Moonbyte application foundation and Discord command modules.
 
+pub mod commands;
 pub mod config;
+
+use std::time::{Duration, Instant};
+
+/// Shared error type for the Discord adapter and command handlers.
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
+
+/// Data shared with every Poise command invocation.
+pub struct Data {
+    prefix: String,
+    started_at: Instant,
+}
+
+impl Data {
+    pub fn new(prefix: String) -> Self {
+        Self {
+            prefix,
+            started_at: Instant::now(),
+        }
+    }
+
+    pub fn prefix(&self) -> &str {
+        &self.prefix
+    }
+
+    pub fn uptime(&self) -> Duration {
+        self.started_at.elapsed()
+    }
+}

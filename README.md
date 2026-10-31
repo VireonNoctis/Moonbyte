@@ -10,7 +10,7 @@ Moonbyte is a **separate bot built from selected game concepts and systems in Lu
 
 ## Project status
 
-**Product specification and repository foundation.** Product direction, technology decisions, architecture, game catalogue, privacy stance, Lunar migration inventory, and staged roadmap are documented. The executable Discord bot and playable catalogue have not yet been implemented. Commands and features below describe intended behavior, not currently working functionality.
+**Early Discord runtime implemented.** Moonbyte now connects through Tokio, Serenity, and Poise, with working `help`, `about`, `ping`, and privacy-overview commands in both prefix and slash form. The game engine, playable catalogue, SQLite persistence, profiles, and economy are still implementation work. Commands marked planned below are not available yet.
 
 ## The vision
 
@@ -51,31 +51,33 @@ The visual library is a dedicated **Next.js + React + TypeScript** frontend for 
 
 ## Command model
 
-The default prefix is a single period: **.**
+The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 
-| Prefix command | Intended purpose |
-| --- | --- |
-| .help | Browse commands and get started. |
-| .games | Browse and filter the game library. |
-| .play <game> | Start a game or join a compatible session. |
-| .daily | Open the optional daily challenge. |
-| .profile | View a player profile and statistics. |
-| .collection | View collected cards, discoveries, and items. |
-| .inventory | View usable items and cosmetics. |
-| .quests | Browse active and available quests. |
-| .party | Create, invite, or manage a party. |
-| .leaderboard | View supported rankings. |
-| .achievements | Browse earned achievements. |
-| .privacy | Read Moonbyte's privacy stance and available controls. |
-| .privacy data | See categories of data associated with your profile. |
-| .privacy export | Request a copy of your stored profile data. |
-| .privacy delete | Request deletion of your Moonbyte profile data. |
-| .settings | Configure preferences and privacy controls. |
-| .stop | Leave or end an eligible active session. |
+| Command | Status | Purpose |
+| --- | --- | --- |
+| `.help` / `/help` | Implemented | List commands available in this build. |
+| `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
+| `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
+| `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
+| `.games` / `/games` | Planned | Browse and filter the game library. |
+| `.play <game>` / `/play` | Planned | Start a game or join a compatible session. |
+| `.daily` / `/daily` | Planned | Open the optional daily challenge. |
+| `.profile` / `/profile` | Planned | View a player profile and statistics. |
+| `.collection` / `/collection` | Planned | View collected cards, discoveries, and items. |
+| `.inventory` / `/inventory` | Planned | View usable items and cosmetics. |
+| `.quests` / `/quests` | Planned | Browse active and available quests. |
+| `.party` / `/party` | Planned | Create, invite, or manage a party. |
+| `.leaderboard` / `/leaderboard` | Planned | View supported rankings. |
+| `.achievements` / `/achievements` | Planned | Browse earned achievements. |
+| `.privacy data` / `/privacy data` | Planned | Inspect categories of data associated with the requester. |
+| `.privacy export` / `/privacy export` | Planned | Request a private copy of stored profile data. |
+| `.privacy delete` / `/privacy delete` | Planned | Request confirmed deletion of Moonbyte profile data. |
+| `.settings` / `/settings` | Planned | Configure player and server preferences. |
+| `.stop` / `/stop` | Planned | Leave or end an eligible active session. |
 
-Slash command equivalents should accompany prefix commands where Discord supports the same interaction. Poise is the chosen command framework over Serenity. Prefix commands require Discord's privileged Message Content intent to be enabled for the application and requested by the bot.
+Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The planned privacy command should provide overview, data, export, and delete flows. Deletion must require explicit confirmation and must not be hidden behind a support ticket.
+The current `.privacy` command is an overview only. It does not provide a data inventory, export, or deletion flow. See [Command reference](docs/COMMANDS.md) for exact behavior and setup notes.
 
 ## Privacy is a product feature
 
@@ -88,7 +90,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - Profile export and deletion controls are part of the planned product, not an afterthought.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The policy describes intended production behavior; the bot is not yet implemented, so it is not a claim that a running service currently collects only these fields.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime does not connect to SQLite or persist player/game records. Data inventory, export, and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
 
 ## Technology decisions
 
@@ -127,9 +129,9 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository now contains an initial Rust 2024 workspace, a committed lockfile, and an executable configuration bootstrap. Startup validates the required Discord token and the optional prefix/database-path settings without printing secret values. The bootstrap deliberately does not connect to Discord or open SQLite yet; the Tokio/Serenity/Poise runtime, migrations, game engine, and command handlers remain implementation work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token and optional prefix/database-path settings without printing secret values, connects to Discord, registers global slash commands, and exposes the four commands documented in [Command reference](docs/COMMANDS.md). SQLite, migrations, game sessions, and player persistence are not connected yet.
 
-Set configuration in the process environment before launching the executable. The `.env.example` file is a reference template; the current standard-library bootstrap does not parse `.env` files automatically.
+Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
 The repository validation and Rust checks are:
 

@@ -11,6 +11,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 - Documented product vision, five game pillars, architecture, Lunar migration candidates, and phased roadmap.
 - Added a detailed privacy stance, planned privacy command, data inventory, retention principles, and user controls.
 - Selected Rust, Tokio, Serenity, Poise, and SQLite as the initial technology direction.
+- Added the first Tokio/Serenity/Poise runtime with shared help, about, ping, and privacy-overview prefix and slash commands.
 
 ### Changed
 - Replaced generic template text with Moonbyte-specific product and engineering documentation.
