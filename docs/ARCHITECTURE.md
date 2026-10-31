@@ -206,7 +206,7 @@ Use structured logs with correlation identifiers for command and session flows. 
 
 Shutdown should stop new session creation, cancel or drain active work within a defined policy, persist resumable state, close the database pool, and exit. Startup should validate configuration and migrations before accepting play.
 
-## Fairness transcript boundary
+## 13. Fairness transcript boundary
 
 Random outcomes requiring verification use the commit–reveal protocol in [FAIRNESS.md](FAIRNESS.md). Generate secrets using OS-backed CSPRNG entropy; use SHA-512 only as the commitment hash and documented derivation primitive. Store append-only transcript events, do not permit hidden rerolls, and make aborts verifiable. The web UI may display verification state but cannot generate or certify results.
 

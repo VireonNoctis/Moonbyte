@@ -102,13 +102,27 @@ The visual library is a frontend, not a second game engine:
 
 ## 8. Progression, Vaults and Bazaar
 
-Progression should recognise participation and mastery through experience, achievements, cosmetic collection, profile customisation, optional rotating challenges, and server leaderboards where administrators enable them.
+Progression recognises participation and mastery through experience, achievements, cosmetic collections, profile customisation, optional challenges, and administrator-enabled server leaderboards.
 
-The economy must remain non-wagering. No real-money gambling, betting, staking, paid random rolls, or pay-to-win mechanics. Do not let players risk earned currency on uncertain outcomes. Prefer deterministic shops and transparent, earn-only rewards.
+### Vaults
 
-The existing Lunar card-collection/gacha system requires a separate fairness review before migration. Any retained collection mechanic must not become a paid chance system or a way to wager value.
+Vaults are replayable challenge spaces, not random-reward boxes. Planned types include Puzzle Vaults, Expedition Vaults, Relic Vaults, Guild Vaults, Mastery Vaults, Archive Vaults, Crafting Vaults, and optional Seasonal Vaults. Each Vault shows its difficulty, expected session length, rules, and exact rewards before entry. Rewards are fixed for the vault version and completion condition. Players can save at checkpoints and leave without losing completed progress.
 
-## 8. Discord command model
+A Personal Vault stores earned collectibles, discovered relics, recipes, blueprints, cosmetics, and saved loadouts. Keys, where used, are earned through visible progression and are never sold or tied to hidden outcomes.
+
+### Bazaar
+
+The Bazaar is a controlled player marketplace for eligible earned items. It supports player stalls, fixed-price listings, transparent barter, wanted boards, crafting orders, item provenance, escrow, trade receipts, and private trade history. Every trade is explicitly confirmed and atomically executed. Listings reserve items in escrow; cancellation and expiry return them exactly once. Self-trading, duplicate claims, double-spending, and trade-farming are blocked.
+
+### Economy boundaries
+
+Moonbits are earned through published activities and have no real-world value. They cannot be purchased, withdrawn, exchanged outside Moonbyte, or staked. Rewards, prices, recipes, and fees are disclosed in advance.
+
+Moonbyte will not implement gambling, betting, wagering, stakes, cash-out, paid random rewards, or chance-based tradable rewards. Casual random games are score-only: they never risk or award currency or items. Vault rewards and Bazaar prices are deterministic.
+
+See [ECONOMY_AND_VAULTS.md](ECONOMY_AND_VAULTS.md) for the complete system specification and [FAIRNESS.md](FAIRNESS.md) for the verification protocol. SHA-512 is a cryptographic hash, not an entropy source; verified outcomes also require OS-backed entropy and unbiased derivation.
+
+## 9. Discord command model
 
 Default prefix: **.**
 

@@ -100,7 +100,9 @@ Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The poli
 | Command framework | **Poise** | Shared prefix and slash command definitions. |
 | Persistent storage | **SQLite** | Embedded database for the initial single-instance deployment. |
 | Database access | **SQLx with SQLite only** | Async database access and migration support. |
-| Visual library | **Next.js + React + TypeScript** | Catalogue browsing, responsive game UI, and Activity-capable views. |\n| Discord embedded UI | **Discord Embedded App SDK** | Connects the web frontend to Discord when running as an Activity. |\n| Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
+| Visual library | **Next.js + React + TypeScript** | Catalogue browsing, responsive game UI, and Activity-capable views. |
+| Discord embedded UI | **Discord Embedded App SDK** | Connects the web frontend to Discord when running as an Activity. |
+| Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
 
 SQLite will use migrations, indexes, short transactions, and write-ahead logging where appropriate.
 
