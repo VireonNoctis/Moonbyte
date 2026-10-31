@@ -84,6 +84,11 @@ def validate_atlas() -> list[str]:
         "03_crafting_collections_and_arcade.md",
         "04_characters_mastery_and_homesteads.md",
         "05_creation_competition_and_trust.md",
+        "06_ecology_transit_settlements_professions.md",
+        "07_creatures_knowledge_mysteries_narrative.md",
+        "08_building_conservation_governance_liveops.md",
+        "09_extensions_platform_economy_security.md",
+        "10_insights_localisation_onboarding_accessibility.md",
     )
     volume_lines = 0
     volume_text = ""
@@ -101,9 +106,9 @@ def validate_atlas() -> list[str]:
         volume_lines += len(content.splitlines())
         volume_text += content
 
-    if volume_lines < 20_000:
+    if volume_lines < 40_000:
         errors.append(
-            f"docs/atlas: expected at least 20,000 design lines, found {volume_lines}"
+            f"docs/atlas: expected at least 40,000 design lines, found {volume_lines}"
         )
 
     graph_path = atlas_root / "world_graph.json"
@@ -133,9 +138,9 @@ def validate_atlas() -> list[str]:
                 node for node in nodes
                 if isinstance(node, dict) and node.get("type") == "idea"
             ]
-            if len(idea_nodes) != 200:
+            if len(idea_nodes) != 400:
                 errors.append(
-                    f"docs/atlas/world_graph.json: expected 200 ideas, found {len(idea_nodes)}"
+                    f"docs/atlas/world_graph.json: expected 400 ideas, found {len(idea_nodes)}"
                 )
             outgoing: dict[str, int] = {}
             for edge in edges:
@@ -162,7 +167,7 @@ def validate_atlas() -> list[str]:
                     errors.append(
                         f"docs/atlas: graph idea {node_id} has no matching volume specification"
                     )
-            if graph.get("idea_count") != 200 or graph.get("domain_count") != 20:
+            if graph.get("idea_count") != 400 or graph.get("domain_count") != 40:
                 errors.append("docs/atlas/world_graph.json: declared counts do not match the atlas")
 
     map_path = atlas_root / "world_map.mmd"
@@ -176,7 +181,7 @@ def validate_atlas() -> list[str]:
     index_path = atlas_root / "README.md"
     try:
         index_content = index_path.read_text(encoding="utf-8")
-        if "world_graph.json" not in index_content or "200 individual" not in index_content:
+        if "world_graph.json" not in index_content or "400 individual" not in index_content:
             errors.append("docs/atlas/README.md: missing graph or idea-count documentation")
     except (OSError, UnicodeError) as exc:
         errors.append(f"docs/atlas/README.md: cannot read index ({exc})")

@@ -1,8 +1,8 @@
 # Moonbyte World Loom — Master Atlas
 
 - Status: **Expanded product design proposal; not implemented.**
-- Scope: **200 individual system ideas across 20 connected domains.**
-- Documented idea volume: **23,150 lines** across the five design volumes (before this index, mind map and machine-readable graph).
+- Scope: **400 individual system ideas across 40 connected domains.**
+- Documented idea volume: **48,295 lines** across the ten design volumes (before this index, mind map and machine-readable graph).
 - System graph: [world_graph.json](./world_graph.json) — canonical node IDs, typed edges, rationales and shared invariants.
 - Mermaid diagrams: [world_map.mmd](./world_map.mmd) — complete idea hierarchy and cross-domain map.
 
@@ -12,13 +12,18 @@ Moonbyte is designed as one connected world with several player-facing entrances
 
 The graph is not a collection of unrelated command ideas. It is a contract map: each feature has a stable identifier, one owning domain, typed incoming/outgoing connections, an explicit reason for every cross-system relationship and a consistent implementation boundary.
 
-## Five design volumes
+## Ten design volumes
 
 - [Hearth, Bazaar and Communities](./01_hearth_bazaar_and_communities.md) — 40 system proposals.
 - [Atlas, Expeditions and Story](./02_atlas_expeditions_and_story.md) — 40 system proposals.
 - [Crafting, Collections and Arcade](./03_crafting_collections_and_arcade.md) — 40 system proposals.
 - [Characters, Mastery and Homesteads](./04_characters_mastery_and_homesteads.md) — 40 system proposals.
 - [Creation, Competition and Trust](./05_creation_competition_and_trust.md) — 40 system proposals.
+- [Ecology, Transit, Settlements and Professions](./06_ecology_transit_settlements_professions.md) — 40 additional proposals.
+- [Creatures, Knowledge, Mysteries and Narrative](./07_creatures_knowledge_mysteries_narrative.md) — 40 additional proposals.
+- [Building, Conservation, Governance and Live Operations](./08_building_conservation_governance_liveops.md) — 40 additional proposals.
+- [Extensions, Platform, Economy and Security](./09_extensions_platform_economy_security.md) — 40 additional proposals.
+- [Insights, Localisation, Onboarding and Accessibility](./10_insights_localisation_onboarding_accessibility.md) — 40 additional proposals.
 
 ## Domain index
 
@@ -80,7 +85,7 @@ The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`
 - Start with the master graph, then open the feature's volume for its full contract.
 - Treat stable IDs as references in future code, migrations, content packs and UI routes.
 - Keep feature definitions separate from Discord command names; the latter are adapters, not the domain model.
-- Implement vertical slices rather than attempting all 200 proposals at once.
+- Implement vertical slices rather than attempting all 400 proposals at once.
 - Add an implementation link and tests only when the feature actually exists.
 - When a node changes, update both its volume card and graph record in the same commit.
 - Do not represent all concepts as approved catalogue games; this is a wider product-system map, not a release promise.
@@ -97,3 +102,23 @@ The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`
 8. Guild projects and server-scoped controls after isolation tests.
 
 This sequence proves the core connections before the catalogue becomes large. The breadth of this atlas is a direction map, not permission to skip quality gates.
+
+
+## Expansion II — the world beyond the first loop
+
+The second layer adds twenty domains and two hundred distinct proposals. It covers ecology and climate; transport; settlements; professions; creature habitats; research and learning; mysteries; character continuity; architecture; restoration; civic governance; content operations; declarative extensions; Activity continuity; economy stewardship; security; privacy-preserving insights; localisation; onboarding; and advanced accessibility.
+
+These systems make the world coherent and maintainable as it grows. They define stable manifests, content dependencies, rollback paths, deterministic service contracts, privacy-scoped reports, safe event subscriptions, accessible controls and reviewed releases. They connect to the first twenty domains through explained graph links rather than creating an unrelated second game.
+
+### New relationship loops
+
+- **Climate and exploration:** Atlas region → climate profile → forecast clue → Expedition route → observation → restoration map.
+- **Travel and exchange:** route graph → caravan → cargo manifest → delivery contract → Bazaar receipt.
+- **Settlements and professions:** civic project → blueprint → profession task → crafted result → permanent town service.
+- **Creatures and knowledge:** habitat → field observation → Bestiary → research dossier → sanctuary story.
+- **Mysteries and narrative:** case file → evidence wall → hypothesis → character memory flag → chapter recap.
+- **Creation and operations:** creator draft → validation → review → staged preview → versioned release → evergreen archive.
+- **Economy and security:** reward registry → immutable ledger → escrow → receipt → reconciliation and dispute review.
+- **Accessibility and platform:** control preference → Discord/Activity view model → text alternative → consistent session recovery.
+
+The second layer inherits all first-layer invariants. It does not authorise arbitrary executable extensions, real-money markets, behavioural surveillance or additional infrastructure by default.

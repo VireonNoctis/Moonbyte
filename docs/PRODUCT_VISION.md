@@ -199,3 +199,12 @@ This is specified in the [Moonbyte World Loom master atlas](atlas/README.md): 20
 The graph has one governing rule: systems exchange stable domain events and references rather than directly manipulating one another's private state. Rust remains authoritative for rules, sessions, permissions, progression, economy, fairness and SQLite persistence. Next.js + React + TypeScript remain presentation-only. The first release should prove a small connected vertical slice before expanding the catalogue.
 
 The expanded world remains subject to the existing boundaries: earned-only non-redeemable currency, no gambling or paid chance, transparent fixed rewards, original or rights-cleared content, privacy by design, accessible text fallbacks, and replayability without manipulative engagement mechanics.
+
+
+## 15. Expansion II — world depth, operations and continuity
+
+The second design layer covers the capabilities that support a deep world over time: regional ecology and climate; travel and logistics; settlements; professions; creature habitats and sanctuaries; libraries and evidence-led research; community mysteries; narrative character continuity; construction; restoration; fictional civic governance; content operations; declarative extensions; Activity session continuity; economy governance; security; privacy-preserving insights; localisation; onboarding; and advanced accessibility.
+
+It adds 200 proposals across 20 further domains, all connected to the first graph. Its purpose is to make the product coherent and maintainable at scale, not to create disconnected mechanics. Stable content IDs, service ownership, dependency validation, privacy-scoped view models and reversible releases keep the world consistent.
+
+The [Moonbyte World Loom master atlas](atlas/README.md) documents both layers: 400 proposals across 40 domains and 48,295 lines of feature specifications. All proposals remain design work until implemented and tested. Rust owns authoritative rules and persistence, Next.js/React/TypeScript present authorised state, SQLite remains the initial database, and the game remains earned-only, non-wagering, privacy-conscious and playable without attendance pressure.

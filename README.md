@@ -121,7 +121,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering, and operations.
 - [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts, and release quality gates.
 - [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — player inventory, vault experiences, fixed-price trading, and non-wagering economy rules.
-- [Moonbyte World Loom](docs/atlas/README.md) — 200 connected system ideas, five design volumes, a 20,000+ line specification and the machine-readable mind-map graph.
+- [Moonbyte World Loom](docs/atlas/README.md) — 400 connected system ideas across 40 domains, ten design volumes, a 40,000+ line specification and the machine-readable mind-map graph.
 - [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation, and verification requirements.
 - [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — what may be reused conceptually and what must be rebuilt or audited.
 - [Roadmap](docs/ROADMAP.md) — phased implementation, deliverables, and exit criteria.

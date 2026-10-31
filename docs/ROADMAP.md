@@ -212,7 +212,7 @@ Backlog ideas must not delay the runtime, game engine, privacy foundation, or fi
 
 **Status: Product design proposal only; these systems are not implemented.**
 
-The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into 200 connected system proposals across 20 domains. It is intentionally broader than the approved game catalogue: the Tavern, Bazaar, Guilds, Atlas, Expeditions, story, Vaults, crafting, collections, Arcade, multiplayer, characters, mastery, festivals, homes, player creation, fair play, social systems and trust/accessibility foundations form one graph.
+The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into 400 connected system proposals across 40 domains. It is intentionally broader than the approved game catalogue: the Tavern, Bazaar, Guilds, Atlas, Expeditions, story, Vaults, crafting, collections, Arcade, multiplayer, characters, mastery, festivals, homes, player creation, fair play, social systems and trust/accessibility foundations form one graph.
 
 ### Integration order
 
@@ -234,3 +234,25 @@ The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into
 - Bazaar transactions are atomic and deterministic; no stake, wager, paid chance or cash-value mechanism is introduced.
 - All new game sessions have visible rules, clear stop/pause controls, accessibility fallbacks and duplicate-action protection.
 - Documentation distinguishes proposed, in-development and implemented status at all times.
+
+
+## Expansion II — world depth and operating systems
+
+**Status: Product design proposal only; not implemented.**
+
+The [World Loom](atlas/README.md) contains 400 proposals across 40 connected domains. The second layer adds ecological context, transport, settlement services, optional professions, creature habitats, evidence-led research, mystery networks, authored character continuity, construction, restoration, civic governance, content operations, safe declarative extensions, Discord Activity continuity, economy stewardship, security, privacy-preserving insights, localisation, onboarding and advanced accessibility.
+
+These systems must not become independent microservices. Shared contracts remain central: stable content IDs, typed domain events, narrow Rust application services, SQLite transactions, authenticated Discord identity, privacy-scoped view models and one versioned content pipeline.
+
+### Additional integration order
+
+1. Improve core identity, session, permissions, migrations and recovery before increasing persistent feature count.
+2. Add Atlas region profiles, known travel routes and one settlement service slice.
+3. Add one profession task, one creature observation and one evidence-led mystery to prove knowledge loops.
+4. Add construction and conservation projects with validated blueprints and auditable contributions.
+5. Add content registry, review, staging and rollback before community packs expand.
+6. Add Activity handoff, deep links and cross-client resume without moving game authority into TypeScript.
+7. Add market governance, security audits and aggregate insights only after ledger and privacy tests exist.
+8. Add localisation and advanced accessibility gates before public content expands.
+
+Do not implement the full breadth at once. Release one connected, testable vertical slice at a time.
