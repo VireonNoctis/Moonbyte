@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes four Rust game modules: Tic-tac-toe, Connect Four, Memory Match and Word Scramble. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. Profiles, progression, Vaults, Bazaar and the live visual-game API remain implementation work.
+**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes four Rust game modules: Tic-tac-toe, Connect Four, Memory Match and Word Scramble. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. A minimal player profile persists a validated cosmetic board theme. Profile statistics, inventory, progression, privacy export/deletion, Vaults, Bazaar and the live visual-game API remain implementation work.
 
 ## The vision
 
@@ -66,7 +66,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 | `.daily` / `/daily` | Planned | Open the optional daily challenge. |
-| `.profile` / `/profile` | Planned | View a player profile and statistics. |
+| `.profile [theme]` / `/profile` | Implemented | View/set the saved cosmetic board theme; `.profile delete confirm` removes only that preference. |
 | `.collection` / `/collection` | Planned | View collected cards, discoveries, and items. |
 | `.inventory` / `/inventory` | Planned | View usable items and cosmetics. |
 | `.quests` / `/quests` | Planned | Browse active and available quests. |
@@ -94,7 +94,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - Profile export and deletion controls are part of the planned product, not an afterthought.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions to PostgreSQL, including their board state and participant/guild scope. It does not yet persist player profiles, inventories or a complete game-results history. Data inventory, export and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions and minimal player preferences to PostgreSQL. A profile stores only the invoking Discord user ID and one validated cosmetic board-theme value. Player statistics, inventories and a complete game-results history are not persisted. Data inventory, export and confirmed account deletion are not implemented.
 
 ## Technology decisions
 
@@ -134,7 +134,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, result history, progression and privacy export/deletion remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle and minimal player-theme preferences are implemented and covered by unit and database integration tests. Player statistics, result history, progression and privacy export/deletion remain future work.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 

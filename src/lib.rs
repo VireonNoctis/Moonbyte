@@ -4,6 +4,7 @@ pub mod commands;
 pub mod config;
 pub mod database;
 pub mod game;
+pub mod profile;
 
 use std::time::{Duration, Instant};
 
@@ -15,14 +16,20 @@ pub struct Data {
     prefix: String,
     started_at: Instant,
     games: game::GameRuntime,
+    profiles: profile::ProfileRepository,
 }
 
 impl Data {
-    pub fn new(prefix: String, games: game::GameRuntime) -> Self {
+    pub fn new(
+        prefix: String,
+        games: game::GameRuntime,
+        profiles: profile::ProfileRepository,
+    ) -> Self {
         Self {
             prefix,
             started_at: Instant::now(),
             games,
+            profiles,
         }
     }
 
@@ -36,5 +43,9 @@ impl Data {
 
     pub fn games(&self) -> &game::GameRuntime {
         &self.games
+    }
+
+    pub fn profiles(&self) -> &profile::ProfileRepository {
+        &self.profiles
     }
 }

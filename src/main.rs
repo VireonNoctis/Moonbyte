@@ -1,6 +1,9 @@
 use std::{process::ExitCode, time::Duration};
 
-use moonbyte::{Data, Error, commands, config::Config, database::Database, game::GameRuntime};
+use moonbyte::{
+    Data, Error, commands, config::Config, database::Database, game::GameRuntime,
+    profile::ProfileRepository,
+};
 use poise::serenity_prelude as serenity;
 
 #[tokio::main]
@@ -17,7 +20,9 @@ async fn main() -> ExitCode {
 async fn run() -> Result<(), Error> {
     let config = Config::from_environment()?;
     let database = Database::connect(config.database_url()).await?;
-    let games = GameRuntime::new(database.pool());
+    let pool = database.pool();
+    let games = GameRuntime::new(pool.clone());
+    let profiles = ProfileRepository::new(pool);
     let prefix = config.default_prefix().to_owned();
 
     // One central cleanup task enforces the 24-hour inactive-session retention
@@ -46,9 +51,10 @@ async fn run() -> Result<(), Error> {
         .setup(move |ctx, _ready, framework| {
             let prefix = prefix.clone();
             let games = games.clone();
+            let profiles = profiles.clone();
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data::new(prefix, games))
+                Ok(Data::new(prefix, games, profiles))
             })
         })
         .build();

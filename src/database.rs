@@ -2,8 +2,21 @@ use std::time::Duration;
 
 use sqlx::{PgPool, postgres::PgPoolOptions};
 
-const INITIAL_MIGRATION: &str = include_str!("../migrations/0001_postgres_sessions.sql");
-const INITIAL_SCHEMA_VERSION: i64 = 1;
+struct Migration {
+    version: i64,
+    sql: &'static str,
+}
+
+const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        sql: include_str!("../migrations/0001_postgres_sessions.sql"),
+    },
+    Migration {
+        version: 2,
+        sql: include_str!("../migrations/0002_player_profiles.sql"),
+    },
+];
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -46,20 +59,28 @@ impl Database {
             .await?;
 
         sqlx::query(
-            "CREATE TABLE IF NOT EXISTS moonbyte_schema_migrations (                version BIGINT PRIMARY KEY,                applied_at TIMESTAMPTZ NOT NULL DEFAULT now()            )",
+            "CREATE TABLE IF NOT EXISTS moonbyte_schema_migrations ( \
+                version BIGINT PRIMARY KEY, \
+                applied_at TIMESTAMPTZ NOT NULL DEFAULT now() \
+            )",
         )
         .execute(&mut *transaction)
         .await?;
 
-        let already_applied: bool = sqlx::query_scalar(
-            "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",
-        )
-        .bind(INITIAL_SCHEMA_VERSION)
-        .fetch_one(&mut *transaction)
-        .await?;
+        for migration in MIGRATIONS {
+            let already_applied: bool = sqlx::query_scalar(
+                "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",
+            )
+            .bind(migration.version)
+            .fetch_one(&mut *transaction)
+            .await?;
 
-        if !already_applied {
-            for statement in INITIAL_MIGRATION
+            if already_applied {
+                continue;
+            }
+
+            for statement in migration
+                .sql
                 .split(';')
                 .map(str::trim)
                 .filter(|sql| !sql.is_empty())
@@ -68,11 +89,35 @@ impl Database {
             }
 
             sqlx::query("INSERT INTO moonbyte_schema_migrations (version) VALUES ($1)")
-                .bind(INITIAL_SCHEMA_VERSION)
+                .bind(migration.version)
                 .execute(&mut *transaction)
                 .await?;
         }
 
         transaction.commit().await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn migrations_are_ordered_and_idempotent() {
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("PostgreSQL integration tests require DATABASE_URL");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("first migration run");
+        database.migrate().await.expect("repeated migration run");
+
+        let applied: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM moonbyte_schema_migrations WHERE version IN (1, 2)",
+        )
+        .fetch_one(&database.pool)
+        .await
+        .expect("read migration ledger");
+
+        assert_eq!(applied, 2);
     }
 }

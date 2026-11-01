@@ -1,4 +1,4 @@
-//! Authoritative, transport-independent game rules and in-process session runtime.
+//! Authoritative, transport-independent game rules and PostgreSQL-backed session runtime.
 //!
 //! Discord handlers call this module; game state never depends on Serenity types.
 

@@ -1,6 +1,6 @@
 # Moonbyte Architecture
 
-- Status: Rust workspace, configuration bootstrap, Discord command adapters, a first transport-independent game/session slice, and a presentation-only Next.js catalogue foundation implemented; PostgreSQL-backed session persistence and restart recovery are implemented; player/profile persistence, live game API, Activity handshake, and authoritative visual rendering remain unimplemented.
+- Status: Rust workspace, configuration bootstrap, Discord command adapters, a first transport-independent game/session slice, and a presentation-only Next.js catalogue foundation implemented; PostgreSQL-backed session persistence and restart recovery are implemented; minimal cosmetic player-profile preferences are implemented; profile statistics, live game API, Activity handshake, and authoritative visual rendering remain unimplemented.
 - Last updated: 2026-10-31.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
@@ -53,7 +53,7 @@ The runtime should be one deployable bot process first. Separate services, queue
 | Game registry | Discover validated game definitions and metadata. | Persistent player data or gateway connections. |
 | Session manager | Create, find, authorise, transition, expire, and recover sessions. | Individual game's domain rules. |
 | Game modules | Rules, legal actions, state transitions, outcomes, and game-specific presentation data. | Directly sending Discord messages or bypassing session validation. |
-| Player/progression services | Profiles, statistics, achievements, inventory, and reward policy. | Guild-private configuration. |
+| Player/profile services | Player identifiers and minimal cosmetic preferences; future statistics, achievements and inventory. | Guild-private configuration. |
 | Privacy service | Data inventory, export, deletion orchestration, retention requests, and privacy command responses. | Bypassing repositories or claiming deletion before it completes. |
 | Persistence layer | PostgreSQL repositories, versioned migrations, short transactions, JSONB state snapshots and expiry cleanup. | Discord API calls. |
 | Rendering layer | Convert game view models and assets into cached image output or frontend-ready view models. | Mutating game state. |
@@ -118,7 +118,7 @@ The current supported deployment remains one bot process with one PostgreSQL dat
 
 Backup, restore, managed-database selection, connection-secret provisioning and production encryption-at-rest configuration remain operator/deployment work. Never log the connection URL or claim that selecting PostgreSQL automatically proves encryption at rest.
 
-Likely future data groups include player profiles, settings, guild settings, results, achievements, inventory, quest progress, ledger entries and privacy-operation metadata. Add each through reviewed migrations and update the privacy inventory before enabling the feature.
+Current data groups include durable game sessions and minimal player profiles (Discord user ID plus validated board theme). Future data groups may include player settings, guild settings, results, achievements, inventory, quest progress, ledger entries and privacy-operation metadata. Add each through reviewed migrations and update the privacy inventory before enabling the feature.
 ## 7. Discord command and interaction adapter
 
 Default prefix: **.** Poise should expose shared command definitions as prefix and slash commands where appropriate.
@@ -234,6 +234,6 @@ The current playable slice is deliberately small and honest about its limits:
 - Poise exposes the same operations as prefix and slash commands.
 - The registry uses a short synchronous mutex only around in-memory operations. It performs no await, Discord request or disk I/O while holding the lock.
 - Session IDs are process-local references, not durable IDs or authentication credentials.
-- PostgreSQL session persistence, migrations, and restart recovery are implemented. Player profiles, achievements, inventory, economy, privacy export/deletion and the live web game API remain unimplemented.
+- PostgreSQL session persistence, migrations, restart recovery and minimal cosmetic player preferences are implemented. Profile statistics, achievements, inventory, economy, privacy export/deletion and the live web game API remain unimplemented.
 
-This is a functional vertical slice for domain rules, Discord commands, PostgreSQL persistence and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is player/profile persistence, end-to-end privacy workflows, idempotent Discord interaction handling and concurrent-session load tests.
+This is a functional vertical slice for domain rules, Discord commands, PostgreSQL persistence and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is profile statistics and settings, end-to-end privacy export/account deletion, idempotent Discord interaction handling and concurrent-session load tests.

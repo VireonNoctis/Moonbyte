@@ -1,7 +1,7 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Intended product policy; the current runtime has process-local game sessions but no persistent profiles or privacy export/deletion controls.
+- Status: Intended product policy; active game sessions and minimal cosmetic profile preferences are persisted in PostgreSQL. Complete privacy inventory, export and account-deletion controls are not yet implemented.
 - Last updated: 2026-10-31.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime does not yet persist player profiles, inventories or a complete game-results history. The `.privacy` command does not provide a complete data inventory, export or deletion flow. These limited facts describe this code slice only; broader commitments must be verified before production release.
+These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime additionally stores a minimal player profile containing a Discord user ID and a validated board-theme preference. It does not yet persist player statistics, inventories or a complete game-results history. The `.privacy` command does not provide a complete data inventory, export or account-deletion flow. A player can remove only the cosmetic theme row with `.profile delete confirm`; this does not delete session history or other records. These limited facts describe this code slice only; broader commitments must be verified before production release.
 
 ## 2. Data Moonbyte needs
 
@@ -31,7 +31,7 @@ The planned bot may process or store these categories when the relevant feature 
 | Data category | Examples | Why it is needed |
 | --- | --- | --- |
 | Discord identifiers | User ID; guild ID; channel or message ID for an active game where necessary. | Identify the player, scope settings, and update an active game message. |
-| Player profile | Display preferences, chosen emblem, accessibility preferences. | Render the chosen experience. |
+| Player profile | Currently: Discord user ID and one fixed board-theme preference. Planned: accessibility and other explicit display preferences. | Associate and render the player's selected cosmetic presentation. |
 | Game state | Current turn, board state, action data needed to resume, participants, quest checkpoint. | Run, recover, and fairly resolve games. |
 | Game results | Game type, result, completion time, personal best, statistics. | Show requested records, achievements, and leaderboards. |
 | Progress and collections | Earned experience, achievements, items, quests, cosmetic unlocks. | Provide persistent progression features. |
@@ -41,7 +41,7 @@ The planned bot may process or store these categories when the relevant feature 
 
 Moonbyte should not require Lunar account linking, an email address, real name, or separate website account.
 
-The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. They are stored in PostgreSQL JSONB plus indexed metadata columns. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart and expire after 24 hours without a successful mutation.
+The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. They are stored in PostgreSQL JSONB plus indexed metadata columns. A separate player_profiles row stores the Discord user ID and one of four fixed cosmetic board themes; it contains no free-text biography, external identity or real-world contact fields. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart and expire after 24 hours without a successful mutation.
 
 ## 3. Message and interaction content
 
@@ -79,8 +79,8 @@ The provider list describes the intended model; it does not claim a production h
 
 | Data | Intended retention |
 | --- | --- |
-| Active session state | While active, with a maximum 24-hour recovery window after inactivity or interruption unless a game documents a different save model. |
-| Completed game results | While the player's profile is active and the statistics feature is enabled; delete on profile deletion. |
+| Active session state | While active, with a maximum 24-hour recovery window after inactivity; expired rows are removed by the central cleanup task. |
+| Cosmetic player profile | The theme preference remains until the player removes it with `.profile delete confirm` or a future full account-deletion flow. |
 | Player settings, achievements, progression | Until profile deletion or a documented feature migration. |
 | Guild settings | While the bot remains installed and settings are needed; delete or anonymise after removal, target maximum 30 days. |
 | Routine operational logs | Target maximum 30 days, then delete or aggregate without direct identifiers. |
@@ -91,14 +91,14 @@ These are implementation targets. Before launch, maintainers must configure and 
 
 ## 7. Privacy command and user controls
 
-The planned .privacy prefix command and /privacy slash command provide:
+The current `.privacy` command is informational only. The `.profile delete confirm` action removes only the theme preference row. It does not delete session records or represent full account deletion. The planned `.privacy` command group is expected to provide:
 
 | Command | Purpose |
 | --- | --- |
 | .privacy | Read a short privacy summary and open controls. |
 | .privacy data | Show categories of data currently associated with the requesting user. |
 | .privacy export | Request a copy of the user's stored profile and game data. |
-| .privacy delete | Begin explicit, confirmed deletion of the user's Moonbyte profile data. |
+| .privacy delete | Begin explicit, confirmed deletion of all user-owned Moonbyte data. Not implemented yet. |
 | .privacy server | Let an authorised server administrator inspect guild-specific configuration and deletion controls. |
 
 Slash-command subcommands should mirror these actions. User exports must be private and delivered only to the requesting user. If private delivery fails, the bot must not post the export publicly; it should explain the failure and allow a safe retry.
@@ -109,12 +109,12 @@ Slash-command subcommands should mirror these actions. User exports must be priv
 2. Require a separate confirmation interaction.
 3. Re-check that the requester owns the profile.
 4. End or detach active sessions safely; do not corrupt other players' sessions.
-5. Delete or anonymise all user-owned records across profiles, results, achievements, inventory, quest progress, and indexes.
+5. Delete or anonymise all user-owned records across profiles, sessions, results, achievements, inventory, quest progress, and indexes.
 6. Remove user identifiers from retained aggregates where practical and permitted.
 7. Record only minimal operational evidence that the deletion operation completed, without retaining deleted profile contents.
 8. Report whether the database operation completed or failed. Never claim success before it is confirmed.
 
-The user may still appear in Discord messages or records retained by Discord or other server members. Moonbyte cannot delete Discord's own records.
+The current profile preference command only deletes the profile row; the complete deletion workflow above is planned, not implemented. The user may still appear in Discord messages or records retained by Discord or other server members. Moonbyte cannot delete Discord's own records.
 
 ## 8. Guild privacy
 

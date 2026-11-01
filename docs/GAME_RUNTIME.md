@@ -56,6 +56,10 @@ Pure domain tests cover parser bounds, win detection, invalid moves, game comple
 
 These are automated tests, not a Discord live-guild smoke test, multi-process load test, backup/restore rehearsal, or production deployment certification.
 
+## Player preference slice
+
+The separate `player_profiles` table is introduced by migration 0002. It stores the invoking Discord user ID, one allow-listed cosmetic board theme (`classic`, `forest`, `sunset`, or `lavender`), and timestamps. The Rust profile repository validates decimal Discord snowflakes and stores only enum-backed themes; the database repeats the allow-list in a CHECK constraint. `.profile` and `/profile` display the preference or set one of the four themes. The theme is presentation-only and never affects game logic, outcomes, scores or rewards. The repository has a row-deletion method for service use and tests, but no user-facing full account-deletion workflow exists.
+
 ## Known gaps before the next release gate
 
 - Durable player identity, profiles, preferences, results, achievements, inventory and progression.
