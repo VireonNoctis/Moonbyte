@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime additionally stores a minimal player profile containing a Discord user ID and a validated board-theme preference. It does not yet persist player statistics, inventories or a complete game-results history. The `.privacy` command does not provide a complete data inventory, export or account-deletion flow. A player can remove only the cosmetic theme row with `.profile delete confirm`; this does not delete session history or other records. These limited facts describe this code slice only; broader commitments must be verified before production release.
+These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime additionally stores a minimal player profile containing a Discord user ID and a validated board-theme preference. It does not yet persist player statistics, inventories or a complete game-results history. The `.privacy` command does not provide a complete data inventory, export or account-deletion flow. A player can remove only the cosmetic theme row with `.profile delete-confirm`; this does not delete session history or other records. These limited facts describe this code slice only; broader commitments must be verified before production release.
 
 ## 2. Data Moonbyte needs
 
@@ -80,7 +80,7 @@ The provider list describes the intended model; it does not claim a production h
 | Data | Intended retention |
 | --- | --- |
 | Active session state | While active, with a maximum 24-hour recovery window after inactivity; expired rows are removed by the central cleanup task. |
-| Cosmetic player profile | The theme preference remains until the player removes it with `.profile delete confirm` or a future full account-deletion flow. |
+| Cosmetic player profile | The theme preference remains until the player removes it with `.profile delete-confirm` or a future full account-deletion flow. |
 | Player settings, achievements, progression | Until profile deletion or a documented feature migration. |
 | Guild settings | While the bot remains installed and settings are needed; delete or anonymise after removal, target maximum 30 days. |
 | Routine operational logs | Target maximum 30 days, then delete or aggregate without direct identifiers. |
@@ -91,7 +91,7 @@ These are implementation targets. Before launch, maintainers must configure and 
 
 ## 7. Privacy command and user controls
 
-The current `.privacy` command is informational only. The `.profile delete confirm` action removes only the theme preference row. It does not delete session records or represent full account deletion. The planned `.privacy` command group is expected to provide:
+The current `.privacy` command is informational only. The `.profile delete-confirm` action removes only the theme preference row. It does not delete session records or represent full account deletion. The planned `.privacy` command group is expected to provide:
 
 | Command | Purpose |
 | --- | --- |

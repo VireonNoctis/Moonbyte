@@ -66,7 +66,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 | `.daily` / `/daily` | Planned | Open the optional daily challenge. |
-| `.profile [theme]` / `/profile` | Implemented | View/set the saved cosmetic board theme; `.profile delete confirm` removes only that preference. |
+| `.profile [theme]` / `/profile` | Implemented | View/set the saved cosmetic board theme; `.profile delete-confirm` removes only that preference. |
 | `.collection` / `/collection` | Planned | View collected cards, discoveries, and items. |
 | `.inventory` / `/inventory` | Planned | View usable items and cosmetics. |
 | `.quests` / `/quests` | Planned | Browse active and available quests. |

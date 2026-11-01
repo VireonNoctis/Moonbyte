@@ -45,7 +45,6 @@ pub async fn privacy(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-
 #[poise::command(prefix_command, slash_command)]
 pub async fn profile(
     ctx: Context<'_>,
@@ -57,12 +56,12 @@ pub async fn profile(
     let saved_theme = match theme {
         Some(value) if value.trim().eq_ignore_ascii_case("delete") => {
             ctx.say(
-                "This removes only your saved cosmetic theme preference. To confirm, run `.profile delete confirm`. Your active and completed session records are not deleted.",
+                "This removes only your saved cosmetic theme preference. To confirm, run `.profile delete-confirm`. Your active and completed session records are not deleted.",
             )
             .await?;
             return Ok(());
         }
-        Some(value) if value.trim().eq_ignore_ascii_case("delete confirm") => {
+        Some(value) if value.trim().eq_ignore_ascii_case("delete-confirm") => {
             let deleted = repository.delete_profile(&user_id).await?;
             let result = if deleted {
                 "Your saved cosmetic profile preference has been deleted. Session records are not affected."
@@ -84,7 +83,7 @@ pub async fn profile(
     };
 
     ctx.say(format!(
-        "**Your Moonbyte profile**\nBoard theme: **{}**\n\nChange it with `.profile <theme>` or `/profile theme`. Use `.profile delete confirm` to remove this preference only. It is cosmetic and does not change game rules or outcomes.",
+        "**Your Moonbyte profile**\nBoard theme: **{}**\n\nChange it with `.profile <theme>` or `/profile theme`. Use `.profile delete-confirm` to remove this preference only. It is cosmetic and does not change game rules or outcomes.",
         saved_theme.label()
     ))
     .await?;
@@ -234,7 +233,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}about / /about — describe this build\n\
          {safe_prefix}ping / /ping — check responsiveness and uptime\n\
          {safe_prefix}privacy / /privacy — read the current privacy overview\n\
-         {safe_prefix}profile [theme] / /profile — view/change your cosmetic theme; delete confirm removes only that preference\n\
+         {safe_prefix}profile [theme] / /profile — view/change your cosmetic theme; delete-confirm removes only that preference\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\

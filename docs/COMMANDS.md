@@ -12,7 +12,7 @@
 | .about | /about | Shows the application version and current implementation boundaries. |
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
 | .privacy | /privacy | Explains current PostgreSQL session/profile storage and unavailable privacy controls. |
-| .profile [theme] | /profile | Views the requester's saved cosmetic theme, sets a supported theme, or removes only that preference after the explicit `delete confirm` phrase. |
+| .profile [theme] | /profile | Views the requester's saved cosmetic theme, sets a supported theme, or removes only that preference after the explicit `delete-confirm` phrase. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
@@ -47,7 +47,7 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 Active session state is stored in PostgreSQL. The JSONB snapshot includes the game state, participant Discord IDs, optional guild ID, lifecycle phase and action count; mutations are committed transactionally with a row lock. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants. An inactive session expires after 24 hours and is removed by the central cleanup task.
 
-The privacy command is informational only. Profile storage is limited to Discord user ID and a board-theme preference. `.profile delete confirm` removes only that preference row. Player statistics, inventory, progression, a complete stored-data inventory, private export and full account deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
+The privacy command is informational only. Profile storage is limited to Discord user ID and a board-theme preference. `.profile delete-confirm` removes only that preference row. Player statistics, inventory, progression, a complete stored-data inventory, private export and full account deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
 
 ## Planned command groups
 
