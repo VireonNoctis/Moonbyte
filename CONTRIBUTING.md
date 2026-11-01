@@ -12,7 +12,7 @@ Thanks for helping build Moonbyte.
 6. [Roadmap](docs/ROADMAP.md)
 7. [Engineering instructions](AGENTS.md)
 
-Moonbyte is a separate Rust Discord bot. Lunar is a source of audited game concepts, not a runtime dependency. The accepted stack is Rust, Tokio, Serenity, Poise, and SQLite through SQLx. PostgreSQL and ScyllaDB are excluded.
+Moonbyte is a separate Rust Discord bot. Lunar is a source of audited game concepts, not a runtime dependency. The accepted stack is Rust, Tokio, Serenity, Poise, and PostgreSQL through SQLx. SQLite and ScyllaDB are not selected.
 
 ## Development workflow
 
@@ -29,7 +29,7 @@ Moonbyte is a separate Rust Discord bot. Lunar is a source of audited game conce
 - Rust code is formatted with rustfmt and passes Clippy without unexplained warnings.
 - Game logic is deterministic under injected test clocks and random sources.
 - Multiplayer actions validate membership, permissions, and turn ownership.
-- Persistence changes include SQLite migrations and migration tests.
+- Persistence changes include PostgreSQL migrations, transaction tests, and restart-recovery tests.
 - Privacy changes include export/deletion, retention, guild-isolation, and log-redaction tests as applicable.
 - Discord operations respect rate limits, interaction expiry, and permissions.
 - Pixel-art assets are original or have documented rights for their intended use.

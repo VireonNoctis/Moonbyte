@@ -44,9 +44,9 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 ## Runtime and privacy boundary
 
-The current session registry is process-local memory. Active sessions and their participant IDs, guild IDs, board states and action counts are held only while the bot process is running. They are not written to SQLite and are lost on restart. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants.
+Active session state is stored in PostgreSQL. The JSONB snapshot includes the game state, participant Discord IDs, optional guild ID, lifecycle phase and action count; mutations are committed transactionally with a row lock. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants. An inactive session expires after 24 hours and is removed by the central cleanup task.
 
-The privacy command is informational only. SQLite persistence, player profiles, inventory, progression, a stored-data inventory, private export and confirmed deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or database-encryption claim.
+The privacy command is informational only. Player profiles, inventory, progression, a complete stored-data inventory, private export and confirmed deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
 
 ## Planned command groups
 

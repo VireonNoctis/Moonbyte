@@ -1,6 +1,6 @@
 # 0001. Moonbyte product identity and technology foundation
 
-- Status: Accepted
+- Status: Superseded in part by ADR 0004 (database choice); other decisions remain accepted.
 - Date: 2026-10-31
 - Owners: Project maintainer
 
@@ -26,6 +26,10 @@ Moonbyte is a new Discord gaming bot based on selected game concepts and systems
 ## Alternatives considered
 
 Python and TypeScript were not selected because the project prioritises Rust's performance characteristics, memory safety, and explicit state modelling. Go was considered credible but Rust was preferred. PostgreSQL and ScyllaDB were excluded because the initial workload does not justify a separate database service. A runtime dependency on Lunar was rejected to keep operation and data independent.
+
+## Supersession note
+
+The initial SQLite-only storage choice is superseded by ADR 0004 — PostgreSQL as the session and application store. This record is retained to explain the original trade-off and is not the current database instruction.
 
 ## Consequences
 

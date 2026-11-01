@@ -8,4 +8,4 @@ mod runtime;
 
 pub use engine::{GameAction, GameError};
 pub use model::{GameDefinition, GameKind, GamePhase, GameSession, SessionSnapshot};
-pub use runtime::GameRuntime;
+pub use runtime::{GameRuntime, GameRuntimeError};

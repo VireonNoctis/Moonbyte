@@ -2,6 +2,7 @@
 
 pub mod commands;
 pub mod config;
+pub mod database;
 pub mod game;
 
 use std::time::{Duration, Instant};
@@ -17,11 +18,11 @@ pub struct Data {
 }
 
 impl Data {
-    pub fn new(prefix: String) -> Self {
+    pub fn new(prefix: String, games: game::GameRuntime) -> Self {
         Self {
             prefix,
             started_at: Instant::now(),
-            games: game::GameRuntime::new(),
+            games,
         }
     }
 
@@ -35,21 +36,5 @@ impl Data {
 
     pub fn games(&self) -> &game::GameRuntime {
         &self.games
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn application_data_starts_with_an_available_game_runtime() {
-        let data = Data::new(".".to_owned());
-        let session = data
-            .games()
-            .start(game::GameKind::WordScramble, "player", None)
-            .expect("the runtime should accept a solo session");
-        assert_eq!(session.game, game::GameKind::WordScramble);
-        assert_eq!(session.phase, game::GamePhase::Active);
     }
 }

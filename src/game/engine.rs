@@ -278,7 +278,7 @@ fn apply_word_scramble(
     if state.attempts_left == 0 {
         return Err(GameError::AlreadyFinished);
     }
-    if answer.trim().eq_ignore_ascii_case(state.answer) {
+    if answer.trim().eq_ignore_ascii_case(state.answer.as_str()) {
         state.attempts_left = 0;
         return Ok(GameResolution {
             winner_index: Some(0),

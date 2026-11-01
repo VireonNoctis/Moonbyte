@@ -51,7 +51,7 @@ Do not connect to Lunar's live database. Do not import production user records b
 
 A later migration of user-owned collection data requires a documented source and target schema, user-visible opt-in, data minimisation, validation, a tested rollback/discard strategy, and confirmation that source data and assets may lawfully be used.
 
-The initial product starts with new Moonbyte player records and new SQLite storage.
+The initial product starts with new Moonbyte player records and new PostgreSQL storage.
 
 ## 6. Definition of migration complete
 

@@ -169,7 +169,7 @@ Likely tables/entities once implementation begins:
 - `trade_transactions`: buyer, seller, escrow state, receipt, idempotency key.
 - `trade_events`: immutable state transitions and moderation references.
 
-Never store currency balances without a ledger. Balance updates and ledger entries must share a single SQLite transaction. Use constraints and unique idempotency keys to prevent duplicate credits or debits.
+Never store currency balances without a ledger. Balance updates and ledger entries must share a single PostgreSQL transaction. Use constraints and unique idempotency keys to prevent duplicate credits or debits.
 
 ## 9. Release sequence
 

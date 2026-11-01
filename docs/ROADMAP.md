@@ -1,7 +1,7 @@
 # Moonbyte Roadmap
 
 - Status: In progress.
-- The initial Rust workspace, configuration bootstrap, CI checks, Discord command adapters and first playable in-process game/session slice are implemented; SQLite persistence and production recovery remain.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence, versioned migration runner, row-locked state transitions and restart recovery are implemented. Player profiles, progression, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -34,7 +34,8 @@ Deliverables:
 - [x] Game catalogue and play/session commands for the first four games.
 - [x] Clear configuration and startup errors.
 - [ ] Structured logging and graceful shutdown.
-- SQLite connection, migration runner, and backup path.
+- [x] PostgreSQL connection pool, schema migration runner, durable game-session repository and JSONB state snapshots.
+- [ ] Production backup/restore automation and a rehearsed recovery procedure.
 - [x] CI for formatting, Clippy, compilation, and tests.
 - [x] Next.js + React + TypeScript visual-library workspace with responsive catalogue, search, filters, game cards, and command handoff.
 - [ ] Discord Activity integration spike using the Embedded App SDK, with browser fallback.
@@ -43,7 +44,7 @@ Exit criteria:
 - Bot connects and reconnects without leaking tasks.
 - Prefix and slash smoke tests work in a development guild.
 - [x] Missing configuration fails clearly.
-- SQLite opens, migrates, and closes safely.
+- [x] PostgreSQL connects, applies versioned migrations, and closes its pool safely.
 - [x] CI is reproducible on a clean checkout.
 
 ## Phase 2 — Core game platform
@@ -53,11 +54,11 @@ Deliverables:
 - [x] In-process session lifecycle with start, join, action, read and leave operations.
 - [x] State-machine validation for the first four playable game modules.
 - [x] Guild scope, participant membership and turn ownership checks.
-- [ ] Durable shared session lifecycle and state-machine recovery with SQLite.
+- [x] Durable session lifecycle and state-machine recovery with PostgreSQL.
 - Player identity and basic profiles.
 - [x] In-memory session creation, joining, leaving and game completion.
-- [ ] Session cancellation/expiry policy and scheduled cleanup.
-- [ ] Versioned SQLite session persistence and restart recovery.
+- [x] 24-hour inactivity expiry and one central cleanup task.
+- [x] Versioned PostgreSQL session persistence and runtime reconstruction.
 - [ ] Injectable clock and entropy interfaces for any future randomised game modules.
 - Discord interaction adapter with membership and permission checks.
 
@@ -177,7 +178,7 @@ Deliverables:
 - Moderation, reporting, rate limits, and guild-scoped controls.
 
 Exit criteria:
-- Every balance mutation has an immutable ledger entry in the same SQLite transaction.
+- Every balance mutation has an immutable ledger entry in the same PostgreSQL transaction.
 - Double-spend, duplicate interaction, race, rollback, and self-trade tests pass.
 - No real-money value, wagering, paid random reward, or cash-out feature exists.
 - Profile export/deletion and guild-isolation tests cover the new records.
@@ -236,7 +237,7 @@ The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into
 - Every implemented node has a stable ID, owning domain, documented input/output contract and typed graph relationships.
 - Every cross-system edge is backed by a real service contract or explicitly labelled as a future proposal.
 - Rust remains the sole authority for state, outcomes, economy and permissions; the React Activity remains presentation-only.
-- SQLite migration, recovery, privacy export/deletion and guild-isolation tests cover every new persisted record.
+- PostgreSQL migration, session-recovery, privacy export/deletion and guild-isolation tests cover every new persisted record.
 - Bazaar transactions are atomic and deterministic; no stake, wager, paid chance or cash-value mechanism is introduced.
 - All new game sessions have visible rules, clear stop/pause controls, accessibility fallbacks and duplicate-action protection.
 - Documentation distinguishes proposed, in-development and implemented status at all times.
@@ -248,7 +249,7 @@ The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into
 
 The [World Loom](atlas/README.md) contains 400 proposals across 40 connected domains. The second layer adds ecological context, transport, settlement services, optional professions, creature habitats, evidence-led research, mystery networks, authored character continuity, construction, restoration, civic governance, content operations, safe declarative extensions, Discord Activity continuity, economy stewardship, security, privacy-preserving insights, localisation, onboarding and advanced accessibility.
 
-These systems must not become independent microservices. Shared contracts remain central: stable content IDs, typed domain events, narrow Rust application services, SQLite transactions, authenticated Discord identity, privacy-scoped view models and one versioned content pipeline.
+These systems must not become independent microservices. Shared contracts remain central: stable content IDs, typed domain events, narrow Rust application services, PostgreSQL transactions, authenticated Discord identity, privacy-scoped view models and one versioned content pipeline.
 
 ### Additional integration order
 

@@ -1,6 +1,10 @@
+use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
 use super::engine::{GameAction, GameError, apply_action};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum GameKind {
     TicTacToe,
     ConnectFour,
@@ -70,7 +74,7 @@ pub struct GameDefinition {
     pub controls: &'static str,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum GamePhase {
     WaitingForPlayers,
     Active,
@@ -89,7 +93,7 @@ impl fmt::Display for GamePhase {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub(super) enum GameState {
     TicTacToe(TicTacToeState),
     ConnectFour(ConnectFourState),
@@ -123,7 +127,7 @@ impl GameState {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
+#[derive(Clone, Debug, Eq, PartialEq, Default, Serialize, Deserialize)]
 pub(super) struct TicTacToeState {
     pub(super) board: [[u8; 3]; 3],
     pub(super) current_player: u8,
@@ -171,7 +175,7 @@ impl TicTacToeState {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
+#[derive(Clone, Debug, Eq, PartialEq, Default, Serialize, Deserialize)]
 pub(super) struct ConnectFourState {
     pub(super) columns: [[u8; 6]; 7],
     pub(super) heights: [u8; 7],
@@ -224,7 +228,7 @@ impl ConnectFourState {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub(super) struct MemoryMatchState {
     pub(super) pairs: [u8; 8],
     pub(super) matched: u8,
@@ -271,16 +275,16 @@ impl MemoryMatchState {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub(super) struct WordScrambleState {
-    pub(super) answer: &'static str,
+    pub(super) answer: String,
     pub(super) attempts_left: u8,
 }
 
 impl Default for WordScrambleState {
     fn default() -> Self {
         Self {
-            answer: "ORBIT",
+            answer: String::from("ORBIT"),
             attempts_left: 3,
         }
     }
@@ -295,7 +299,7 @@ impl WordScrambleState {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GameSession {
     id: String,
     game: GameKind,

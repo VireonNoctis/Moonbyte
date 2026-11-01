@@ -1,13 +1,12 @@
 //! Environment-based configuration with secret-safe error reporting.
 
 use std::env;
-use std::path::PathBuf;
 
 /// Validated settings required before the Discord and storage adapters start.
 pub struct Config {
     discord_token: String,
     default_prefix: String,
-    database_path: PathBuf,
+    database_url: String,
 }
 
 impl Config {
@@ -34,18 +33,17 @@ impl Config {
             ));
         }
 
-        let database_path =
-            lookup("DATABASE_PATH").unwrap_or_else(|| "data/moonbyte.sqlite3".to_owned());
-        if database_path.trim().is_empty() {
-            return Err(ConfigError(
-                "DATABASE_PATH must be a non-empty filesystem path",
-            ));
-        }
+        let database_url = lookup("DATABASE_URL")
+            .filter(|value| !value.trim().is_empty())
+            .map(|value| value.trim().to_owned())
+            .ok_or(ConfigError(
+                "DATABASE_URL must be set to a non-empty PostgreSQL connection URL",
+            ))?;
 
         Ok(Self {
             discord_token,
             default_prefix,
-            database_path: PathBuf::from(database_path.trim()),
+            database_url,
         })
     }
 
@@ -58,8 +56,9 @@ impl Config {
         &self.default_prefix
     }
 
-    pub fn database_path(&self) -> &std::path::Path {
-        &self.database_path
+    /// Return the connection URL without exposing it through Debug or Display.
+    pub fn database_url(&self) -> &str {
+        &self.database_url
     }
 }
 
@@ -101,33 +100,37 @@ mod tests {
 
     #[test]
     fn applies_documented_defaults() {
-        let config = load(&[("DISCORD_TOKEN", "test-token")]).expect("valid config");
+        let config = load(&[
+            ("DISCORD_TOKEN", "test-token"),
+            ("DATABASE_URL", "postgres://moonbyte:secret@localhost/moonbyte"),
+        ])
+        .expect("valid config");
 
         assert_eq!(config.default_prefix(), ".");
         assert_eq!(
-            config.database_path(),
-            std::path::Path::new("data/moonbyte.sqlite3")
+            config.database_url(),
+            "postgres://moonbyte:secret@localhost/moonbyte"
         );
     }
 
     #[test]
-    fn accepts_explicit_prefix_and_database_path() {
+    fn accepts_explicit_prefix_and_postgres_url() {
         let config = load(&[
             ("DISCORD_TOKEN", "test-token"),
             ("DEFAULT_PREFIX", "mb!"),
-            ("DATABASE_PATH", "./state/moonbyte.db"),
+            ("DATABASE_URL", "postgres://moonbyte:secret@localhost/moonbyte"),
         ])
         .expect("valid config");
 
         assert_eq!(config.default_prefix(), "mb!");
         assert_eq!(
-            config.database_path(),
-            std::path::Path::new("./state/moonbyte.db")
+            config.database_url(),
+            "postgres://moonbyte:secret@localhost/moonbyte"
         );
     }
 
     #[test]
-    fn rejects_invalid_prefixes_and_empty_database_paths() {
+    fn rejects_invalid_prefixes_and_missing_database_urls() {
         assert!(
             load(&[
                 ("DISCORD_TOKEN", "test-token"),
@@ -142,7 +145,8 @@ mod tests {
             ])
             .is_err()
         );
-        assert!(load(&[("DISCORD_TOKEN", "test-token"), ("DATABASE_PATH", "  "),]).is_err());
+        assert!(load(&[("DISCORD_TOKEN", "test-token"), ("DATABASE_URL", "  ")]).is_err());
+        assert!(load(&[("DISCORD_TOKEN", "test-token")]).is_err());
     }
 
     #[test]

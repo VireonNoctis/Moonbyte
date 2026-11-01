@@ -94,7 +94,7 @@ Candidates are not promises that every title will ship. See [GAME_CATALOGUE.md](
 Moonbyte's visual library uses **Next.js + React + TypeScript**. It provides a browsable catalogue, detailed game pages, richer lobby views, and interfaces for games that benefit from a full web surface.
 
 The visual library is a frontend, not a second game engine:
-- Rust/Tokio remains authoritative for game rules, validation, randomness, session state, progression, economy, and SQLite persistence.
+- Rust/Tokio remains authoritative for game rules, validation, randomness, session state, progression, economy, and PostgreSQL persistence.
 - The frontend receives authorised view models and submits player actions to the backend.
 - Discord-native commands continue to use messages, embeds, buttons, menus, and modals.
 - When running inside Discord, the frontend can integrate the official Embedded App SDK as an Activity. An HTTPS browser fallback supports discovery and compatible views.
@@ -185,7 +185,7 @@ The policy is a target commitment and must be implemented and verified before pr
 
 ## 13. First-release definition
 
-A first public release is ready when the bot connects, recovers, and shuts down cleanly; prefix and slash commands work; a curated set of solo and multiplayer games completes reliably; sessions enforce membership and state transitions; profiles persist in SQLite; pixel-art UI is readable; privacy controls accurately describe data, export it, and delete it; retention and log redaction are tested; and documentation matches production behavior.
+A first public release is ready when the bot connects, recovers, and shuts down cleanly; prefix and slash commands work; a curated set of solo and multiplayer games completes reliably; sessions enforce membership and state transitions; active sessions persist in PostgreSQL, with profiles planned; pixel-art UI is readable; privacy controls accurately describe data, export it, and delete it; retention and log redaction are tested; and documentation matches production behavior.
 
 
 ## 14. The connected world: Moonbyte World Loom
@@ -207,4 +207,4 @@ The second design layer covers the capabilities that support a deep world over t
 
 It adds 200 proposals across 20 further domains, all connected to the first graph. Its purpose is to make the product coherent and maintainable at scale, not to create disconnected mechanics. Stable content IDs, service ownership, dependency validation, privacy-scoped view models and reversible releases keep the world consistent.
 
-The [Moonbyte World Loom master atlas](atlas/README.md) documents both layers: 400 proposals across 40 domains and 48,295 lines of feature specifications. All proposals remain design work until implemented and tested. Rust owns authoritative rules and persistence, Next.js/React/TypeScript present authorised state, SQLite remains the initial database, and the game remains earned-only, non-wagering, privacy-conscious and playable without attendance pressure.
+The [Moonbyte World Loom master atlas](atlas/README.md) documents both layers: 400 proposals across 40 domains and 48,295 lines of feature specifications. All proposals remain design work until implemented and tested. Rust owns authoritative rules and persistence, Next.js/React/TypeScript present authorised state, PostgreSQL is the selected database, and the game remains earned-only, non-wagering, privacy-conscious and playable without attendance pressure.

@@ -20,8 +20,8 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
         "Moonbyte v{} — a colourful world of games inside Discord.\n\n\
          This build includes four playable games, guild-scoped multiplayer lobbies, \
          turn validation, private session reads and explicit leave controls. Sessions \
-         currently live in process memory and reset when the bot restarts; persistent \
-         profiles, SQLite saves, Vaults and the Bazaar are not connected yet.",
+         are persisted in PostgreSQL and expire after 24 hours of inactivity; player \
+         profiles, progression, Vaults and the Bazaar are not connected yet.",
         env!("CARGO_PKG_VERSION")
     );
     ctx.say(message).await?;
@@ -77,7 +77,7 @@ pub async fn play(
     let snapshot = ctx
         .data()
         .games()
-        .start(game, &player_id, guild_id.as_deref())?;
+        .start(game, &player_id, guild_id.as_deref()).await?;
     let intro = if snapshot.phase == GamePhase::WaitingForPlayers {
         format!(
             "Lobby created. Another player in this server can join with .join {}.",
@@ -100,7 +100,7 @@ pub async fn join(
     let snapshot = ctx
         .data()
         .games()
-        .join(&session_id, &player_id, guild_id.as_deref())?;
+        .join(&session_id, &player_id, guild_id.as_deref()).await?;
     ctx.say(format!("You joined the game.\n\n{}", snapshot.render()))
         .await?;
     Ok(())
@@ -118,7 +118,7 @@ pub async fn action(
     let snapshot = ctx
         .data()
         .games()
-        .act(&session_id, &player_id, guild_id.as_deref(), &input)?;
+        .act(&session_id, &player_id, guild_id.as_deref(), &input).await?;
     ctx.say(snapshot.render()).await?;
     Ok(())
 }
@@ -133,7 +133,7 @@ pub async fn session(
     let snapshot = ctx
         .data()
         .games()
-        .get(&session_id, &player_id, guild_id.as_deref())?;
+        .get(&session_id, &player_id, guild_id.as_deref()).await?;
     ctx.say(snapshot.render()).await?;
     Ok(())
 }
@@ -148,7 +148,7 @@ pub async fn leave(
     let snapshot = ctx
         .data()
         .games()
-        .leave(&session_id, &player_id, guild_id.as_deref())?;
+        .leave(&session_id, &player_id, guild_id.as_deref()).await?;
     ctx.say(format!("Session ended.\n\n{}", snapshot.render()))
         .await?;
     Ok(())
@@ -188,23 +188,23 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}session <session> / /session — inspect your own session\n\
          {safe_prefix}leave <session> / /leave — end a session you joined\n\n\
          Multiplayer sessions are scoped to their originating server. The current \
-         runtime is in-memory; progress resets when the bot process restarts."
+         session state is stored in PostgreSQL and expires after 24 hours of inactivity."
     )
 }
 
 const PRIVACY_OVERVIEW: &str = "\
 **Moonbyte privacy — current build**\n\n\
-Moonbyte processes Discord interactions to run commands and games. Game sessions are \
-kept in process memory only and are not written to a database. The current runtime does \
-not persist player profiles, inventories, message histories or game records. Sessions \
-are scoped to their originating Discord server, and session reads are limited to their \
-participants.\n\n\
+Moonbyte processes Discord interactions to run commands and games. Active game sessions \
+are stored in PostgreSQL, including session state, Discord participant IDs, optional \
+guild scope, phase, and action counts. Sessions are scoped to their originating server \
+and expire after 24 hours without activity. Raw message histories are not stored as \
+analytics. Player profiles, inventories, and game-history features are not connected.\n\n\
 Discord independently processes interactions under its own policies. Moonbyte cannot \
-control Discord's retention. This project does not claim end-to-end encryption or \
-database encryption.\n\n\
-**Not implemented yet:** SQLite persistence, a stored-data inventory, private data \
-export and confirmed account deletion. Do not post private personal data in public \
-channels. This overview is not a deletion request.";
+control Discord's retention. PostgreSQL does not by itself prove encryption at rest, and \
+this project does not claim end-to-end encryption.\n\n\
+**Not implemented yet:** a complete stored-data inventory, private data export, and \
+confirmed account deletion. Do not post private personal data in public channels. This \
+overview is not a deletion request.";
 
 #[cfg(test)]
 mod tests {
@@ -219,7 +219,7 @@ mod tests {
         ] {
             assert!(message.contains(&format!(".{command} / /{command}")));
         }
-        assert!(message.contains("progress resets when the bot process restarts"));
+        assert!(message.contains("expires after 24 hours of inactivity"));
     }
 
     #[test]
