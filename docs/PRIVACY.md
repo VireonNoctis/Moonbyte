@@ -1,7 +1,7 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Intended product policy; the current runtime has process-local game sessions but no persistent profiles or privacy export/deletion controls.
+- Status: Intended product policy; active sessions are persisted in PostgreSQL, but persistent player profiles and privacy export/deletion controls are not implemented.
 - Last updated: 2026-10-31.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 

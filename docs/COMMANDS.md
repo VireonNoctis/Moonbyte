@@ -11,12 +11,13 @@
 | .help | /help | Lists commands available in this build and the configured prefix. |
 | .about | /about | Shows the application version and current implementation boundaries. |
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
-| .privacy | /privacy | Explains current in-memory session handling and unavailable persistent privacy controls. |
+| .privacy | /privacy | Explains current PostgreSQL session storage and unavailable persistent privacy controls. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
 | .action <session> <input> | /action | Submits a game-specific action after participant, guild, phase and turn validation. |
 | .session <session> | /session | Reads the current snapshot of a session in which the requester participates. |
+| .sessions | /sessions | Lists up to 10 most recently updated, non-expired sessions the requester participates in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
 
 All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
@@ -30,7 +31,7 @@ All commands use shared Rust handlers for prefix and slash invocation. The help 
 | Memory Match | memory-match | 1-based position from 1 to 8 |
 | Word Scramble | word-scramble | Answer text; the current starter puzzle is BITOR → ORBIT |
 
-Tic-tac-toe and Connect Four create lobbies for two players. A second participant must join from the same Discord server. Solo games start immediately. Session reads are restricted to participants.
+Tic-tac-toe and Connect Four create lobbies for two players. A second participant must join from the same Discord server. Solo games start immediately. Session reads and session listings are restricted to participants. `.sessions` only lists sessions from the current guild, or solo sessions in DMs; it does not search other servers.
 
 ## Discord setup
 
