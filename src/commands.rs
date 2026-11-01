@@ -143,6 +143,48 @@ pub async fn session(
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn sessions(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let guild_id = ctx.guild_id().map(|id| id.to_string());
+    let scope = if guild_id.is_some() {
+        "this server"
+    } else {
+        "your DMs"
+    };
+    let sessions = ctx
+        .data()
+        .games()
+        .list_active_for_player(&player_id, guild_id.as_deref())
+        .await?;
+
+    if sessions.is_empty() {
+        ctx.say(format!("You don't have any active sessions in {scope}."))
+            .await?;
+        return Ok(());
+    }
+
+    let entries = sessions
+        .iter()
+        .map(|snapshot| {
+            format!(
+                "• **{}** · `{}` · {}\n  {}",
+                snapshot.game.definition().name,
+                snapshot.id,
+                snapshot.phase,
+                snapshot.last_result
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+
+    ctx.say(format!(
+        "**Your active sessions in {scope}**\n\n{entries}\n\nUse `session <id>` to inspect a board or `action <id> <input>` to play. Showing up to 10 most recently updated sessions."
+    ))
+    .await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn leave(
     ctx: Context<'_>,
     #[description = "The session ID"] session_id: String,
@@ -170,13 +212,14 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         join(),
         action(),
         session(),
+        sessions(),
         leave(),
     ]
 }
 
 fn help_message(prefix: &str) -> String {
     let safe_prefix = prefix
-        .replace('@', "@​")
+        .replace('@', "@\u{200B}")
         .replace(char::from(96), "ˋ")
         .replace(char::from(92), "＼");
     format!(
@@ -191,6 +234,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
          {safe_prefix}action <session> <input> / /action — submit a legal game action\n\
          {safe_prefix}session <session> / /session — inspect your own session\n\
+         {safe_prefix}sessions / /sessions — list your active sessions here\n\
          {safe_prefix}leave <session> / /leave — end a session you joined\n\n\
          Multiplayer sessions are scoped to their originating server. The current \
          session state is stored in PostgreSQL and expires after 24 hours of inactivity."
@@ -228,6 +272,7 @@ mod tests {
             ".join <session> / /join",
             ".action <session> <input> / /action",
             ".session <session> / /session",
+            ".sessions / /sessions",
             ".leave <session> / /leave",
         ] {
             assert!(message.contains(command), "missing help entry: {command}");
@@ -239,7 +284,7 @@ mod tests {
     fn help_safely_displays_custom_prefixes() {
         let prefix = format!("@everyone{}", char::from(96));
         let message = help_message(&prefix);
-        assert!(message.contains("@​everyoneˋ"));
+        assert!(message.contains("@\u{200B}everyoneˋ"));
         assert!(!message.contains("@everyone"));
     }
 }

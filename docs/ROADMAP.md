@@ -223,7 +223,7 @@ The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into
 
 ### Integration order
 
-1. Establish the authoritative Rust game/session contract, player identity and SQLite persistence.
+1. Establish the authoritative Rust game/session contract, player identity and PostgreSQL persistence.
 2. Deliver the Tavern as a navigable entry surface with one polished solo game and one cooperative game.
 3. Add Atlas locations, a bounded Expedition and one authored Quest/Vault route.
 4. Add Archive records and deterministic progression so discoveries persist and can be exported/deleted.
@@ -269,4 +269,4 @@ Do not implement the full breadth at once. Release one connected, testable verti
 
 The current branch adds four real Rust game rules and a shared in-process session runtime. The feature adapter exposes games, play, join, action, session and leave commands in prefix and slash form. The implementation includes participant-only reads, originating-guild checks, turn validation, legal action parsing, win/draw detection and unit tests.
 
-This increment does **not** mark the persistent game platform complete. SQLite, migrations, versioned saves, restart recovery, cleanup/expiry, player identity and progression, privacy export/deletion, buttons and rich Activity views remain follow-up implementation gates.
+This increment does **not** mark the full player platform complete. PostgreSQL migrations, versioned session snapshots, restart recovery and expiry are implemented; player identity and progression, privacy export/deletion, buttons and rich Activity views remain follow-up implementation gates.

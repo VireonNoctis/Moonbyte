@@ -64,6 +64,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
 | `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
+| `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 | `.daily` / `/daily` | Planned | Open the optional daily challenge. |
 | `.profile` / `/profile` | Planned | View a player profile and statistics. |
