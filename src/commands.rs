@@ -79,7 +79,10 @@ pub async fn play(
         .games()
         .start(game, &player_id, guild_id.as_deref())?;
     let intro = if snapshot.phase == GamePhase::WaitingForPlayers {
-        format!("Lobby created. Another player in this server can join with .join {}.", snapshot.id)
+        format!(
+            "Lobby created. Another player in this server can join with .join {}.",
+            snapshot.id
+        )
     } else {
         String::from("Your solo session is ready.")
     };

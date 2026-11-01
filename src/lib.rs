@@ -29,9 +29,13 @@ impl Data {
         &self.prefix
     }
 
-    pub fn uptime(&self) -> Duration { self.started_at.elapsed() }
+    pub fn uptime(&self) -> Duration {
+        self.started_at.elapsed()
+    }
 
-    pub fn games(&self) -> &game::GameRuntime { &self.games }
+    pub fn games(&self) -> &game::GameRuntime {
+        &self.games
+    }
 }
 
 #[cfg(test)]

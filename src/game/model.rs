@@ -1,19 +1,55 @@
 use super::engine::{GameAction, GameError, apply_action};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum GameKind { TicTacToe, ConnectFour, MemoryMatch, WordScramble }
+pub enum GameKind {
+    TicTacToe,
+    ConnectFour,
+    MemoryMatch,
+    WordScramble,
+}
 
 impl GameKind {
-    pub const ALL: [Self; 4] = [Self::TicTacToe, Self::ConnectFour, Self::MemoryMatch, Self::WordScramble];
+    pub const ALL: [Self; 4] = [
+        Self::TicTacToe,
+        Self::ConnectFour,
+        Self::MemoryMatch,
+        Self::WordScramble,
+    ];
     pub const fn definition(self) -> GameDefinition {
         match self {
-            Self::TicTacToe => GameDefinition { id: "tic-tac-toe", name: "Tic-tac-toe", description: "A two-player strategy game on a 3×3 board.", players: "2 players", controls: "Use .action <session> <row>,<column> with 1-based coordinates." },
-            Self::ConnectFour => GameDefinition { id: "connect-four", name: "Connect Four", description: "Drop discs into seven columns and connect four in a row.", players: "2 players", controls: "Use .action <session> <column> with a column from 1 to 7." },
-            Self::MemoryMatch => GameDefinition { id: "memory-match", name: "Memory Match", description: "Find four pairs by remembering where each symbol appears.", players: "1 player", controls: "Use .action <session> <position> with a position from 1 to 8." },
-            Self::WordScramble => GameDefinition { id: "word-scramble", name: "Word Scramble", description: "Reconstruct an original five-letter word from its scrambled letters.", players: "1 player", controls: "Use .action <session> <answer> to submit your guess." },
+            Self::TicTacToe => GameDefinition {
+                id: "tic-tac-toe",
+                name: "Tic-tac-toe",
+                description: "A two-player strategy game on a 3×3 board.",
+                players: "2 players",
+                controls: "Use .action <session> <row>,<column> with 1-based coordinates.",
+            },
+            Self::ConnectFour => GameDefinition {
+                id: "connect-four",
+                name: "Connect Four",
+                description: "Drop discs into seven columns and connect four in a row.",
+                players: "2 players",
+                controls: "Use .action <session> <column> with a column from 1 to 7.",
+            },
+            Self::MemoryMatch => GameDefinition {
+                id: "memory-match",
+                name: "Memory Match",
+                description: "Find four pairs by remembering where each symbol appears.",
+                players: "1 player",
+                controls: "Use .action <session> <position> with a position from 1 to 8.",
+            },
+            Self::WordScramble => GameDefinition {
+                id: "word-scramble",
+                name: "Word Scramble",
+                description: "Reconstruct an original five-letter word from its scrambled letters.",
+                players: "1 player",
+                controls: "Use .action <session> <answer> to submit your guess.",
+            },
         }
     }
-    pub const fn requires_opponent(self) -> bool { matches!(self, Self::TicTacToe | Self::ConnectFour) }
+    pub const fn requires_opponent(self) -> bool {
+        matches!(self, Self::TicTacToe | Self::ConnectFour)
+    }
     pub fn parse(value: &str) -> Result<Self, GameError> {
         match value.trim().to_ascii_lowercase().as_str() {
             "tic-tac-toe" | "tictactoe" | "xo" => Ok(Self::TicTacToe),
@@ -35,7 +71,12 @@ pub struct GameDefinition {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum GamePhase { WaitingForPlayers, Active, Completed, Abandoned }
+pub enum GamePhase {
+    WaitingForPlayers,
+    Active,
+    Completed,
+    Abandoned,
+}
 
 impl fmt::Display for GamePhase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -96,8 +137,14 @@ impl TicTacToeState {
                 out.push_str("───┼───┼───\n");
             }
             for (ci, cell) in row.iter().enumerate() {
-                if ci > 0 { out.push_str(" │ "); }
-                out.push(match cell { 0 => '·', 1 => 'X', _ => 'O' });
+                if ci > 0 {
+                    out.push_str(" │ ");
+                }
+                out.push(match cell {
+                    0 => '·',
+                    1 => 'X',
+                    _ => 'O',
+                });
             }
             out.push('\n');
         }
@@ -172,7 +219,9 @@ impl ConnectFourState {
                 >= 4
         })
     }
-    pub(super) fn is_full(&self) -> bool { self.heights.iter().all(|height| *height == 6) }
+    pub(super) fn is_full(&self) -> bool {
+        self.heights.iter().all(|height| *height == 6)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -208,8 +257,14 @@ impl MemoryMatchState {
             }
             let visible = self.matched & (1 << index) != 0
                 || self.first_reveal == Some(index as u8)
-                || self.last_pair.is_some_and(|(first, second)| first == index as u8 || second == index as u8);
-            out.push(if visible { symbols[usize::from(*pair)] } else { '□' });
+                || self
+                    .last_pair
+                    .is_some_and(|(first, second)| first == index as u8 || second == index as u8);
+            out.push(if visible {
+                symbols[usize::from(*pair)]
+            } else {
+                '□'
+            });
             out.push(' ');
         }
         out
@@ -223,7 +278,12 @@ pub(super) struct WordScrambleState {
 }
 
 impl Default for WordScrambleState {
-    fn default() -> Self { Self { answer: "ORBIT", attempts_left: 3 } }
+    fn default() -> Self {
+        Self {
+            answer: "ORBIT",
+            attempts_left: 3,
+        }
+    }
 }
 
 impl WordScrambleState {
@@ -256,16 +316,33 @@ impl GameSession {
             GamePhase::Active
         };
         Self {
-            id, game, guild_id, players: vec![owner_id], phase, state: GameState::new(game),
-            winner: None, action_count: 0, last_result: String::from("Session created."),
+            id,
+            game,
+            guild_id,
+            players: vec![owner_id],
+            phase,
+            state: GameState::new(game),
+            winner: None,
+            action_count: 0,
+            last_result: String::from("Session created."),
         }
     }
-    pub fn game(&self) -> GameKind { self.game }
-    pub fn guild_id(&self) -> Option<&str> { self.guild_id.as_deref() }
+    pub fn game(&self) -> GameKind {
+        self.game
+    }
+    pub fn guild_id(&self) -> Option<&str> {
+        self.guild_id.as_deref()
+    }
     pub fn join(&mut self, player_id: &str, guild_id: Option<&str>) -> Result<(), GameError> {
-        if self.phase != GamePhase::WaitingForPlayers { return Err(GameError::NotJoinable); }
-        if self.players.iter().any(|player| player == player_id) { return Err(GameError::AlreadyJoined); }
-        if self.guild_id.as_deref() != guild_id { return Err(GameError::WrongGuild); }
+        if self.phase != GamePhase::WaitingForPlayers {
+            return Err(GameError::NotJoinable);
+        }
+        if self.players.iter().any(|player| player == player_id) {
+            return Err(GameError::AlreadyJoined);
+        }
+        if self.guild_id.as_deref() != guild_id {
+            return Err(GameError::WrongGuild);
+        }
         self.players.push(player_id.to_owned());
         self.phase = GamePhase::Active;
         self.last_result = String::from("The lobby is full. The game is ready.");
@@ -355,9 +432,15 @@ impl SessionSnapshot {
             .unwrap_or_default();
         format!(
             "**{}** · {} · {}\nPlayers: {}{}\nActions: {}\n{}\n{}\n{}",
-            self.game.definition().name, self.id, self.phase,
-            if players.is_empty() { "none" } else { &players }, winner,
-            self.action_count, self.last_result, self.board, self.controls
+            self.game.definition().name,
+            self.id,
+            self.phase,
+            if players.is_empty() { "none" } else { &players },
+            winner,
+            self.action_count,
+            self.last_result,
+            self.board,
+            self.controls
         )
     }
 }

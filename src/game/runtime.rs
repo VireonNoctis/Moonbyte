@@ -74,7 +74,9 @@ impl GameRuntime {
             .sessions
             .get_mut(&normalise_session_id(session_id))
             .ok_or(GameError::NotJoinable)?;
-        if session.guild_id() != guild_id { return Err(GameError::WrongGuild); }
+        if session.guild_id() != guild_id {
+            return Err(GameError::WrongGuild);
+        }
         let action = GameAction::parse(session.game(), input)?;
         session.act(player_id, action)?;
         Ok(session.snapshot())
@@ -91,7 +93,9 @@ impl GameRuntime {
             .sessions
             .get(&normalise_session_id(session_id))
             .ok_or(GameError::NotJoinable)?;
-        if !session.is_visible_to(player_id, guild_id) { return Err(GameError::NotParticipant); }
+        if !session.is_visible_to(player_id, guild_id) {
+            return Err(GameError::NotParticipant);
+        }
         Ok(session.snapshot())
     }
 
@@ -106,7 +110,9 @@ impl GameRuntime {
             .sessions
             .get_mut(&normalise_session_id(session_id))
             .ok_or(GameError::NotJoinable)?;
-        if session.guild_id() != guild_id { return Err(GameError::WrongGuild); }
+        if session.guild_id() != guild_id {
+            return Err(GameError::WrongGuild);
+        }
         session.leave(player_id)?;
         Ok(session.snapshot())
     }
@@ -147,9 +153,17 @@ mod tests {
             .start(GameKind::TicTacToe, "owner", Some("guild-1"))
             .expect("lobby");
         assert_eq!(lobby.phase.to_string(), "waiting for players");
-        assert_eq!(runtime.join(&lobby.id, "owner", Some("guild-1")), Err(GameError::AlreadyJoined));
-        assert_eq!(runtime.join(&lobby.id, "guest", Some("guild-2")), Err(GameError::WrongGuild));
-        let started = runtime.join(&lobby.id.to_ascii_lowercase(), "guest", Some("guild-1")).expect("join");
+        assert_eq!(
+            runtime.join(&lobby.id, "owner", Some("guild-1")),
+            Err(GameError::AlreadyJoined)
+        );
+        assert_eq!(
+            runtime.join(&lobby.id, "guest", Some("guild-2")),
+            Err(GameError::WrongGuild)
+        );
+        let started = runtime
+            .join(&lobby.id.to_ascii_lowercase(), "guest", Some("guild-1"))
+            .expect("join");
         assert_eq!(started.phase.to_string(), "active");
         assert_eq!(started.players.len(), 2);
     }
@@ -170,8 +184,14 @@ mod tests {
             .start(GameKind::MemoryMatch, "owner", None)
             .expect("start");
         assert!(runtime.get(&session.id, "owner", None).is_ok());
-        assert_eq!(runtime.get(&session.id, "intruder", None), Err(GameError::NotParticipant));
-        assert_eq!(runtime.get(&session.id, "owner", Some("guild-1")), Err(GameError::NotParticipant));
+        assert_eq!(
+            runtime.get(&session.id, "intruder", None),
+            Err(GameError::NotParticipant)
+        );
+        assert_eq!(
+            runtime.get(&session.id, "owner", Some("guild-1")),
+            Err(GameError::NotParticipant)
+        );
     }
 
     #[test]
@@ -242,10 +262,19 @@ mod tests {
             .start(GameKind::MemoryMatch, "owner", None)
             .expect("start");
         for (first, second) in [(1, 5), (2, 6), (3, 7), (4, 8)] {
-            runtime.act(&session.id, "owner", None, &first.to_string()).expect("first reveal");
-            let result = runtime.act(&session.id, "owner", None, &second.to_string()).expect("pair");
-            if second == 8 { assert_eq!(result.phase, super::super::model::GamePhase::Completed); }
+            runtime
+                .act(&session.id, "owner", None, &first.to_string())
+                .expect("first reveal");
+            let result = runtime
+                .act(&session.id, "owner", None, &second.to_string())
+                .expect("pair");
+            if second == 8 {
+                assert_eq!(result.phase, super::super::model::GamePhase::Completed);
+            }
         }
-        assert_eq!(runtime.act(&session.id, "owner", None, "1"), Err(GameError::NotActive));
+        assert_eq!(
+            runtime.act(&session.id, "owner", None, "1"),
+            Err(GameError::NotActive)
+        );
     }
 }

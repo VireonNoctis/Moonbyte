@@ -34,8 +34,13 @@ impl GameAction {
                 })
             }
             GameKind::ConnectFour => {
-                let column = input.trim().parse::<usize>().map_err(|_| GameError::InvalidAction)?;
-                if !(1..=7).contains(&column) { return Err(GameError::InvalidAction); }
+                let column = input
+                    .trim()
+                    .parse::<usize>()
+                    .map_err(|_| GameError::InvalidAction)?;
+                if !(1..=7).contains(&column) {
+                    return Err(GameError::InvalidAction);
+                }
                 Ok(Self::ConnectFourDrop { column: column - 1 })
             }
             GameKind::MemoryMatch => {
@@ -97,7 +102,9 @@ impl std::fmt::Display for GameError {
                 "That session is not waiting for another player or could not be found."
             }
             Self::AlreadyJoined => "You are already in this session.",
-            Self::WrongGuild => "Sessions are private to the Discord server where they were created.",
+            Self::WrongGuild => {
+                "Sessions are private to the Discord server where they were created."
+            }
             Self::NotActive => "This session is not accepting game actions.",
             Self::NotParticipant => "You are not a participant in this session.",
             Self::NotYourTurn => "It is not your turn.",
@@ -107,7 +114,9 @@ impl std::fmt::Display for GameError {
             }
             Self::OccupiedCell => "That square is already occupied.",
             Self::FullColumn => "That column is full. Choose another column.",
-            Self::AlreadyMatched => "That position is already matched. Choose a face-down position.",
+            Self::AlreadyMatched => {
+                "That position is already matched. Choose a face-down position."
+            }
             Self::SamePosition => "Choose a different second position.",
             Self::RuntimeUnavailable => "The game runtime is temporarily unavailable. Try again.",
         })
@@ -186,7 +195,9 @@ fn apply_connect_four(
         return Err(GameError::InvalidAction);
     }
     let height = usize::from(state.heights[column]);
-    if height >= 6 { return Err(GameError::FullColumn); }
+    if height >= 6 {
+        return Err(GameError::FullColumn);
+    }
     let marker = (player_index + 1) as u8;
     state.columns[column][height] = marker;
     state.heights[column] += 1;
@@ -226,7 +237,9 @@ fn apply_memory_match(
         return Err(GameError::AlreadyMatched);
     }
     let matched_pair = if let Some(first) = state.first_reveal {
-        if usize::from(first) == position { return Err(GameError::SamePosition); }
+        if usize::from(first) == position {
+            return Err(GameError::SamePosition);
+        }
         state.attempts = state.attempts.saturating_add(1);
         state.last_pair = Some((first, position as u8));
         let matched = state.pairs[usize::from(first)] == state.pairs[position];
@@ -343,7 +356,11 @@ mod tests {
         )
         .expect("first move");
         assert_eq!(
-            apply_action(&mut state, 1, GameAction::TicTacToeMove { row: 1, column: 1 }),
+            apply_action(
+                &mut state,
+                1,
+                GameAction::TicTacToeMove { row: 1, column: 1 }
+            ),
             Err(GameError::OccupiedCell)
         );
         assert_eq!(state.current_player_index(), 1);
