@@ -219,10 +219,18 @@ mod tests {
     fn help_lists_only_commands_registered_in_this_build() {
         let message = help_message(".");
         for command in [
-            "help", "about", "ping", "privacy", "games", "play", "join", "action", "session",
-            "leave",
+            ".help / /help",
+            ".about / /about",
+            ".ping / /ping",
+            ".privacy / /privacy",
+            ".games / /games",
+            ".play <game> / /play",
+            ".join <session> / /join",
+            ".action <session> <input> / /action",
+            ".session <session> / /session",
+            ".leave <session> / /leave",
         ] {
-            assert!(message.contains(&format!(".{command} / /{command}")));
+            assert!(message.contains(command), "missing help entry: {command}");
         }
         assert!(message.contains("expires after 24 hours of inactivity"));
     }

@@ -167,7 +167,7 @@ impl TicTacToeState {
             [b[0][2], b[1][1], b[2][0]],
         ];
         lines.into_iter().find_map(|line| {
-            (line[0] != 0 && line[0] == line[1] && line[1] == line[2]).then_some(line[0] - 1)
+            (line[0] != 0 && line[0] == line[1] && line[1] == line[2]).then(|| line[0] - 1)
         })
     }
     pub(super) fn is_full(&self) -> bool {
