@@ -1,4 +1,7 @@
-use std::{fmt, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    fmt,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use sqlx::PgPool;
 
@@ -64,8 +67,12 @@ impl fmt::Display for ProfileError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidDiscordUserId => formatter.write_str("The player reference is invalid."),
-            Self::InvalidStoredTheme => formatter.write_str("The saved profile preference is invalid."),
-            Self::Database(_) => formatter.write_str("The player profile store is temporarily unavailable."),
+            Self::InvalidStoredTheme => {
+                formatter.write_str("The saved profile preference is invalid.")
+            }
+            Self::Database(_) => {
+                formatter.write_str("The player profile store is temporarily unavailable.")
+            }
         }
     }
 }
@@ -143,10 +150,7 @@ impl ProfileRepository {
     }
 
     /// Delete only this profile row. This is not the full account-deletion flow.
-    pub async fn delete_profile(
-        &self,
-        discord_user_id: &str,
-    ) -> Result<bool, ProfileError> {
+    pub async fn delete_profile(&self, discord_user_id: &str) -> Result<bool, ProfileError> {
         validate_discord_user_id(discord_user_id)?;
         let result = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
             .bind(discord_user_id)
@@ -157,10 +161,7 @@ impl ProfileRepository {
 }
 
 fn validate_discord_user_id(value: &str) -> Result<(), ProfileError> {
-    if value.is_empty()
-        || value.len() > 20
-        || !value.bytes().all(|byte| byte.is_ascii_digit())
-    {
+    if value.is_empty() || value.len() > 20 || !value.bytes().all(|byte| byte.is_ascii_digit()) {
         return Err(ProfileError::InvalidDiscordUserId);
     }
     Ok(())
@@ -239,13 +240,17 @@ mod tests {
             BoardTheme::Classic
         );
 
-        assert!(profiles
-            .delete_profile(&first_user)
-            .await
-            .expect("remove the test profile"));
-        assert!(profiles
-            .delete_profile(&second_user)
-            .await
-            .expect("remove the second test profile"));
+        assert!(
+            profiles
+                .delete_profile(&first_user)
+                .await
+                .expect("remove the test profile")
+        );
+        assert!(
+            profiles
+                .delete_profile(&second_user)
+                .await
+                .expect("remove the second test profile")
+        );
     }
 }

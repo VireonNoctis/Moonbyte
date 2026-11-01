@@ -1,6 +1,5 @@
 //! Discord-native commands. Handlers adapt user input to application services;
 //! the game module remains independent of Serenity and Poise.
-
 use crate::{
     Data, Error,
     game::{GameKind, GamePhase},
