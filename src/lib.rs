@@ -25,7 +25,9 @@ impl Data {
         }
     }
 
-    pub fn prefix(&self) -> &str { &self.prefix }
+    pub fn prefix(&self) -> &str {
+        &self.prefix
+    }
 
     pub fn uptime(&self) -> Duration { self.started_at.elapsed() }
 
@@ -39,7 +41,9 @@ mod tests {
     #[test]
     fn application_data_starts_with_an_available_game_runtime() {
         let data = Data::new(".".to_owned());
-        let session = data.games().start(game::GameKind::WordScramble, "player", None)
+        let session = data
+            .games()
+            .start(game::GameKind::WordScramble, "player", None)
             .expect("the runtime should accept a solo session");
         assert_eq!(session.game, game::GameKind::WordScramble);
         assert_eq!(session.phase, game::GamePhase::Active);

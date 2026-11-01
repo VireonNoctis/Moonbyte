@@ -15,14 +15,23 @@ impl GameAction {
         match game {
             GameKind::TicTacToe => {
                 let mut parts = input.split(',').map(str::trim);
-                let row = parts.next().ok_or(GameError::InvalidAction)?
-                    .parse::<usize>().map_err(|_| GameError::InvalidAction)?;
-                let column = parts.next().ok_or(GameError::InvalidAction)?
-                    .parse::<usize>().map_err(|_| GameError::InvalidAction)?;
+                let row = parts
+                    .next()
+                    .ok_or(GameError::InvalidAction)?
+                    .parse::<usize>()
+                    .map_err(|_| GameError::InvalidAction)?;
+                let column = parts
+                    .next()
+                    .ok_or(GameError::InvalidAction)?
+                    .parse::<usize>()
+                    .map_err(|_| GameError::InvalidAction)?;
                 if parts.next().is_some() || !(1..=3).contains(&row) || !(1..=3).contains(&column) {
                     return Err(GameError::InvalidAction);
                 }
-                Ok(Self::TicTacToeMove { row: row - 1, column: column - 1 })
+                Ok(Self::TicTacToeMove {
+                    row: row - 1,
+                    column: column - 1,
+                })
             }
             GameKind::ConnectFour => {
                 let column = input.trim().parse::<usize>().map_err(|_| GameError::InvalidAction)?;
@@ -30,16 +39,25 @@ impl GameAction {
                 Ok(Self::ConnectFourDrop { column: column - 1 })
             }
             GameKind::MemoryMatch => {
-                let position = input.trim().parse::<usize>().map_err(|_| GameError::InvalidAction)?;
-                if !(1..=8).contains(&position) { return Err(GameError::InvalidAction); }
-                Ok(Self::MemoryReveal { position: position - 1 })
+                let position = input
+                    .trim()
+                    .parse::<usize>()
+                    .map_err(|_| GameError::InvalidAction)?;
+                if !(1..=8).contains(&position) {
+                    return Err(GameError::InvalidAction);
+                }
+                Ok(Self::MemoryReveal {
+                    position: position - 1,
+                })
             }
             GameKind::WordScramble => {
                 let answer = input.trim();
                 if answer.is_empty() || answer.chars().count() > 32 {
                     return Err(GameError::InvalidAction);
                 }
-                Ok(Self::WordAnswer { answer: answer.to_owned() })
+                Ok(Self::WordAnswer {
+                    answer: answer.to_owned(),
+                })
             }
         }
     }
@@ -75,14 +93,18 @@ impl std::fmt::Display for GameError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             Self::UnknownGame => "That game is not available. Use .games to browse playable games.",
-            Self::NotJoinable => "That session is not waiting for another player or could not be found.",
+            Self::NotJoinable => {
+                "That session is not waiting for another player or could not be found."
+            }
             Self::AlreadyJoined => "You are already in this session.",
             Self::WrongGuild => "Sessions are private to the Discord server where they were created.",
             Self::NotActive => "This session is not accepting game actions.",
             Self::NotParticipant => "You are not a participant in this session.",
             Self::NotYourTurn => "It is not your turn.",
             Self::AlreadyFinished => "This session has already ended.",
-            Self::InvalidAction => "That action is not valid. Check the controls shown on the session.",
+            Self::InvalidAction => {
+                "That action is not valid. Check the controls shown on the session."
+            }
             Self::OccupiedCell => "That square is already occupied.",
             Self::FullColumn => "That column is full. Choose another column.",
             Self::AlreadyMatched => "That position is already matched. Choose a face-down position.",
@@ -122,8 +144,12 @@ fn apply_tic_tac_toe(
     row: usize,
     column: usize,
 ) -> Result<GameResolution, GameError> {
-    if row >= 3 || column >= 3 { return Err(GameError::InvalidAction); }
-    if state.board[row][column] != 0 { return Err(GameError::OccupiedCell); }
+    if row >= 3 || column >= 3 {
+        return Err(GameError::InvalidAction);
+    }
+    if state.board[row][column] != 0 {
+        return Err(GameError::OccupiedCell);
+    }
     let marker = (player_index + 1) as u8;
     state.board[row][column] = marker;
     if let Some(winner) = state.winner() {
@@ -156,7 +182,9 @@ fn apply_connect_four(
     player_index: usize,
     column: usize,
 ) -> Result<GameResolution, GameError> {
-    if column >= 7 { return Err(GameError::InvalidAction); }
+    if column >= 7 {
+        return Err(GameError::InvalidAction);
+    }
     let height = usize::from(state.heights[column]);
     if height >= 6 { return Err(GameError::FullColumn); }
     let marker = (player_index + 1) as u8;
@@ -191,8 +219,12 @@ fn apply_memory_match(
     state: &mut MemoryMatchState,
     position: usize,
 ) -> Result<GameResolution, GameError> {
-    if position >= 8 { return Err(GameError::InvalidAction); }
-    if state.matched & (1 << position) != 0 { return Err(GameError::AlreadyMatched); }
+    if position >= 8 {
+        return Err(GameError::InvalidAction);
+    }
+    if state.matched & (1 << position) != 0 {
+        return Err(GameError::AlreadyMatched);
+    }
     let matched_pair = if let Some(first) = state.first_reveal {
         if usize::from(first) == position { return Err(GameError::SamePosition); }
         state.attempts = state.attempts.saturating_add(1);
@@ -230,7 +262,9 @@ fn apply_word_scramble(
     state: &mut WordScrambleState,
     answer: String,
 ) -> Result<GameResolution, GameError> {
-    if state.attempts_left == 0 { return Err(GameError::AlreadyFinished); }
+    if state.attempts_left == 0 {
+        return Err(GameError::AlreadyFinished);
+    }
     if answer.trim().eq_ignore_ascii_case(state.answer) {
         state.attempts_left = 0;
         return Ok(GameResolution {
@@ -260,19 +294,38 @@ mod tests {
 
     #[test]
     fn command_parser_rejects_out_of_range_and_malformed_actions() {
-        assert_eq!(GameAction::parse(GameKind::TicTacToe, "1,4"), Err(GameError::InvalidAction));
-        assert_eq!(GameAction::parse(GameKind::TicTacToe, "1"), Err(GameError::InvalidAction));
-        assert_eq!(GameAction::parse(GameKind::ConnectFour, "8"), Err(GameError::InvalidAction));
-        assert_eq!(GameAction::parse(GameKind::MemoryMatch, "0"), Err(GameError::InvalidAction));
-        assert_eq!(GameAction::parse(GameKind::WordScramble, " "), Err(GameError::InvalidAction));
+        assert_eq!(
+            GameAction::parse(GameKind::TicTacToe, "1,4"),
+            Err(GameError::InvalidAction)
+        );
+        assert_eq!(
+            GameAction::parse(GameKind::TicTacToe, "1"),
+            Err(GameError::InvalidAction)
+        );
+        assert_eq!(
+            GameAction::parse(GameKind::ConnectFour, "8"),
+            Err(GameError::InvalidAction)
+        );
+        assert_eq!(
+            GameAction::parse(GameKind::MemoryMatch, "0"),
+            Err(GameError::InvalidAction)
+        );
+        assert_eq!(
+            GameAction::parse(GameKind::WordScramble, " "),
+            Err(GameError::InvalidAction)
+        );
     }
 
     #[test]
     fn tic_tac_toe_detects_a_horizontal_win() {
         let mut state = GameState::TicTacToe(TicTacToeState::default());
         for (player, row, column) in [(0, 0, 0), (1, 1, 0), (0, 0, 1), (1, 1, 1), (0, 0, 2)] {
-            let result = apply_action(&mut state, player, GameAction::TicTacToeMove { row, column })
-                .expect("legal move");
+            let result = apply_action(
+                &mut state,
+                player,
+                GameAction::TicTacToeMove { row, column },
+            )
+            .expect("legal move");
             if player == 0 && row == 0 && column == 2 {
                 assert_eq!(result.winner_index, Some(0));
                 assert!(result.is_complete);
@@ -283,7 +336,12 @@ mod tests {
     #[test]
     fn occupied_tic_tac_toe_cells_are_rejected_without_advancing() {
         let mut state = GameState::TicTacToe(TicTacToeState::default());
-        apply_action(&mut state, 0, GameAction::TicTacToeMove { row: 1, column: 1 }).expect("first move");
+        apply_action(
+            &mut state,
+            0,
+            GameAction::TicTacToeMove { row: 1, column: 1 },
+        )
+        .expect("first move");
         assert_eq!(
             apply_action(&mut state, 1, GameAction::TicTacToeMove { row: 1, column: 1 }),
             Err(GameError::OccupiedCell)
@@ -298,7 +356,9 @@ mod tests {
             let result = apply_action(
                 &mut state,
                 player,
-                GameAction::ConnectFourDrop { column: if player == 0 { 0 } else { 1 } },
+                GameAction::ConnectFourDrop {
+                    column: if player == 0 { 0 } else { 1 },
+                },
             )
             .expect("legal drop");
             if turn == 6 {
@@ -314,17 +374,37 @@ mod tests {
     fn memory_match_completes_only_after_all_pairs_are_found() {
         let mut state = GameState::MemoryMatch(MemoryMatchState::default());
         for (a, b) in [(0, 4), (1, 5), (2, 6), (3, 7)] {
-            apply_action(&mut state, 0, GameAction::MemoryReveal { position: a }).expect("first reveal");
-            let result = apply_action(&mut state, 0, GameAction::MemoryReveal { position: b }).expect("pair");
-            if b == 7 { assert!(result.is_complete); } else { assert!(!result.is_complete); }
+            apply_action(&mut state, 0, GameAction::MemoryReveal { position: a })
+                .expect("first reveal");
+            let result = apply_action(&mut state, 0, GameAction::MemoryReveal { position: b })
+                .expect("pair");
+            if b == 7 {
+                assert!(result.is_complete);
+            } else {
+                assert!(!result.is_complete);
+            }
         }
     }
 
     #[test]
     fn word_scramble_has_bounded_attempts_and_case_insensitive_answer() {
         let mut state = GameState::WordScramble(WordScrambleState::default());
-        apply_action(&mut state, 0, GameAction::WordAnswer { answer: "wrong".into() }).expect("wrong guess");
-        let result = apply_action(&mut state, 0, GameAction::WordAnswer { answer: "orbit".into() }).expect("correct guess");
+        apply_action(
+            &mut state,
+            0,
+            GameAction::WordAnswer {
+                answer: "wrong".into(),
+            },
+        )
+        .expect("wrong guess");
+        let result = apply_action(
+            &mut state,
+            0,
+            GameAction::WordAnswer {
+                answer: "orbit".into(),
+            },
+        )
+        .expect("correct guess");
         assert_eq!(result.winner_index, Some(0));
         assert!(result.is_complete);
     }

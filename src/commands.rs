@@ -1,7 +1,10 @@
 //! Discord-native commands. Handlers adapt user input to application services;
 //! the game module remains independent of Serenity and Poise.
 
-use crate::{Data, Error, game::{GameKind, GamePhase}};
+use crate::{
+    Data, Error,
+    game::{GameKind, GamePhase},
+};
 
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -27,7 +30,11 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.say(format!("Moonbyte is online. Process uptime: {} seconds.", ctx.data().uptime().as_secs())).await?;
+    ctx.say(format!(
+        "Moonbyte is online. Process uptime: {} seconds.",
+        ctx.data().uptime().as_secs()
+    ))
+    .await?;
     Ok(())
 }
 
@@ -39,14 +46,23 @@ pub async fn privacy(ctx: Context<'_>) -> Result<(), Error> {
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
-    let entries = GameKind::ALL.iter().map(|kind| {
-        let definition = kind.definition();
-        format!(
-            "**{}** ({}) · {}\n{}\nControls: {}",
-            definition.name, definition.id, definition.players, definition.description, definition.controls
-        )
-    }).collect::<Vec<_>>().join("\n\n");
-    ctx.say(format!("**Moonbyte Game Library**\n\n{entries}")).await?;
+    let entries = GameKind::ALL
+        .iter()
+        .map(|kind| {
+            let definition = kind.definition();
+            format!(
+                "**{}** ({}) · {}\n{}\nControls: {}",
+                definition.name,
+                definition.id,
+                definition.players,
+                definition.description,
+                definition.controls
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    ctx.say(format!("**Moonbyte Game Library**\n\n{entries}"))
+        .await?;
     Ok(())
 }
 
@@ -58,7 +74,10 @@ pub async fn play(
     let game = GameKind::parse(&game)?;
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
-    let snapshot = ctx.data().games().start(game, &player_id, guild_id.as_deref())?;
+    let snapshot = ctx
+        .data()
+        .games()
+        .start(game, &player_id, guild_id.as_deref())?;
     let intro = if snapshot.phase == GamePhase::WaitingForPlayers {
         format!("Lobby created. Another player in this server can join with .join {}.", snapshot.id)
     } else {
@@ -75,8 +94,12 @@ pub async fn join(
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
-    let snapshot = ctx.data().games().join(&session_id, &player_id, guild_id.as_deref())?;
-    ctx.say(format!("You joined the game.\n\n{}", snapshot.render())).await?;
+    let snapshot = ctx
+        .data()
+        .games()
+        .join(&session_id, &player_id, guild_id.as_deref())?;
+    ctx.say(format!("You joined the game.\n\n{}", snapshot.render()))
+        .await?;
     Ok(())
 }
 
@@ -84,11 +107,15 @@ pub async fn join(
 pub async fn action(
     ctx: Context<'_>,
     #[description = "The session ID"] session_id: String,
-    #[description = "Tic-tac-toe: row,column; Connect Four: column; Memory: position; Word Scramble: answer"] input: String,
+    #[description = "Tic-tac-toe: row,column; Connect Four: column; Memory: position; Word Scramble: answer"]
+    input: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
-    let snapshot = ctx.data().games().act(&session_id, &player_id, guild_id.as_deref(), &input)?;
+    let snapshot = ctx
+        .data()
+        .games()
+        .act(&session_id, &player_id, guild_id.as_deref(), &input)?;
     ctx.say(snapshot.render()).await?;
     Ok(())
 }
@@ -100,7 +127,10 @@ pub async fn session(
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
-    let snapshot = ctx.data().games().get(&session_id, &player_id, guild_id.as_deref())?;
+    let snapshot = ctx
+        .data()
+        .games()
+        .get(&session_id, &player_id, guild_id.as_deref())?;
     ctx.say(snapshot.render()).await?;
     Ok(())
 }
@@ -112,13 +142,28 @@ pub async fn leave(
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
-    let snapshot = ctx.data().games().leave(&session_id, &player_id, guild_id.as_deref())?;
-    ctx.say(format!("Session ended.\n\n{}", snapshot.render())).await?;
+    let snapshot = ctx
+        .data()
+        .games()
+        .leave(&session_id, &player_id, guild_id.as_deref())?;
+    ctx.say(format!("Session ended.\n\n{}", snapshot.render()))
+        .await?;
     Ok(())
 }
 
 pub fn all() -> Vec<poise::Command<Data, Error>> {
-    vec![help(), about(), ping(), privacy(), games(), play(), join(), action(), session(), leave()]
+    vec![
+        help(),
+        about(),
+        ping(),
+        privacy(),
+        games(),
+        play(),
+        join(),
+        action(),
+        session(),
+        leave(),
+    ]
 }
 
 fn help_message(prefix: &str) -> String {
@@ -165,7 +210,10 @@ mod tests {
     #[test]
     fn help_lists_only_commands_registered_in_this_build() {
         let message = help_message(".");
-        for command in ["help", "about", "ping", "privacy", "games", "play", "join", "action", "session", "leave"] {
+        for command in [
+            "help", "about", "ping", "privacy", "games", "play", "join", "action", "session",
+            "leave",
+        ] {
             assert!(message.contains(&format!(".{command} / /{command}")));
         }
         assert!(message.contains("progress resets when the bot process restarts"));

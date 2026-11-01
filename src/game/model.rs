@@ -1,4 +1,3 @@
-use std::fmt;
 use super::engine::{GameAction, GameError, apply_action};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -27,7 +26,13 @@ impl GameKind {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct GameDefinition { pub id: &'static str, pub name: &'static str, pub description: &'static str, pub players: &'static str, pub controls: &'static str }
+pub struct GameDefinition {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub players: &'static str,
+    pub controls: &'static str,
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GamePhase { WaitingForPlayers, Active, Completed, Abandoned }
@@ -87,7 +92,9 @@ impl TicTacToeState {
     fn render(&self) -> String {
         let mut out = String::new();
         for (ri, row) in self.board.iter().enumerate() {
-            if ri > 0 { out.push_str("───┼───┼───\n"); }
+            if ri > 0 {
+                out.push_str("───┼───┼───\n");
+            }
             for (ci, cell) in row.iter().enumerate() {
                 if ci > 0 { out.push_str(" │ "); }
                 out.push(match cell { 0 => '·', 1 => 'X', _ => 'O' });
@@ -99,16 +106,22 @@ impl TicTacToeState {
     pub(super) fn winner(&self) -> Option<u8> {
         let b = &self.board;
         let lines = [
-            [b[0][0], b[0][1], b[0][2]], [b[1][0], b[1][1], b[1][2]],
-            [b[2][0], b[2][1], b[2][2]], [b[0][0], b[1][0], b[2][0]],
-            [b[0][1], b[1][1], b[2][1]], [b[0][2], b[1][2], b[2][2]],
-            [b[0][0], b[1][1], b[2][2]], [b[0][2], b[1][1], b[2][0]],
+            [b[0][0], b[0][1], b[0][2]],
+            [b[1][0], b[1][1], b[1][2]],
+            [b[2][0], b[2][1], b[2][2]],
+            [b[0][0], b[1][0], b[2][0]],
+            [b[0][1], b[1][1], b[2][1]],
+            [b[0][2], b[1][2], b[2][2]],
+            [b[0][0], b[1][1], b[2][2]],
+            [b[0][2], b[1][1], b[2][0]],
         ];
         lines.into_iter().find_map(|line| {
             (line[0] != 0 && line[0] == line[1] && line[1] == line[2]).then_some(line[0] - 1)
         })
     }
-    pub(super) fn is_full(&self) -> bool { self.board.iter().flatten().all(|cell| *cell != 0) }
+    pub(super) fn is_full(&self) -> bool {
+        self.board.iter().flatten().all(|cell| *cell != 0)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
@@ -123,8 +136,14 @@ impl ConnectFourState {
         let mut out = String::new();
         for row in (0..6).rev() {
             for col in 0..7 {
-                if col > 0 { out.push(' '); }
-                out.push(match self.columns[col][row] { 0 => '·', 1 => 'X', _ => 'O' });
+                if col > 0 {
+                    out.push(' ');
+                }
+                out.push(match self.columns[col][row] {
+                    0 => '·',
+                    1 => 'X',
+                    _ => 'O',
+                });
             }
             out.push('\n');
         }
@@ -135,7 +154,10 @@ impl ConnectFourState {
         let mut count = 0;
         let mut x = column + dc;
         let mut y = row + dr;
-        while (0..7).contains(&x) && (0..6).contains(&y) && self.columns[x as usize][y as usize] == marker {
+        while (0..7).contains(&x)
+            && (0..6).contains(&y)
+            && self.columns[x as usize][y as usize] == marker
+        {
             count += 1;
             x += dc;
             y += dr;
@@ -146,7 +168,8 @@ impl ConnectFourState {
         const DIRS: [(i8, i8); 4] = [(1, 0), (0, 1), (1, 1), (1, -1)];
         DIRS.into_iter().any(|(dc, dr)| {
             1 + self.count_from(column as i8, row as i8, dc, dr, marker)
-                + self.count_from(column as i8, row as i8, -dc, -dr, marker) >= 4
+                + self.count_from(column as i8, row as i8, -dc, -dr, marker)
+                >= 4
         })
     }
     pub(super) fn is_full(&self) -> bool { self.heights.iter().all(|height| *height == 6) }
@@ -164,7 +187,14 @@ pub(super) struct MemoryMatchState {
 
 impl Default for MemoryMatchState {
     fn default() -> Self {
-        Self { pairs: [0, 1, 2, 3, 0, 1, 2, 3], matched: 0, first_reveal: None, last_pair: None, attempts: 0, pairs_found: 0 }
+        Self {
+            pairs: [0, 1, 2, 3, 0, 1, 2, 3],
+            matched: 0,
+            first_reveal: None,
+            last_pair: None,
+            attempts: 0,
+            pairs_found: 0,
+        }
     }
 }
 
@@ -173,7 +203,9 @@ impl MemoryMatchState {
         let symbols = ['◆', '●', '▲', '■'];
         let mut out = String::new();
         for (index, pair) in self.pairs.iter().enumerate() {
-            if index > 0 && index % 4 == 0 { out.push('\n'); }
+            if index > 0 && index % 4 == 0 {
+                out.push('\n');
+            }
             let visible = self.matched & (1 << index) != 0
                 || self.first_reveal == Some(index as u8)
                 || self.last_pair.is_some_and(|(first, second)| first == index as u8 || second == index as u8);
@@ -185,14 +217,22 @@ impl MemoryMatchState {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(super) struct WordScrambleState { pub(super) answer: &'static str, pub(super) attempts_left: u8 }
+pub(super) struct WordScrambleState {
+    pub(super) answer: &'static str,
+    pub(super) attempts_left: u8,
+}
 
 impl Default for WordScrambleState {
     fn default() -> Self { Self { answer: "ORBIT", attempts_left: 3 } }
 }
 
 impl WordScrambleState {
-    fn render(&self) -> String { format!("Scrambled word: BITOR\nAttempts remaining: {}", self.attempts_left) }
+    fn render(&self) -> String {
+        format!(
+            "Scrambled word: BITOR\nAttempts remaining: {}",
+            self.attempts_left
+        )
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -210,7 +250,11 @@ pub struct GameSession {
 
 impl GameSession {
     pub fn create(id: String, game: GameKind, owner_id: String, guild_id: Option<String>) -> Self {
-        let phase = if game.requires_opponent() { GamePhase::WaitingForPlayers } else { GamePhase::Active };
+        let phase = if game.requires_opponent() {
+            GamePhase::WaitingForPlayers
+        } else {
+            GamePhase::Active
+        };
         Self {
             id, game, guild_id, players: vec![owner_id], phase, state: GameState::new(game),
             winner: None, action_count: 0, last_result: String::from("Session created."),
@@ -228,9 +272,17 @@ impl GameSession {
         Ok(())
     }
     pub fn act(&mut self, player_id: &str, action: GameAction) -> Result<(), GameError> {
-        if self.phase != GamePhase::Active { return Err(GameError::NotActive); }
-        let player_index = self.players.iter().position(|player| player == player_id).ok_or(GameError::NotParticipant)?;
-        if self.state.current_player_index() != player_index { return Err(GameError::NotYourTurn); }
+        if self.phase != GamePhase::Active {
+            return Err(GameError::NotActive);
+        }
+        let player_index = self
+            .players
+            .iter()
+            .position(|player| player == player_id)
+            .ok_or(GameError::NotParticipant)?;
+        if self.state.current_player_index() != player_index {
+            return Err(GameError::NotYourTurn);
+        }
         let result = apply_action(&mut self.state, player_index, action)?;
         self.action_count = self.action_count.saturating_add(1);
         self.last_result = result.message.to_owned();
@@ -243,37 +295,64 @@ impl GameSession {
         Ok(())
     }
     pub fn leave(&mut self, player_id: &str) -> Result<(), GameError> {
-        if !self.players.iter().any(|player| player == player_id) { return Err(GameError::NotParticipant); }
-        if matches!(self.phase, GamePhase::Completed | GamePhase::Abandoned) { return Err(GameError::AlreadyFinished); }
+        if !self.players.iter().any(|player| player == player_id) {
+            return Err(GameError::NotParticipant);
+        }
+        if matches!(self.phase, GamePhase::Completed | GamePhase::Abandoned) {
+            return Err(GameError::AlreadyFinished);
+        }
         self.phase = GamePhase::Abandoned;
         self.last_result = String::from("A participant ended the session.");
         Ok(())
     }
     pub fn snapshot(&self) -> SessionSnapshot {
         SessionSnapshot {
-            id: self.id.clone(), game: self.game, guild_id: self.guild_id.clone(),
-            players: self.players.clone(), phase: self.phase, winner: self.winner.clone(),
-            action_count: self.action_count, last_result: self.last_result.clone(),
-            board: self.state.render(), controls: self.game.definition().controls,
+            id: self.id.clone(),
+            game: self.game,
+            guild_id: self.guild_id.clone(),
+            players: self.players.clone(),
+            phase: self.phase,
+            winner: self.winner.clone(),
+            action_count: self.action_count,
+            last_result: self.last_result.clone(),
+            board: self.state.render(),
+            controls: self.game.definition().controls,
         }
     }
     pub fn is_visible_to(&self, player_id: &str, guild_id: Option<&str>) -> bool {
-        self.players.iter().any(|player| player == player_id) && self.guild_id.as_deref() == guild_id
+        self.players.iter().any(|player| player == player_id)
+            && self.guild_id.as_deref() == guild_id
     }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SessionSnapshot {
-    pub id: String, pub game: GameKind, pub guild_id: Option<String>, pub players: Vec<String>,
-    pub phase: GamePhase, pub winner: Option<String>, pub action_count: u32,
-    pub last_result: String, pub board: String, pub controls: &'static str,
+    pub id: String,
+    pub game: GameKind,
+    pub guild_id: Option<String>,
+    pub players: Vec<String>,
+    pub phase: GamePhase,
+    pub winner: Option<String>,
+    pub action_count: u32,
+    pub last_result: String,
+    pub board: String,
+    pub controls: &'static str,
 }
 
 impl SessionSnapshot {
     pub fn render(&self) -> String {
-        let players = self.players.iter().enumerate()
-            .map(|(i, player)| format!("P{}: {}", i + 1, player)).collect::<Vec<_>>().join(" · ");
-        let winner = self.winner.as_deref().map(|value| format!("\nWinner: {value}")).unwrap_or_default();
+        let players = self
+            .players
+            .iter()
+            .enumerate()
+            .map(|(i, player)| format!("P{}: {}", i + 1, player))
+            .collect::<Vec<_>>()
+            .join(" · ");
+        let winner = self
+            .winner
+            .as_deref()
+            .map(|value| format!("\nWinner: {value}"))
+            .unwrap_or_default();
         format!(
             "**{}** · {} · {}\nPlayers: {}{}\nActions: {}\n{}\n{}\n{}",
             self.game.definition().name, self.id, self.phase,
@@ -284,5 +363,7 @@ impl SessionSnapshot {
 }
 
 impl fmt::Display for GameKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { f.write_str(self.definition().id) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.definition().id)
+    }
 }
