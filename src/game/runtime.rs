@@ -1,5 +1,4 @@
 use std::fmt;
-
 use sqlx::{PgPool, Postgres, Transaction};
 
 use super::{
@@ -27,9 +26,14 @@ impl fmt::Display for GameRuntimeError {
         match self {
             Self::Domain(error) => fmt::Display::fmt(error, formatter),
             Self::Database(_) => formatter.write_str("The game store is temporarily unavailable."),
-            Self::Serialization(_) => formatter.write_str("The stored game state could not be read."),
+            Self::Serialization(_) => {
+                formatter.write_str("The stored game state could not be read.")
+            }
             Self::UnsupportedStateVersion(version) => {
-                write!(formatter, "Stored game state version {version} is not supported.")
+                write!(
+                    formatter,
+                    "Stored game state version {version} is not supported."
+                )
             }
         }
     }
@@ -47,17 +51,25 @@ impl std::error::Error for GameRuntimeError {
 }
 
 impl From<GameError> for GameRuntimeError {
-    fn from(error: GameError) -> Self { Self::Domain(error) }
+    fn from(error: GameError) -> Self {
+        Self::Domain(error)
+    }
 }
 impl From<sqlx::Error> for GameRuntimeError {
-    fn from(error: sqlx::Error) -> Self { Self::Database(error) }
+    fn from(error: sqlx::Error) -> Self {
+        Self::Database(error)
+    }
 }
 impl From<serde_json::Error> for GameRuntimeError {
-    fn from(error: serde_json::Error) -> Self { Self::Serialization(error) }
+    fn from(error: serde_json::Error) -> Self {
+        Self::Serialization(error)
+    }
 }
 
 impl GameRuntime {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 
     pub async fn start(
         &self,
@@ -74,12 +86,8 @@ impl GameRuntime {
             .fetch_one(&mut *transaction)
             .await?;
         let id = format!("MB-{sequence:06}");
-        let session = GameSession::create(
-            id,
-            game,
-            player_id.to_owned(),
-            guild_id.map(str::to_owned),
-        );
+        let session =
+            GameSession::create(id, game, player_id.to_owned(), guild_id.map(str::to_owned));
         let snapshot = session.snapshot();
         let state_json = serde_json::to_string(&session)?;
 
@@ -216,10 +224,7 @@ async fn persist_locked(
     Ok(())
 }
 
-fn decode_session(
-    version: i16,
-    state_json: &str,
-) -> Result<GameSession, GameRuntimeError> {
+fn decode_session(version: i16, state_json: &str) -> Result<GameSession, GameRuntimeError> {
     if version != 1 {
         return Err(GameRuntimeError::UnsupportedStateVersion(version));
     }
@@ -324,17 +329,25 @@ mod tests {
             .await
             .expect("join");
         assert!(matches!(
-            runtime.act(&lobby.id, "intruder", Some("guild-1"), "1,1").await,
-            Err(GameRuntimeError::Domain(GameError::NotYourTurn | GameError::NotParticipant))
+            runtime
+                .act(&lobby.id, "intruder", Some("guild-1"), "1,1")
+                .await,
+            Err(GameRuntimeError::Domain(
+                GameError::NotYourTurn | GameError::NotParticipant
+            ))
         ));
         assert!(matches!(
-            runtime.act(&lobby.id, "owner", Some("guild-2"), "1,1").await,
+            runtime
+                .act(&lobby.id, "owner", Some("guild-2"), "1,1")
+                .await,
             Err(GameRuntimeError::Domain(GameError::WrongGuild))
         ));
-        assert!(runtime
-            .act(&lobby.id, "owner", Some("guild-1"), "1,1")
-            .await
-            .is_ok());
+        assert!(
+            runtime
+                .act(&lobby.id, "owner", Some("guild-1"), "1,1")
+                .await
+                .is_ok()
+        );
     }
 
     #[tokio::test]
@@ -348,10 +361,12 @@ mod tests {
             .get(&session.id, "owner", None)
             .await
             .expect("read before");
-        assert!(runtime
-            .act(&session.id, "owner", None, "not-a-position")
-            .await
-            .is_err());
+        assert!(
+            runtime
+                .act(&session.id, "owner", None, "not-a-position")
+                .await
+                .is_err()
+        );
         let after = runtime
             .get(&session.id, "owner", None)
             .await
@@ -433,11 +448,9 @@ mod tests {
             .await
             .expect("expire the test session");
 
-        let database = Database::connect(
-            &std::env::var("DATABASE_URL").expect("DATABASE_URL"),
-        )
-        .await
-        .expect("database");
+        let database = Database::connect(&std::env::var("DATABASE_URL").expect("DATABASE_URL"))
+            .await
+            .expect("database");
         assert!(database.remove_expired_sessions().await.expect("cleanup") >= 1);
         assert!(matches!(
             runtime.get(&session.id, "owner", None).await,

@@ -102,7 +102,10 @@ mod tests {
     fn applies_documented_defaults() {
         let config = load(&[
             ("DISCORD_TOKEN", "test-token"),
-            ("DATABASE_URL", "postgres://moonbyte:secret@localhost/moonbyte"),
+            (
+                "DATABASE_URL",
+                "postgres://moonbyte:secret@localhost/moonbyte",
+            ),
         ])
         .expect("valid config");
 

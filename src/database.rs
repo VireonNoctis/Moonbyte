@@ -59,7 +59,11 @@ impl Database {
         .await?;
 
         if !already_applied {
-            for statement in INITIAL_MIGRATION.split(';').map(str::trim).filter(|sql| !sql.is_empty()) {
+            for statement in INITIAL_MIGRATION
+                .split(';')
+                .map(str::trim)
+                .filter(|sql| !sql.is_empty())
+            {
                 sqlx::query(statement).execute(&mut *transaction).await?;
             }
 

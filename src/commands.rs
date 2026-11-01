@@ -77,7 +77,8 @@ pub async fn play(
     let snapshot = ctx
         .data()
         .games()
-        .start(game, &player_id, guild_id.as_deref()).await?;
+        .start(game, &player_id, guild_id.as_deref())
+        .await?;
     let intro = if snapshot.phase == GamePhase::WaitingForPlayers {
         format!(
             "Lobby created. Another player in this server can join with .join {}.",
@@ -100,7 +101,8 @@ pub async fn join(
     let snapshot = ctx
         .data()
         .games()
-        .join(&session_id, &player_id, guild_id.as_deref()).await?;
+        .join(&session_id, &player_id, guild_id.as_deref())
+        .await?;
     ctx.say(format!("You joined the game.\n\n{}", snapshot.render()))
         .await?;
     Ok(())
@@ -118,7 +120,8 @@ pub async fn action(
     let snapshot = ctx
         .data()
         .games()
-        .act(&session_id, &player_id, guild_id.as_deref(), &input).await?;
+        .act(&session_id, &player_id, guild_id.as_deref(), &input)
+        .await?;
     ctx.say(snapshot.render()).await?;
     Ok(())
 }
@@ -133,7 +136,8 @@ pub async fn session(
     let snapshot = ctx
         .data()
         .games()
-        .get(&session_id, &player_id, guild_id.as_deref()).await?;
+        .get(&session_id, &player_id, guild_id.as_deref())
+        .await?;
     ctx.say(snapshot.render()).await?;
     Ok(())
 }
@@ -148,7 +152,8 @@ pub async fn leave(
     let snapshot = ctx
         .data()
         .games()
-        .leave(&session_id, &player_id, guild_id.as_deref()).await?;
+        .leave(&session_id, &player_id, guild_id.as_deref())
+        .await?;
     ctx.say(format!("Session ended.\n\n{}", snapshot.render()))
         .await?;
     Ok(())
