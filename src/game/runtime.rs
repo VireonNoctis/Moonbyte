@@ -1,4 +1,5 @@
 use std::fmt;
+
 use sqlx::{PgPool, Postgres, Transaction};
 
 use super::{
@@ -477,5 +478,4 @@ mod tests {
             Err(GameRuntimeError::UnsupportedStateVersion(42))
         ));
     }
-
 }

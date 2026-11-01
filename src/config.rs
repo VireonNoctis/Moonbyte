@@ -121,7 +121,10 @@ mod tests {
         let config = load(&[
             ("DISCORD_TOKEN", "test-token"),
             ("DEFAULT_PREFIX", "mb!"),
-            ("DATABASE_URL", "postgres://moonbyte:secret@localhost/moonbyte"),
+            (
+                "DATABASE_URL",
+                "postgres://moonbyte:secret@localhost/moonbyte",
+            ),
         ])
         .expect("valid config");
 
