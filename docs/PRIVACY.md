@@ -1,7 +1,7 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Intended product policy; the first Discord command runtime exists, but persistent profiles and privacy controls are not implemented.
+- Status: Intended product policy; the current runtime has process-local game sessions but no persistent profiles or privacy export/deletion controls.
 - Last updated: 2026-10-31.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. The current runtime can answer help, about, ping, and privacy-overview commands, but it does not connect to SQLite or persist profiles, sessions, or game records. The `.privacy` command does not yet provide a data inventory, export, or deletion flow. These limited facts describe this code slice only; the broader commitments must be verified before production release.
+These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime does not yet persist player profiles, inventories or a complete game-results history. The `.privacy` command does not provide a complete data inventory, export or deletion flow. These limited facts describe this code slice only; broader commitments must be verified before production release.
 
 ## 2. Data Moonbyte needs
 
@@ -40,6 +40,8 @@ The planned bot may process or store these categories when the relevant feature 
 | Security records | Limited identifiers and event metadata associated with an incident. | Protect the bot and investigate abuse. |
 
 Moonbyte should not require Lunar account linking, an email address, real name, or separate website account.
+
+The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. They are stored in PostgreSQL JSONB plus indexed metadata columns. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart and expire after 24 hours without a successful mutation.
 
 ## 3. Message and interaction content
 
@@ -141,7 +143,7 @@ Planned safeguards:
 
 **Moonbyte does not claim end-to-end encryption for bot data.** Discord and the Moonbyte process must be able to read and process commands, game actions, and session state to provide the service. The bot therefore cannot truthfully promise that only the user can decrypt all gameplay data.
 
-SQLite does not automatically mean that the database file is encrypted. This project has not selected or implemented database-level encryption. Operators may use full-disk or volume encryption, but that must be configured and verified separately. Do not advertise encryption at rest unless the actual host, database files, backups, and key management have been checked.
+PostgreSQL does not automatically prove that data is encrypted at rest. The project has not selected a production host or independently verified database-volume, backup and key-management encryption. TLS behavior depends on the configured connection URL and server. Do not advertise encryption at rest or end-to-end encryption unless the actual deployment, backups and key management have been checked.
 
 ## 10. Safety and community
 

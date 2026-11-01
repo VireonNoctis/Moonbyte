@@ -1,7 +1,7 @@
 # Moonbyte Roadmap
 
 - Status: In progress.
-- The initial Rust workspace, configuration bootstrap, Rust CI checks, and first Discord command runtime are implemented; SQLite and game/session runtime work remains.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence, versioned migration runner, row-locked state transitions and restart recovery are implemented. Player profiles, progression, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -31,35 +31,42 @@ Deliverables:
 - [x] Serenity client with Tokio runtime and Poise command framework.
 - [x] Default period prefix and global slash-command registration.
 - [x] Help, about, privacy overview, and minimal diagnostics (`ping`).
+- [x] Game catalogue and play/session commands for the first four games.
 - [x] Clear configuration and startup errors.
 - [ ] Structured logging and graceful shutdown.
-- SQLite connection, migration runner, and backup path.
+- [x] PostgreSQL connection pool, schema migration runner, durable game-session repository and JSONB state snapshots.
+- [ ] Production backup/restore automation and a rehearsed recovery procedure.
 - [x] CI for formatting, Clippy, compilation, and tests.
-- Next.js + React + TypeScript visual-library workspace.
-- Discord Activity integration spike using the Embedded App SDK, with browser fallback.
+- [x] Next.js + React + TypeScript visual-library workspace with responsive catalogue, search, filters, game cards, and command handoff.
+- [ ] Discord Activity integration spike using the Embedded App SDK, with browser fallback.
 
 Exit criteria:
 - Bot connects and reconnects without leaking tasks.
 - Prefix and slash smoke tests work in a development guild.
 - [x] Missing configuration fails clearly.
-- SQLite opens, migrates, and closes safely.
+- [x] PostgreSQL connects, applies versioned migrations, and closes its pool safely.
 - [x] CI is reproducible on a clean checkout.
 
 ## Phase 2 — Core game platform
 
 Deliverables:
-- Game identifiers, metadata, categories, and registry.
-- Shared session lifecycle and state-machine validation.
+- [x] Stable game identifiers and metadata for the four starter games.
+- [x] In-process session lifecycle with start, join, action, read and leave operations.
+- [x] State-machine validation for the first four playable game modules.
+- [x] Guild scope, participant membership and turn ownership checks.
+- [x] Durable session lifecycle and state-machine recovery with PostgreSQL.
 - Player identity and basic profiles.
-- Session creation, joining, leaving, completion, cancellation, and expiry.
-- Versioned session persistence and restart recovery.
-- Injectable clock and RNG interfaces for deterministic tests.
+- [x] In-memory session creation, joining, leaving and game completion.
+- [x] 24-hour inactivity expiry and one central cleanup task.
+- [x] Versioned PostgreSQL session persistence and runtime reconstruction.
+- [ ] Injectable clock and entropy interfaces for any future randomised game modules.
 - Discord interaction adapter with membership and permission checks.
 
 Exit criteria:
-- A test game runs end-to-end without embedding Discord types in its rules.
-- Invalid, duplicate, stale, and unauthorised actions are rejected.
-- A resumable session survives a bot restart.
+- [x] Four test games run through the domain/runtime API without embedding Discord types in their rules.
+- [x] Invalid, occupied, wrong-turn, non-member and cross-guild actions are rejected.
+- [ ] Stale interaction tokens, durable idempotency and expiry are implemented.
+- [ ] A resumable session survives a bot restart.
 - Independent sessions do not block each other.
 
 ## Phase 3 — Lunar game migration and quick-play catalogue
@@ -171,7 +178,7 @@ Deliverables:
 - Moderation, reporting, rate limits, and guild-scoped controls.
 
 Exit criteria:
-- Every balance mutation has an immutable ledger entry in the same SQLite transaction.
+- Every balance mutation has an immutable ledger entry in the same PostgreSQL transaction.
 - Double-spend, duplicate interaction, race, rollback, and self-trade tests pass.
 - No real-money value, wagering, paid random reward, or cash-out feature exists.
 - Profile export/deletion and guild-isolation tests cover the new records.
@@ -230,7 +237,7 @@ The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into
 - Every implemented node has a stable ID, owning domain, documented input/output contract and typed graph relationships.
 - Every cross-system edge is backed by a real service contract or explicitly labelled as a future proposal.
 - Rust remains the sole authority for state, outcomes, economy and permissions; the React Activity remains presentation-only.
-- SQLite migration, recovery, privacy export/deletion and guild-isolation tests cover every new persisted record.
+- PostgreSQL migration, session-recovery, privacy export/deletion and guild-isolation tests cover every new persisted record.
 - Bazaar transactions are atomic and deterministic; no stake, wager, paid chance or cash-value mechanism is introduced.
 - All new game sessions have visible rules, clear stop/pause controls, accessibility fallbacks and duplicate-action protection.
 - Documentation distinguishes proposed, in-development and implemented status at all times.
@@ -242,7 +249,7 @@ The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into
 
 The [World Loom](atlas/README.md) contains 400 proposals across 40 connected domains. The second layer adds ecological context, transport, settlement services, optional professions, creature habitats, evidence-led research, mystery networks, authored character continuity, construction, restoration, civic governance, content operations, safe declarative extensions, Discord Activity continuity, economy stewardship, security, privacy-preserving insights, localisation, onboarding and advanced accessibility.
 
-These systems must not become independent microservices. Shared contracts remain central: stable content IDs, typed domain events, narrow Rust application services, SQLite transactions, authenticated Discord identity, privacy-scoped view models and one versioned content pipeline.
+These systems must not become independent microservices. Shared contracts remain central: stable content IDs, typed domain events, narrow Rust application services, PostgreSQL transactions, authenticated Discord identity, privacy-scoped view models and one versioned content pipeline.
 
 ### Additional integration order
 
@@ -256,3 +263,10 @@ These systems must not become independent microservices. Shared contracts remain
 8. Add localisation and advanced accessibility gates before public content expands.
 
 Do not implement the full breadth at once. Release one connected, testable vertical slice at a time.
+
+
+## Current implementation increment — first playable runtime
+
+The current branch adds four real Rust game rules and a shared in-process session runtime. The feature adapter exposes games, play, join, action, session and leave commands in prefix and slash form. The implementation includes participant-only reads, originating-guild checks, turn validation, legal action parsing, win/draw detection and unit tests.
+
+This increment does **not** mark the persistent game platform complete. SQLite, migrations, versioned saves, restart recovery, cleanup/expiry, player identity and progression, privacy export/deletion, buttons and rich Activity views remain follow-up implementation gates.

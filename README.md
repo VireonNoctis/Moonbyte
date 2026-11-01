@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**Early Discord runtime implemented.** Moonbyte now connects through Tokio, Serenity, and Poise, with working `help`, `about`, `ping`, and privacy-overview commands in both prefix and slash form. The game engine, playable catalogue, SQLite persistence, profiles, and economy are still implementation work. Commands marked planned below are not available yet.
+**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes four Rust game modules: Tic-tac-toe, Connect Four, Memory Match and Word Scramble. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. Profiles, progression, Vaults, Bazaar and the live visual-game API remain implementation work.
 
 ## The vision
 
@@ -42,11 +42,11 @@ Every listed title is a candidate, not a promise that it already exists. The cat
 
 ## Visual Library
 
-The visual library is a dedicated **Next.js + React + TypeScript** frontend for browsing the catalogue, viewing detailed game cards, creating/joining richer lobbies, and displaying game interfaces that benefit from a full web UI.
+The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the four implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
 
-- In Discord, the frontend can be launched as a Discord Activity using the official Embedded App SDK, subject to application configuration and Activity requirements.
+- Discord Activity integration using the official Embedded App SDK remains planned and is not yet implemented.
 - A normal HTTPS browser fallback remains available for catalogue discovery and supported views.
-- The Rust/Tokio backend remains authoritative for game rules, session state, fairness, player progression, and SQLite persistence.
+- The Rust/Tokio backend remains authoritative for game rules, session state, fairness, player progression, and PostgreSQL persistence.
 - Standard bot commands still use Discord messages, embeds, buttons, select menus, and modals. React is not rendered inside an ordinary Discord embed.
 
 ## Command model
@@ -59,8 +59,12 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
 | `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
-| `.games` / `/games` | Planned | Browse and filter the game library. |
-| `.play <game>` / `/play` | Planned | Start a game or join a compatible session. |
+| `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
+| `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
+| `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
+| `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
+| `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
+| `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 | `.daily` / `/daily` | Planned | Open the optional daily challenge. |
 | `.profile` / `/profile` | Planned | View a player profile and statistics. |
 | `.collection` / `/collection` | Planned | View collected cards, discoveries, and items. |
@@ -77,7 +81,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The current `.privacy` command is an overview only. It does not provide a data inventory, export, or deletion flow. See [Command reference](docs/COMMANDS.md) for exact behavior and setup notes.
+The current `.privacy` command is an overview only. It does not provide a complete data inventory, export, or deletion flow. Active session state is persisted to PostgreSQL and can be recovered after a restart; inactive sessions expire after 24 hours. See [Command reference](docs/COMMANDS.md) and [Game Runtime](docs/GAME_RUNTIME.md) for exact behavior and limitations.
 
 ## Privacy is a product feature
 
@@ -90,7 +94,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - Profile export and deletion controls are part of the planned product, not an afterthought.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime does not connect to SQLite or persist player/game records. Data inventory, export, and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions to PostgreSQL, including their board state and participant/guild scope. It does not yet persist player profiles, inventories or a complete game-results history. Data inventory, export and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
 
 ## Technology decisions
 
@@ -100,13 +104,13 @@ Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The curr
 | Async runtime | **Tokio** | Efficient asynchronous Discord networking and concurrent session coordination. |
 | Discord API | **Serenity** | Gateway, HTTP, interactions, and sharding support. |
 | Command framework | **Poise** | Shared prefix and slash command definitions. |
-| Persistent storage | **SQLite** | Embedded database for the initial single-instance deployment. |
-| Database access | **SQLx with SQLite only** | Async database access and migration support. |
+| Persistent storage | **PostgreSQL** | Transactional database for session persistence, recovery and future player systems. |
+| Database access | **SQLx with PostgreSQL only** | Async connection pooling, migrations, JSONB state snapshots and transactional row locking. |
 | Visual library | **Next.js + React + TypeScript** | Catalogue browsing, responsive game UI, and Activity-capable views. |
 | Discord embedded UI | **Discord Embedded App SDK** | Connects the web frontend to Discord when running as an Activity. |
 | Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
 
-SQLite will use migrations, indexes, short transactions, and write-ahead logging where appropriate.
+PostgreSQL uses versioned migrations, indexes, bounded connection pooling, JSONB session snapshots, and short row-locked transactions. The supported deployment remains one bot process until cross-process interaction idempotency and load behavior are tested.
 
 ## Economy, Vaults and Bazaar
 
@@ -130,7 +134,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token and optional prefix/database-path settings without printing secret values, connects to Discord, registers global slash commands, and exposes the four commands documented in [Command reference](docs/COMMANDS.md). SQLite, migrations, game sessions, and player persistence are not connected yet.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, result history, progression and privacy export/deletion remain future work.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 

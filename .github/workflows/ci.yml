@@ -16,7 +16,23 @@ jobs:
   validate:
     name: Repository validation
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: moonbyte
+          POSTGRES_USER: moonbyte
+          POSTGRES_PASSWORD: moonbyte
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U moonbyte -d moonbyte"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgres://moonbyte:moonbyte@localhost:5432/moonbyte
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,10 +48,21 @@ jobs:
           toolchain: stable
           components: clippy, rustfmt
 
+      - name: Resolve and generate the committed dependency lock
+        run: cargo generate-lockfile
+
+      - name: Upload resolved Cargo.lock for commit
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: moonbyte-cargo-lock
+          path: Cargo.lock
+          if-no-files-found: error
+          retention-days: 3
+
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
 
-      - name: Test Rust workspace
+      - name: Test Rust workspace against PostgreSQL
         run: cargo test --workspace --locked
 
       - name: Check Rust code with Clippy

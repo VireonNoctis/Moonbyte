@@ -1,6 +1,6 @@
-use std::process::ExitCode;
+use std::{process::ExitCode, time::Duration};
 
-use moonbyte::{Data, Error, commands, config::Config};
+use moonbyte::{Data, Error, commands, config::Config, database::Database, game::GameRuntime};
 use poise::serenity_prelude as serenity;
 
 #[tokio::main]
@@ -16,7 +16,23 @@ async fn main() -> ExitCode {
 
 async fn run() -> Result<(), Error> {
     let config = Config::from_environment()?;
+    let database = Database::connect(config.database_url()).await?;
+    let games = GameRuntime::new(database.pool());
     let prefix = config.default_prefix().to_owned();
+
+    // One central cleanup task enforces the 24-hour inactive-session retention
+    // window without polling each individual session.
+    let cleanup_database = database.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(15 * 60));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        loop {
+            interval.tick().await;
+            if cleanup_database.remove_expired_sessions().await.is_err() {
+                eprintln!("Moonbyte: PostgreSQL expired-session cleanup failed.");
+            }
+        }
+    });
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -29,9 +45,10 @@ async fn run() -> Result<(), Error> {
         })
         .setup(move |ctx, _ready, framework| {
             let prefix = prefix.clone();
+            let games = games.clone();
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data::new(prefix))
+                Ok(Data::new(prefix, games))
             })
         })
         .build();

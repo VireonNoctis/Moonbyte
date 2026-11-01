@@ -69,7 +69,7 @@ Puzzle or story creator → validation → moderation → private playtest → a
 
 1. **One source of truth:** Rust owns game state, rules, permissions, reward eligibility, trades, fairness transcripts and persistence.
 2. **One presentation family:** Discord-native commands remain first-class; Next.js + React + TypeScript add rich views through the official Embedded App SDK where appropriate.
-3. **One initial database target:** SQLite with versioned migrations, short transactions and tested recovery.
+3. **One initial database target:** PostgreSQL with versioned migrations, JSONB snapshots, short transactions and tested recovery.
 4. **One honest economy:** Moonbits are earned-only and non-redeemable. No betting, staking, cash-out, paid random rewards or chance-based tradable assets.
 5. **One coherent identity:** original full-colour pixel art, common content IDs, shared world locations and consistent state labels.
 6. **One engagement ethic:** players return for meaningful play, social choice, mastery and new content—not loss aversion, artificial scarcity or compulsive loops.
@@ -95,7 +95,7 @@ The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`
 1. Shared session and player identity contract.
 2. Tavern home with the Wayfinder and Common Tables.
 3. One polished mini-game and one small cooperative puzzle.
-4. SQLite progress, idempotent rewards and a privacy-complete profile slice.
+4. PostgreSQL-backed progress, idempotent rewards and a privacy-complete profile slice.
 5. Personal Archive and a fixed-reward Puzzle Vault.
 6. Known-resource crafting with provenance.
 7. Fixed-price Bazaar listings only after ledger, escrow and double-spend tests.

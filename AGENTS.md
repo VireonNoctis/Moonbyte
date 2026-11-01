@@ -19,8 +19,8 @@ These instructions apply across this repository. More specific instructions in a
 - Command framework: Poise.
 - Visual library: Next.js + React + TypeScript.
 - Discord Activity integration: official Discord Embedded App SDK.
-- Initial persistent database: SQLite, accessed through SQLx configured for SQLite only.
-- PostgreSQL and ScyllaDB are explicitly excluded.
+- Persistent database: PostgreSQL, accessed through SQLx with the PostgreSQL driver only.
+- SQLite and ScyllaDB are explicitly excluded.
 - Do not introduce Redis, message brokers, separate services, or distributed storage without measured requirements and a new accepted decision.
 - Keep compatible stable dependency versions and commit Cargo.lock when the application workspace exists.
 
@@ -79,7 +79,7 @@ These instructions apply across this repository. More specific instructions in a
 - Unit-test deterministic game rules independently of Discord.
 - Test state machines, permissions, turn order, duplicate actions, deadlines, cancellation, and recovery.
 - Inject clocks and random-number sources in tests.
-- Test SQLite migrations and repository behavior using temporary databases.
+- Test PostgreSQL migrations, transactional repositories, expiry, and recovery against an isolated test database.
 - Test privacy export, profile deletion, guild isolation, and log redaction.
 - Add adapter tests for command parsing and authorization where practical.
 - Run rustfmt, Clippy, tests, and the full build once the Rust workspace exists.

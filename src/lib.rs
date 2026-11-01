@@ -1,7 +1,9 @@
-//! Moonbyte application foundation and Discord command modules.
+//! Moonbyte application foundation, game domain and Discord command modules.
 
 pub mod commands;
 pub mod config;
+pub mod database;
+pub mod game;
 
 use std::time::{Duration, Instant};
 
@@ -12,13 +14,15 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub struct Data {
     prefix: String,
     started_at: Instant,
+    games: game::GameRuntime,
 }
 
 impl Data {
-    pub fn new(prefix: String) -> Self {
+    pub fn new(prefix: String, games: game::GameRuntime) -> Self {
         Self {
             prefix,
             started_at: Instant::now(),
+            games,
         }
     }
 
@@ -28,5 +32,9 @@ impl Data {
 
     pub fn uptime(&self) -> Duration {
         self.started_at.elapsed()
+    }
+
+    pub fn games(&self) -> &game::GameRuntime {
+        &self.games
     }
 }
