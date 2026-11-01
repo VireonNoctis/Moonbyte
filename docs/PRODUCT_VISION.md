@@ -196,7 +196,7 @@ The Tavern is the social home and discovery surface. The Atlas gives every regio
 
 This is specified in the [Moonbyte World Loom master atlas](atlas/README.md): 200 individual proposals across 20 domains, five detailed volumes, a Mermaid map and a machine-readable graph with typed edges and an explanation for every cross-system relationship. The atlas is a product design proposal, not an implementation claim or a promise to ship every idea.
 
-The graph has one governing rule: systems exchange stable domain events and references rather than directly manipulating one another's private state. Rust remains authoritative for rules, sessions, permissions, progression, economy, fairness and SQLite persistence. Next.js + React + TypeScript remain presentation-only. The first release should prove a small connected vertical slice before expanding the catalogue.
+The graph has one governing rule: systems exchange stable domain events and references rather than directly manipulating one another's private state. Rust remains authoritative for rules, sessions, permissions, progression, economy, fairness and PostgreSQL persistence. Next.js + React + TypeScript remain presentation-only. The first release should prove a small connected vertical slice before expanding the catalogue.
 
 The expanded world remains subject to the existing boundaries: earned-only non-redeemable currency, no gambling or paid chance, transparent fixed rewards, original or rights-cleared content, privacy by design, accessible text fallbacks, and replayability without manipulative engagement mechanics.
 

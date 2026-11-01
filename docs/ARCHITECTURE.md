@@ -230,10 +230,10 @@ Do not distribute the system merely to appear enterprise-grade.
 The current playable slice is deliberately small and honest about its limits:
 
 - Rust domain rules implement Tic-tac-toe, Connect Four, Memory Match and Word Scramble.
-- An in-process session registry provides start, guild-scoped join, validated action, participant-only read and leave operations.
-- Poise exposes the same operations as prefix and slash commands.
-- The registry uses a short synchronous mutex only around in-memory operations. It performs no await, Discord request or disk I/O while holding the lock.
-- Session IDs are process-local references, not durable IDs or authentication credentials.
-- PostgreSQL session persistence, migrations, and restart recovery are implemented. Player profiles, achievements, inventory, economy, privacy export/deletion and the live web game API remain unimplemented.
+- `GameRuntime` uses PostgreSQL as the durable source of truth. Start, join, action, read, active-session listing and leave operations use the versioned JSONB session snapshot.
+- Mutations use short row-locked transactions; reads and active-session listings enforce participant and guild/DM scope.
+- Poise exposes the implemented operations as shared prefix and slash commands, including `.sessions` for the requester's 10 most recently updated active sessions in the current scope.
+- Session IDs are generated from a PostgreSQL sequence and survive process restarts. They are references, not authentication credentials.
+- Player profiles, achievements, inventory, economy, privacy export/deletion, durable interaction idempotency and the live web game API remain unimplemented.
 
 This is a functional vertical slice for domain rules, Discord commands, PostgreSQL persistence and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is player/profile persistence, end-to-end privacy workflows, idempotent Discord interaction handling and concurrent-session load tests.

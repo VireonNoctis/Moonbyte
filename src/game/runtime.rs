@@ -162,6 +162,37 @@ impl GameRuntime {
         Ok(session.snapshot())
     }
 
+    /// List the requester's non-expired sessions in the current guild or DM scope.
+    /// The JSONB participant predicate is repeated by a domain-level visibility check.
+    pub async fn list_active_for_player(
+        &self,
+        player_id: &str,
+        guild_id: Option<&str>,
+    ) -> Result<Vec<SessionSnapshot>, GameRuntimeError> {
+        let stored: Vec<(i16, String)> = sqlx::query_as(
+            "SELECT state_version, session_state::text FROM game_sessions \
+             WHERE expires_at > now() \
+               AND phase IN ('waiting for players', 'active') \
+               AND guild_id IS NOT DISTINCT FROM $2 \
+               AND (session_state -> 'players') @> jsonb_build_array($1::text) \
+             ORDER BY updated_at DESC, session_id ASC \
+             LIMIT 10",
+        )
+        .bind(player_id)
+        .bind(guild_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut snapshots = Vec::with_capacity(stored.len());
+        for (version, state_json) in stored {
+            let session = decode_session(version, &state_json)?;
+            if session.is_visible_to(player_id, guild_id) {
+                snapshots.push(session.snapshot());
+            }
+        }
+        Ok(snapshots)
+    }
+
     pub async fn leave(
         &self,
         session_id: &str,
@@ -316,6 +347,82 @@ mod tests {
             runtime.get(&session.id, "owner", Some("guild-1")).await,
             Err(GameRuntimeError::Domain(GameError::NotParticipant))
         ));
+    }
+
+    #[tokio::test]
+    async fn active_session_listing_is_participant_and_guild_scoped() {
+        let runtime = runtime().await;
+        let guild_session = runtime
+            .start(GameKind::TicTacToe, "listing-owner", Some("listing-guild"))
+            .await
+            .expect("guild lobby");
+        runtime
+            .start(
+                GameKind::WordScramble,
+                "listing-other",
+                Some("listing-guild"),
+            )
+            .await
+            .expect("another player's session");
+        runtime
+            .start(
+                GameKind::WordScramble,
+                "listing-owner",
+                Some("another-guild"),
+            )
+            .await
+            .expect("session in another guild");
+        let dm_session = runtime
+            .start(GameKind::MemoryMatch, "listing-owner", None)
+            .await
+            .expect("DM session");
+        let completed = runtime
+            .start(GameKind::WordScramble, "listing-owner", None)
+            .await
+            .expect("completed session");
+        runtime
+            .act(&completed.id, "listing-owner", None, "orbit")
+            .await
+            .expect("complete word scramble");
+        let abandoned = runtime
+            .start(GameKind::MemoryMatch, "listing-owner", None)
+            .await
+            .expect("abandoned session");
+        runtime
+            .leave(&abandoned.id, "listing-owner", None)
+            .await
+            .expect("end session");
+
+        let guild_sessions = runtime
+            .list_active_for_player("listing-owner", Some("listing-guild"))
+            .await
+            .expect("list guild sessions");
+        assert_eq!(guild_sessions.len(), 1);
+        assert_eq!(guild_sessions[0].id, guild_session.id);
+
+        let dm_sessions = runtime
+            .list_active_for_player("listing-owner", None)
+            .await
+            .expect("list DM sessions");
+        assert_eq!(dm_sessions.len(), 1);
+        assert_eq!(dm_sessions[0].id, dm_session.id);
+    }
+
+    #[tokio::test]
+    async fn active_session_listing_is_limited_to_ten_results() {
+        let runtime = runtime().await;
+        for _ in 0..12 {
+            runtime
+                .start(GameKind::MemoryMatch, "listing-limit", Some("listing-limit-guild"))
+                .await
+                .expect("create session");
+        }
+
+        let sessions = runtime
+            .list_active_for_player("listing-limit", Some("listing-limit-guild"))
+            .await
+            .expect("list sessions");
+        assert_eq!(sessions.len(), 10);
     }
 
     #[tokio::test]
