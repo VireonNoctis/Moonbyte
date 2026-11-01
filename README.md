@@ -42,9 +42,9 @@ Every listed title is a candidate, not a promise that it already exists. The cat
 
 ## Visual Library
 
-The visual library is a dedicated **Next.js + React + TypeScript** frontend for browsing the catalogue, viewing detailed game cards, creating/joining richer lobbies, and displaying game interfaces that benefit from a full web UI.
+The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the four implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
 
-- In Discord, the frontend can be launched as a Discord Activity using the official Embedded App SDK, subject to application configuration and Activity requirements.
+- Discord Activity integration using the official Embedded App SDK remains planned and is not yet implemented.
 - A normal HTTPS browser fallback remains available for catalogue discovery and supported views.
 - The Rust/Tokio backend remains authoritative for game rules, session state, fairness, player progression, and SQLite persistence.
 - Standard bot commands still use Discord messages, embeds, buttons, select menus, and modals. React is not rendered inside an ordinary Discord embed.

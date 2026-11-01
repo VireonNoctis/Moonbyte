@@ -1,6 +1,6 @@
 # Moonbyte Architecture
 
-- Status: Rust workspace, configuration bootstrap, Discord command adapters and a first transport-independent game/session slice implemented; SQLite persistence, reconnect recovery, Activity and visual rendering remain unimplemented.
+- Status: Rust workspace, configuration bootstrap, Discord command adapters, a first transport-independent game/session slice, and a presentation-only Next.js catalogue foundation implemented; SQLite persistence, reconnect recovery, live game API, Activity handshake, and authoritative visual rendering remain unimplemented.
 - Last updated: 2026-10-31.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
@@ -20,7 +20,7 @@ This document describes intended boundaries and constraints. It must be revised 
 | Logging and diagnostics | Structured tracing |
 | Art pipeline | Original pixel-art source assets and cached rendered output |
 
-Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter now exposes a game catalogue, start/join/action/session/leave operations in addition to help, about, ping and privacy. Four game modules run without Discord types. The current session registry is an in-process adapter; add SQLx and SQLite only with the first durable persistence slice, and keep game rules independent of Discord.
+Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter now exposes a game catalogue, start/join/action/session/leave operations in addition to help, about, ping and privacy. Four game modules run without Discord types. The current session registry is an in-process adapter; add SQLx and SQLite only with the first durable persistence slice, and keep game rules independent of Discord. `visual-library/` contains a real Next.js app for browsing only the implemented catalogue; it deliberately does not duplicate authoritative game logic or claim to host live sessions.
 
 References: [Poise documentation](https://docs.rs/poise/latest/poise/), [Serenity documentation](https://docs.rs/serenity/latest/serenity/), [Tokio documentation](https://docs.rs/tokio/latest/tokio/).
 

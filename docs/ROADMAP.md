@@ -36,8 +36,8 @@ Deliverables:
 - [ ] Structured logging and graceful shutdown.
 - SQLite connection, migration runner, and backup path.
 - [x] CI for formatting, Clippy, compilation, and tests.
-- Next.js + React + TypeScript visual-library workspace.
-- Discord Activity integration spike using the Embedded App SDK, with browser fallback.
+- [x] Next.js + React + TypeScript visual-library workspace with responsive catalogue, search, filters, game cards, and command handoff.
+- [ ] Discord Activity integration spike using the Embedded App SDK, with browser fallback.
 
 Exit criteria:
 - Bot connects and reconnects without leaking tasks.
