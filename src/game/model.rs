@@ -334,6 +334,10 @@ impl GameSession {
     pub fn game(&self) -> GameKind {
         self.game
     }
+
+    pub(super) fn id(&self) -> &str {
+        &self.id
+    }
     pub fn guild_id(&self) -> Option<&str> {
         self.guild_id.as_deref()
     }
