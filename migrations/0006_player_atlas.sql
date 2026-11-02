@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS player_atlas_discoveries (
-    discord_user_id TEXT NOT NULL CHECK (length(discord_user_id) BETWEEN 1 AND 32),
+    discord_user_id TEXT NOT NULL
+        REFERENCES player_profiles(discord_user_id) ON DELETE CASCADE,
     location_id TEXT NOT NULL CHECK (
         location_id IN (
             'lantern-square',
@@ -19,7 +20,8 @@ CREATE INDEX IF NOT EXISTS player_atlas_discoveries_history_idx
     ON player_atlas_discoveries (discord_user_id, discovered_at ASC, location_id);
 
 CREATE TABLE IF NOT EXISTS player_world_state (
-    discord_user_id TEXT PRIMARY KEY CHECK (length(discord_user_id) BETWEEN 1 AND 32),
+    discord_user_id TEXT PRIMARY KEY
+        REFERENCES player_profiles(discord_user_id) ON DELETE CASCADE,
     current_location_id TEXT NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT player_world_state_current_discovery_fk
