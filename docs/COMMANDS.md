@@ -1,6 +1,6 @@
 # Moonbyte Command Reference
 
-- Status: Four playable games, PostgreSQL sessions, player profiles and the first privacy-control slice are implemented.
+- Status: Four playable games, PostgreSQL sessions, player profiles, game results/statistics, earned-only Moonbits and the initial Tavern Wayfinder are implemented.
 - Framework: Poise on Serenity.
 - Default prefix: period; override with DEFAULT_PREFIX.
 
@@ -41,12 +41,12 @@ All commands use shared Rust handlers for prefix and slash invocation. The help 
 
 ## Privacy controls and scope
 
-1. Run `.privacy_data` to see whether a profile exists and how many session records currently reference the requester.
-2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The export contains the player's profile, session metadata, completed-result metadata and aggregate per-game statistics, but not other participants' IDs or raw message content.
+1. Run `.privacy_data` to inspect the profile, session, result, per-game statistic, wallet and ledger records currently associated with the requester.
+2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The version 3 export contains the player's profile, session metadata, completed-result metadata, aggregate per-game statistics, wallet balance and wallet ledger entries, but not other participants' IDs or raw message content.
 3. Run `.privacy_delete` to read the exact deletion scope. Nothing is deleted at this step.
 4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile, statistic rows, Moonbits wallet and ledger entries, plus every stored game-session snapshot and linked result containing that Discord ID.
 
-Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The deletion result reports the actual number of session rows removed and whether a profile row existed.
+Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The private deletion receipt reports the counts of session, result, statistic, wallet and ledger rows removed.
 
 This covers the current Moonbyte PostgreSQL player-owned schema only: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_wallets` and `wallet_ledger_entries`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
 
