@@ -249,9 +249,9 @@ impl ProfileStore {
         .bind(quiet_mode)
         .execute(&self.pool)
         .await?;
-        self.get(player_id).await?.ok_or_else(|| {
-            ProfileError::Database(sqlx::Error::RowNotFound)
-        })
+        self.get(player_id)
+            .await?
+            .ok_or_else(|| ProfileError::Database(sqlx::Error::RowNotFound))
     }
 
     pub async fn inventory(&self, player_id: &str) -> Result<ProfileInventory, ProfileError> {
