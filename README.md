@@ -91,7 +91,6 @@ The Wayfinder currently exposes six live destinations: Common Tables (`.games`),
 | `.quests` / `/quests` | Planned | Browse active and available quests. |
 | `.party` / `/party` | Planned | Create, invite or manage a party. |
 | `.leaderboard` / `/leaderboard` | Planned | View supported rankings. |
-| `.achievements` / `/achievements` | Planned | Browse earned achievements. |
 | `.stop` / `/stop` | Planned | Leave or end an eligible active session. |
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
@@ -137,7 +136,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 - [Product vision](docs/PRODUCT_VISION.md) — product goals, engagement principles, systems, safety and non-goals.
 - [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
-- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, Moonbits and privacy coverage.
+- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, achievements, Moonbits and privacy coverage.\n- [Atlas starter map](docs/ATLAS.md) — the five authored locations, direct-route travel and personal discovery contract.
 - [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the implemented first-completion ledger and planned Vault/trading boundaries.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
@@ -149,7 +148,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, the first-completion Moonbits ledger, private data inventory/export/deletion, and Tavern Wayfinder are implemented with unit and PostgreSQL integration coverage. The custom-emoji registry has paste-in ID slots and Unicode fallbacks. Achievements, progression, inventory, spending, full Hearth behavior, Vaults and Bazaar remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, the first-completion Moonbits ledger, the six-destination Tavern Wayfinder, the five-location Atlas, private data inventory/export/deletion and the custom-emoji registry are implemented with unit and PostgreSQL integration coverage. The Atlas only allows direct-route travel and issues no travel rewards. Inventory, quests, Expeditions, authored story, spending, full Hearth behavior, Vaults and Bazaar remain future work.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
