@@ -82,9 +82,11 @@ The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`
 
 ## Implemented vertical-slice links
 
-The first home-navigation slice is implemented in [Tavern and Wayfinder](../TAVERN.md). The `.tavern` and `/tavern` commands route only to the current live Common Tables, player profile and game-record views. This is an entry point, not the full Hearth domain: parties, hosted tables, NPCs, guild rooms, rumours, Vaults, the Atlas, crafting and the Bazaar remain unimplemented.
+The initial Tavern home and Wayfinder are implemented in [Tavern and Wayfinder](../TAVERN.md). Its live destinations are the Common Tables, player profile, game record, earned-only ledger, achievement gallery and initial Atlas.
 
-The player foundation and completed-game statistics are described in [Player Profiles](../PLAYER_PROFILES.md). The World Loom graph stays a design contract until a specific node has shipped with ownership, persistence, permissions, privacy handling and acceptance tests.
+The Atlas first slice is implemented in [Atlas starter map](../ATLAS.md): five authored locations, reciprocal direct-route connections, personal current-location state, persistent discoveries and bounded travel commands. This does **not** mark the full Atlas domain as complete. The remaining Atlas concepts in Volume II, along with Expeditions, Quests, community maps and narrative routes, remain proposals.
+
+The player foundation, completed-game statistics, achievements and Moonbits ledger are described in [Player Profiles](../PLAYER_PROFILES.md). The World Loom graph remains a design contract for every node that has not shipped with its own ownership, persistence, permissions, privacy handling and acceptance tests.
 
 ## How to use this atlas
 
