@@ -817,7 +817,7 @@ mod postgres_tests {
         assert!(export.contains("\"wallet_balance\": 10"));
         assert!(export.contains("first_game_completion"));
         assert!(export.contains("current Atlas location"));
-        assert!(export.contains("atlas-discoveries"));
+        assert!(export.contains("atlas_discoveries"));
         assert!(export.contains("mosslight-grove"));
         assert!(export.contains("\"format_version\": 5"));
         assert!(export.contains(&completed_session.id));
