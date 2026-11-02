@@ -67,7 +67,26 @@ pub struct PlayerProfile {
 pub struct ProfileInventory {
     pub profile_record: bool,
     pub game_session_records: i64,
+    pub game_result_records: i64,
+    pub game_stat_rows: i64,
     pub session_retention: &'static str,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PlayerGameStat {
+    pub game_id: String,
+    pub games_played: i64,
+    pub games_won: i64,
+    pub draws: i64,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct PlayerDeletion {
+    pub sessions_removed: u64,
+    pub results_removed: u64,
+    pub stat_rows_removed: u64,
+    pub profile_removed: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -81,13 +100,24 @@ struct ExportedSession {
     expires_at: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedResult {
+    session_id: String,
+    game_id: String,
+    outcome: String,
+    action_count: i64,
+    completed_at: String,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 2],
+    data_categories: [&'static str; 4],
     profile: Option<PlayerProfile>,
     game_sessions: Vec<ExportedSession>,
+    game_results: Vec<ExportedResult>,
+    game_statistics: Vec<PlayerGameStat>,
     limitations: [&'static str; 2],
 }
 
@@ -209,11 +239,52 @@ impl ProfileStore {
         .fetch_one(&self.pool)
         .await?;
 
+        let game_result_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM game_results \
+             WHERE player_ids @> jsonb_build_array($1::text)",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let game_stat_rows: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_game_stats WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+
         Ok(ProfileInventory {
             profile_record,
             game_session_records,
-            session_retention: "Sessions expire 24 hours after their last successful action; cleanup runs every 15 minutes.",
+            game_result_records,
+            game_stat_rows,
+            session_retention: "Sessions and their result records expire 24 hours after the last successful action; cleanup runs every 15 minutes.",
         })
+    }
+
+    pub async fn game_stats(
+        &self,
+        player_id: &str,
+    ) -> Result<Vec<PlayerGameStat>, ProfileError> {
+        let rows = sqlx::query_as::<_, (String, i64, i64, i64, String)>(
+            "SELECT game_id, games_played, games_won, draws, updated_at::text \
+             FROM player_game_stats WHERE discord_user_id = $1 \
+             ORDER BY games_played DESC, game_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|(game_id, games_played, games_won, draws, updated_at)| PlayerGameStat {
+                game_id,
+                games_played,
+                games_won,
+                draws,
+                updated_at,
+            })
+            .collect())
     }
 
     pub async fn export_json(&self, player_id: &str) -> Result<String, ProfileError> {
@@ -227,6 +298,26 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_all(&self.pool)
         .await?;
+
+        let result_rows = sqlx::query_as::<_, (String, String, String, i64, String)>(
+            "SELECT session_id, game_id, outcome, action_count, completed_at::text \
+             FROM game_results WHERE player_ids @> jsonb_build_array($1::text) \
+             ORDER BY completed_at DESC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?;
+        let game_results = result_rows
+            .into_iter()
+            .map(|(session_id, game_id, outcome, action_count, completed_at)| ExportedResult {
+                session_id,
+                game_id,
+                outcome,
+                action_count,
+                completed_at,
+            })
+            .collect();
+        let game_statistics = self.game_stats(player_id).await?;
 
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
             .fetch_one(&self.pool)
@@ -248,11 +339,18 @@ impl ProfileStore {
             .collect();
 
         let export = PlayerExport {
-            format_version: 1,
+            format_version: 2,
             exported_at,
-            data_categories: ["player profile and preferences", "game session metadata"],
+            data_categories: [
+                "player profile and preferences",
+                "game session metadata",
+                "completed game results",
+                "per-game statistics",
+            ],
             profile,
             game_sessions,
+            game_results,
+            game_statistics,
             limitations: [
                 "Discord independently retains interactions under its own policies.",
                 "This export includes records in the current Moonbyte PostgreSQL schema only.",
@@ -261,11 +359,21 @@ impl ProfileStore {
         Ok(serde_json::to_string_pretty(&export)?)
     }
 
-    /// Deletes the profile and every stored session snapshot containing this player.
-    /// Ending shared sessions is intentional: the snapshot contains every participant ID.
-    pub async fn delete_account(&self, player_id: &str) -> Result<(u64, bool), ProfileError> {
+    /// Deletes the profile, session snapshots, cascading results and aggregate stats.
+    /// Ending shared sessions is intentional: each snapshot contains every participant ID.
+    pub async fn delete_account(
+        &self,
+        player_id: &str,
+    ) -> Result<PlayerDeletion, ProfileError> {
         let mut transaction = self.pool.begin().await?;
-        let sessions = sqlx::query(
+        let results_removed: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM game_results \
+             WHERE player_ids @> jsonb_build_array($1::text)",
+        )
+        .bind(player_id)
+        .fetch_one(&mut *transaction)
+        .await?;
+        let sessions_removed = sqlx::query(
             "DELETE FROM game_sessions \
              WHERE (session_state -> 'players') @> jsonb_build_array($1::text)",
         )
@@ -273,14 +381,28 @@ impl ProfileStore {
         .execute(&mut *transaction)
         .await?
         .rows_affected();
-        let profile = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
-            .bind(player_id)
-            .execute(&mut *transaction)
-            .await?
-            .rows_affected()
+        let stat_rows_removed = sqlx::query(
+            "DELETE FROM player_game_stats WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let profile_removed = sqlx::query(
+            "DELETE FROM player_profiles WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected()
             > 0;
         transaction.commit().await?;
-        Ok((sessions, profile))
+        Ok(PlayerDeletion {
+            sessions_removed,
+            results_removed: results_removed as u64,
+            stat_rows_removed,
+            profile_removed,
+        })
     }
 }
 
@@ -378,21 +500,37 @@ mod postgres_tests {
             .start(GameKind::MemoryMatch, &player_id, None)
             .await
             .expect("create linked session");
+        let completed_session = runtime
+            .start(GameKind::WordScramble, &player_id, None)
+            .await
+            .expect("create result session");
+        runtime
+            .act(&completed_session.id, &player_id, None, "orbit")
+            .await
+            .expect("complete result session");
+        let stats = store.game_stats(&player_id).await.expect("read stats");
+        assert_eq!(stats.len(), 1);
+        assert_eq!(stats[0].games_played, 1);
+        assert_eq!(stats[0].games_won, 1);
         let inventory = store.inventory(&player_id).await.expect("read inventory");
         assert!(inventory.profile_record);
-        assert_eq!(inventory.game_session_records, 1);
+        assert_eq!(inventory.game_session_records, 2);
 
         let export = store.export_json(&player_id).await.expect("export data");
         assert!(export.contains("Moonbyte Pilot"));
         assert!(export.contains(&session.id));
-        assert!(export.contains("game session metadata"));
+        assert!(export.contains("completed game results"));
+        assert!(export.contains("per-game statistics"));
+        assert!(export.contains(&completed_session.id));
 
-        let (sessions_removed, profile_removed) = store
+        let deletion = store
             .delete_account(&player_id)
             .await
             .expect("delete player records");
-        assert_eq!(sessions_removed, 1);
-        assert!(profile_removed);
+        assert_eq!(deletion.sessions_removed, 2);
+        assert_eq!(deletion.results_removed, 1);
+        assert_eq!(deletion.stat_rows_removed, 1);
+        assert!(deletion.profile_removed);
         assert!(store.get(&player_id).await.expect("read deleted profile").is_none());
         assert_eq!(
             store.inventory(&player_id).await.expect("read deleted inventory").game_session_records,
