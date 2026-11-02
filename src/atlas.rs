@@ -275,10 +275,7 @@ async fn ensure_starting_point(
 }
 
 fn normalise_reference(value: &str) -> String {
-    value
-        .trim()
-        .to_ascii_lowercase()
-        .replace([' ', '_'], "-")
+    value.trim().to_ascii_lowercase().replace([' ', '_'], "-")
 }
 
 pub fn find_location(value: &str) -> Option<AtlasLocation> {
