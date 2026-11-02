@@ -109,7 +109,14 @@ mod tests {
         assert_eq!(AVAILABLE_DESTINATIONS.len(), 6);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
-            ["games", "profile", "stats", "wallet", "achievements", "atlas"]
+            [
+                "games",
+                "profile",
+                "stats",
+                "wallet",
+                "achievements",
+                "atlas"
+            ]
         );
 
         let home = render(".");
