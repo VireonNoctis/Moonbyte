@@ -91,27 +91,28 @@ These are implementation targets. Before launch, maintainers must configure and 
 
 ## 7. Privacy command and user controls
 
-The implemented privacy commands are:
+The current prefix and slash commands provide:
 
 | Command | Purpose |
 | --- | --- |
-| .privacy | Read a short privacy summary and open controls. |
-| .privacy data | Show categories of data currently associated with the requesting user. |
-| .privacy export | Request a copy of the user's stored profile and game data. |
-| .privacy delete | Begin explicit, confirmed deletion of the user's Moonbyte profile data. |
-| .privacy server | Let an authorised server administrator inspect guild-specific configuration and deletion controls. |
+| `.privacy` | Read a short privacy summary. |
+| `.privacy_data` | Privately inspect the requester’s current profile/session record counts. |
+| `.privacy_export` | Receive a private JSON copy of the profile and session metadata in the current schema. |
+| `.privacy_delete` | Read the deletion scope and confirmation instructions. |
+| `.privacy_delete DELETE` | Confirm deletion of the profile and all session snapshots containing the requester. |
 
-The commands are shared prefix/slash handlers. When invoked in a guild, profile details, inventories and exports are sent by direct message; they are never posted to the public channel. If DM delivery fails, the command returns an error rather than exposing private data. The JSON export describes the current schema only and excludes other participants' Discord IDs and raw message content.
+When invoked in a server, profile details, inventories and exports are sent by direct message; they are never posted to the public channel. The export describes the current schema only and excludes other participants’ Discord IDs and raw message content. If DM delivery fails, the command returns an error rather than exposing private data.
 
 ### Deletion flow
 
-1. Explain that the profile and all session snapshots containing the requester's Discord ID will be removed.
+1. Explain that the profile and every session snapshot containing the requester’s Discord ID will be removed.
 2. Require the requester to run the explicit second command `.privacy_delete DELETE`.
-3. Use the authenticated Discord command author as the account owner; no arbitrary target user ID is accepted.
-4. Delete matching `game_sessions` rows and the `player_profiles` row in one PostgreSQL transaction.
-5. Commit before reporting the actual deleted row counts.
+3. Use the authenticated Discord command author as the account owner; arbitrary target IDs are not accepted.
+4. Establish the private receipt channel before changing records when deletion is invoked in a server.
+5. Delete matching `game_sessions` rows and the `player_profiles` row in one PostgreSQL transaction.
+6. Commit before reporting the actual deleted row counts.
 
-The current implementation deletes records only from the two tables that presently contain player-owned data: `player_profiles` and `game_sessions`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord's own records.
+The current implementation covers the two tables that presently contain player-owned data: `player_profiles` and `game_sessions`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord’s own records.
 
 ## 8. Guild privacy
 
