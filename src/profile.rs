@@ -222,9 +222,9 @@ impl ProfileStore {
         .bind(bio)
         .execute(&self.pool)
         .await?;
-        self.get(player_id).await?.ok_or_else(|| {
-            ProfileError::Database(sqlx::Error::RowNotFound)
-        })
+        self.get(player_id)
+            .await?
+            .ok_or_else(|| ProfileError::Database(sqlx::Error::RowNotFound))
     }
 
     pub async fn update_preferences(
