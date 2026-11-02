@@ -30,7 +30,7 @@ Deliverables:
 - [x] Configuration loading and validation from environment variables.
 - [x] Serenity client with Tokio runtime and Poise command framework.
 - [x] Default period prefix and global slash-command registration.
-- [x] Help, about, privacy overview, and minimal diagnostics (`ping`).
+- [x] Help, about, privacy overview, and minimal diagnostics (`ping`).\n- [x] Initial Tavern home and Wayfinder command, linked only to implemented game, profile and statistics destinations.\n- [x] Central custom-emoji registry with safe Unicode fallbacks for unconfigured upload IDs.
 - [x] Game catalogue and play/session commands for the first four games.
 - [x] Clear configuration and startup errors.
 - [ ] Structured logging and graceful shutdown.
@@ -265,8 +265,8 @@ These systems must not become independent microservices. Shared contracts remain
 Do not implement the full breadth at once. Release one connected, testable vertical slice at a time.
 
 
-## Current implementation increment — player profiles and game statistics
+## Current implementation increment — player foundation and Tavern Wayfinder
 
-The implementation combines four Rust game rules, a PostgreSQL-backed session runtime and the player foundation. The feature adapter exposes game/session commands, profile editing, profile preferences, private data inventory/export/deletion and a private statistics view. On completion, a unique result row and per-player/per-game aggregate counters are written in the same transaction as the final session snapshot. Repeated actions cannot award a completion twice. Profile deletion locks and removes matching sessions, linked results, aggregate stats and the profile in one transaction.
+The implementation combines four Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics and private data controls. The first Tavern home is now available through `.tavern` and `/tavern`; its Wayfinder routes to the implemented Common Tables, player profile and Chronicle only. The destination list is driven by one typed registry and uses the central custom-emoji module with safe fallbacks. No broader Tavern, Atlas, party, Vault or Bazaar behavior is implied by this navigation slice.
 
-This increment does **not** mark the full player platform complete. Achievements, inventory, quests, progression, additional games, the Tavern/Atlas/Vault/Bazaar systems, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
+This increment does **not** mark the full player platform complete. Tavern tables/parties/NPCs, Atlas discoveries, Expeditions, quests, Vaults, Moonbits ledger, inventory, crafting, Bazaar escrow/trading, additional games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
