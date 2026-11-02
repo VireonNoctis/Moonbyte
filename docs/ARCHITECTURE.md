@@ -1,7 +1,7 @@
 # Moonbyte Architecture
 
 - Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions and recovery, player profiles/preferences, atomic completed-game results, per-game aggregate statistics, earned-only Moonbits wallet/ledger, privacy inventory/export/deletion, initial Tavern Wayfinder and a central custom-emoji registry are implemented. The Tavern links only to live games, profile, records and wallet commands. Spending/transfers, inventory, Vaults, Bazaar, broader Hearth systems, live game API, Activity handshake and authoritative visual rendering remain unimplemented.
-- Last updated: 2026-10-31.
+- Last updated: 2026-11-02.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
 
