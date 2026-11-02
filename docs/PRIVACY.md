@@ -1,7 +1,7 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Intended product policy; active sessions are persisted in PostgreSQL, but persistent player profiles and privacy export/deletion controls are not implemented.
+- Status: Current runtime includes PostgreSQL-backed player profiles, preferences, data inventory, private JSON export and confirmed profile/session deletion. Other product systems remain planned.
 - Last updated: 2026-10-31.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -26,12 +26,12 @@ These are requirements for implementation. The current runtime stores active ses
 
 ## 2. Data Moonbyte needs
 
-The planned bot may process or store these categories when the relevant feature is enabled.
+The bot may process or store these categories when the relevant feature is enabled. The current runtime stores only the profile and session fields described below; the remaining categories are future design targets.
 
 | Data category | Examples | Why it is needed |
 | --- | --- | --- |
 | Discord identifiers | User ID; guild ID; channel or message ID for an active game where necessary. | Identify the player, scope settings, and update an active game message. |
-| Player profile | Display preferences, chosen emblem, accessibility preferences. | Render the chosen experience. |
+| Player profile | Discord user ID, player-selected display name, optional short bio, visibility and two preference flags. | Render and configure the player's profile. |
 | Game state | Current turn, board state, action data needed to resume, participants, quest checkpoint. | Run, recover, and fairly resolve games. |
 | Game results | Game type, result, completion time, personal best, statistics. | Show requested records, achievements, and leaderboards. |
 | Progress and collections | Earned experience, achievements, items, quests, cosmetic unlocks. | Provide persistent progression features. |
@@ -41,7 +41,7 @@ The planned bot may process or store these categories when the relevant feature 
 
 Moonbyte should not require Lunar account linking, an email address, real name, or separate website account.
 
-The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. They are stored in PostgreSQL JSONB plus indexed metadata columns. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart and expire after 24 hours without a successful mutation.
+The currently persisted profile fields are the Discord user ID, display name, optional bio, visibility, statistics preference and quiet-mode preference. Profile visibility defaults to private. The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. Profiles are stored in `player_profiles`; sessions are stored in PostgreSQL JSONB plus indexed metadata columns. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart and expire after 24 hours without a successful mutation. Statistics and quiet-mode preferences are stored, but their corresponding public statistics and optional notification surfaces are not implemented.
 
 ## 3. Message and interaction content
 
@@ -91,7 +91,7 @@ These are implementation targets. Before launch, maintainers must configure and 
 
 ## 7. Privacy command and user controls
 
-The planned .privacy prefix command and /privacy slash command provide:
+The implemented privacy commands are:
 
 | Command | Purpose |
 | --- | --- |
@@ -101,20 +101,17 @@ The planned .privacy prefix command and /privacy slash command provide:
 | .privacy delete | Begin explicit, confirmed deletion of the user's Moonbyte profile data. |
 | .privacy server | Let an authorised server administrator inspect guild-specific configuration and deletion controls. |
 
-Slash-command subcommands should mirror these actions. User exports must be private and delivered only to the requesting user. If private delivery fails, the bot must not post the export publicly; it should explain the failure and allow a safe retry.
+The commands are shared prefix/slash handlers. When invoked in a guild, profile details, inventories and exports are sent by direct message; they are never posted to the public channel. If DM delivery fails, the command returns an error rather than exposing private data. The JSON export describes the current schema only and excludes other participants' Discord IDs and raw message content.
 
 ### Deletion flow
 
-1. Explain exactly what will be removed and that Moonbyte cannot delete records held by Discord or other server members.
-2. Require a separate confirmation interaction.
-3. Re-check that the requester owns the profile.
-4. End or detach active sessions safely; do not corrupt other players' sessions.
-5. Delete or anonymise all user-owned records across profiles, results, achievements, inventory, quest progress, and indexes.
-6. Remove user identifiers from retained aggregates where practical and permitted.
-7. Record only minimal operational evidence that the deletion operation completed, without retaining deleted profile contents.
-8. Report whether the database operation completed or failed. Never claim success before it is confirmed.
+1. Explain that the profile and all session snapshots containing the requester's Discord ID will be removed.
+2. Require the requester to run the explicit second command `.privacy_delete DELETE`.
+3. Use the authenticated Discord command author as the account owner; no arbitrary target user ID is accepted.
+4. Delete matching `game_sessions` rows and the `player_profiles` row in one PostgreSQL transaction.
+5. Commit before reporting the actual deleted row counts.
 
-The user may still appear in Discord messages or records retained by Discord or other server members. Moonbyte cannot delete Discord's own records.
+The current implementation deletes records only from the two tables that presently contain player-owned data: `player_profiles` and `game_sessions`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord's own records.
 
 ## 8. Guild privacy
 
@@ -127,7 +124,7 @@ The user may still appear in Discord messages or records retained by Discord or 
 
 ## 9. Security protections
 
-Planned safeguards:
+Current and required safeguards:
 - Keep bot credentials in environment variables or a deployment secret manager.
 - Never commit real tokens or production database files.
 - Restrict database and backup filesystem permissions.
@@ -167,4 +164,4 @@ Before public release, verify:
 - Retention and backup rotation run and are observable.
 - Hosting providers and additional processors are documented.
 - Database and backup access controls are verified.
-- Public privacy claims match the deployed implementation.
+- Public privacy claims match the deployed implementation.\n- Profile export and deletion cover every currently persisted player table.
