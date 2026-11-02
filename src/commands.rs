@@ -69,7 +69,11 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
         inventory.game_session_records,
         inventory.game_result_records,
         inventory.game_stat_rows,
-        if inventory.wallet_record { "present" } else { "not created" },
+        if inventory.wallet_record {
+            "present"
+        } else {
+            "not created"
+        },
         inventory.wallet_ledger_records,
         inventory.session_retention
     );
@@ -145,7 +149,11 @@ pub async fn privacy_delete(
         deletion.sessions_removed,
         deletion.results_removed,
         deletion.stat_rows_removed,
-        if deletion.wallet_removed { "yes" } else { "no wallet record existed" },
+        if deletion.wallet_removed {
+            "yes"
+        } else {
+            "no wallet record existed"
+        },
         deletion.wallet_ledger_records_removed
     );
     if let Some(dm) = private_channel {
@@ -283,7 +291,7 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
          Repeat completions do not grant more. Use `.wallet` to view your balance.",
         crate::wallet::FIRST_COMPLETION_REWARD
     ))
-        .await?;
+    .await?;
     Ok(())
 }
 
