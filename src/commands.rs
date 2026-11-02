@@ -547,7 +547,9 @@ Moonbyte processes Discord interactions to run commands and games. PostgreSQL st
 player profiles, session snapshots, completed-game result metadata, per-game aggregate \
 statistics and earned-only wallet/ledger records. Sessions include game state and participant IDs, are scoped to their originating \
 server, and expire after 24 hours without activity. Completed result rows expire with their \
-parent session; aggregate statistics remain until the player requests deletion.\n\n\
+parent session; aggregate statistics and earned wallet/ledger records remain until the player \
+requests deletion. The first completion of each game type earns 10 Moonbits once per player; \
+spending and trading are not enabled.\n\n\
 Player profiles store a Discord user ID, display name, optional bio, private-by-default \
 visibility and two preference flags. Use `.privacy_data` to inspect your current records, \
 `.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
