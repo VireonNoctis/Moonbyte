@@ -397,6 +397,11 @@ mod tests {
             % 1_000_000_000_000_000_000;
         let player_id = format!("atlas-{nonce}");
         let store = super::AtlasStore::new(pool.clone());
+        let profiles = crate::profile::ProfileStore::new(pool.clone());
+        profiles
+            .get_or_create(&player_id, "Atlas Test")
+            .await
+            .expect("create player profile");
 
         let initial = store.snapshot(&player_id).await.expect("open Atlas");
         assert_eq!(initial.current_location.id, "lantern-square");
@@ -435,17 +440,12 @@ mod tests {
             ]
         );
 
-        let mut transaction = pool.begin().await.expect("begin fixture cleanup");
-        sqlx::query("DELETE FROM player_world_state WHERE discord_user_id = $1")
-            .bind(&player_id)
-            .execute(&mut *transaction)
+        let deletion = profiles
+            .delete_account(&player_id)
             .await
-            .expect("delete fixture state");
-        sqlx::query("DELETE FROM player_atlas_discoveries WHERE discord_user_id = $1")
-            .bind(&player_id)
-            .execute(&mut *transaction)
-            .await
-            .expect("delete fixture discoveries");
-        transaction.commit().await.expect("commit fixture cleanup");
+            .expect("clean up player and Atlas fixture through privacy service");
+        assert!(deletion.profile_removed);
+        assert!(deletion.world_state_removed);
+        assert_eq!(deletion.atlas_discoveries_removed, 2);
     }
 }
