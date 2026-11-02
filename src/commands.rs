@@ -229,6 +229,13 @@ pub async fn settings(
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
+    let message = crate::tavern::render(ctx.data().prefix(), GameKind::ALL.len());
+    ctx.say(message).await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
     let entries = GameKind::ALL
         .iter()
@@ -398,6 +405,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         profile_edit(),
         settings(),
         stats(),
+        tavern(),
         games(),
         play(),
         join(),
@@ -488,6 +496,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}profile_edit <name> | <bio> / /profile_edit — edit your profile\n\
          {safe_prefix}settings <visibility> <show_stats> <quiet_mode> / /settings — update preferences\n\
          {safe_prefix}stats / /stats — view completed game statistics\n\
+         {safe_prefix}tavern / /tavern — open the Tavern and live Wayfinder\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
@@ -537,6 +546,7 @@ mod tests {
             ".profile_edit <name> | <bio> / /profile_edit",
             ".settings <visibility> <show_stats> <quiet_mode> / /settings",
             ".stats / /stats",
+            ".tavern / /tavern",
             ".games / /games",
             ".play <game> / /play",
             ".join <session> / /join",
