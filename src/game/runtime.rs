@@ -307,6 +307,14 @@ async fn persist_locked(
                 .bind(draws)
                 .execute(&mut **transaction)
                 .await?;
+
+                crate::wallet::award_first_game_completion(
+                    transaction,
+                    player_id,
+                    snapshot.game.definition().id,
+                    &snapshot.id,
+                )
+                .await?;
             }
         }
     }
