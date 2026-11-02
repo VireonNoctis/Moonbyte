@@ -1,6 +1,6 @@
 # Moonbyte World Loom — Master Atlas
 
-- Status: **Expanded product design proposal; not implemented.**
+- Status: **Expanded product design proposal; partially connected to working code.** The initial Tavern Wayfinder navigation is implemented; the 400 system proposals and their deeper domain behavior remain proposed until each has its own implementation and tests.
 - Scope: **400 individual system ideas across 40 connected domains.**
 - Documented idea volume: **48,295 lines** across the ten design volumes (before this index, mind map and machine-readable graph).
 - System graph: [world_graph.json](./world_graph.json) — canonical node IDs, typed edges, rationales and shared invariants.
@@ -79,6 +79,12 @@ Puzzle or story creator → validation → moderation → private playtest → a
 ## Relationship semantics
 
 The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`, `records`, `unlocks`, `coordinates`, `secured_by`, `belongs_to` and `contains_idea`. An edge includes a human-readable reason. A feature without a relationship is an incomplete design and should not be added to the graph as an orphan.
+
+## Implemented vertical-slice links
+
+The first home-navigation slice is implemented in [Tavern and Wayfinder](../TAVERN.md). The `.tavern` and `/tavern` commands route only to the current live Common Tables, player profile and game-record views. This is an entry point, not the full Hearth domain: parties, hosted tables, NPCs, guild rooms, rumours, Vaults, the Atlas, crafting and the Bazaar remain unimplemented.
+
+The player foundation and completed-game statistics are described in [Player Profiles](../PLAYER_PROFILES.md). The World Loom graph stays a design contract until a specific node has shipped with ownership, persistence, permissions, privacy handling and acceptance tests.
 
 ## How to use this atlas
 
