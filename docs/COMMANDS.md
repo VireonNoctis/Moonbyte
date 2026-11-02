@@ -18,7 +18,7 @@
 | .privacy_delete DELETE | /privacy_delete | Confirms deletion of the requester’s profile and stored sessions. |
 | .profile | /profile | Creates or displays the requester's private player profile. |
 | .profile_edit | /profile_edit | Updates the profile display name and bio. |
-| .settings | /settings | Saves profile visibility and player preference flags. |
+| .settings | /settings | Saves profile visibility and player preference flags. |\n| .stats | /stats | Privately displays completed-game totals and per-game wins/draws. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
@@ -39,13 +39,13 @@ All commands use shared Rust handlers for prefix and slash invocation. The help 
 ## Privacy controls and scope
 
 1. Run `.privacy_data` to see whether a profile exists and how many session records currently reference the requester.
-2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The export contains the player's profile and session metadata, but not other participants' IDs or raw message content.
+2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The export contains the player's profile, session metadata, completed-result metadata and aggregate per-game statistics, but not other participants' IDs or raw message content.
 3. Run `.privacy_delete` to read the exact deletion scope. Nothing is deleted at this step.
-4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile and every stored game-session snapshot containing that Discord ID.
+4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile and statistic rows, plus every stored game-session snapshot and linked result containing that Discord ID.
 
 Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The deletion result reports the actual number of session rows removed and whether a profile row existed.
 
-This covers the current Moonbyte PostgreSQL schema only: `player_profiles` and `game_sessions`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
+This covers the current Moonbyte PostgreSQL schema only: `player_profiles`, `game_sessions`, `game_results` and `player_game_stats`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
 
 ## Game controls
 
@@ -70,12 +70,12 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 ## Persistence and privacy boundary
 
-Player profile data is stored in `player_profiles`; game sessions are stored in `game_sessions`. The second versioned migration creates the profile table. A profile stores the Discord user ID, display name, optional bio, private/public visibility, and two preference flags. It does not store real names, email addresses or location.
+Player profile data is stored in `player_profiles`; game sessions are stored in `game_sessions`; completed results are stored in `game_results`; and durable per-game aggregates are stored in `player_game_stats`. Versioned migrations 0002 and 0003 add the player and results tables. A profile stores the Discord user ID, display name, optional bio, private/public visibility and two preference flags. It does not store real names, email addresses or location.
 
-Session snapshots contain game state and participant IDs, optional guild scope, lifecycle phase and action count. Mutations are committed transactionally with a row lock. An inactive session expires after 24 hours and is removed by the central cleanup task.
+Session snapshots contain game state and participant IDs, optional guild scope, lifecycle phase and action count. On completion, result metadata and each participant's per-game counters are written in the same transaction as the final snapshot. The session ID prevents duplicate result awards. Session-level result rows are removed with their parent session after the 24-hour inactivity window; aggregate statistics remain until account deletion.
 
 See [Player Profiles](PLAYER_PROFILES.md) and [Privacy Policy](PRIVACY.md) for exact data coverage, export fields, deletion behavior and the limitations that remain.
 
 ## Still planned
 
-Game result history, achievements, inventory, quests, parties, leaderboard/statistics surfaces, personal Vaults, Bazaar trading, a live authenticated game API, Discord Activity integration and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
+Achievements, inventory, quests, parties, public leaderboard/statistics surfaces, personal Vaults, Bazaar trading, a live authenticated game API, Discord Activity integration and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
