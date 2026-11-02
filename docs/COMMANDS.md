@@ -21,7 +21,7 @@
 | .profile_edit | /profile_edit | Updates the profile display name and bio. |
 | .settings | /settings | Saves profile visibility and player preference flags. |
 | .stats | /stats | Privately displays completed-game totals and per-game wins/draws. |
-| .wallet | /wallet | Privately displays earned-only Moonbits balance and ledger-entry count. |
+| .wallet | /wallet | Privately displays earned-only Moonbits balance and ledger-entry count. |\n| .achievements | /achievements | Privately lists the player's unlocked achievement milestones. |\n| .atlas | /atlas | Privately displays the player's current place, discoveries and connected routes. |\n| .travel <location> | /travel | Travels to a directly connected location and records the visit.
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
@@ -41,14 +41,14 @@ All commands use shared Rust handlers for prefix and slash invocation. The help 
 
 ## Privacy controls and scope
 
-1. Run `.privacy_data` to inspect the profile, session, result, per-game statistic, wallet and ledger records currently associated with the requester.
-2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The version 3 export contains the player's profile, session metadata, completed-result metadata, aggregate per-game statistics, wallet balance and wallet ledger entries, but not other participants' IDs or raw message content.
+1. Run `.privacy_data` to inspect profile, session, result, statistic, achievement, wallet/ledger and Atlas state/discovery records associated with the requester.
+2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The version 5 export contains the player's profile, session metadata, completed-result metadata, aggregate statistics, achievement records, wallet balance/ledger and Atlas current-location/discovery history, but not other participants' IDs or raw message content.
 3. Run `.privacy_delete` to read the exact deletion scope. Nothing is deleted at this step.
-4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile, statistic rows, Moonbits wallet and ledger entries, plus every stored game-session snapshot and linked result containing that Discord ID.
+4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile, statistic and achievement rows, Moonbits wallet/ledger, Atlas current-location/discovery records, plus every stored game-session snapshot and linked result containing that Discord ID.
 
-Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The private deletion receipt reports the counts of session, result, statistic, wallet and ledger rows removed.
+Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The private deletion receipt reports the counts of session, result, statistic, achievement, wallet/ledger and Atlas records removed.
 
-This covers the current Moonbyte PostgreSQL player-owned schema only: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_wallets` and `wallet_ledger_entries`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
+This covers the current Moonbyte PostgreSQL player-owned schema only: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
 
 ## Moonbits
 
@@ -77,7 +77,7 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 ## Persistence and privacy boundary
 
-Player profile data is stored in `player_profiles`; game sessions are stored in `game_sessions`; completed results are stored in `game_results`; durable per-game aggregates are stored in `player_game_stats`; and the earned-only currency foundation is stored in `player_wallets` plus `wallet_ledger_entries`. Versioned migrations 0002, 0003 and 0004 add those tables. A profile stores the Discord user ID, display name, optional bio, private/public visibility and two preference flags. It does not store real names, email addresses or location.
+Player profile data is stored in `player_profiles`; game sessions are stored in `game_sessions`; completed results are stored in `game_results`; durable per-game aggregates are stored in `player_game_stats`; and the earned-only currency foundation is stored in `player_wallets` plus `wallet_ledger_entries`. Versioned migrations 0002 through 0006 add those tables. A profile stores the Discord user ID, display name, optional bio, private/public visibility and two preference flags. It does not store real names, email addresses or location.
 
 Session snapshots contain game state and participant IDs, optional guild scope, lifecycle phase and action count. On completion, result metadata and each participant's per-game counters are written in the same transaction as the final snapshot. The session ID prevents duplicate result awards. Each participant's first completion of a game type also earns a fixed 10 Moonbits once; the ledger idempotency key is unique per player/game type and wallet balance updates commit in the same transaction. Repeat completions do not pay again. Session-level result rows are removed with their parent session after the 24-hour inactivity window; aggregate statistics and wallet milestones remain until account deletion.
 
@@ -85,4 +85,4 @@ See [Player Profiles](PLAYER_PROFILES.md) and [Privacy Policy](PRIVACY.md) for e
 
 ## Still planned
 
-Achievements, inventory, quests, parties, public leaderboard/statistics surfaces, personal Vaults, Bazaar trading, a live authenticated game API, Discord Activity integration and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
+Inventory, quests, Expeditions, authored story, parties, public leaderboards, personal Vaults, crafting, Bazaar trading, a live authenticated game API, Discord Activity integration and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
