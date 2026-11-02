@@ -315,6 +315,12 @@ async fn persist_locked(
                     &snapshot.id,
                 )
                 .await?;
+                crate::achievement::award_for_player_completion(
+                    transaction,
+                    player_id,
+                    &snapshot.id,
+                )
+                .await?;
             }
         }
     }
