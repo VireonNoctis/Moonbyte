@@ -1,6 +1,6 @@
 # Player Profiles and Privacy Controls
 
-- Status: Player profiles, preferences, game results, per-game statistics, earned-only Moonbits, data inventory, private export and confirmed deletion are implemented.
+- Status: Player profiles, preferences, game results, per-game statistics, five persistent achievement milestones, earned-only Moonbits, data inventory, private export and confirmed deletion are implemented.
 - Storage: PostgreSQL through SQLx.
 - Owner identity: Discord user ID. Moonbyte does not collect email addresses, real names, phone numbers or precise location for these features.
 
@@ -27,6 +27,22 @@ Profile visibility is stored now, but a public profile directory, social graph a
 - Result metadata expires with its parent session after the existing 24-hour inactivity window.
 - Aggregate statistics remain until the player requests deletion.
 - Result and aggregate-stat writes occur in the same transaction as the final game-session snapshot. The session ID is the idempotency key for the result row.
+
+## Achievements
+
+Achievements are fixed, server-authoritative milestones evaluated after a completed game updates the player's aggregate statistics. Unlock rows are written in the same PostgreSQL transaction as the completed result, per-game statistics and Moonbits milestone. The unique key on `(discord_user_id, achievement_id)` makes each unlock idempotent.
+
+| Achievement | Unlock condition |
+| --- | --- |
+| **First Steps** | Complete the first game. |
+| **Bright Start** | Earn the first game victory. |
+| **Game Hopper** | Complete all four games currently in the starter library. |
+| **Table Regular** | Complete ten games across the library. |
+| **Rising Champion** | Win five games. |
+
+Achievements are cosmetic records, not currency. They do not grant Moonbits, competitive power, paid boosts or item drops. The private `.achievements` command and Tavern's **The Gallery** show unlocked achievements with their category and unlock time. A later catalogue expansion must version the achievement definition and update the collection milestone deliberately.
+
+Achievement records store the achievement ID, title/description through the definition catalogue, source session ID and unlock timestamp. They remain until account deletion; expiry of the source game session does not remove a persistent achievement.
 
 ## Moonbits wallet
 
@@ -92,7 +108,7 @@ Deletion runs in one PostgreSQL transaction:
 
 Game state is stored as one shared snapshot. Removing only one participant ID from that snapshot would require a domain migration and could leave a broken or partially recoverable session. The current safe behavior therefore ends every stored session containing the requester, including sessions shared with other players. The command explains this before asking for the explicit `DELETE` confirmation.
 
-The operation covers the current player-owned schema: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_wallets` and `wallet_ledger_entries`. Result rows are removed with their parent sessions; aggregate statistics and wallet records are removed directly. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
+The operation covers the current player-owned schema: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets` and `wallet_ledger_entries`. Result rows are removed with their parent sessions; aggregate statistics and wallet records are removed directly. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
 
 ## Engineering invariants
 
@@ -101,7 +117,7 @@ The operation covers the current player-owned schema: `player_profiles`, `game_s
 - Private account data is delivered by DM from guild invocations.
 - Export is scoped to the authenticated player and the current schema.
 - Deletion of player and session records is atomic.
-- The first-completion milestone is fixed, disclosed and non-random.
+- Achievement unlocks are checked against server-owned aggregate statistics and stored once per player/achievement.\n- The first-completion milestone is fixed, disclosed and non-random.
 - Ledger writes and wallet balance updates share the game-completion transaction.
 - A unique player/game idempotency key prevents repeat completion credits.
 - No purchases, cash-out, wagering, staking, or player transfers exist.
