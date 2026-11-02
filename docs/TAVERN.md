@@ -48,7 +48,7 @@ The bot's five upload names are declared in `src/emoji.rs`:
 | `ids::CRYSTAL` | `moonbyte_crystal` |
 | `ids::CHAT` | `moonbyte_chat` |
 
-After uploading the PNGs to the target Discord server, paste each numeric custom-emoji ID into its matching `Option<&str>` slot as `Some("123456789012345678")`. Do not paste the complete Discord markup. Missing or malformed IDs use the defined Unicode fallback, so unconfigured emoji slots never generate broken mentions. The current PNGs are static, so the registry emits static custom-emoji markup.
+After uploading the PNGs to the target Discord server, paste each 17–20 digit numeric Discord snowflake ID into its matching `Option<&str>` slot as `Some("123456789012345678")`. Do not paste the complete Discord markup. Missing or malformed IDs use the defined Unicode fallback, so unconfigured emoji slots never generate broken mentions. The current PNGs are static, so the registry emits static custom-emoji markup.
 
 ## Engineering rules for future destinations
 
