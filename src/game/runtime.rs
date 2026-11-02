@@ -4,7 +4,7 @@ use sqlx::{PgPool, Postgres, Transaction};
 
 use super::{
     engine::{GameAction, GameError},
-    model::{GameKind, GameSession, SessionSnapshot},
+    model::{GameKind, GamePhase, GameSession, SessionSnapshot},
 };
 
 /// Database-backed session operations. Each mutation is committed atomically
@@ -253,6 +253,63 @@ async fn persist_locked(
     if result.rows_affected() != 1 {
         return Err(GameError::NotJoinable.into());
     }
+
+    // Persist a completed result and update each participant's aggregate stats
+    // in the same transaction as the final game-state snapshot.
+    if snapshot.phase == GamePhase::Completed {
+        let winner = snapshot.winner.as_deref();
+        let outcome = if winner.is_some() {
+            "won"
+        } else if snapshot.game.requires_opponent() {
+            "draw"
+        } else {
+            "completed"
+        };
+        let player_ids = serde_json::to_string(&snapshot.players)?;
+        let inserted = sqlx::query(
+            "INSERT INTO game_results \
+             (session_id, game_id, outcome, winner_player_id, player_ids, action_count) \
+             VALUES ($1, $2, $3, $4, $5::jsonb, $6) \
+             ON CONFLICT (session_id) DO NOTHING",
+        )
+        .bind(&snapshot.id)
+        .bind(snapshot.game.definition().id)
+        .bind(outcome)
+        .bind(winner)
+        .bind(player_ids)
+        .bind(i64::from(snapshot.action_count))
+        .execute(&mut **transaction)
+        .await?
+        .rows_affected()
+            == 1;
+
+        if inserted {
+            for player_id in &snapshot.players {
+                let games_won = if winner == Some(player_id.as_str()) {
+                    1_i64
+                } else {
+                    0_i64
+                };
+                let draws = if outcome == "draw" { 1_i64 } else { 0_i64 };
+                sqlx::query(
+                    "INSERT INTO player_game_stats \
+                     (discord_user_id, game_id, games_played, games_won, draws) \
+                     VALUES ($1, $2, 1, $3, $4) \
+                     ON CONFLICT (discord_user_id, game_id) DO UPDATE SET \
+                         games_played = player_game_stats.games_played + 1, \
+                         games_won = player_game_stats.games_won + EXCLUDED.games_won, \
+                         draws = player_game_stats.draws + EXCLUDED.draws, \
+                         updated_at = now()",
+                )
+                .bind(player_id)
+                .bind(snapshot.game.definition().id)
+                .bind(games_won)
+                .bind(draws)
+                .execute(&mut **transaction)
+                .await?;
+            }
+        }
+    }
     Ok(())
 }
 
@@ -279,6 +336,54 @@ mod tests {
             .await
             .expect("PostgreSQL must be available and migrations must apply");
         GameRuntime::new(database.pool())
+    }
+
+    #[tokio::test]
+    async fn completed_games_write_results_and_stats_once() {
+        let runtime = runtime().await;
+        let session = runtime
+            .start(GameKind::WordScramble, "stats-player", None)
+            .await
+            .expect("start word scramble");
+        let completed = runtime
+            .act(&session.id, "stats-player", None, "orbit")
+            .await
+            .expect("solve word scramble");
+        assert_eq!(completed.phase, GamePhase::Completed);
+        assert_eq!(completed.winner.as_deref(), Some("stats-player"));
+
+        let stats: (i64, i64, i64) = sqlx::query_as(
+            "SELECT games_played, games_won, draws FROM player_game_stats \
+             WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
+        )
+        .bind("stats-player")
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read player stats");
+        assert_eq!(stats, (1, 1, 0));
+
+        let result_count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM game_results WHERE session_id = $1",
+        )
+        .bind(&session.id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read game result");
+        assert_eq!(result_count, 1);
+
+        assert!(matches!(
+            runtime.act(&session.id, "stats-player", None, "orbit").await,
+            Err(GameRuntimeError::Domain(GameError::NotActive))
+        ));
+        let after_retry: (i64, i64, i64) = sqlx::query_as(
+            "SELECT games_played, games_won, draws FROM player_game_stats \
+             WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
+        )
+        .bind("stats-player")
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read stats after duplicate action");
+        assert_eq!(after_retry, (1, 1, 0));
     }
 
     #[tokio::test]
