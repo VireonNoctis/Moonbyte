@@ -385,9 +385,7 @@ impl ProfileStore {
         .fetch_one(&self.pool)
         .await?;
         let wallet_rows = sqlx::query_as::<_, (i64, i64, String, String, String)>(
-            "SELECT entry_id, amount_delta, reason, source_id, created_at::text \\
-             FROM wallet_ledger_entries WHERE discord_user_id = $1 \\
-             ORDER BY entry_id ASC",
+            "SELECT entry_id, amount_delta, reason, source_id, created_at::text FROM wallet_ledger_entries WHERE discord_user_id = $1 ORDER BY entry_id ASC",
         )
         .bind(player_id)
         .fetch_all(&self.pool)
