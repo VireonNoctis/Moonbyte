@@ -24,5 +24,6 @@ CREATE TABLE IF NOT EXISTS player_game_stats (
     games_won BIGINT NOT NULL DEFAULT 0 CHECK (games_won >= 0 AND games_won <= games_played),
     draws BIGINT NOT NULL DEFAULT 0 CHECK (draws >= 0 AND draws <= games_played),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    PRIMARY KEY (discord_user_id, game_id)
+    PRIMARY KEY (discord_user_id, game_id),
+    CHECK (games_won + draws <= games_played)
 );
