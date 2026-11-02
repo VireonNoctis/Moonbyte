@@ -11,14 +11,16 @@
 | .help | /help | Lists commands available in this build and the configured prefix. |
 | .about | /about | Shows the application version and implementation boundaries. |
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. |
+| .tavern | /tavern | Opens the Tavern home and Wayfinder for implemented destinations. |
 | .privacy | /privacy | Explains current data handling and privacy limits. |
 | .privacy_data | /privacy_data | Privately inspects the requester's current data inventory. |
 | .privacy_export | /privacy_export | Sends a private JSON export attachment. |
 | .privacy_delete | /privacy_delete | Starts deletion confirmation. |
-| .privacy_delete DELETE | /privacy_delete | Confirms deletion of the requester’s profile and stored sessions. |
+| .privacy_delete DELETE | /privacy_delete | Confirms deletion of the requester's profile, statistics and linked sessions/results. |
 | .profile | /profile | Creates or displays the requester's private player profile. |
 | .profile_edit | /profile_edit | Updates the profile display name and bio. |
-| .settings | /settings | Saves profile visibility and player preference flags. |\n| .stats | /stats | Privately displays completed-game totals and per-game wins/draws. |
+| .settings | /settings | Saves profile visibility and player preference flags. |
+| .stats | /stats | Privately displays completed-game totals and per-game wins/draws. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
@@ -34,7 +36,7 @@ All commands use shared Rust handlers for prefix and slash invocation. The help 
 - `.profile_edit Display Name | Short bio` sets the display name and bio. The name is limited to 32 characters and the bio to 160 characters. Use `-` after the separator to clear the bio.
 - `.settings private false true` is an example that sets private visibility, hides statistics, and enables the quiet-mode preference. Visibility must be `public` or `private`.
 - Visibility defaults to private. This build does not yet expose a public profile directory or statistics/leaderboard surface; the preferences are persisted for those later surfaces.
-- Profile, settings and inventory responses are sent by DM when invoked in a server. In DMs they are returned in the current conversation.
+- Profile, settings, statistics and account-data responses are sent by DM when invoked in a server. The public `.privacy` overview and Tavern home may be shown in the invoking channel. In DMs, private responses are returned in the current conversation.
 
 ## Privacy controls and scope
 
