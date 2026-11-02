@@ -6,7 +6,10 @@
 - Add private profile commands, a current-schema data inventory, on-demand JSON export and explicit two-step profile deletion.
 - Add atomic player deletion that removes the profile and every game-session snapshot containing that player ID.
 - Add a PostgreSQL migration for player profiles and extend the ordered migration runner.
-- Add PostgreSQL integration coverage for profile creation, editing, preferences, export and deletion.\n- Add migration 0003 for completed-game result records and per-player/per-game aggregate statistics.\n- Persist results and update every participant's counters atomically with the completed session snapshot, using the session ID to prevent duplicate awards.\n- Include result metadata and aggregate statistics in privacy inventory/export/deletion.
+- Add PostgreSQL integration coverage for profile creation, editing, preferences, export and deletion.
+- Add migration 0003 for completed-game result records and per-player/per-game aggregate statistics.
+- Persist results and update every participant's counters atomically with the completed session snapshot, using the session ID to prevent duplicate awards.
+- Include result metadata and aggregate statistics in privacy inventory/export/deletion.
 
 - Switch the persistence target from the superseded SQLite decision to PostgreSQL through SQLx (PostgreSQL driver only).
 - Add a versioned PostgreSQL migration runner, durable JSONB game-session snapshots, transactional row-locked mutations, restart recovery, 24-hour inactivity expiry and scheduled cleanup.
