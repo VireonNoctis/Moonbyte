@@ -355,7 +355,7 @@ mod tests {
             .await
             .expect("solve word scramble");
         assert_eq!(completed.phase, GamePhase::Completed);
-        assert_eq!(completed.winner.as_deref(), Some(&player_id));
+        assert_eq!(completed.winner.as_deref(), Some(player_id.as_str()));
 
         let stats: (i64, i64, i64) = sqlx::query_as(
             "SELECT games_played, games_won, draws FROM player_game_stats \
