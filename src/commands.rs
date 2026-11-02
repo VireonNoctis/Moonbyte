@@ -263,7 +263,7 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
         return send_private(
             ctx,
             format!(
-                "**Your Achievement Gallery**\n\nNo achievements unlocked yet. \\
+                "**Your Achievement Gallery**\n\nNo achievements unlocked yet. \
                  Complete games to record your milestones. Use `{}games` to browse.",
                 ctx.data().prefix()
             ),
