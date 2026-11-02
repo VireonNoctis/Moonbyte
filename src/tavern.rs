@@ -41,6 +41,14 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 3] = [
         emoji: EmojiKey::Crystal,
         fallback: "🏆",
     },
+    TavernDestination {
+        id: "moonbits-ledger",
+        title: "The Ledger",
+        description: "View earned-only Moonbits and first-completion milestones.",
+        command: "wallet",
+        emoji: EmojiKey::Rocket,
+        fallback: "🪙",
+    },
 ];
 
 /// Render the initial Tavern Wayfinder using only live commands.
@@ -85,13 +93,15 @@ mod tests {
         assert_eq!(AVAILABLE_DESTINATIONS.len(), 3);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
-            ["games", "profile", "stats"]
+            ["games", "profile", "stats", "wallet"]
         );
 
         let home = render(".");
         assert!(home.contains(".games"));
         assert!(home.contains(".profile"));
         assert!(home.contains(".stats"));
+        assert!(home.contains(".wallet"));
+        assert!(home.contains("The Ledger"));
         assert!(home.contains("The Common Tables"));
         assert!(home.contains("The Chronicle"));
         assert!(home.contains("only as their systems become playable"));
