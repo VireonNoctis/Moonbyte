@@ -30,7 +30,9 @@ Deliverables:
 - [x] Configuration loading and validation from environment variables.
 - [x] Serenity client with Tokio runtime and Poise command framework.
 - [x] Default period prefix and global slash-command registration.
-- [x] Help, about, privacy overview, and minimal diagnostics (`ping`).\n- [x] Initial Tavern home and Wayfinder command, linked only to implemented game, profile and statistics destinations.\n- [x] Central custom-emoji registry with safe Unicode fallbacks for unconfigured upload IDs.
+- [x] Help, about, privacy overview, and minimal diagnostics (`ping`).
+- [x] Initial Tavern home and Wayfinder command, linked only to implemented game, profile and statistics destinations.
+- [x] Central custom-emoji registry with safe Unicode fallbacks for unconfigured upload IDs.
 - [x] Game catalogue and play/session commands for the first four games.
 - [x] Clear configuration and startup errors.
 - [ ] Structured logging and graceful shutdown.
@@ -55,7 +57,8 @@ Deliverables:
 - [x] State-machine validation for the first four playable game modules.
 - [x] Guild scope, participant membership and turn ownership checks.
 - [x] Durable session lifecycle and state-machine recovery with PostgreSQL.
-- [x] Player identity and basic profile persistence.\n- [x] Completed-game result records and per-game aggregate statistics, transactionally tied to session completion.
+- [x] Player identity and basic profile persistence.
+- [x] Completed-game result records and per-game aggregate statistics, transactionally tied to session completion.
 - [x] Session creation, joining, leaving and game completion through the Rust runtime.
 - [x] 24-hour inactivity expiry and one central cleanup task.
 - [x] Versioned PostgreSQL session persistence and runtime reconstruction.
@@ -95,9 +98,13 @@ Exit criteria:
 Deliverables:
 - Moonbyte-original mini-games.
 - Puzzle/strategy foundation and optional daily challenge.
-- [x] Durable per-game statistics for completed sessions.\n- Player achievements, inventory, and cosmetic unlocks.
+- [x] Durable per-game statistics for completed sessions.
+- Player achievements, inventory, and cosmetic unlocks.
 - Deterministic shops and earned rewards.
-- [x] Profile and preference commands.\n- [x] Current-schema data inventory, private JSON export and confirmed profile/session deletion.\n- [x] Completed-result metadata and per-game statistics for the current game catalogue.\n- Player achievements, inventory, quest progress and progression.
+- [x] Profile and preference commands.
+- [x] Current-schema data inventory, private JSON export and confirmed profile/session deletion.
+- [x] Completed-result metadata and per-game statistics for the current game catalogue.
+- Player achievements, inventory, quest progress and progression.
 
 Suggested first originals:
 - Memory match.
