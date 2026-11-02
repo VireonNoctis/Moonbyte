@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 3] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 5] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 3);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 5);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
             ["games", "profile", "stats", "wallet", "achievements"]
