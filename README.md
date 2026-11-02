@@ -67,7 +67,10 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.profile_edit` / `/profile_edit` | Implemented | Set a display name and short bio. |
 | `.settings` / `/settings` | Implemented | Save profile visibility and player preferences. |
 | `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |
-| `.wallet` / `/wallet` | Implemented | View the earned-only Moonbits balance and ledger-entry count privately. |\n| `.achievements` / `/achievements` | Implemented | View the five fixed achievement milestones earned through play. |\n| `.atlas` / `/atlas` | Implemented | View your current location, known places and directly connected routes privately. |\n| `.travel <location>` / `/travel` | Implemented | Travel to a directly connected Atlas location and record its discovery. |
+| `.wallet` / `/wallet` | Implemented | View the earned-only Moonbits balance and ledger-entry count privately. |
+| `.achievements` / `/achievements` | Implemented | View the five fixed achievement milestones earned through play. |
+| `.atlas` / `/atlas` | Implemented | View your current location, known places and directly connected routes privately. |
+| `.travel <location>` / `/travel` | Implemented | Travel to a directly connected Atlas location and record its discovery. |
 | `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
