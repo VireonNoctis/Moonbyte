@@ -66,7 +66,8 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.profile` / `/profile` | Implemented | View your private player profile. |
 | `.profile_edit` / `/profile_edit` | Implemented | Set a display name and short bio. |
 | `.settings` / `/settings` | Implemented | Save profile visibility and player preferences. |
-| `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |\n| `.wallet` / `/wallet` | Implemented | View the earned-only Moonbits balance and ledger-entry count privately. |
+| `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |
+| `.wallet` / `/wallet` | Implemented | View the earned-only Moonbits balance and ledger-entry count privately. |
 | `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
@@ -132,7 +133,9 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 ## Documentation
 
 - [Product vision](docs/PRODUCT_VISION.md) — product goals, engagement principles, systems, safety and non-goals.
-- [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.\n- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, Moonbits and privacy coverage.\n- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the earned-only economy rules and planned Vault/trading boundaries.
+- [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
+- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, Moonbits and privacy coverage.
+- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the earned-only economy rules and planned Vault/trading boundaries.
 - [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, private export and deletion coverage.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
