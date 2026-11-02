@@ -58,7 +58,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.help` / `/help` | Implemented | List commands available in this build. |
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
-| `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
+| `.privacy` / `/privacy` | Implemented | Explain current data handling, privacy controls and their limits. |
 | `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
@@ -92,7 +92,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - No AI training on player messages or game activity.
 - No raw message-content analytics. Prefix text is processed to identify the command and arguments, then discarded unless a specific game needs a value for its active session.
 - No cross-server exposure of guild settings or server-only leaderboards.
-- Profile export and deletion controls are part of the planned product, not an afterthought.
+- In-bot export and deletion controls cover the current persisted data; every new player-owned system must extend them before release.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
 Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists player profiles and preferences plus game-session snapshots in PostgreSQL. It does not yet persist a complete game-results history, achievements, inventories or progression. The implemented export covers the current profile and session metadata schema; deletion removes the profile and all session snapshots containing the requesting player ID. It cannot delete Discord’s own records or independent infrastructure backups.
