@@ -31,9 +31,13 @@ The bot may process or store these categories when the relevant feature is enabl
 | Data category | Examples | Why it is needed |
 | --- | --- | --- |
 | Discord identifiers | User ID; guild ID; channel or message ID for an active game where necessary. | Identify the player, scope settings, and update an active game message. |
-| Player profile | Discord user ID, player-selected display name, optional short bio, visibility and two preference flags. | Render and configure the player's profile. |\n| Player game statistics | Discord user ID, game ID, completed count, wins, draws and update timestamp. | Show the player their own completed-game record. |\n| Moonbits wallet | Discord user ID, non-negative balance and version counter. | Show fixed, earned-only game-completion milestones. |\n| Moonbits ledger | Transaction ID, player ID, signed amount, fixed reason, source session, idempotency key and timestamp. | Audit each earned credit and prevent duplicate milestone awards. |
+| Player profile | Discord user ID, player-selected display name, optional short bio, visibility and two preference flags. | Render and configure the player's profile. |
+| Player game statistics | Discord user ID, game ID, completed count, wins, draws and update timestamp. | Show the player their own completed-game record. |
+| Moonbits wallet | Discord user ID, non-negative balance and version counter. | Show fixed, earned-only game-completion milestones. |
+| Moonbits ledger | Transaction ID, player ID, signed amount, fixed reason, source session, idempotency key and timestamp. | Audit each earned credit and prevent duplicate milestone awards. |
 | Game state | Current turn, board state, action data needed to resume, participants, quest checkpoint. | Run, recover, and fairly resolve games. |
-| Game results | Game ID, outcome, winner ID when applicable, participant IDs, action count and completion time. | Record completed sessions and derive requested per-game statistics. |\n| Player game statistics | Per-game games-played, wins and draws totals. | Show the player their own completed-game record. |
+| Game results | Game ID, outcome, winner ID when applicable, participant IDs, action count and completion time. | Record completed sessions and derive requested per-game statistics. |
+| Player game statistics | Per-game games-played, wins and draws totals. | Show the player their own completed-game record. |
 | Progress and collections | Earned experience, achievements, items, quests, cosmetic unlocks. | Provide persistent progression features. |
 | Guild settings | Enabled games, leaderboard visibility, channel configuration, server preferences. | Apply administrators' choices within that guild. |
 | Operational diagnostics | Event type, command name, error category, timing, pseudonymous correlation ID. | Diagnose outages, bugs, rate limits, and performance without recording message contents. |
@@ -165,4 +169,5 @@ Before public release, verify:
 - Retention and backup rotation run and are observable.
 - Hosting providers and additional processors are documented.
 - Database and backup access controls are verified.
-- Public privacy claims match the deployed implementation.\n- Profile export and deletion cover every currently persisted player table.
+- Public privacy claims match the deployed implementation.
+- Profile export and deletion cover every currently persisted player table.
