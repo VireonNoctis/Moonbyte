@@ -402,7 +402,6 @@ pub async fn travel(
     .await
 }
 
-
 #[poise::command(prefix_command, slash_command)]
 pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
     let entries = GameKind::ALL
