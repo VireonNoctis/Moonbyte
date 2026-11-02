@@ -1,6 +1,6 @@
 # Moonbyte Economy, Vaults & Bazaar
 
-- Status: Approved direction for product design; no economy or marketplace system is implemented yet.
+- Status: The first earned-only Moonbits wallet/ledger milestone is implemented. Spending, transfers, items, Vault rewards and Bazaar/marketplace behavior are not implemented.
 - This document defines a game economy, not a real-money financial service.
 - All currency is earned in Moonbyte, has no cash value, cannot be bought, sold, withdrawn, or redeemed, and is never used for wagering.
 
@@ -26,13 +26,26 @@ Use a small, transparent currency model rather than many confusing tokens.
 
 Moonbits are earned through defined, non-random activities:
 
-- Completing a game session, with reasonable daily caps against farming.
+- Completing a game session.
 - Finishing quests and story chapters.
-- Solving optional daily or weekly challenges.
+- Solving optional challenges.
 - Completing guild cooperation milestones.
-- Earning achievements for skill, exploration, or mastery.
+- Earning achievements for skill, exploration or mastery.
 
-The award amount is shown before claiming wherever feasible. Repeated low-effort matches, AFK behavior, self-trading, and collusion must not create an unlimited farming loop.
+The award amount is shown before claiming wherever feasible. Repeated low-effort matches, AFK behavior, self-trading and collusion must not create an unlimited farming loop.
+
+### Implemented first-completion milestone
+
+The initial wallet vertical slice implements one narrow rule:
+
+- The first completed session of each game type credits **10 Moonbits** to every participant.
+- Each player receives the first-completion reward only once per game type. Completing the same game type again does not issue another credit.
+- The reward is for completing the activity; it does not depend on winning, losing or drawing.
+- The result row, player statistics, wallet creation, ledger entry and balance increment commit in the same PostgreSQL transaction.
+- Each award uses a unique idempotency key in the form `first-game-completion:<game_id>` for that player.
+- `.wallet` displays the current balance and ledger-entry count. The Tavern Wayfinder exposes this as The Ledger.
+
+This is a milestone foundation, not a complete economy. Spending, transfers, shop purchases, item rewards, Vault rewards and Bazaar trades are not enabled. The current reason constraint intentionally admits only `first_game_completion`; additional reward types require a reviewed migration and new idempotency/test coverage.
 
 Moonbits:
 
