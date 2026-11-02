@@ -265,8 +265,8 @@ These systems must not become independent microservices. Shared contracts remain
 Do not implement the full breadth at once. Release one connected, testable vertical slice at a time.
 
 
-## Current implementation increment — first playable runtime
+## Current implementation increment — player foundation
 
-The current branch adds four real Rust game rules and a PostgreSQL-backed session runtime. The feature adapter exposes games, play, join, action, session, sessions and leave commands in prefix and slash form. The implementation includes participant-only reads and listings, originating-guild checks, turn validation, legal action parsing, win/draw detection and unit tests.
+The current implementation combines four Rust game rules, a PostgreSQL-backed session runtime and the player-foundation vertical slice. The feature adapter exposes game/session commands, profile editing, profile preferences, privacy data inventory, private JSON export and confirmed profile/session deletion. Profiles default to private. Deletion is transactional and ends any stored shared session containing the requester. PostgreSQL integration coverage exercises profile creation, editing, preferences, export, inventory and deletion.
 
-This increment does **not** mark the full player platform complete. PostgreSQL migrations, versioned session snapshots, restart recovery and expiry are implemented; player identity and progression, privacy export/deletion, buttons and rich Activity views remain follow-up implementation gates.
+This increment does **not** mark the full player platform complete. Game-result history, statistics, achievements, inventory, quests, progression, the Tavern/Atlas/Vault/Bazaar systems, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
