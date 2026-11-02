@@ -171,10 +171,13 @@ Read [FAIRNESS.md](FAIRNESS.md) for the SHA-512 commit–reveal design. The econ
 
 ## 8. Data model outline
 
-Likely tables/entities once implementation begins:
+Current wallet tables:
 
-- `wallets`: player ID, non-negative balance, version.
-- `ledger_entries`: immutable transaction ID, player, amount delta, reason, source ID, timestamp, idempotency key.
+- `player_wallets` (implemented): Discord player ID, non-negative balance, version and timestamps.
+- `wallet_ledger_entries` (implemented): immutable entry ID, player ID, signed amount, fixed reason, source session, idempotency key and timestamp.
+
+Future tables/entities:
+
 - `items`: stable item ID, definition version, owner, provenance, tradeability.
 - `vault_definitions`: versioned vault content and published rewards.
 - `vault_runs`: player/party, vault version, checkpoint, state, result.
