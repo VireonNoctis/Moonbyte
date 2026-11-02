@@ -33,7 +33,7 @@ The bot may process or store these categories when the relevant feature is enabl
 | Discord identifiers | User ID; guild ID; channel or message ID for an active game where necessary. | Identify the player, scope settings, and update an active game message. |
 | Player profile | Discord user ID, player-selected display name, optional short bio, visibility and two preference flags. | Render and configure the player's profile. |
 | Game state | Current turn, board state, action data needed to resume, participants, quest checkpoint. | Run, recover, and fairly resolve games. |
-| Game results | Game type, result, completion time, personal best, statistics. | Show requested records, achievements, and leaderboards. |
+| Game results | Game ID, outcome, winner ID when applicable, participant IDs, action count and completion time. | Record completed sessions and derive requested per-game statistics. |\n| Player game statistics | Per-game games-played, wins and draws totals. | Show the player their own completed-game record. |
 | Progress and collections | Earned experience, achievements, items, quests, cosmetic unlocks. | Provide persistent progression features. |
 | Guild settings | Enabled games, leaderboard visibility, channel configuration, server preferences. | Apply administrators' choices within that guild. |
 | Operational diagnostics | Event type, command name, error category, timing, pseudonymous correlation ID. | Diagnose outages, bugs, rate limits, and performance without recording message contents. |
