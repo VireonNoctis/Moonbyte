@@ -375,6 +375,17 @@ mod tests {
         .expect("read player stats");
         assert_eq!(stats, (1, 1, 0));
 
+        let wallet: (i64, i64) = sqlx::query_as(
+            "SELECT balance, \
+             (SELECT count(*) FROM wallet_ledger_entries WHERE discord_user_id = $1) \
+             FROM player_wallets WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read first-completion wallet");
+        assert_eq!(wallet, (crate::wallet::FIRST_COMPLETION_REWARD, 1));
+
         let result_count: i64 =
             sqlx::query_scalar("SELECT count(*) FROM game_results WHERE session_id = $1")
                 .bind(&session.id)
@@ -396,6 +407,56 @@ mod tests {
         .await
         .expect("read stats after duplicate action");
         assert_eq!(after_retry, (1, 1, 0));
+        let wallet_after_retry: i64 = sqlx::query_scalar(
+            "SELECT balance FROM player_wallets WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read wallet after duplicate action");
+        assert_eq!(wallet_after_retry, crate::wallet::FIRST_COMPLETION_REWARD);
+    }
+
+    #[tokio::test]
+    async fn repeated_game_completions_do_not_repeat_first_completion_currency() {
+        let runtime = runtime().await;
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos();
+        let player_id = format!("wallet-{nonce}");
+
+        for _ in 0..2 {
+            let session = runtime
+                .start(GameKind::WordScramble, &player_id, None)
+                .await
+                .expect("start another word scramble");
+            runtime
+                .act(&session.id, &player_id, None, "orbit")
+                .await
+                .expect("complete word scramble");
+        }
+
+        let wallet: (i64, i64) = sqlx::query_as(
+            "SELECT balance, \
+             (SELECT count(*) FROM wallet_ledger_entries WHERE discord_user_id = $1) \
+             FROM player_wallets WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read wallet after repeated completions");
+        assert_eq!(wallet, (crate::wallet::FIRST_COMPLETION_REWARD, 1));
+
+        let stats: i64 = sqlx::query_scalar(
+            "SELECT games_played FROM player_game_stats \
+             WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read repeat-completion stats");
+        assert_eq!(stats, 2);
     }
 
     #[tokio::test]
