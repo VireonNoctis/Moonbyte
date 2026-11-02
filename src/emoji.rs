@@ -81,8 +81,7 @@ pub fn custom_mention(name: &str, id: Option<&str>) -> Option<String> {
         && name
             .bytes()
             .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_');
-    let valid_id = (17..=20).contains(&id.len())
-        && id.bytes().all(|byte| byte.is_ascii_digit());
+    let valid_id = (17..=20).contains(&id.len()) && id.bytes().all(|byte| byte.is_ascii_digit());
 
     if !valid_name || !valid_id {
         return None;
@@ -152,15 +151,9 @@ mod tests {
             custom_mention("moonbyte;spoof", Some("123456789012345678")),
             None
         );
-        assert_eq!(
-            custom_mention("x", Some("123456789012345678")),
-            None
-        );
+        assert_eq!(custom_mention("x", Some("123456789012345678")), None);
         assert_eq!(render_with_id("moonbyte", None, "🌙"), "🌙");
-        assert_eq!(
-            render_with_id("moonbyte", Some("not-an-id"), "🌙"),
-            "🌙"
-        );
+        assert_eq!(render_with_id("moonbyte", Some("not-an-id"), "🌙"), "🌙");
         // A configured ID may produce a custom mention after upload.
         let crystal = render(EmojiKey::Crystal, "💎");
         assert!(crystal == "💎" || crystal.starts_with("<:moonbyte_crystal:"));
