@@ -1,6 +1,6 @@
 # Moonbyte Architecture
 
-- Status: Rust workspace, configuration bootstrap, Discord command adapters, a first transport-independent game/session slice, and a presentation-only Next.js catalogue foundation implemented; PostgreSQL-backed session persistence and restart recovery are implemented; player/profile persistence, live game API, Activity handshake, and authoritative visual rendering remain unimplemented.
+- Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions and recovery, player profiles/preferences, privacy inventory/export/deletion, and a presentation-only Next.js catalogue are implemented. Live game API, Activity handshake, authoritative visual rendering, player progression and economy remain unimplemented.
 - Last updated: 2026-10-31.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
@@ -20,7 +20,7 @@ This document describes intended boundaries and constraints. It must be revised 
 | Logging and diagnostics | Structured tracing |
 | Art pipeline | Original pixel-art source assets and cached rendered output |
 
-Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter now exposes a game catalogue, start/join/action/session/leave operations in addition to help, about, ping and privacy. Four game modules run without Discord types. The session runtime loads and mutates versioned JSONB session snapshots in PostgreSQL. Mutations use short row-locked transactions; game rules remain independent of Discord and database types. `visual-library/` contains a real Next.js app for browsing only the implemented catalogue; it deliberately does not duplicate authoritative game logic or claim to host live sessions.
+Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter exposes a game catalogue, start/join/action/session/leave operations, player profiles, preferences and private privacy controls in addition to help, about, ping and the privacy overview. Four game modules run without Discord types. The session runtime loads and mutates versioned JSONB session snapshots in PostgreSQL. Mutations use short row-locked transactions; game rules remain independent of Discord and database types. `visual-library/` contains a real Next.js app for browsing only the implemented catalogue; it deliberately does not duplicate authoritative game logic or claim to host live sessions.
 
 References: [Poise documentation](https://docs.rs/poise/latest/poise/), [Serenity documentation](https://docs.rs/serenity/latest/serenity/), [Tokio documentation](https://docs.rs/tokio/latest/tokio/).
 
@@ -108,7 +108,7 @@ A slow game or render must not stall unrelated sessions. Isolate CPU-heavy rende
 
 PostgreSQL is Moonbyte's persistent system of record. SQLx is compiled with its PostgreSQL driver only; SQLite and ScyllaDB are not part of the runtime.
 
-The first migration creates a monotonic session-ID sequence, a schema migration ledger, a game_sessions table with stable ID, game ID, optional guild ID, lifecycle phase, state version, action count, JSONB session snapshot, timestamps and expiry, plus indexes for expiry and guild/phase queries.
+The first migration creates a monotonic session-ID sequence, a schema migration ledger, a game_sessions table with stable ID, game ID, optional guild ID, lifecycle phase, state version, action count, JSONB session snapshot, timestamps and expiry, plus indexes for expiry and guild/phase queries. Migration 0002 adds player_profiles with a Discord user ID, validated display name, optional bio, private-by-default visibility, statistics/quiet-mode preference flags and lifecycle timestamps.
 
 Every session mutation runs inside a short database transaction. Mutating actions select the session row FOR UPDATE, deserialize and validate domain state, serialize the new versioned snapshot, update the row and commit before the Discord adapter sends a response. A rejected action drops the transaction without persisting a partial state change. Session reads verify participant and guild scope.
 
@@ -118,7 +118,7 @@ The current supported deployment remains one bot process with one PostgreSQL dat
 
 Backup, restore, managed-database selection, connection-secret provisioning and production encryption-at-rest configuration remain operator/deployment work. Never log the connection URL or claim that selecting PostgreSQL automatically proves encryption at rest.
 
-Likely future data groups include player profiles, settings, guild settings, results, achievements, inventory, quest progress, ledger entries and privacy-operation metadata. Add each through reviewed migrations and update the privacy inventory before enabling the feature.
+Future data groups include guild settings, results, achievements, inventory, quest progress, ledger entries and privacy-operation metadata. Player profiles and their initial preference fields now exist. Add each new data group through a reviewed migration and update the privacy inventory, export and deletion contract before enabling the feature.
 ## 7. Discord command and interaction adapter
 
 Default prefix: **.** Poise should expose shared command definitions as prefix and slash commands where appropriate.
@@ -142,7 +142,7 @@ The privacy service should provide overview, data inventory, private export, con
 - Repositories must expose explicit user-owned data queries so export/deletion cannot silently omit a table.
 - Deletion must be one coordinated, auditable operation with idempotent retries.
 - A deletion confirmation must be bound to the requesting Discord user and expire.
-- Do not store export files permanently. Generate them on demand and deliver them privately.
+- Do not store export files permanently. Generate JSON on demand and deliver it by DM; never fall back to public channel output.
 - Ensure logs record operation outcome and correlation metadata, not export contents or deleted values.
 - Retention cleanup must be implemented as bounded, observable jobs.
 - Guild-scoped configuration and server-only records must remain isolated by guild ID.
@@ -234,6 +234,6 @@ The current playable slice is deliberately small and honest about its limits:
 - Mutations use short row-locked transactions; reads and active-session listings enforce participant and guild/DM scope.
 - Poise exposes the implemented operations as shared prefix and slash commands, including `.sessions` for the requester's 10 most recently updated active sessions in the current scope.
 - Session IDs are generated from a PostgreSQL sequence and survive process restarts. They are references, not authentication credentials.
-- Player profiles, achievements, inventory, economy, privacy export/deletion, durable interaction idempotency and the live web game API remain unimplemented.
+- The initial player profile, preferences, privacy inventory, private JSON export and confirmed deletion flows are implemented. Result history, achievements, inventory, economy, durable interaction idempotency and the live web game API remain unimplemented.
 
-This is a functional vertical slice for domain rules, Discord commands, PostgreSQL persistence and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is player/profile persistence, end-to-end privacy workflows, idempotent Discord interaction handling and concurrent-session load tests.
+This is a functional vertical slice for game rules, player identity, private data controls, Discord commands, PostgreSQL persistence and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is result/progression persistence, idempotent Discord interaction handling and concurrent-session load tests.
