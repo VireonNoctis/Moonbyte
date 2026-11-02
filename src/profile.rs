@@ -410,16 +410,18 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|(achievement_id, title, description, category, source_session_id, unlocked_at)| {
-            ExportedAchievement {
-                achievement_id,
-                title,
-                description,
-                category,
-                source_session_id,
-                unlocked_at,
-            }
-        })
+        .map(
+            |(achievement_id, title, description, category, source_session_id, unlocked_at)| {
+                ExportedAchievement {
+                    achievement_id,
+                    title,
+                    description,
+                    category,
+                    source_session_id,
+                    unlocked_at,
+                }
+            },
+        )
         .collect();
 
         let wallet_balance: i64 = sqlx::query_scalar(
