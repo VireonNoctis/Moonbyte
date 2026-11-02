@@ -135,8 +135,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Product vision](docs/PRODUCT_VISION.md) — product goals, engagement principles, systems, safety and non-goals.
 - [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
 - [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, Moonbits and privacy coverage.
-- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the earned-only economy rules and planned Vault/trading boundaries.
-- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, private export and deletion coverage.
+- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the implemented first-completion ledger and planned Vault/trading boundaries.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
 - [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts and release quality gates.
