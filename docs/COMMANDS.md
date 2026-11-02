@@ -24,7 +24,7 @@
 | .wallet | /wallet | Privately displays earned-only Moonbits balance and ledger-entry count. |
 | .achievements | /achievements | Privately lists the player's unlocked achievement milestones. |
 | .atlas | /atlas | Privately displays the player's current place, discoveries and connected routes. |
-| .travel <location> | /travel | Travels to a directly connected location and records the visit.
+| .travel <location> | /travel | Travels to a directly connected location and records the visit. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
@@ -80,9 +80,9 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 ## Persistence and privacy boundary
 
-Player profile data is stored in `player_profiles`; game sessions are stored in `game_sessions`; completed results are stored in `game_results`; durable per-game aggregates are stored in `player_game_stats`; and the earned-only currency foundation is stored in `player_wallets` plus `wallet_ledger_entries`. Versioned migrations 0002 through 0006 add those tables. A profile stores the Discord user ID, display name, optional bio, private/public visibility and two preference flags. It does not store real names, email addresses or location.
+Player profile data is stored in `player_profiles`; game sessions are stored in `game_sessions`; completed results are stored in `game_results`; durable per-game aggregates are stored in `player_game_stats`; achievement unlocks are stored in `player_achievements`; earned-only Moonbits are stored in `player_wallets` plus `wallet_ledger_entries`; and Atlas position/discovery is stored in `player_world_state` plus `player_atlas_discoveries`. Versioned migrations 0002 through 0006 add those tables. A profile stores the Discord user ID, display name, optional bio, private/public visibility and two preference flags. It does not store real names, email addresses or location.
 
-Session snapshots contain game state and participant IDs, optional guild scope, lifecycle phase and action count. On completion, result metadata and each participant's per-game counters are written in the same transaction as the final snapshot. The session ID prevents duplicate result awards. Each participant's first completion of a game type also earns a fixed 10 Moonbits once; the ledger idempotency key is unique per player/game type and wallet balance updates commit in the same transaction. Repeat completions do not pay again. Session-level result rows are removed with their parent session after the 24-hour inactivity window; aggregate statistics and wallet milestones remain until account deletion.
+Session snapshots contain game state and participant IDs, optional guild scope, lifecycle phase and action count. On completion, result metadata and each participant's per-game counters are written in the same transaction as the final snapshot. The session ID prevents duplicate result awards. Each participant's first completion of a game type also earns a fixed 10 Moonbits once; the ledger idempotency key is unique per player/game type and wallet balance updates commit in the same transaction. Repeat completions do not pay again. Session-level result rows are removed with their parent session after the 24-hour inactivity window; aggregate statistics, achievements, wallet milestones and personal Atlas discoveries remain until account deletion.
 
 See [Player Profiles](PLAYER_PROFILES.md) and [Privacy Policy](PRIVACY.md) for exact data coverage, export fields, deletion behavior and the limitations that remain.
 
