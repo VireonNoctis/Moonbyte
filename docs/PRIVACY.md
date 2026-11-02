@@ -37,7 +37,9 @@ The bot may process or store these categories when the relevant feature is enabl
 | Moonbits ledger | Transaction ID, player ID, signed amount, fixed reason, source session, idempotency key and timestamp. | Audit each earned credit and prevent duplicate milestone awards. |
 | Game state | Current turn, board state, action data needed to resume, participants, quest checkpoint. | Run, recover, and fairly resolve games. |
 | Game results | Game ID, outcome, winner ID when applicable, participant IDs, action count and completion time. | Record completed sessions and derive requested per-game statistics. |
-| Achievements | Achievement ID, source session ID and unlock timestamp. | Show fixed, server-authoritative milestones earned through play. |\n| Atlas exploration | Current location ID, discovered location IDs, first discovery time, last visit time and visit count. | Resume the player's position and show their own charted places. |\n| Future inventory and quests | Items, authored quest progress and checkpoints. | Not currently stored; requires reviewed persistence and privacy handling before release. |
+| Achievements | Achievement ID, source session ID and unlock timestamp. | Show fixed, server-authoritative milestones earned through play. |
+| Atlas exploration | Current location ID, discovered location IDs, first discovery time, last visit time and visit count. | Resume the player's position and show their own charted places. |
+| Future inventory and quests | Items, authored quest progress and checkpoints. | Not currently stored; requires reviewed persistence and privacy handling before release. |
 | Guild settings | Enabled games, leaderboard visibility, channel configuration, server preferences. | Apply administrators' choices within that guild. |
 | Operational diagnostics | Event type, command name, error category, timing, pseudonymous correlation ID. | Diagnose outages, bugs, rate limits, and performance without recording message contents. |
 | Security records | Limited identifiers and event metadata associated with an incident. | Protect the bot and investigate abuse. |
@@ -86,7 +88,9 @@ The provider list describes the intended model; it does not claim a production h
 | Completed game results | Expire with the parent session after 24 hours of inactivity; delete on account deletion. |
 | Player settings and aggregate statistics | Until profile deletion. |
 | Moonbits wallet and ledger | Until profile deletion; session expiry does not remove earned ledger entries. |
-| Achievement milestones | Until account deletion. |\n| Personal Atlas location and discovery history | Until account deletion. The authored five-location catalogue is static code, not player data. |\n| Inventory, quests and other future progression | Not currently stored. Future retention must be documented with the feature. |
+| Achievement milestones | Until account deletion. |
+| Personal Atlas location and discovery history | Until account deletion. The authored five-location catalogue is static code, not player data. |
+| Inventory, quests and other future progression | Not currently stored. Future retention must be documented with the feature. |
 | Guild settings | While the bot remains installed and settings are needed; delete or anonymise after removal, target maximum 30 days. |
 | Routine operational logs | Target maximum 30 days, then delete or aggregate without direct identifiers. |
 | Security incident records | Only as long as reasonably necessary; restrict access and document the purpose. |
