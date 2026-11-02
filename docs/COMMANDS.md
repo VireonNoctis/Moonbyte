@@ -21,7 +21,10 @@
 | .profile_edit | /profile_edit | Updates the profile display name and bio. |
 | .settings | /settings | Saves profile visibility and player preference flags. |
 | .stats | /stats | Privately displays completed-game totals and per-game wins/draws. |
-| .wallet | /wallet | Privately displays earned-only Moonbits balance and ledger-entry count. |\n| .achievements | /achievements | Privately lists the player's unlocked achievement milestones. |\n| .atlas | /atlas | Privately displays the player's current place, discoveries and connected routes. |\n| .travel <location> | /travel | Travels to a directly connected location and records the visit.
+| .wallet | /wallet | Privately displays earned-only Moonbits balance and ledger-entry count. |
+| .achievements | /achievements | Privately lists the player's unlocked achievement milestones. |
+| .atlas | /atlas | Privately displays the player's current place, discoveries and connected routes. |
+| .travel <location> | /travel | Travels to a directly connected location and records the visit.
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
