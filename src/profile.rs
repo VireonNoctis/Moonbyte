@@ -77,6 +77,8 @@ pub struct ProfileInventory {
     pub game_session_records: i64,
     pub game_result_records: i64,
     pub game_stat_rows: i64,
+    pub wallet_record: bool,
+    pub wallet_ledger_records: i64,
     pub session_retention: &'static str,
 }
 
@@ -94,6 +96,8 @@ pub struct PlayerDeletion {
     pub sessions_removed: u64,
     pub results_removed: u64,
     pub stat_rows_removed: u64,
+    pub wallet_ledger_records_removed: u64,
+    pub wallet_removed: bool,
     pub profile_removed: bool,
 }
 
@@ -117,15 +121,26 @@ struct ExportedResult {
     completed_at: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedWalletEntry {
+    entry_id: i64,
+    amount_delta: i64,
+    reason: String,
+    source_id: String,
+    created_at: String,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 4],
+    data_categories: [&'static str; 6],
     profile: Option<PlayerProfile>,
     game_sessions: Vec<ExportedSession>,
     game_results: Vec<ExportedResult>,
     game_statistics: Vec<PlayerGameStat>,
+    wallet_balance: i64,
+    wallet_ledger_entries: Vec<ExportedWalletEntry>,
     limitations: [&'static str; 2],
 }
 
@@ -282,13 +297,27 @@ impl ProfileStore {
                 .bind(player_id)
                 .fetch_one(&self.pool)
                 .await?;
+        let wallet_record: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM player_wallets WHERE discord_user_id = $1)",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let wallet_ledger_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM wallet_ledger_entries WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
 
         Ok(ProfileInventory {
             profile_record,
             game_session_records,
             game_result_records,
             game_stat_rows,
-            session_retention: "Sessions and their result records expire 24 hours after the last successful action; cleanup runs every 15 minutes.",
+            wallet_record,
+            wallet_ledger_records,
+            session_retention: "Sessions and their result records expire 24 hours after the last successful action; wallet milestones remain until account deletion.",
         })
     }
 
@@ -349,6 +378,32 @@ impl ProfileStore {
             )
             .collect();
         let game_statistics = self.game_stats(player_id).await?;
+        let wallet_balance: i64 = sqlx::query_scalar(
+            "SELECT COALESCE((SELECT balance FROM player_wallets WHERE discord_user_id = $1), 0)",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let wallet_rows = sqlx::query_as::<_, (i64, i64, String, String, String)>(
+            "SELECT entry_id, amount_delta, reason, source_id, created_at::text \\
+             FROM wallet_ledger_entries WHERE discord_user_id = $1 \\
+             ORDER BY entry_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?;
+        let wallet_ledger_entries = wallet_rows
+            .into_iter()
+            .map(|(entry_id, amount_delta, reason, source_id, created_at)| {
+                ExportedWalletEntry {
+                    entry_id,
+                    amount_delta,
+                    reason,
+                    source_id,
+                    created_at,
+                }
+            })
+            .collect();
 
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
             .fetch_one(&self.pool)
@@ -372,18 +427,22 @@ impl ProfileStore {
             .collect();
 
         let export = PlayerExport {
-            format_version: 2,
+            format_version: 3,
             exported_at,
             data_categories: [
                 "player profile and preferences",
                 "game session metadata",
                 "completed game results",
                 "per-game statistics",
+                "Moonbits wallet balance",
+                "Moonbits wallet ledger entries",
             ],
             profile,
             game_sessions,
             game_results,
             game_statistics,
+            wallet_balance,
+            wallet_ledger_entries,
             limitations: [
                 "Discord independently retains interactions under its own policies.",
                 "This export includes records in the current Moonbyte PostgreSQL schema only.",
@@ -424,6 +483,21 @@ impl ProfileStore {
                 .execute(&mut *transaction)
                 .await?
                 .rows_affected();
+        let wallet_ledger_records_removed = sqlx::query(
+            "DELETE FROM wallet_ledger_entries WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let wallet_removed = sqlx::query(
+            "DELETE FROM player_wallets WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected()
+            > 0;
         let profile_removed = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
             .bind(player_id)
             .execute(&mut *transaction)
@@ -435,6 +509,8 @@ impl ProfileStore {
             sessions_removed,
             results_removed,
             stat_rows_removed,
+            wallet_ledger_records_removed,
+            wallet_removed,
             profile_removed,
         })
     }
@@ -571,12 +647,17 @@ mod postgres_tests {
         assert_eq!(inventory.game_session_records, 2);
         assert_eq!(inventory.game_result_records, 1);
         assert_eq!(inventory.game_stat_rows, 1);
+        assert!(inventory.wallet_record);
+        assert_eq!(inventory.wallet_ledger_records, 1);
 
         let export = store.export_json(&player_id).await.expect("export data");
         assert!(export.contains("Moonbyte Pilot"));
         assert!(export.contains(&session.id));
         assert!(export.contains("completed game results"));
         assert!(export.contains("per-game statistics"));
+        assert!(export.contains("Moonbits wallet balance"));
+        assert!(export.contains("wallet_balance"));
+        assert!(export.contains("first_game_completion"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
@@ -586,6 +667,8 @@ mod postgres_tests {
         assert_eq!(deletion.sessions_removed, 2);
         assert_eq!(deletion.results_removed, 1);
         assert_eq!(deletion.stat_rows_removed, 1);
+        assert_eq!(deletion.wallet_ledger_records_removed, 1);
+        assert!(deletion.wallet_removed);
         assert!(deletion.profile_removed);
         assert!(
             store
