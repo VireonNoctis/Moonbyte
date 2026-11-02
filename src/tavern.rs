@@ -11,7 +11,8 @@ pub struct TavernDestination {
     pub title: &'static str,
     pub description: &'static str,
     pub command: &'static str,
-    pub symbol: &'static str,
+    pub emoji: EmojiKey,
+    pub fallback: &'static str,
 }
 
 /// Real destinations currently backed by registered commands.
@@ -19,48 +20,50 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 3] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
-        description: "Browse the four playable games and start a solo game or lobby.",
+        description: "Browse the playable games and start a solo session or an open lobby.",
         command: "games",
-        symbol: "🎮",
+        emoji: EmojiKey::Chat,
+        fallback: "🎮",
     },
     TavernDestination {
         id: "player-profile",
         title: "Your Place",
         description: "View your private player profile and saved preferences.",
         command: "profile",
-        symbol: "📜",
+        emoji: EmojiKey::Treasure,
+        fallback: "📜",
     },
     TavernDestination {
         id: "player-record",
         title: "The Chronicle",
         description: "Review completed games, wins and draws from your own record.",
         command: "stats",
-        symbol: "🏆",
+        emoji: EmojiKey::Crystal,
+        fallback: "🏆",
     },
 ];
 
 /// Render the initial Tavern Wayfinder using only live commands.
-pub fn render(prefix: &str, available_games: usize) -> String {
+pub fn render(prefix: &str) -> String {
     let prefix = safe_prefix(prefix);
     let brand = emoji::render(EmojiKey::Moonbyte, "🌙");
-    let tables = emoji::render(EmojiKey::Chat, "🎮");
-    let profile = emoji::render(EmojiKey::Treasure, "📜");
-    let records = emoji::render(EmojiKey::Crystal, "🏆");
+    let destinations = AVAILABLE_DESTINATIONS
+        .iter()
+        .map(|destination| {
+            let icon = emoji::render(destination.emoji, destination.fallback);
+            format!(
+                "{icon} **{}**\n{}\n→ `{prefix}{}`",
+                destination.title, destination.description, destination.command
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
 
     format!(
         "{brand} **The Tavern — Lantern and Ladle**\n\n\
          A quiet place to choose your next stop. The Wayfinder shows destinations that are \
-         available in this build; nothing joins a game or changes your progress until you \
-         choose a command.\n\n\
-         {tables} **The Common Tables**\n\
-         Browse {available_games} playable games, then start a solo session or an open lobby.\n\
-         → `{prefix}games`\n\n\
-         {profile} **Your Place**\n\
-         Open your private profile and preferences.\n\
-         → `{prefix}profile`\n\n\
-         {records} **The Chronicle**\n\
-         Review your completed-game record and per-game results.\n\
-         → `{prefix}stats`\n\n\
+         available in this build; browsing never joins a game or changes your progress.\n\n\
+         {destinations}\n\n\
          Use `{prefix}help` for every available command. The wider Atlas, Expeditions, Vaults, \
          Guilds and Bazaar will appear here only as their systems become playable."
     )
@@ -85,11 +88,12 @@ mod tests {
             ["games", "profile", "stats"]
         );
 
-        let home = render(".", 4);
+        let home = render(".");
         assert!(home.contains(".games"));
         assert!(home.contains(".profile"));
         assert!(home.contains(".stats"));
-        assert!(home.contains("4 playable games"));
+        assert!(home.contains("The Common Tables"));
+        assert!(home.contains("The Chronicle"));
         assert!(home.contains("only as their systems become playable"));
     }
 
