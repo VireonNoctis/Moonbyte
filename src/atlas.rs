@@ -278,8 +278,7 @@ fn normalise_reference(value: &str) -> String {
     value
         .trim()
         .to_ascii_lowercase()
-        .replace(' ', "-")
-        .replace('_', "-")
+        .replace([' ', '_'], "-")
 }
 
 pub fn find_location(value: &str) -> Option<AtlasLocation> {
