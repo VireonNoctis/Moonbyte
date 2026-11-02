@@ -1,7 +1,7 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, the initial earned-only Moonbits wallet/ledger, data inventory, private JSON export and confirmed deletion across the current player-owned tables. Vaults, inventory, spending and Bazaar systems remain planned.
+- Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, five achievement milestones, an earned-only Moonbits wallet/ledger, a five-location Atlas with personal discoveries, data inventory, private version 5 JSON export and confirmed deletion across all current player-owned tables. Inventory, quests, Expeditions, Vaults, spending and Bazaar systems remain planned.
 - Last updated: 2026-11-02.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-The current runtime stores player profiles/preferences, game-session snapshots, completed result metadata, per-game statistics, and earned-only wallet/ledger records in PostgreSQL. It does not yet persist inventory, achievements, quests, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Every future persisted feature must extend the same inventory/export/deletion contract before release.
+The current runtime stores player profiles/preferences, game-session snapshots, completed result metadata, per-game statistics, achievement milestones, earned-only wallet/ledger records and personal Atlas location/discovery state in PostgreSQL. It does not yet persist inventory, quests, Expeditions, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Every future persisted feature must extend the same inventory/export/deletion contract before release.
 
 ## 2. Data Moonbyte needs
 
