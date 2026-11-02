@@ -221,13 +221,10 @@ mod tests {
             .expect("insert deterministic player statistics");
         }
 
-        let awarded = super::award_for_player_completion(
-            &mut transaction,
-            &player_id,
-            "MB-ACHIEVEMENT-TEST",
-        )
-        .await
-        .expect("award eligible achievements");
+        let awarded =
+            super::award_for_player_completion(&mut transaction, &player_id, "MB-ACHIEVEMENT-TEST")
+                .await
+                .expect("award eligible achievements");
         assert_eq!(awarded, 5);
 
         let repeated = super::award_for_player_completion(
