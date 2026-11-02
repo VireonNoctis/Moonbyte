@@ -502,19 +502,21 @@ fn help_message(prefix: &str) -> String {
 
 const PRIVACY_OVERVIEW: &str = "\
 **Moonbyte privacy — current build**\n\n\
-Moonbyte processes Discord interactions to run commands and games. Active and recently \
-retained game sessions are stored in PostgreSQL, including session state and Discord \
-participant IDs. Sessions are scoped to their originating server and expire after \
-24 hours without activity. Player profiles store a Discord user ID, display name, \
-optional bio, visibility and two preference flags.\n\n\
-Use `.privacy_data` to inspect the records currently associated with you, \
-`.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin \
-confirmed deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
-Deletion removes the profile and session snapshots containing your ID from the current \
-PostgreSQL schema. It can end shared sessions. It cannot delete Discord's own messages, \
-Discord account data, other participants' copies, or backups outside the current database.\n\n\
-Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of \
-the current implementation, not a statement about Discord's independent data practices.";
+Moonbyte processes Discord interactions to run commands and games. PostgreSQL stores \
+player profiles, session snapshots, completed-game result metadata and per-game aggregate \
+statistics. Sessions include game state and participant IDs, are scoped to their originating \
+server, and expire after 24 hours without activity. Completed result rows expire with their \
+parent session; aggregate statistics remain until the player requests deletion.\n\n\
+Player profiles store a Discord user ID, display name, optional bio, private-by-default \
+visibility and two preference flags. Use `.privacy_data` to inspect your current records, \
+`.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
+deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
+Deletion removes the profile, per-game statistics and every session/result snapshot containing \
+your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
+Discord's own messages, Discord account data, other participants' copies, or backups outside \
+the current database.\n\n\
+Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of the \
+current implementation, not a statement about Discord's independent data practices.";
 
 #[cfg(test)]
 mod tests {
