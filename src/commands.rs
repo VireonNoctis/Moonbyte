@@ -79,7 +79,11 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
             "not created"
         },
         inventory.wallet_ledger_records,
-        if inventory.world_state_record { "present" } else { "not created" },
+        if inventory.world_state_record {
+            "present"
+        } else {
+            "not created"
+        },
         inventory.atlas_discovery_records,
         inventory.session_retention
     );
@@ -166,7 +170,11 @@ pub async fn privacy_delete(
             "no wallet record existed"
         },
         deletion.wallet_ledger_records_removed,
-        if deletion.world_state_removed { "yes" } else { "no record existed" },
+        if deletion.world_state_removed {
+            "yes"
+        } else {
+            "no record existed"
+        },
         deletion.atlas_discoveries_removed
     );
     if let Some(dm) = private_channel {
@@ -376,7 +384,10 @@ pub async fn travel(
     };
 
     let message = if result.moved {
-        format!("You travelled from **{}** to **{}**.", result.from.name, result.to.name)
+        format!(
+            "You travelled from **{}** to **{}**.",
+            result.from.name, result.to.name
+        )
     } else {
         format!("You are already at **{}**.", result.to.name)
     };
