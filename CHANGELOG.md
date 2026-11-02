@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add PostgreSQL-backed player profiles with validated display names, short bios, private-by-default visibility and saved preferences.
+- Add private profile commands, a current-schema data inventory, on-demand JSON export and explicit two-step profile deletion.
+- Add atomic player deletion that removes the profile and every game-session snapshot containing that player ID.
+- Add a PostgreSQL migration for player profiles and extend the ordered migration runner.
+- Add PostgreSQL integration coverage for profile creation, editing, preferences, export and deletion.
+
 - Switch the persistence target from the superseded SQLite decision to PostgreSQL through SQLx (PostgreSQL driver only).
 - Add a versioned PostgreSQL migration runner, durable JSONB game-session snapshots, transactional row-locked mutations, restart recovery, 24-hour inactivity expiry and scheduled cleanup.
 - Add PostgreSQL-backed runtime integration tests and a CI PostgreSQL service.
