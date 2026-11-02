@@ -279,6 +279,8 @@ impl MemoryMatchState {
 pub(super) struct WordScrambleState {
     pub(super) answer: String,
     pub(super) attempts_left: u8,
+    #[serde(default)]
+    pub(super) guesses: Vec<String>,
 }
 
 impl Default for WordScrambleState {
@@ -286,15 +288,21 @@ impl Default for WordScrambleState {
         Self {
             answer: String::from("ORBIT"),
             attempts_left: 3,
+            guesses: Vec::new(),
         }
     }
 }
 
 impl WordScrambleState {
     fn render(&self) -> String {
+        let guesses = if self.guesses.is_empty() {
+            String::from("none")
+        } else {
+            self.guesses.join(", ")
+        };
         format!(
-            "Scrambled word: BITOR\nAttempts remaining: {}",
-            self.attempts_left
+            "Scrambled word: BITOR\nAttempts remaining: {}\nPrevious guesses: {}",
+            self.attempts_left, guesses
         )
     }
 }
@@ -456,5 +464,49 @@ impl SessionSnapshot {
 impl fmt::Display for GameKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.definition().id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{GameKind, GameSession, WordScrambleState};
+    use crate::game::engine::{GameAction, GameError};
+
+    #[test]
+    fn legacy_word_scramble_snapshots_default_guess_history() {
+        let state: WordScrambleState =
+            serde_json::from_str(r#"{"answer":"ORBIT","attempts_left":2}"#)
+                .expect("legacy session snapshot");
+        assert!(state.guesses.is_empty());
+    }
+
+    #[test]
+    fn duplicate_word_scramble_guess_does_not_advance_session() {
+        let mut session = GameSession::create(
+            String::from("MB-TEST"),
+            GameKind::WordScramble,
+            String::from("player"),
+            None,
+        );
+        session
+            .act(
+                "player",
+                GameAction::WordAnswer {
+                    answer: "planet".into(),
+                },
+            )
+            .expect("first guess");
+        let before = session.snapshot();
+
+        assert_eq!(
+            session.act(
+                "player",
+                GameAction::WordAnswer {
+                    answer: "PLANET".into(),
+                },
+            ),
+            Err(GameError::AlreadyGuessed)
+        );
+        assert_eq!(session.snapshot(), before);
     }
 }
