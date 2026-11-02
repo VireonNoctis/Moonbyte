@@ -7,6 +7,7 @@ pub mod emoji;
 pub mod game;
 pub mod profile;
 pub mod tavern;
+pub mod wallet;
 
 use std::time::{Duration, Instant};
 
@@ -19,15 +20,22 @@ pub struct Data {
     started_at: Instant,
     games: game::GameRuntime,
     profiles: profile::ProfileStore,
+    wallets: wallet::WalletStore,
 }
 
 impl Data {
-    pub fn new(prefix: String, games: game::GameRuntime, profiles: profile::ProfileStore) -> Self {
+    pub fn new(
+        prefix: String,
+        games: game::GameRuntime,
+        profiles: profile::ProfileStore,
+        wallets: wallet::WalletStore,
+    ) -> Self {
         Self {
             prefix,
             started_at: Instant::now(),
             games,
             profiles,
+            wallets,
         }
     }
 
@@ -45,5 +53,9 @@ impl Data {
 
     pub fn profiles(&self) -> &profile::ProfileStore {
         &self.profiles
+    }
+
+    pub fn wallets(&self) -> &wallet::WalletStore {
+        &self.wallets
     }
 }
