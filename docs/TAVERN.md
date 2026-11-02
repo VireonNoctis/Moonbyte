@@ -17,7 +17,8 @@ The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the des
 | --- | --- | --- | --- |
 | `arcade` | The Common Tables | `.games` / `/games` | Browse four playable games; start solo games or multiplayer lobbies. |
 | `player-profile` | Your Place | `.profile` / `/profile` | View the player's private profile and preferences. |
-| `player-record` | The Chronicle | `.stats` / `/stats` | View completed-game totals, wins and draws. |\n| `moonbits-ledger` | The Ledger | `.wallet` / `/wallet` | View the player's earned-only Moonbits balance and first-completion milestones. |
+| `player-record` | The Chronicle | `.stats` / `/stats` | View completed-game totals, wins and draws. |
+| `moonbits-ledger` | The Ledger | `.wallet` / `/wallet` | View the player's earned-only Moonbits balance and first-completion milestones. |
 
 The Wayfinder is generated from this registry rather than maintaining a second handwritten list. Every destination has a stable internal ID, a title, a description and a registered command route. Tests verify the current command targets and visible destinations. The Ledger points only to the read-only wallet summary; it does not enable spending or trading.
 
