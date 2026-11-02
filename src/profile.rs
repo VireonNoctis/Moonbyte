@@ -80,6 +80,8 @@ pub struct ProfileInventory {
     pub achievement_rows: i64,
     pub wallet_record: bool,
     pub wallet_ledger_records: i64,
+    pub world_state_record: bool,
+    pub atlas_discovery_records: i64,
     pub session_retention: &'static str,
 }
 
@@ -100,6 +102,8 @@ pub struct PlayerDeletion {
     pub achievement_rows_removed: u64,
     pub wallet_ledger_records_removed: u64,
     pub wallet_removed: bool,
+    pub world_state_removed: bool,
+    pub atlas_discoveries_removed: u64,
     pub profile_removed: bool,
 }
 
@@ -142,11 +146,25 @@ struct ExportedAchievement {
     unlocked_at: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedWorldState {
+    current_location_id: String,
+    updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ExportedAtlasDiscovery {
+    location_id: String,
+    discovered_at: String,
+    last_visited_at: String,
+    visits: i64,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 7],
+    data_categories: [&'static str; 9],
     profile: Option<PlayerProfile>,
     game_sessions: Vec<ExportedSession>,
     game_results: Vec<ExportedResult>,
@@ -154,6 +172,8 @@ struct PlayerExport {
     achievements: Vec<ExportedAchievement>,
     wallet_balance: i64,
     wallet_ledger_entries: Vec<ExportedWalletEntry>,
+    world_state: Option<ExportedWorldState>,
+    atlas_discoveries: Vec<ExportedAtlasDiscovery>,
     limitations: [&'static str; 2],
 }
 
@@ -328,6 +348,18 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
+        let world_state_record: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM player_world_state WHERE discord_user_id = $1)",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let atlas_discovery_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_atlas_discoveries WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
 
         Ok(ProfileInventory {
             profile_record,
@@ -337,7 +369,9 @@ impl ProfileStore {
             achievement_rows,
             wallet_record,
             wallet_ledger_records,
-            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics and wallet milestones remain until account deletion.",
+            world_state_record,
+            atlas_discovery_records,
+            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics, wallet milestones and Atlas discoveries remain until account deletion.",
         })
     }
 
@@ -449,6 +483,33 @@ impl ProfileStore {
             )
             .collect();
 
+        let world_state = sqlx::query_as::<_, (String, String)>(
+            "SELECT current_location_id, updated_at::text FROM player_world_state WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_optional(&self.pool)
+        .await?
+        .map(|(current_location_id, updated_at)| ExportedWorldState {
+            current_location_id,
+            updated_at,
+        });
+        let atlas_discoveries = sqlx::query_as::<_, (String, String, String, i64)>(
+            "SELECT location_id, discovered_at::text, last_visited_at::text, visit_count \
+             FROM player_atlas_discoveries WHERE discord_user_id = $1 \
+             ORDER BY discovered_at ASC, location_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|(location_id, discovered_at, last_visited_at, visits)| ExportedAtlasDiscovery {
+            location_id,
+            discovered_at,
+            last_visited_at,
+            visits,
+        })
+        .collect();
+
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
             .fetch_one(&self.pool)
             .await?;
@@ -471,7 +532,7 @@ impl ProfileStore {
             .collect();
 
         let export = PlayerExport {
-            format_version: 4,
+            format_version: 5,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -481,6 +542,8 @@ impl ProfileStore {
                 "unlocked achievements",
                 "Moonbits wallet balance",
                 "Moonbits wallet ledger entries",
+                "current Atlas location",
+                "Atlas discoveries and visit history",
             ],
             profile,
             game_sessions,
@@ -489,6 +552,8 @@ impl ProfileStore {
             achievements,
             wallet_balance,
             wallet_ledger_entries,
+            world_state,
+            atlas_discoveries,
             limitations: [
                 "Discord independently retains interactions under its own policies.",
                 "This export includes records in the current Moonbyte PostgreSQL schema only.",
@@ -547,6 +612,30 @@ impl ProfileStore {
             .await?
             .rows_affected()
             > 0;
+        // Atlas travel locks the player's world-state row. Lock it before
+        // deletion so an in-flight move cannot recreate state after this commit.
+        let _world_state_lock: Option<String> = sqlx::query_scalar(
+            "SELECT current_location_id FROM player_world_state WHERE discord_user_id = $1 FOR UPDATE",
+        )
+        .bind(player_id)
+        .fetch_optional(&mut *transaction)
+        .await?;
+        let world_state_removed = sqlx::query(
+            "DELETE FROM player_world_state WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected()
+            > 0;
+        let atlas_discoveries_removed = sqlx::query(
+            "DELETE FROM player_atlas_discoveries WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+
         let profile_removed = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
             .bind(player_id)
             .execute(&mut *transaction)
@@ -561,6 +650,8 @@ impl ProfileStore {
             achievement_rows_removed,
             wallet_ledger_records_removed,
             wallet_removed,
+            world_state_removed,
+            atlas_discoveries_removed,
             profile_removed,
         })
     }
@@ -634,6 +725,7 @@ mod postgres_tests {
 
     use crate::{
         database::Database,
+        atlas::AtlasStore,
         game::{GameKind, GameRuntime},
     };
 
@@ -648,6 +740,7 @@ mod postgres_tests {
             .expect("connect and migrate PostgreSQL");
         let store = ProfileStore::new(database.pool());
         let runtime = GameRuntime::new(database.pool());
+        let atlas = AtlasStore::new(database.pool());
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system clock after epoch")
@@ -692,6 +785,11 @@ mod postgres_tests {
         assert_eq!(stats.len(), 1);
         assert_eq!(stats[0].games_played, 1);
         assert_eq!(stats[0].games_won, 1);
+        let atlas_before = atlas.snapshot(&player_id).await.expect("open player Atlas");
+        assert_eq!(atlas_before.current_location.id, "lantern-square");
+        let atlas_trip = atlas.travel(&player_id, "mosslight-grove").await.expect("discover grove");
+        assert_eq!(atlas_trip.to.id, "mosslight-grove");
+
         let inventory = store.inventory(&player_id).await.expect("read inventory");
         assert!(inventory.profile_record);
         assert_eq!(inventory.game_session_records, 2);
@@ -700,6 +798,8 @@ mod postgres_tests {
         assert_eq!(inventory.achievement_rows, 2);
         assert!(inventory.wallet_record);
         assert_eq!(inventory.wallet_ledger_records, 1);
+        assert!(inventory.world_state_record);
+        assert_eq!(inventory.atlas_discovery_records, 2);
 
         let export = store.export_json(&player_id).await.expect("export data");
         assert!(export.contains("Moonbyte Pilot"));
@@ -716,6 +816,10 @@ mod postgres_tests {
         assert!(export.contains("wallet_balance"));
         assert!(export.contains("\"wallet_balance\": 10"));
         assert!(export.contains("first_game_completion"));
+        assert!(export.contains("current Atlas location"));
+        assert!(export.contains("atlas-discoveries"));
+        assert!(export.contains("mosslight-grove"));
+        assert!(export.contains("\"format_version\": 5"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
@@ -728,6 +832,8 @@ mod postgres_tests {
         assert_eq!(deletion.achievement_rows_removed, 2);
         assert_eq!(deletion.wallet_ledger_records_removed, 1);
         assert!(deletion.wallet_removed);
+        assert!(deletion.world_state_removed);
+        assert_eq!(deletion.atlas_discoveries_removed, 2);
         assert!(deletion.profile_removed);
         assert!(
             store
@@ -744,6 +850,8 @@ mod postgres_tests {
         assert_eq!(deleted_inventory.achievement_rows, 0);
         assert!(!deleted_inventory.wallet_record);
         assert_eq!(deleted_inventory.wallet_ledger_records, 0);
+        assert!(!deleted_inventory.world_state_record);
+        assert_eq!(deleted_inventory.atlas_discovery_records, 0);
         assert!(
             runtime.get(&session.id, &player_id, None).await.is_err(),
             "deleted session state must no longer be recoverable"
