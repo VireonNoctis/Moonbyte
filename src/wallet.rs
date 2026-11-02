@@ -101,6 +101,5 @@ mod tests {
     #[test]
     fn first_completion_reward_is_fixed_and_non_negative() {
         assert_eq!(FIRST_COMPLETION_REWARD, 10);
-        assert!(FIRST_COMPLETION_REWARD > 0);
     }
 }
