@@ -108,23 +108,34 @@ pub async fn privacy_delete(
         .await;
     }
 
+    // Establish the private receipt channel before mutating data. If DMs are
+    // unavailable, the command fails without deleting records silently.
+    let private_channel = if ctx.guild_id().is_some() {
+        Some(ctx.author().create_dm_channel(ctx.http()).await?)
+    } else {
+        None
+    };
     let player_id = ctx.author().id.to_string();
     let (sessions_removed, profile_removed) =
         ctx.data().profiles().delete_account(&player_id).await?;
-    send_private(
-        ctx,
-        format!(
-            "**Moonbyte deletion completed**\n\n\
-             Profile record removed: {}\n\
-             Session records removed: {}\n\n\
-             This confirms deletion from the current Moonbyte PostgreSQL tables only. \
-             It cannot delete Discord messages, Discord account data, or copies retained \
-             by other participants or infrastructure backups.",
-            if profile_removed { "yes" } else { "no profile record existed" },
-            sessions_removed
-        ),
-    )
-    .await
+    let receipt = format!(
+        "**Moonbyte deletion completed**\n\n\
+         Profile record removed: {}\n\
+         Session records removed: {}\n\n\
+         This confirms deletion from the current Moonbyte PostgreSQL tables only. \
+         It cannot delete Discord messages, Discord account data, or copies retained \
+         by other participants or infrastructure backups.",
+        if profile_removed { "yes" } else { "no profile record existed" },
+        sessions_removed
+    );
+    if let Some(dm) = private_channel {
+        dm.say(ctx.http(), receipt).await?;
+        ctx.say("Your deletion completed. I sent the private receipt to your DMs.")
+            .await?;
+    } else {
+        ctx.say(receipt).await?;
+    }
+    Ok(())
 }
 
 #[poise::command(prefix_command, slash_command)]
