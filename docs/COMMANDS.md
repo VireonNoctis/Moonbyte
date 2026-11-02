@@ -1,6 +1,6 @@
 # Moonbyte Command Reference
 
-- Status: The first playable game/runtime slice is implemented.
+- Status: Four playable games, PostgreSQL sessions, player profiles and the first privacy-control slice are implemented.
 - Framework: Poise on Serenity.
 - Default prefix: period; override with DEFAULT_PREFIX.
 
@@ -9,9 +9,16 @@
 | Prefix | Slash | Behavior |
 | --- | --- | --- |
 | .help | /help | Lists commands available in this build and the configured prefix. |
-| .about | /about | Shows the application version and current implementation boundaries. |
-| .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
-| .privacy | /privacy | Explains current PostgreSQL session storage and unavailable persistent privacy controls. |
+| .about | /about | Shows the application version and implementation boundaries. |
+| .ping | /ping | Confirms handler responsiveness and reports process uptime. |
+| .privacy | /privacy | Explains current data handling and privacy limits. |
+| .privacy_data | /privacy_data | Privately inspects the requester's current data inventory. |
+| .privacy_export | /privacy_export | Sends a private JSON export attachment. |
+| .privacy_delete | /privacy_delete | Starts deletion confirmation. |
+| .privacy_delete DELETE | /privacy_delete | Confirms deletion of the requester’s profile and stored sessions. |
+| .profile | /profile | Creates or displays the requester's private player profile. |
+| .profile_edit | /profile_edit | Updates the profile display name and bio. |
+| .settings | /settings | Saves profile visibility and player preference flags. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
@@ -20,7 +27,25 @@
 | .sessions | /sessions | Lists up to 10 most recently updated, non-expired sessions the requester participates in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
 
-All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
+All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, quest or RPG features as working.
+
+## Profile commands
+
+- `.profile_edit Display Name | Short bio` sets the display name and bio. The name is limited to 32 characters and the bio to 160 characters. Use `-` after the separator to clear the bio.
+- `.settings private false true` is an example that sets private visibility, hides statistics, and enables the quiet-mode preference. Visibility must be `public` or `private`.
+- Visibility defaults to private. This build does not yet expose a public profile directory or statistics/leaderboard surface; the preferences are persisted for those later surfaces.
+- Profile, settings and inventory responses are sent by DM when invoked in a server. In DMs they are returned in the current conversation.
+
+## Privacy controls and scope
+
+1. Run `.privacy_data` to see whether a profile exists and how many session records currently reference the requester.
+2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The export contains the player's profile and session metadata, but not other participants' IDs or raw message content.
+3. Run `.privacy_delete` to read the exact deletion scope. Nothing is deleted at this step.
+4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile and every stored game-session snapshot containing that Discord ID.
+
+Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The deletion result reports the actual number of session rows removed and whether a profile row existed.
+
+This covers the current Moonbyte PostgreSQL schema only: `player_profiles` and `game_sessions`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
 
 ## Game controls
 
@@ -43,12 +68,14 @@ Tic-tac-toe and Connect Four create lobbies for two players. A second participan
 
 The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Message Content intent is privileged and must be enabled for the application. Slash commands are registered globally during startup; Discord may take up to an hour to propagate global command changes.
 
-## Runtime and privacy boundary
+## Persistence and privacy boundary
 
-Active session state is stored in PostgreSQL. The JSONB snapshot includes the game state, participant Discord IDs, optional guild ID, lifecycle phase and action count; mutations are committed transactionally with a row lock. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants. An inactive session expires after 24 hours and is removed by the central cleanup task.
+Player profile data is stored in `player_profiles`; game sessions are stored in `game_sessions`. The second versioned migration creates the profile table. A profile stores the Discord user ID, display name, optional bio, private/public visibility, and two preference flags. It does not store real names, email addresses or location.
 
-The privacy command is informational only. Player profiles, inventory, progression, a complete stored-data inventory, private export and confirmed deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
+Session snapshots contain game state and participant IDs, optional guild scope, lifecycle phase and action count. Mutations are committed transactionally with a row lock. An inactive session expires after 24 hours and is removed by the central cleanup task.
 
-## Planned command groups
+See [Player Profiles](PLAYER_PROFILES.md) and [Privacy Policy](PRIVACY.md) for exact data coverage, export fields, deletion behavior and the limitations that remain.
 
-Profiles, collections, inventory, quests, parties, leaderboards, achievements, settings, the persistent Vault, Bazaar, privacy data/export/delete and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
+## Still planned
+
+Game result history, achievements, inventory, quests, parties, leaderboard/statistics surfaces, personal Vaults, Bazaar trading, a live authenticated game API, Discord Activity integration and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
