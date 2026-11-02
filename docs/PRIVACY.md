@@ -1,8 +1,8 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Current runtime includes PostgreSQL-backed player profiles, preferences, data inventory, private JSON export and confirmed profile/session deletion. Other product systems remain planned.
-- Last updated: 2026-10-31.
+- Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, the initial earned-only Moonbits wallet/ledger, data inventory, private JSON export and confirmed deletion across the current player-owned tables. Vaults, inventory, spending and Bazaar systems remain planned.
+- Last updated: 2026-11-02.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
 ## 1. Our stance
@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-The current runtime stores player profiles and preferences in `player_profiles` and game-session snapshots in `game_sessions`. It does not yet persist inventories, achievements or a complete game-results history. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current schema. These facts describe the current code slice only; every future persisted feature must extend the same inventory/export/deletion contract before release.
+The current runtime stores player profiles/preferences, game-session snapshots, completed result metadata, per-game statistics, and earned-only wallet/ledger records in PostgreSQL. It does not yet persist inventory, achievements, quests, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Every future persisted feature must extend the same inventory/export/deletion contract before release.
 
 ## 2. Data Moonbyte needs
 
@@ -84,8 +84,8 @@ The provider list describes the intended model; it does not claim a production h
 | Data | Intended retention |
 | --- | --- |
 | Active session state | While active, with a maximum 24-hour recovery window after inactivity or interruption unless a game documents a different save model. |
-| Completed game results | While the player's profile is active and the statistics feature is enabled; delete on profile deletion. |
-| Player settings, achievements, progression | Until profile deletion or a documented feature migration. |
+| Completed game results | Expire with the parent session after 24 hours of inactivity; delete on account deletion. |
+| Player settings and aggregate statistics | Until profile deletion. |\n| Moonbits wallet and ledger | Until profile deletion; session expiry does not remove earned ledger entries. |\n| Achievements, inventory and other progression | Not currently stored. Future retention must be documented with the feature. |
 | Guild settings | While the bot remains installed and settings are needed; delete or anonymise after removal, target maximum 30 days. |
 | Routine operational logs | Target maximum 30 days, then delete or aggregate without direct identifiers. |
 | Security incident records | Only as long as reasonably necessary; restrict access and document the purpose. |
