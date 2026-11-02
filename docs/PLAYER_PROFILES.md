@@ -98,12 +98,12 @@ The database stores `player_world_state` and `player_atlas_discoveries`, both ow
 | `.achievements` | Privately list the player's unlocked milestones. |
 | `.atlas` | Privately show the current world location, known places and connected routes. |
 | `.travel mosslight-grove` | Travel to a directly connected location; use the Atlas for available routes. |
-| `.privacy_data` | Privately inspect profile, session, result, statistics and wallet record counts. |
+| `.privacy_data` | Privately inspect profile, session, result, statistic, achievement, wallet/ledger and Atlas record counts. |
 | `.privacy_export` | Receive a JSON attachment containing the current player-owned records. |
 | `.privacy_delete` | Start a deletion request and explain its scope. |
 | `.privacy_delete DELETE` | Explicitly confirm deletion. |
 
-The same commands are registered as slash commands. When invoked in a guild, personal profile details, inventory counts, wallet data and exports are sent to the requester's DM. If Discord prevents delivery, private commands fail without posting personal details in the channel.
+The same commands are registered as slash commands. When invoked in a guild, personal profile details, inventory counts, wallet data, achievement lists, Atlas maps and exports are sent to the requester's DM. If Discord prevents delivery, private commands fail without posting personal details in the channel.
 
 ## Export format
 
@@ -127,15 +127,15 @@ Deletion runs in one PostgreSQL transaction:
 
 1. Lock every `game_sessions` row whose JSONB player list contains the requesting Discord ID.
 2. Delete the linked `game_results` rows and the matching session rows.
-3. Delete every `player_game_stats` row for the requester.
-4. Delete the requester's `wallet_ledger_entries` rows.
-5. Delete the matching `player_wallets` row.
+3. Delete every `player_game_stats` and `player_achievements` row for the requester.
+4. Delete the requester's `wallet_ledger_entries` rows and `player_wallets` row.
+5. Lock and delete the requester's `player_world_state` row, then delete their `player_atlas_discoveries` rows.
 6. Delete the matching `player_profiles` row.
 7. Commit all changes together and report the affected row counts.
 
 Game state is stored as one shared snapshot. Removing only one participant ID from that snapshot would require a domain migration and could leave a broken or partially recoverable session. The current safe behavior therefore ends every stored session containing the requester, including sessions shared with other players. The command explains this before asking for the explicit `DELETE` confirmation.
 
-The operation covers the current player-owned schema: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Result rows are removed with their parent sessions; aggregate statistics and wallet records are removed directly. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
+The operation covers the current player-owned schema: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Result rows are removed with their parent sessions; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas tables also have foreign-key ownership by the profile. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
 
 ## Engineering invariants
 
