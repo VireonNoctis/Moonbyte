@@ -58,7 +58,9 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Per-game statistic rows: {}\n\
          Achievement records: {}\n\
          Wallet record: {}\n\
-         Wallet ledger entries: {}\n\n\
+         Wallet ledger entries: {}\n\
+         Atlas world-state record: {}\n\
+         Atlas discovery records: {}\n\n\
          {}\n\n\
          Use `.privacy_export` to receive a JSON copy, or `.privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
@@ -77,6 +79,8 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
             "not created"
         },
         inventory.wallet_ledger_records,
+        if inventory.world_state_record { "present" } else { "not created" },
+        inventory.atlas_discovery_records,
         inventory.session_retention
     );
     send_private(ctx, message).await
@@ -116,7 +120,8 @@ pub async fn privacy_delete(
             ctx,
             "**Delete your Moonbyte profile?**\n\n\
              This removes your profile, unlocked achievements, Moonbits wallet and ledger \
-             entries, and every stored game-session snapshot containing your Discord ID. Shared sessions will end for \
+             entries, Atlas location/discovery records, and every stored game-session snapshot \
+             containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
              To confirm, run `.privacy_delete DELETE`. No deletion has happened yet.",
         )
@@ -140,7 +145,9 @@ pub async fn privacy_delete(
          Per-game statistic rows removed: {}\n\
          Achievement records removed: {}\n\
          Wallet record removed: {}\n\
-         Wallet ledger entries removed: {}\n\n\
+         Wallet ledger entries removed: {}\n\
+         Atlas world-state record removed: {}\n\
+         Atlas discovery records removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
          by other participants or infrastructure backups.",
@@ -158,7 +165,9 @@ pub async fn privacy_delete(
         } else {
             "no wallet record existed"
         },
-        deletion.wallet_ledger_records_removed
+        deletion.wallet_ledger_records_removed,
+        if deletion.world_state_removed { "yes" } else { "no record existed" },
+        deletion.atlas_discoveries_removed
     );
     if let Some(dm) = private_channel {
         dm.say(ctx.http(), receipt).await?;
@@ -666,7 +675,7 @@ const PRIVACY_OVERVIEW: &str = "\
 **Moonbyte privacy — current build**\n\n\
 Moonbyte processes Discord interactions to run commands and games. PostgreSQL stores \
 player profiles, session snapshots, completed-game result metadata, per-game aggregate \
-statistics, earned-only wallet/ledger records and unlocked achievements. Sessions include game state and participant IDs, are scoped to their originating \
+statistics, earned-only wallet/ledger records, unlocked achievements and personal Atlas location/discovery records. Sessions include game state and participant IDs, are scoped to their originating \
 server, and expire after 24 hours without activity. Completed result rows expire with their \
 parent session; aggregate statistics and earned wallet/ledger records remain until the player \
 requests deletion. The first completion of each game type earns 10 Moonbits once per player. \
@@ -677,8 +686,8 @@ Player profiles store a Discord user ID, display name, optional bio, private-by-
 visibility and two preference flags. Use `.privacy_data` to inspect your current records, \
 `.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
 deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
-Deletion removes the profile, per-game statistics, achievements, Moonbits wallet/ledger records \
-and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
+Deletion removes the profile, per-game statistics, achievements, Moonbits wallet/ledger records, \
+Atlas location/discovery records and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
 Discord's own messages, Discord account data, other participants' copies, or backups outside \
 the current database.\n\n\
 Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of the \
