@@ -94,7 +94,10 @@ The database stores `player_world_state` and `player_atlas_discoveries`, both ow
 | `.profile_edit Name Here \| Short bio` | Update display name and bio. Use `-` after the separator to clear the bio. |
 | `.settings private false true` | Example: save visibility, statistics preference and quiet mode. Accepted visibility values are `private` and `public`. |
 | `.stats` | Privately show completed game totals, wins and draws by game. |
-| `.wallet` | Privately show the Moonbits balance and number of earned ledger entries. |\n| `.achievements` | Privately list the player's unlocked milestones. |\n| `.atlas` | Privately show the current world location, known places and connected routes. |\n| `.travel mosslight-grove` | Travel to a directly connected location; use the Atlas for available routes. |
+| `.wallet` | Privately show the Moonbits balance and number of earned ledger entries. |
+| `.achievements` | Privately list the player's unlocked milestones. |
+| `.atlas` | Privately show the current world location, known places and connected routes. |
+| `.travel mosslight-grove` | Travel to a directly connected location; use the Atlas for available routes. |
 | `.privacy_data` | Privately inspect profile, session, result, statistics and wallet record counts. |
 | `.privacy_export` | Receive a JSON attachment containing the current player-owned records. |
 | `.privacy_delete` | Start a deletion request and explain its scope. |
@@ -112,7 +115,9 @@ The version 5 JSON export contains:
 - Completed-result metadata for the requester: game, outcome, action count and completion time.
 - Aggregate per-game completed, win and draw counts.
 - Current Moonbits wallet balance.
-- Wallet ledger entries, including amount, fixed reason, source session, idempotency key and timestamp.\n- Five achievement milestone records when earned, including their source session and unlock timestamp.\n- The player's current Atlas location and the locations they have discovered, with timestamps and visit counts.
+- Wallet ledger entries, including amount, fixed reason, source session, idempotency key and timestamp.
+- Five achievement milestone records when earned, including their source session and unlock timestamp.
+- The player's current Atlas location and the locations they have discovered, with timestamps and visit counts.
 
 The export deliberately excludes other participants' Discord IDs and raw message content. It describes the current Moonbyte PostgreSQL schema only. Discord independently retains interactions under its own policies.
 
@@ -139,7 +144,8 @@ The operation covers the current player-owned schema: `player_profiles`, `game_s
 - Private account data is delivered by DM from guild invocations.
 - Export is scoped to the authenticated player and the current schema.
 - Deletion of player, session, achievement, wallet and Atlas records is atomic.
-- Achievement unlocks are checked against server-owned aggregate statistics and stored once per player/achievement.\n- The first-completion milestone is fixed, disclosed and non-random.
+- Achievement unlocks are checked against server-owned aggregate statistics and stored once per player/achievement.
+- The first-completion milestone is fixed, disclosed and non-random.
 - Ledger writes and wallet balance updates share the game-completion transaction.
 - A unique player/game idempotency key prevents repeat completion credits.
 - No purchases, cash-out, wagering, staking, or player transfers exist.
