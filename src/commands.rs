@@ -21,9 +21,9 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
     let message = format!(
         "Moonbyte v{} — a colourful world of games inside Discord.\n\n\
          This build includes four playable games, PostgreSQL-backed sessions, persistent \
-         player profiles, per-game results and statistics, private data export and confirmed \
-         profile deletion. The wider Tavern, Atlas, quests, Vaults, collections and Bazaar \
-         remain in active development.",
+         player profiles, per-game results and statistics, earned-only Moonbits milestones, \
+         private data export and confirmed profile deletion. The initial Tavern Wayfinder \
+         links to live destinations; the wider world is in active development.",
         env!("CARGO_PKG_VERSION")
     );
     ctx.say(message).await?;
@@ -55,7 +55,9 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Profile record: {}\n\
          Game-session records currently retained: {}\n\
          Completed result records retained: {}\n\
-         Per-game statistic rows: {}\n\n\
+         Per-game statistic rows: {}\n\
+         Wallet record: {}\n\
+         Wallet ledger entries: {}\n\n\
          {}\n\n\
          Use `.privacy_export` to receive a JSON copy, or `.privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
@@ -67,6 +69,8 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
         inventory.game_session_records,
         inventory.game_result_records,
         inventory.game_stat_rows,
+        if inventory.wallet_record { "present" } else { "not created" },
+        inventory.wallet_ledger_records,
         inventory.session_retention
     );
     send_private(ctx, message).await
@@ -105,9 +109,9 @@ pub async fn privacy_delete(
         return send_private(
             ctx,
             "**Delete your Moonbyte profile?**\n\n\
-             This removes your profile and every stored game-session snapshot containing \
-             your Discord ID. Shared sessions will end for every participant because their \
-             state is stored together. This cannot be undone.\n\n\
+             This removes your profile, Moonbits wallet and ledger entries, and every stored \
+             game-session snapshot containing your Discord ID. Shared sessions will end for \
+             every participant because their state is stored together. This cannot be undone.\n\n\
              To confirm, run `.privacy_delete DELETE`. No deletion has happened yet.",
         )
         .await;
@@ -127,7 +131,9 @@ pub async fn privacy_delete(
          Profile record removed: {}\n\
          Session records removed: {}\n\
          Completed results removed: {}\n\
-         Per-game statistic rows removed: {}\n\n\
+         Per-game statistic rows removed: {}\n\
+         Wallet record removed: {}\n\
+         Wallet ledger entries removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
          by other participants or infrastructure backups.",
@@ -138,7 +144,9 @@ pub async fn privacy_delete(
         },
         deletion.sessions_removed,
         deletion.results_removed,
-        deletion.stat_rows_removed
+        deletion.stat_rows_removed,
+        if deletion.wallet_removed { "yes" } else { "no wallet record existed" },
+        deletion.wallet_ledger_records_removed
     );
     if let Some(dm) = private_channel {
         dm.say(ctx.http(), receipt).await?;
@@ -197,6 +205,23 @@ pub async fn profile_edit(
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn wallet(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let wallet = ctx.data().wallets().snapshot(&player_id).await?;
+    let message = format!(
+        "**Your Moonbits wallet**\n\nBalance: **{} Moonbits**\nLedger entries: {}\n\n\
+         The first completion of each game type earns {} Moonbits once per player. \
+         Replaying a game does not repeat that milestone. Moonbits are earned-only, \
+         cannot be purchased or cashed out, and cannot be staked. Spending and trading \
+         are not enabled yet.",
+        wallet.balance,
+        wallet.ledger_entries,
+        crate::wallet::FIRST_COMPLETION_REWARD
+    );
+    send_private(ctx, message).await
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let stats = ctx.data().profiles().game_stats(&player_id).await?;
@@ -252,7 +277,12 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
         })
         .collect::<Vec<_>>()
         .join("\n\n");
-    ctx.say(format!("**Moonbyte Game Library**\n\n{entries}"))
+    ctx.say(format!(
+        "**Moonbyte Game Library**\n\n{entries}\n\n\
+         First completion of each game type grants {} Moonbits once per player. \
+         Repeat completions do not grant more. Use `.wallet` to view your balance.",
+        crate::wallet::FIRST_COMPLETION_REWARD
+    ))
         .await?;
     Ok(())
 }
@@ -404,6 +434,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         profile(),
         profile_edit(),
         settings(),
+        wallet(),
         stats(),
         tavern(),
         games(),
@@ -495,6 +526,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}profile / /profile — view your private player profile\n\
          {safe_prefix}profile_edit <name> | <bio> / /profile_edit — edit your profile\n\
          {safe_prefix}settings <visibility> <show_stats> <quiet_mode> / /settings — update preferences\n\
+         {safe_prefix}wallet / /wallet — view your earned-only Moonbits balance\n\
          {safe_prefix}stats / /stats — view completed game statistics\n\
          {safe_prefix}tavern / /tavern — open the Tavern and live Wayfinder\n\
          {safe_prefix}games / /games — browse the playable library\n\
@@ -512,16 +544,16 @@ fn help_message(prefix: &str) -> String {
 const PRIVACY_OVERVIEW: &str = "\
 **Moonbyte privacy — current build**\n\n\
 Moonbyte processes Discord interactions to run commands and games. PostgreSQL stores \
-player profiles, session snapshots, completed-game result metadata and per-game aggregate \
-statistics. Sessions include game state and participant IDs, are scoped to their originating \
+player profiles, session snapshots, completed-game result metadata, per-game aggregate \
+statistics and earned-only wallet/ledger records. Sessions include game state and participant IDs, are scoped to their originating \
 server, and expire after 24 hours without activity. Completed result rows expire with their \
 parent session; aggregate statistics remain until the player requests deletion.\n\n\
 Player profiles store a Discord user ID, display name, optional bio, private-by-default \
 visibility and two preference flags. Use `.privacy_data` to inspect your current records, \
 `.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
 deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
-Deletion removes the profile, per-game statistics and every session/result snapshot containing \
-your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
+Deletion removes the profile, per-game statistics, Moonbits wallet/ledger records and every \
+session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
 Discord's own messages, Discord account data, other participants' copies, or backups outside \
 the current database.\n\n\
 Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of the \
@@ -545,6 +577,7 @@ mod tests {
             ".profile / /profile",
             ".profile_edit <name> | <bio> / /profile_edit",
             ".settings <visibility> <show_stats> <quiet_mode> / /settings",
+            ".wallet / /wallet",
             ".stats / /stats",
             ".tavern / /tavern",
             ".games / /games",
