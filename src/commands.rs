@@ -21,9 +21,9 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
     let message = format!(
         "Moonbyte v{} — a colourful world of games inside Discord.\n\n\
          This build includes four playable games, PostgreSQL-backed sessions, persistent \
-         player profiles, profile preferences, private data export and confirmed profile \
-         deletion. The wider Tavern, Atlas, quests, Vaults, collections and Bazaar remain \
-         in active development.",
+         player profiles, per-game results and statistics, private data export and confirmed \
+         profile deletion. The wider Tavern, Atlas, quests, Vaults, collections and Bazaar \
+         remain in active development.",
         env!("CARGO_PKG_VERSION")
     );
     ctx.say(message).await?;
@@ -53,12 +53,16 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
     let message = format!(
         "**Your Moonbyte data inventory**\n\n\
          Profile record: {}\n\
-         Game-session records currently retained: {}\n\n\
+         Game-session records currently retained: {}\n\
+         Completed result records retained: {}\n\
+         Per-game statistic rows: {}\n\n\
          {}\n\n\
          Use `.privacy_export` to receive a JSON copy, or `.privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
         if inventory.profile_record { "present" } else { "not created" },
         inventory.game_session_records,
+        inventory.game_result_records,
+        inventory.game_stat_rows,
         inventory.session_retention
     );
     send_private(ctx, message).await
@@ -116,17 +120,20 @@ pub async fn privacy_delete(
         None
     };
     let player_id = ctx.author().id.to_string();
-    let (sessions_removed, profile_removed) =
-        ctx.data().profiles().delete_account(&player_id).await?;
+    let deletion = ctx.data().profiles().delete_account(&player_id).await?;
     let receipt = format!(
         "**Moonbyte deletion completed**\n\n\
          Profile record removed: {}\n\
-         Session records removed: {}\n\n\
+         Session records removed: {}\n\
+         Completed results removed: {}\n\
+         Per-game statistic rows removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
          by other participants or infrastructure backups.",
-        if profile_removed { "yes" } else { "no profile record existed" },
-        sessions_removed
+        if deletion.profile_removed { "yes" } else { "no profile record existed" },
+        deletion.sessions_removed,
+        deletion.results_removed,
+        deletion.stat_rows_removed
     );
     if let Some(dm) = private_channel {
         dm.say(ctx.http(), receipt).await?;
@@ -146,7 +153,8 @@ pub async fn profile(ctx: Context<'_>) -> Result<(), Error> {
         .profiles()
         .get_or_create(&player_id, &ctx.author().name)
         .await?;
-    send_private(ctx, render_profile(&profile)).await
+    let stats = ctx.data().profiles().game_stats(&player_id).await?;
+    send_private(ctx, render_profile(&profile, &stats)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -175,7 +183,15 @@ pub async fn profile_edit(
         .profiles()
         .update_identity(&player_id, display_name.trim(), bio)
         .await?;
-    send_private(ctx, format!("Profile saved.\n\n{}", render_profile(&profile))).await
+    let stats = ctx.data().profiles().game_stats(&player_id).await?;
+    send_private(ctx, format!("Profile saved.\n\n{}", render_profile(&profile, &stats))).await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let stats = ctx.data().profiles().game_stats(&player_id).await?;
+    send_private(ctx, render_statistics(&stats)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -375,6 +391,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         profile(),
         profile_edit(),
         settings(),
+        stats(),
         games(),
         play(),
         join(),
@@ -397,19 +414,46 @@ async fn send_private(ctx: Context<'_>, content: impl Into<String>) -> Result<()
     Ok(())
 }
 
-fn render_profile(profile: &PlayerProfile) -> String {
+fn render_profile(
+    profile: &PlayerProfile,
+    stats: &[crate::profile::PlayerGameStat],
+) -> String {
     let bio = profile
         .bio
         .as_deref()
         .map(escape_user_text)
         .unwrap_or_else(|| "No bio yet.".to_owned());
     format!(
-        "**Your Moonbyte profile**\n\nDisplay name: {}\nBio: {}\nVisibility: {}\nShow statistics: {}\nQuiet mode: {}",
+        "**Your Moonbyte profile**\n\nDisplay name: {}\nBio: {}\nVisibility: {}\nShow statistics: {}\nQuiet mode: {}\n\n{}",
         escape_user_text(&profile.display_name),
         bio,
         profile.visibility,
         profile.show_statistics,
-        profile.quiet_mode
+        profile.quiet_mode,
+        render_statistics(stats)
+    )
+}
+
+fn render_statistics(stats: &[crate::profile::PlayerGameStat]) -> String {
+    if stats.is_empty() {
+        return String::from("**Game statistics**\n\nNo completed games are recorded yet.");
+    }
+    let games_played: i64 = stats.iter().map(|stat| stat.games_played).sum();
+    let games_won: i64 = stats.iter().map(|stat| stat.games_won).sum();
+    let draws: i64 = stats.iter().map(|stat| stat.draws).sum();
+    let entries = stats
+        .iter()
+        .map(|stat| {
+            format!(
+                "• **{}** — {} completed · {} wins · {} draws",
+                stat.game_id, stat.games_played, stat.games_won, stat.draws
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    format!(
+        "**Game statistics**\n\n{} completed · {} wins · {} draws\n\n{}",
+        games_played, games_won, draws, entries
     )
 }
 
@@ -440,6 +484,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}profile / /profile — view your private player profile\n\
          {safe_prefix}profile_edit <name> | <bio> / /profile_edit — edit your profile\n\
          {safe_prefix}settings <visibility> <show_stats> <quiet_mode> / /settings — update preferences\n\
+         {safe_prefix}stats / /stats — view completed game statistics\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
@@ -486,6 +531,7 @@ mod tests {
             ".profile / /profile",
             ".profile_edit <name> | <bio> / /profile_edit",
             ".settings <visibility> <show_stats> <quiet_mode> / /settings",
+            ".stats / /stats",
             ".games / /games",
             ".play <game> / /play",
             ".join <session> / /join",
