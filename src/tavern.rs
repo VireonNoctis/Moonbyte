@@ -49,6 +49,14 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 3] = [
         emoji: EmojiKey::Rocket,
         fallback: "🪙",
     },
+    TavernDestination {
+        id: "achievement-gallery",
+        title: "The Gallery",
+        description: "Browse achievements unlocked through completed games.",
+        command: "achievements",
+        emoji: EmojiKey::Crystal,
+        fallback: "🏅",
+    },
 ];
 
 /// Render the initial Tavern Wayfinder using only live commands.
@@ -93,7 +101,7 @@ mod tests {
         assert_eq!(AVAILABLE_DESTINATIONS.len(), 3);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
-            ["games", "profile", "stats", "wallet"]
+            ["games", "profile", "stats", "wallet", "achievements"]
         );
 
         let home = render(".");
@@ -102,6 +110,8 @@ mod tests {
         assert!(home.contains(".stats"));
         assert!(home.contains(".wallet"));
         assert!(home.contains("The Ledger"));
+        assert!(home.contains(".achievements"));
+        assert!(home.contains("The Gallery"));
         assert!(home.contains("The Common Tables"));
         assert!(home.contains("The Chronicle"));
         assert!(home.contains("only as their systems become playable"));
