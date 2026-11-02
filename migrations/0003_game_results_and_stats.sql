@@ -5,11 +5,17 @@ CREATE TABLE IF NOT EXISTS game_results (
     winner_player_id TEXT,
     player_ids JSONB NOT NULL,
     action_count BIGINT NOT NULL CHECK (action_count >= 0),
-    completed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (jsonb_typeof(player_ids) = 'array'),
+    CHECK ((outcome = 'won') = (winner_player_id IS NOT NULL)),
+    CHECK (winner_player_id IS NULL OR player_ids @> jsonb_build_array(winner_player_id))
 );
 
 CREATE INDEX IF NOT EXISTS game_results_player_ids_idx
     ON game_results USING GIN (player_ids jsonb_path_ops);
+
+CREATE INDEX IF NOT EXISTS game_sessions_players_idx
+    ON game_sessions USING GIN ((session_state -> 'players') jsonb_path_ops);
 
 CREATE TABLE IF NOT EXISTS player_game_stats (
     discord_user_id TEXT NOT NULL CHECK (length(discord_user_id) BETWEEN 1 AND 32),
