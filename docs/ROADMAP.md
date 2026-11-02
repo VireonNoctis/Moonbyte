@@ -1,7 +1,7 @@
 # Moonbyte Roadmap
 
 - Status: In progress.
-- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence, versioned migrations, row-locked state transitions, restart recovery, player profiles/preferences and the first privacy export/deletion controls are implemented. Progression, production recovery operations and the live visual-game API remain.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence, versioned migrations, row-locked state transitions, restart recovery, player profiles/preferences, completed-game results/statistics, the initial Tavern Wayfinder, and the first-completion Moonbits wallet/ledger with privacy coverage are implemented. Broader progression, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -177,7 +177,7 @@ Exit criteria:
 ## Phase 8 — Vaults, Bazaar and economy
 
 Deliverables:
-- Earned-only Moonbits ledger with idempotent entries and transparent reward definitions.
+- [x] Initial earned-only Moonbits wallet and immutable first-completion ledger entry with idempotency key.\n- Additional transparent reward definitions and deterministic award paths for later systems.
 - Personal Vault and collectible archive.
 - Puzzle Vault vertical slice with fixed, published rewards and save checkpoints.
 - Crafting recipes and item provenance.
@@ -185,10 +185,10 @@ Deliverables:
 - Moderation, reporting, rate limits, and guild-scoped controls.
 
 Exit criteria:
-- Every balance mutation has an immutable ledger entry in the same PostgreSQL transaction.
+- [x] The current first-completion credit writes an immutable ledger entry and wallet balance in the same PostgreSQL transaction.\n- Every future balance mutation must follow the same invariant.
 - Double-spend, duplicate interaction, race, rollback, and self-trade tests pass.
 - No real-money value, wagering, paid random reward, or cash-out feature exists.
-- Profile export/deletion and guild-isolation tests cover the new records.
+- [x] Profile inventory, export and deletion cover the wallet and ledger tables.\n- Guild-isolation tests must cover future guild-owned economy records.
 - Every Vault reward and Bazaar price/fee is shown before confirmation.
 
 ## Phase 9 — Production readiness and measured scale
@@ -276,4 +276,4 @@ Do not implement the full breadth at once. Release one connected, testable verti
 
 The implementation combines four Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics and private data controls. The first Tavern home is now available through `.tavern` and `/tavern`; its Wayfinder routes to the implemented Common Tables, player profile and Chronicle only. The destination list is driven by one typed registry and uses the central custom-emoji module with safe fallbacks. No broader Tavern, Atlas, party, Vault or Bazaar behavior is implied by this navigation slice.
 
-This increment does **not** mark the full player platform complete. Tavern tables/parties/NPCs, Atlas discoveries, Expeditions, quests, Vaults, Moonbits ledger, inventory, crafting, Bazaar escrow/trading, additional games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
+This increment does **not** mark the full player platform complete. Tavern tables/parties/NPCs, Atlas discoveries, Expeditions, quests, Vaults/reward catalogue, inventory, crafting, Moonbits spending/transfers, Bazaar escrow/trading, additional games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
