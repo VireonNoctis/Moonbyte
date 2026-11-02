@@ -103,7 +103,7 @@ pub async fn privacy_delete(
              This removes your profile and every stored game-session snapshot containing \
              your Discord ID. Shared sessions will end for every participant because their \
              state is stored together. This cannot be undone.\n\n\
-             To confirm, run `.privacy-delete DELETE`. No deletion has happened yet.",
+             To confirm, run `.privacy_delete DELETE`. No deletion has happened yet.",
         )
         .await;
     }
@@ -434,11 +434,11 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}about / /about — describe this build\n\
          {safe_prefix}ping / /ping — check responsiveness and uptime\n\
          {safe_prefix}privacy / /privacy — read the current privacy overview\n\
-         {safe_prefix}privacy-data / /privacy_data — inspect your stored data\n\
-         {safe_prefix}privacy-export / /privacy_export — receive a private JSON export\n\
-         {safe_prefix}privacy-delete [DELETE] / /privacy_delete — confirm profile deletion\n\
+         {safe_prefix}privacy_data / /privacy_data — inspect your stored data\n\
+         {safe_prefix}privacy_export / /privacy_export — receive a private JSON export\n\
+         {safe_prefix}privacy_delete [DELETE] / /privacy_delete — confirm profile deletion\n\
          {safe_prefix}profile / /profile — view your private player profile\n\
-         {safe_prefix}profile-edit <name> <bio> / /profile_edit — edit your profile\n\
+         {safe_prefix}profile_edit <name> | <bio> / /profile_edit — edit your profile\n\
          {safe_prefix}settings <visibility> <show_stats> <quiet_mode> / /settings — update preferences\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
@@ -460,7 +460,7 @@ participant IDs. Sessions are scoped to their originating server and expire afte
 24 hours without activity. Player profiles store a Discord user ID, display name, \
 optional bio, visibility and two preference flags.\n\n\
 Use `.privacy_data` to inspect the records currently associated with you, \
-`.privacy-export` to receive a private JSON export, and `.privacy-delete` to begin \
+`.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin \
 confirmed deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
 Deletion removes the profile and session snapshots containing your ID from the current \
 PostgreSQL schema. It can end shared sessions. It cannot delete Discord's own messages, \
