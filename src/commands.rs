@@ -330,6 +330,10 @@ pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn atlas(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     let snapshot = ctx.data().atlas().snapshot(&player_id).await?;
     send_private(ctx, crate::atlas::render(&snapshot, ctx.data().prefix())).await
 }
@@ -341,6 +345,10 @@ pub async fn travel(
     location: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     let result = match ctx.data().atlas().travel(&player_id, &location).await {
         Ok(result) => result,
         Err(crate::atlas::AtlasError::UnknownLocation) => {
