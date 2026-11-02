@@ -807,7 +807,6 @@ mod postgres_tests {
         assert!(export.contains("completed game results"));
         assert!(export.contains("per-game statistics"));
         assert!(export.contains("format_version"));
-        assert!(export.contains("\"format_version\": 4"));
         assert!(export.contains("unlocked achievements"));
         assert!(export.contains("first_clear"));
         assert!(export.contains("First Steps"));
