@@ -20,11 +20,7 @@ pub struct Data {
 }
 
 impl Data {
-    pub fn new(
-        prefix: String,
-        games: game::GameRuntime,
-        profiles: profile::ProfileStore,
-    ) -> Self {
+    pub fn new(prefix: String, games: game::GameRuntime, profiles: profile::ProfileStore) -> Self {
         Self {
             prefix,
             started_at: Instant::now(),
