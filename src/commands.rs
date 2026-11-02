@@ -59,7 +59,11 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          {}\n\n\
          Use `.privacy_export` to receive a JSON copy, or `.privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
-        if inventory.profile_record { "present" } else { "not created" },
+        if inventory.profile_record {
+            "present"
+        } else {
+            "not created"
+        },
         inventory.game_session_records,
         inventory.game_result_records,
         inventory.game_stat_rows,
@@ -72,10 +76,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
 pub async fn privacy_export(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let export = ctx.data().profiles().export_json(&player_id).await?;
-    let attachment = CreateAttachment::bytes(
-        export.into_bytes(),
-        "moonbyte-data-export.json",
-    );
+    let attachment = CreateAttachment::bytes(export.into_bytes(), "moonbyte-data-export.json");
     let dm = ctx.author().create_dm_channel(ctx.http()).await?;
     dm.send_files(
         ctx.http(),
@@ -130,7 +131,11 @@ pub async fn privacy_delete(
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
          by other participants or infrastructure backups.",
-        if deletion.profile_removed { "yes" } else { "no profile record existed" },
+        if deletion.profile_removed {
+            "yes"
+        } else {
+            "no profile record existed"
+        },
         deletion.sessions_removed,
         deletion.results_removed,
         deletion.stat_rows_removed
@@ -184,7 +189,11 @@ pub async fn profile_edit(
         .update_identity(&player_id, display_name.trim(), bio)
         .await?;
     let stats = ctx.data().profiles().game_stats(&player_id).await?;
-    send_private(ctx, format!("Profile saved.\n\n{}", render_profile(&profile, &stats))).await
+    send_private(
+        ctx,
+        format!("Profile saved.\n\n{}", render_profile(&profile, &stats)),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -198,8 +207,7 @@ pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
 pub async fn settings(
     ctx: Context<'_>,
     #[description = "Profile visibility: public or private"] visibility: String,
-    #[description = "Allow profile statistics to be shown: true or false"]
-    show_statistics: bool,
+    #[description = "Allow profile statistics to be shown: true or false"] show_statistics: bool,
     #[description = "Enable quiet mode for future optional notices: true or false"]
     quiet_mode: bool,
 ) -> Result<(), Error> {
@@ -215,9 +223,7 @@ pub async fn settings(
         .await?;
     let message = format!(
         "**Settings saved**\n\nVisibility: {}\nShow statistics: {}\nQuiet mode: {}",
-        profile.visibility,
-        profile.show_statistics,
-        profile.quiet_mode
+        profile.visibility, profile.show_statistics, profile.quiet_mode
     );
     send_private(ctx, message).await
 }
@@ -414,10 +420,7 @@ async fn send_private(ctx: Context<'_>, content: impl Into<String>) -> Result<()
     Ok(())
 }
 
-fn render_profile(
-    profile: &PlayerProfile,
-    stats: &[crate::profile::PlayerGameStat],
-) -> String {
+fn render_profile(profile: &PlayerProfile, stats: &[crate::profile::PlayerGameStat]) -> String {
     let bio = profile
         .bio
         .as_deref()
