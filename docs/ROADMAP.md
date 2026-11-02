@@ -1,7 +1,7 @@
 # Moonbyte Roadmap
 
 - Status: In progress.
-- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence, versioned migration runner, row-locked state transitions and restart recovery are implemented. Player profiles, progression, production recovery operations and the live visual-game API remain.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence, versioned migrations, row-locked state transitions, restart recovery, player profiles/preferences and the first privacy export/deletion controls are implemented. Progression, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -55,7 +55,7 @@ Deliverables:
 - [x] State-machine validation for the first four playable game modules.
 - [x] Guild scope, participant membership and turn ownership checks.
 - [x] Durable session lifecycle and state-machine recovery with PostgreSQL.
-- Player identity and basic profiles.
+- [x] Player identity and basic profile persistence.
 - [x] Session creation, joining, leaving and game completion through the Rust runtime.
 - [x] 24-hour inactivity expiry and one central cleanup task.
 - [x] Versioned PostgreSQL session persistence and runtime reconstruction.
@@ -97,7 +97,7 @@ Deliverables:
 - Puzzle/strategy foundation and optional daily challenge.
 - Player statistics, achievements, inventory, and cosmetic unlocks.
 - Deterministic shops and earned rewards.
-- Profile, privacy data, export, and deletion commands.
+- [x] Profile and preference commands.\n- [x] Current-schema data inventory, private JSON export and confirmed profile/session deletion.\n- Player result history, achievements, inventory, quest progress and progression.
 
 Suggested first originals:
 - Memory match.
