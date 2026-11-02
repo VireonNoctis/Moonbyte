@@ -26,7 +26,8 @@ Profile visibility is stored now, but a public profile directory, social graph a
 | --- | --- |
 | `.profile` | Create the default profile if needed and show it privately with the player's aggregate statistics. |
 | `.profile_edit Name Here \| Short bio` | Update display name and bio. Use `-` after the separator to clear the bio. |
-| `.settings private false true` | Example: save visibility, statistics preference and quiet mode. Accepted visibility values are `private` and `public`. |\n| `.stats` | Privately show completed game totals, wins and draws by game. |
+| `.settings private false true` | Example: save visibility, statistics preference and quiet mode. Accepted visibility values are `private` and `public`. |
+| `.stats` | Privately show completed game totals, wins and draws by game. |
 | `.privacy_data` | Privately inspect the profile and session record counts. |
 | `.privacy_export` | Receive a JSON attachment containing the profile and stored session metadata. |
 | `.privacy_delete` | Start a deletion request and explain its scope. |
@@ -65,4 +66,6 @@ The result covers the current player-owned schema: `player_profiles`, `game_sess
 - Export data is generated from the current database state, not a cached profile.
 - Deletion of player and session records is atomic.
 - No profile feature introduces currency, random rewards, wagering or paid progression.
-- Completed-game results and aggregate statistics are written in the same transaction as the completed session snapshot. The session ID is the idempotency key.\n- Session-level result metadata expires with its parent session; aggregate statistics remain until player deletion.\n- Database tests cover profile creation, editing, preferences, result/stat persistence, export, inventory and deletion of linked records.
+- Completed-game results and aggregate statistics are written in the same transaction as the completed session snapshot. The session ID is the idempotency key.
+- Session-level result metadata expires with its parent session; aggregate statistics remain until player deletion.
+- Database tests cover profile creation, editing, preferences, result/stat persistence, export, inventory and deletion of linked records.
