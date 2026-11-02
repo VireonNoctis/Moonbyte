@@ -17,9 +17,9 @@ The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the des
 | --- | --- | --- | --- |
 | `arcade` | The Common Tables | `.games` / `/games` | Browse four playable games; start solo games or multiplayer lobbies. |
 | `player-profile` | Your Place | `.profile` / `/profile` | View the player's private profile and preferences. |
-| `player-record` | The Chronicle | `.stats` / `/stats` | View completed-game totals, wins and draws. |
+| `player-record` | The Chronicle | `.stats` / `/stats` | View completed-game totals, wins and draws. |\n| `moonbits-ledger` | The Ledger | `.wallet` / `/wallet` | View the player's earned-only Moonbits balance and first-completion milestones. |
 
-The Wayfinder is generated from this registry rather than maintaining a second handwritten list. Every destination has a stable internal ID, a title, a description and a registered command route. Tests verify the current command targets and visible destinations.
+The Wayfinder is generated from this registry rather than maintaining a second handwritten list. Every destination has a stable internal ID, a title, a description and a registered command route. Tests verify the current command targets and visible destinations. The Ledger points only to the read-only wallet summary; it does not enable spending or trading.
 
 Browsing the Tavern does not create a game, join a lobby, claim a reward, or alter saved player state. Starting or changing an activity always requires a separate explicit command.
 
@@ -30,7 +30,7 @@ The following World Loom proposals are not implemented by the Wayfinder itself a
 - Tavern tables, host controls, parties, guild rooms, rumour circles and NPC interactions.
 - Atlas regions, discoveries, routes, expeditions and story chapters.
 - Quests, Puzzle Vaults, inventory, crafting, collections and homesteads.
-- Moonbits wallet, immutable economy ledger, reward definitions and Vault checkpoints.
+- Moonbits spending, transfers, immutable marketplace ledger operations, reward definitions beyond first-completion milestones, and Vault checkpoints.
 - Bazaar listings, escrow, barter, contracts, settlement and dispute handling.
 
 The full design remains in [the World Loom master atlas](atlas/README.md), [Hearth/Bazaar/Communities volume](atlas/01_hearth_bazaar_and_communities.md), [Atlas/Expeditions/Story volume](atlas/02_atlas_expeditions_and_story.md), and [Economy, Vaults & Bazaar](ECONOMY_AND_VAULTS.md).
