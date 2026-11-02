@@ -230,7 +230,7 @@ pub async fn settings(
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
-    let message = crate::tavern::render(ctx.data().prefix(), GameKind::ALL.len());
+    let message = crate::tavern::render(ctx.data().prefix());
     ctx.say(message).await?;
     Ok(())
 }
