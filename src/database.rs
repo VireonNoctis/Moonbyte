@@ -3,7 +3,7 @@ use std::time::Duration;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 
 const INITIAL_MIGRATION: &str = include_str!("../migrations/0001_postgres_sessions.sql");
-const INITIAL_SCHEMA_VERSION: i64 = 1;
+const PLAYER_MIGRATION: &str = include_str!("../migrations/0002_player_profiles.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -46,20 +46,27 @@ impl Database {
             .await?;
 
         sqlx::query(
-            "CREATE TABLE IF NOT EXISTS moonbyte_schema_migrations (                version BIGINT PRIMARY KEY,                applied_at TIMESTAMPTZ NOT NULL DEFAULT now()            )",
+            "CREATE TABLE IF NOT EXISTS moonbyte_schema_migrations (
+                version BIGINT PRIMARY KEY,
+                applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )",
         )
         .execute(&mut *transaction)
         .await?;
 
-        let already_applied: bool = sqlx::query_scalar(
-            "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",
-        )
-        .bind(INITIAL_SCHEMA_VERSION)
-        .fetch_one(&mut *transaction)
-        .await?;
+        for (version, migration) in [(1_i64, INITIAL_MIGRATION), (2_i64, PLAYER_MIGRATION)] {
+            let already_applied: bool = sqlx::query_scalar(
+                "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",
+            )
+            .bind(version)
+            .fetch_one(&mut *transaction)
+            .await?;
 
-        if !already_applied {
-            for statement in INITIAL_MIGRATION
+            if already_applied {
+                continue;
+            }
+
+            for statement in migration
                 .split(';')
                 .map(str::trim)
                 .filter(|sql| !sql.is_empty())
@@ -68,7 +75,7 @@ impl Database {
             }
 
             sqlx::query("INSERT INTO moonbyte_schema_migrations (version) VALUES ($1)")
-                .bind(INITIAL_SCHEMA_VERSION)
+                .bind(version)
                 .execute(&mut *transaction)
                 .await?;
         }
