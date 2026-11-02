@@ -20,11 +20,19 @@ pub enum ProfileError {
 impl fmt::Display for ProfileError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Database(_) => formatter.write_str("The player store is temporarily unavailable."),
+            Self::Database(_) => {
+                formatter.write_str("The player store is temporarily unavailable.")
+            }
             Self::Serialization(_) => formatter.write_str("The player data could not be exported."),
-            Self::InvalidDisplayName => formatter.write_str("Display names must contain 1 to 32 visible characters."),
-            Self::InvalidBio => formatter.write_str("Profile bios must be 160 characters or fewer."),
-            Self::InvalidVisibility => formatter.write_str("Visibility must be either public or private."),
+            Self::InvalidDisplayName => {
+                formatter.write_str("Display names must contain 1 to 32 visible characters.")
+            }
+            Self::InvalidBio => {
+                formatter.write_str("Profile bios must be 160 characters or fewer.")
+            }
+            Self::InvalidVisibility => {
+                formatter.write_str("Visibility must be either public or private.")
+            }
         }
     }
 }
@@ -146,13 +154,25 @@ impl ProfileStore {
         .bind(display_name)
         .execute(&self.pool)
         .await?;
-        self.get(player_id).await?.ok_or_else(|| {
-            ProfileError::Database(sqlx::Error::RowNotFound)
-        })
+        self.get(player_id)
+            .await?
+            .ok_or_else(|| ProfileError::Database(sqlx::Error::RowNotFound))
     }
 
     pub async fn get(&self, player_id: &str) -> Result<Option<PlayerProfile>, ProfileError> {
-        let row = sqlx::query_as::<_, (String, String, Option<String>, String, bool, bool, String, String)>(
+        let row = sqlx::query_as::<
+            _,
+            (
+                String,
+                String,
+                Option<String>,
+                String,
+                bool,
+                bool,
+                String,
+                String,
+            ),
+        >(
             "SELECT discord_user_id, display_name, bio, visibility, show_statistics, quiet_mode, \
              created_at::text, updated_at::text FROM player_profiles WHERE discord_user_id = $1",
         )
@@ -160,8 +180,8 @@ impl ProfileStore {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(row.map(|(discord_user_id, display_name, bio, visibility, show_statistics, quiet_mode, created_at, updated_at)| {
-            PlayerProfile {
+        Ok(row.map(
+            |(
                 discord_user_id,
                 display_name,
                 bio,
@@ -170,8 +190,19 @@ impl ProfileStore {
                 quiet_mode,
                 created_at,
                 updated_at,
-            }
-        }))
+            )| {
+                PlayerProfile {
+                    discord_user_id,
+                    display_name,
+                    bio,
+                    visibility,
+                    show_statistics,
+                    quiet_mode,
+                    created_at,
+                    updated_at,
+                }
+            },
+        ))
     }
 
     pub async fn update_identity(
@@ -246,12 +277,11 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
-        let game_stat_rows: i64 = sqlx::query_scalar(
-            "SELECT count(*) FROM player_game_stats WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let game_stat_rows: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM player_game_stats WHERE discord_user_id = $1")
+                .bind(player_id)
+                .fetch_one(&self.pool)
+                .await?;
 
         Ok(ProfileInventory {
             profile_record,
@@ -262,10 +292,7 @@ impl ProfileStore {
         })
     }
 
-    pub async fn game_stats(
-        &self,
-        player_id: &str,
-    ) -> Result<Vec<PlayerGameStat>, ProfileError> {
+    pub async fn game_stats(&self, player_id: &str) -> Result<Vec<PlayerGameStat>, ProfileError> {
         let rows = sqlx::query_as::<_, (String, i64, i64, i64, String)>(
             "SELECT game_id, games_played, games_won, draws, updated_at::text \
              FROM player_game_stats WHERE discord_user_id = $1 \
@@ -277,13 +304,15 @@ impl ProfileStore {
 
         Ok(rows
             .into_iter()
-            .map(|(game_id, games_played, games_won, draws, updated_at)| PlayerGameStat {
-                game_id,
-                games_played,
-                games_won,
-                draws,
-                updated_at,
-            })
+            .map(
+                |(game_id, games_played, games_won, draws, updated_at)| PlayerGameStat {
+                    game_id,
+                    games_played,
+                    games_won,
+                    draws,
+                    updated_at,
+                },
+            )
             .collect())
     }
 
@@ -309,13 +338,15 @@ impl ProfileStore {
         .await?;
         let game_results = result_rows
             .into_iter()
-            .map(|(session_id, game_id, outcome, action_count, completed_at)| ExportedResult {
-                session_id,
-                game_id,
-                outcome,
-                action_count,
-                completed_at,
-            })
+            .map(
+                |(session_id, game_id, outcome, action_count, completed_at)| ExportedResult {
+                    session_id,
+                    game_id,
+                    outcome,
+                    action_count,
+                    completed_at,
+                },
+            )
             .collect();
         let game_statistics = self.game_stats(player_id).await?;
 
@@ -325,17 +356,19 @@ impl ProfileStore {
 
         let game_sessions = rows
             .into_iter()
-            .map(|(session_id, game_id, phase, action_count, created_at, updated_at, expires_at)| {
-                ExportedSession {
-                    session_id,
-                    game_id,
-                    phase,
-                    action_count,
-                    created_at,
-                    updated_at,
-                    expires_at,
-                }
-            })
+            .map(
+                |(session_id, game_id, phase, action_count, created_at, updated_at, expires_at)| {
+                    ExportedSession {
+                        session_id,
+                        game_id,
+                        phase,
+                        action_count,
+                        created_at,
+                        updated_at,
+                        expires_at,
+                    }
+                },
+            )
             .collect();
 
         let export = PlayerExport {
@@ -361,10 +394,7 @@ impl ProfileStore {
 
     /// Deletes the profile, session snapshots, cascading results and aggregate stats.
     /// Ending shared sessions is intentional: each snapshot contains every participant ID.
-    pub async fn delete_account(
-        &self,
-        player_id: &str,
-    ) -> Result<PlayerDeletion, ProfileError> {
+    pub async fn delete_account(&self, player_id: &str) -> Result<PlayerDeletion, ProfileError> {
         let mut transaction = self.pool.begin().await?;
         // Lock matching sessions first. A concurrent completion must finish
         // its result/stat transaction before the privacy deletion can proceed.
@@ -376,34 +406,29 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_all(&mut *transaction)
         .await?;
-        let results_removed = sqlx::query(
-            "DELETE FROM game_results WHERE session_id = ANY($1::text[])",
-        )
-        .bind(&session_ids)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
-        let sessions_removed = sqlx::query(
-            "DELETE FROM game_sessions WHERE session_id = ANY($1::text[])",
-        )
-        .bind(&session_ids)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
-        let stat_rows_removed = sqlx::query(
-            "DELETE FROM player_game_stats WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
-        let profile_removed = sqlx::query(
-            "DELETE FROM player_profiles WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected()
+        let results_removed =
+            sqlx::query("DELETE FROM game_results WHERE session_id = ANY($1::text[])")
+                .bind(&session_ids)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+        let sessions_removed =
+            sqlx::query("DELETE FROM game_sessions WHERE session_id = ANY($1::text[])")
+                .bind(&session_ids)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+        let stat_rows_removed =
+            sqlx::query("DELETE FROM player_game_stats WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+        let profile_removed = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
+            .bind(player_id)
+            .execute(&mut *transaction)
+            .await?
+            .rows_affected()
             > 0;
         transaction.commit().await?;
         Ok(PlayerDeletion {
@@ -441,18 +466,39 @@ mod tests {
 
     #[test]
     fn display_name_requires_one_to_thirty_two_visible_characters() {
-        assert_eq!(normalise_display_name("Moon Explorer").unwrap(), "Moon Explorer");
-        assert!(matches!(normalise_display_name("  "), Err(ProfileError::InvalidDisplayName)));
-        assert!(matches!(normalise_display_name(&"x".repeat(33)), Err(ProfileError::InvalidDisplayName)));
-        assert!(matches!(normalise_display_name("Moon\nByte"), Err(ProfileError::InvalidDisplayName)));
+        assert_eq!(
+            normalise_display_name("Moon Explorer").unwrap(),
+            "Moon Explorer"
+        );
+        assert!(matches!(
+            normalise_display_name("  "),
+            Err(ProfileError::InvalidDisplayName)
+        ));
+        assert!(matches!(
+            normalise_display_name(&"x".repeat(33)),
+            Err(ProfileError::InvalidDisplayName)
+        ));
+        assert!(matches!(
+            normalise_display_name("Moon\nByte"),
+            Err(ProfileError::InvalidDisplayName)
+        ));
     }
 
     #[test]
     fn bio_is_optional_and_bounded() {
         assert_eq!(normalise_bio(" ").unwrap(), None);
-        assert_eq!(normalise_bio("Finding tiny worlds").unwrap().as_deref(), Some("Finding tiny worlds"));
-        assert!(matches!(normalise_bio(&"x".repeat(161)), Err(ProfileError::InvalidBio)));
-        assert!(matches!(normalise_bio("line one\nline two"), Err(ProfileError::InvalidBio)));
+        assert_eq!(
+            normalise_bio("Finding tiny worlds").unwrap().as_deref(),
+            Some("Finding tiny worlds")
+        );
+        assert!(matches!(
+            normalise_bio(&"x".repeat(161)),
+            Err(ProfileError::InvalidBio)
+        ));
+        assert!(matches!(
+            normalise_bio("line one\nline two"),
+            Err(ProfileError::InvalidBio)
+        ));
     }
 }
 
@@ -542,9 +588,19 @@ mod postgres_tests {
         assert_eq!(deletion.results_removed, 1);
         assert_eq!(deletion.stat_rows_removed, 1);
         assert!(deletion.profile_removed);
-        assert!(store.get(&player_id).await.expect("read deleted profile").is_none());
+        assert!(
+            store
+                .get(&player_id)
+                .await
+                .expect("read deleted profile")
+                .is_none()
+        );
         assert_eq!(
-            store.inventory(&player_id).await.expect("read deleted inventory").game_session_records,
+            store
+                .inventory(&player_id)
+                .await
+                .expect("read deleted inventory")
+                .game_session_records,
             0
         );
         assert!(
