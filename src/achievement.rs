@@ -110,8 +110,8 @@ pub(crate) async fn award_for_player_completion(
     source_session_id: &str,
 ) -> Result<u64, sqlx::Error> {
     let (games_played, games_won, distinct_games): (i64, i64, i64) = sqlx::query_as(
-        "SELECT COALESCE(SUM(games_played), 0), \
-         COALESCE(SUM(games_won), 0), COUNT(*) \
+        "SELECT COALESCE(SUM(games_played), 0)::BIGINT, \
+         COALESCE(SUM(games_won), 0)::BIGINT, COUNT(*)::BIGINT \
          FROM player_game_stats WHERE discord_user_id = $1 AND games_played > 0",
     )
     .bind(player_id)
