@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**The player foundation and first results loop are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte now has persistent profiles, editable display names and bios, private-by-default visibility, saved preferences, completed-game result records, per-game aggregate statistics, a private JSON export, a data inventory and confirmed deletion. Result/stat writes commit atomically with the final game state and use the session ID as an idempotency key. Session-level results expire with their parent session; aggregate stats remain until account deletion. Achievements, inventory, quests, Vaults, Bazaar and the live visual-game API remain follow-up implementation work.
+**The player foundation, first results loop and initial Tavern navigation are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte has persistent profiles, editable display names and bios, private-by-default visibility, saved preferences, completed-game result records, per-game aggregate statistics, private JSON export, data inventory and confirmed deletion. Result/stat writes commit atomically with the final game state and use the session ID as an idempotency key. The `.tavern` Wayfinder links only to the live games, profile and records commands. Achievements, inventory, quests, the full Tavern, Atlas, Vaults, Bazaar and live visual-game API remain follow-up implementation work.
 
 ## The vision
 
@@ -145,7 +145,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, private data inventory/export and confirmed profile deletion are implemented with unit and PostgreSQL integration coverage. Achievements, progression, inventory and economy remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, private data inventory/export/deletion, and the initial Tavern Wayfinder are implemented with unit and PostgreSQL integration coverage. The custom-emoji registry has paste-in ID slots and Unicode fallbacks. Achievements, progression, inventory, full Hearth behavior and economy remain future work.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
@@ -162,7 +162,7 @@ CI runs the repository validator plus Rust formatting, tests, and Clippy. Do not
 
 ## Data and privacy
 
-The current data model stores Discord identifiers in player profiles, session snapshots, result rows and per-game aggregate statistics, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
+The current data model stores Discord identifiers in player profiles, session snapshots, result rows and per-game aggregate statistics, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. The Tavern Wayfinder is navigation-only and adds no persisted data. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
 
 ## Licensing
 
