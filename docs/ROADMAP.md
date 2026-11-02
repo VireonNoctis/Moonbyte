@@ -1,7 +1,7 @@
 # Moonbyte Roadmap
 
 - Status: In progress.
-- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence, versioned migrations, row-locked state transitions, restart recovery, player profiles/preferences, completed-game results/statistics, the initial Tavern Wayfinder, and the first-completion Moonbits wallet/ledger with privacy coverage are implemented. Broader progression, production recovery operations and the live visual-game API remain.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence/recovery, player profiles/preferences, completed-game results/statistics, five achievement milestones, earned-only Moonbits wallet/ledger, the Tavern Wayfinder, custom emoji registry, and the initial five-location Atlas with private discoveries are implemented. Inventory, quests, Expeditions, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -31,8 +31,10 @@ Deliverables:
 - [x] Serenity client with Tokio runtime and Poise command framework.
 - [x] Default period prefix and global slash-command registration.
 - [x] Help, about, privacy overview, and minimal diagnostics (`ping`).
-- [x] Initial Tavern home and Wayfinder command, linked only to implemented game, profile, statistics and wallet destinations.
+- [x] Initial Tavern home and Wayfinder command, linked only to implemented games, profile, statistics, wallet, achievements and Atlas destinations.
 - [x] Central custom-emoji registry with safe Unicode fallbacks for unconfigured upload IDs.
+- [x] Five achievement milestones with idempotent unlocks.
+- [x] Initial five-location Atlas, personal discovery state and direct-route travel with PostgreSQL/privacy coverage.
 - [x] Game catalogue and play/session commands for the first four games.
 - [x] Clear configuration and startup errors.
 - [ ] Structured logging and graceful shutdown.
@@ -144,7 +146,8 @@ Exit criteria:
 ## Phase 6 — Adventure and RPG
 
 Deliverables:
-- Original setting and world map.
+- [x] Initial five-location Atlas map with persistent player discovery and connected-route travel.
+- Original setting and expanded world map, authored regions and landmarks.
 - Quest definitions and progression flags.
 - NPC interactions and dialogue.
 - Inventory, collection, crafting, and character progression.
@@ -236,7 +239,7 @@ The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into
 
 1. Establish the authoritative Rust game/session contract, player identity and PostgreSQL persistence.
 2. Deliver the Tavern as a navigable entry surface with one polished solo game and one cooperative game.
-3. Add Atlas locations, a bounded Expedition and one authored Quest/Vault route.
+3. Expand the implemented five-location Atlas with region profiles, then add a bounded Expedition and one authored Quest/Vault route.
 4. Add Archive records and deterministic progression so discoveries persist and can be exported/deleted.
 5. Add known-input crafting and item provenance.
 6. Add fixed-price Bazaar listings only after immutable ledger, escrow, idempotency and double-spend tests pass.
@@ -276,8 +279,10 @@ These systems must not become independent microservices. Shared contracts remain
 Do not implement the full breadth at once. Release one connected, testable vertical slice at a time.
 
 
-## Current implementation increment — player foundation and Tavern Wayfinder
+## Current implementation increment — player foundation, Tavern and Atlas starter map
 
-The implementation combines four Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, an earned-only Moonbits wallet/ledger and private data controls. The Tavern home is available through `.tavern` and `/tavern`; its typed Wayfinder routes to the Common Tables, player profile, Chronicle and The Ledger. The destination list uses the central custom-emoji module with safe Unicode fallbacks. The Ledger is read-only: spending, transfers, Vault rewards and Bazaar trading remain disabled.
+The implementation combines four transport-independent Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, five idempotent achievements, an earned-only Moonbits wallet/ledger and private data controls. The Tavern Wayfinder routes to six live destinations: Common Tables, player profile, Chronicle, Ledger, Achievement Gallery and the initial Atlas.
 
-This increment does **not** mark the full player platform complete. Tavern tables/parties/NPCs, Atlas discoveries, Expeditions, quests, Vaults/reward catalogue, inventory, crafting, Moonbits spending/transfers, Bazaar escrow/trading, additional games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
+The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas data is part of the current privacy inventory, version 5 export and confirmed deletion flow.
+
+This increment does **not** mark the full player platform or World Loom complete. Expeditions, quests, story, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
