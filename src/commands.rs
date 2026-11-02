@@ -99,7 +99,7 @@ pub async fn privacy_export(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn privacy_delete(
     ctx: Context<'_>,
-    #[description = "Type DELETE to confirm removal of your Moonbyte profile and sessions"]
+    #[description = "Type DELETE to confirm removal of your Moonbyte profile, sessions and wallet data"]
     confirmation: Option<String>,
 ) -> Result<(), Error> {
     if !confirmation
