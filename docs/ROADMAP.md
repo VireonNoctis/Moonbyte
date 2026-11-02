@@ -147,6 +147,7 @@ Exit criteria:
 
 Deliverables:
 - [x] Initial five-location Atlas map with persistent player discovery and connected-route travel.
+- [x] Initial five-location Atlas map with persistent player discovery and connected-route travel.
 - Original setting and expanded world map, authored regions and landmarks.
 - Quest definitions and progression flags.
 - NPC interactions and dialogue.
@@ -231,9 +232,7 @@ Backlog ideas must not delay the runtime, game engine, privacy foundation, or fi
 
 ## Cross-cutting expansion — Moonbyte World Loom
 
-**Status: Product design proposal only; these systems are not implemented.**
-
-The [Moonbyte World Loom master atlas](atlas/README.md) expands the product into 400 connected system proposals across 40 domains. It is intentionally broader than the approved game catalogue: the Tavern, Bazaar, Guilds, Atlas, Expeditions, story, Vaults, crafting, collections, Arcade, multiplayer, characters, mastery, festivals, homes, player creation, fair play, social systems and trust/accessibility foundations form one graph.
+**Status: Partially implemented.** The initial Tavern Wayfinder and five-location Atlas starter map are implemented. The [Moonbyte World Loom master atlas](atlas/README.md) remains a design proposal for 400 connected system ideas across 40 domains. It is intentionally broader than the approved game catalogue: the Tavern, Bazaar, Guilds, Atlas, Expeditions, story, Vaults, crafting, collections, Arcade, multiplayer, characters, mastery, festivals, homes, player creation, fair play, social systems and trust/accessibility foundations form one graph.
 
 ### Integration order
 
