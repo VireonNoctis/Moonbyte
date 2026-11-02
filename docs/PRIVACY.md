@@ -26,12 +26,12 @@ The current runtime stores player profiles and preferences in `player_profiles` 
 
 ## 2. Data Moonbyte needs
 
-The bot may process or store these categories when the relevant feature is enabled. The current runtime stores the profile, session, completed-result and aggregate-statistics fields described below; the remaining categories are future design targets.
+The bot may process or store these categories when the relevant feature is enabled. The current runtime stores the profile, session, completed-result, aggregate-statistics and earned-only wallet/ledger fields described below; the remaining categories are future design targets.
 
 | Data category | Examples | Why it is needed |
 | --- | --- | --- |
 | Discord identifiers | User ID; guild ID; channel or message ID for an active game where necessary. | Identify the player, scope settings, and update an active game message. |
-| Player profile | Discord user ID, player-selected display name, optional short bio, visibility and two preference flags. | Render and configure the player's profile. |
+| Player profile | Discord user ID, player-selected display name, optional short bio, visibility and two preference flags. | Render and configure the player's profile. |\n| Player game statistics | Discord user ID, game ID, completed count, wins, draws and update timestamp. | Show the player their own completed-game record. |\n| Moonbits wallet | Discord user ID, non-negative balance and version counter. | Show fixed, earned-only game-completion milestones. |\n| Moonbits ledger | Transaction ID, player ID, signed amount, fixed reason, source session, idempotency key and timestamp. | Audit each earned credit and prevent duplicate milestone awards. |
 | Game state | Current turn, board state, action data needed to resume, participants, quest checkpoint. | Run, recover, and fairly resolve games. |
 | Game results | Game ID, outcome, winner ID when applicable, participant IDs, action count and completion time. | Record completed sessions and derive requested per-game statistics. |\n| Player game statistics | Per-game games-played, wins and draws totals. | Show the player their own completed-game record. |
 | Progress and collections | Earned experience, achievements, items, quests, cosmetic unlocks. | Provide persistent progression features. |
@@ -41,7 +41,7 @@ The bot may process or store these categories when the relevant feature is enabl
 
 Moonbyte should not require Lunar account linking, an email address, real name, or separate website account.
 
-The currently persisted profile fields are the Discord user ID, display name, optional bio, visibility, statistics preference and quiet-mode preference. Profile visibility defaults to private. The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. Completed games create a `game_results` row and update `player_game_stats` for each participant in the same PostgreSQL transaction as the final session snapshot. Result rows are linked to their parent session and expire with it after 24 hours of inactivity; per-game aggregate statistics remain until deletion. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart. The statistics visibility and quiet-mode flags are saved preferences for future public/notification surfaces; the private `.stats` command is already available.
+The currently persisted profile fields are the Discord user ID, display name, optional bio, visibility, statistics preference and quiet-mode preference. Profile visibility defaults to private. The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. Completed games create a `game_results` row and update `player_game_stats` for each participant in the same PostgreSQL transaction as the final session snapshot. Result rows are linked to their parent session and expire with it after 24 hours of inactivity; aggregate statistics remain until deletion. On a player's first completion of each game type, the same transaction creates the player's wallet if needed, inserts a uniquely keyed `first_game_completion` ledger entry for 10 Moonbits, and increments the wallet balance. A player's first-completion milestone is one-time per game type, not per session. Wallet and ledger rows persist after session expiry until account deletion. The `.wallet` command displays the current balance and ledger-entry count; spending and trading are not implemented. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart. The statistics visibility and quiet-mode flags are saved preferences for future public/notification surfaces; the private `.stats` command is already available.
 
 ## 3. Message and interaction content
 
@@ -96,23 +96,23 @@ The current prefix and slash commands provide:
 | Command | Purpose |
 | --- | --- |
 | `.privacy` | Read a short privacy summary. |
-| `.privacy_data` | Privately inspect profile, session, result and aggregate-statistic record counts. |
-| `.privacy_export` | Receive a private JSON copy of profile, session metadata, completed results and per-game statistics. |
+| `.privacy_data` | Privately inspect profile, session, result, statistic and wallet record counts. |
+| `.privacy_export` | Receive a private JSON copy of profile, session metadata, completed results, per-game statistics, wallet balance and wallet ledger entries. |
 | `.privacy_delete` | Read the deletion scope and confirmation instructions. |
-| `.privacy_delete DELETE` | Confirm deletion of the profile, stats and all session snapshots containing the requester. |
+| `.privacy_delete DELETE` | Confirm deletion of the profile, statistics, wallet, ledger and all session snapshots containing the requester. |
 
-When invoked in a server, profile details, inventories and exports are sent by direct message; they are never posted to the public channel. The export describes the current schema only and excludes other participants’ Discord IDs and raw message content. If DM delivery fails, the command returns an error rather than exposing private data.
+When invoked in a server, profile details, inventories, exports and deletion receipts are sent by direct message; they are never posted to the public channel. The export describes the current schema only and excludes other participants' Discord IDs and raw message content. If DM delivery fails, the command returns an error rather than exposing private data. The public `.privacy` overview may be shown in the invoking channel.
 
 ### Deletion flow
 
-1. Explain that the profile, aggregate statistics and every session snapshot containing the requester’s Discord ID will be removed.
+1. Explain that the profile, aggregate statistics, Moonbits wallet/ledger and every session snapshot containing the requester's Discord ID will be removed.
 2. Require the requester to run the explicit second command `.privacy_delete DELETE`.
 3. Use the authenticated Discord command author as the account owner; arbitrary target IDs are not accepted.
 4. Establish the private receipt channel before changing records when deletion is invoked in a server.
-5. Lock all matching session rows, delete their linked `game_results`, delete the session rows, remove the player’s `player_game_stats` rows, and delete the `player_profiles` row in one PostgreSQL transaction.
+5. Lock all matching session rows, delete their linked `game_results`, delete the session rows, remove the player's `player_game_stats` rows, delete their `wallet_ledger_entries`, delete their `player_wallets` row, and delete the `player_profiles` row in one PostgreSQL transaction.
 6. Commit before reporting the actual deleted row counts.
 
-The current implementation covers the player-owned schema: `player_profiles`, `game_sessions`, `game_results` and `player_game_stats`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Aggregate statistic rows are removed directly; result records are deleted with their session. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord’s own records.
+The current player-owned schema is `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_wallets` and `wallet_ledger_entries`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Result records are deleted with their session; aggregate statistics and wallet records are removed directly. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord's own records.
 
 ## 8. Guild privacy
 
