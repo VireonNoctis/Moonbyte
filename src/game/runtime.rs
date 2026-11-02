@@ -367,13 +367,12 @@ mod tests {
         .expect("read player stats");
         assert_eq!(stats, (1, 1, 0));
 
-        let result_count: i64 = sqlx::query_scalar(
-            "SELECT count(*) FROM game_results WHERE session_id = $1",
-        )
-        .bind(&session.id)
-        .fetch_one(&runtime.pool)
-        .await
-        .expect("read game result");
+        let result_count: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM game_results WHERE session_id = $1")
+                .bind(&session.id)
+                .fetch_one(&runtime.pool)
+                .await
+                .expect("read game result");
         assert_eq!(result_count, 1);
 
         assert!(matches!(
