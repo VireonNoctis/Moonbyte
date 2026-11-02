@@ -381,6 +381,16 @@ mod tests {
         .expect("read player stats");
         assert_eq!(stats, (1, 1, 0));
 
+        let achievement_ids: Vec<String> = sqlx::query_scalar(
+            "SELECT achievement_id FROM player_achievements \
+             WHERE discord_user_id = $1 ORDER BY achievement_id",
+        )
+        .bind(&player_id)
+        .fetch_all(&runtime.pool)
+        .await
+        .expect("read initial achievements");
+        assert_eq!(achievement_ids, ["first_clear", "first_victory"]);
+
         let wallet: (i64, i64) = sqlx::query_as(
             "SELECT balance, \
              (SELECT count(*) FROM wallet_ledger_entries WHERE discord_user_id = $1) \
@@ -420,6 +430,14 @@ mod tests {
                 .await
                 .expect("read wallet after duplicate action");
         assert_eq!(wallet_after_retry, crate::wallet::FIRST_COMPLETION_REWARD);
+        let achievements_after_retry: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_achievements WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read achievements after duplicate action");
+        assert_eq!(achievements_after_retry, 2);
     }
 
     #[tokio::test]
