@@ -139,7 +139,6 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
 - [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts and release quality gates.
-- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — planned earned-only currency, deterministic Vaults, ledger and fixed-price trade rules.
 - [Moonbyte World Loom](docs/atlas/README.md) — 400 connected system proposals across 40 domains and the machine-readable system graph.
 - [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation and verification requirements.
 - [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — reuse boundaries and source/licence audit requirements.
