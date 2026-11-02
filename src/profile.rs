@@ -502,7 +502,6 @@ mod tests {
     }
 }
 
-
 #[cfg(test)]
 mod postgres_tests {
     use std::time::{SystemTime, UNIX_EPOCH};
