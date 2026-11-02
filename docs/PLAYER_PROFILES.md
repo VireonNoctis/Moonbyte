@@ -1,6 +1,6 @@
 # Player Profiles and Privacy Controls
 
-- Status: Player profiles, preferences, game results, per-game statistics, five persistent achievement milestones, earned-only Moonbits, data inventory, private export and confirmed deletion are implemented.
+- Status: Player profiles/preferences, game results/statistics, five persistent achievement milestones, earned-only Moonbits, the five-location Atlas, per-player discovery history, private export and confirmed deletion are implemented.
 - Storage: PostgreSQL through SQLx.
 - Owner identity: Discord user ID. Moonbyte does not collect email addresses, real names, phone numbers or precise location for these features.
 
@@ -64,6 +64,28 @@ The current schema stores:
 
 The `.wallet` command displays the player's balance and ledger-entry count privately. The Tavern Wayfinder exposes it as **The Ledger**. The `.games` output discloses the first-completion reward rule.
 
+## Atlas and personal discoveries
+
+The first Atlas slice is a five-location authored map. It stores a player's current location plus a personal discovery row for each place they have visited.
+
+| Location ID | Name | Region | Direct routes |
+| --- | --- | --- | --- |
+| `lantern-square` | Lantern Square | Hearthland | Mosslight Grove, Glasswater Pier |
+| `mosslight-grove` | Mosslight Grove | Verdant Reach | Lantern Square, Ember Archive, Starfall Observatory |
+| `glasswater-pier` | Glasswater Pier | Western Coast | Lantern Square, Starfall Observatory |
+| `ember-archive` | The Ember Archive | Cinder Vale | Mosslight Grove, Starfall Observatory |
+| `starfall-observatory` | Starfall Observatory | High Astral | Mosslight Grove, Glasswater Pier, Ember Archive |
+
+- The route graph is static, reviewed Rust data with stable IDs and reciprocal edges.
+- Opening `.atlas` creates the player's starting point at Lantern Square if one does not already exist.
+- `.travel` accepts a known location ID or display name, but only a direct route from the current location is valid.
+- Travel, current-location updates and visit counters are persisted in PostgreSQL.
+- Reopening the Atlas is read-only after initialisation. Travelling to the current location is a no-op.
+- Visiting a location does not grant Moonbits, achievements, items or repeatable rewards.
+- The wider Atlas design, Expeditions, quests, narrative and community mapping remain proposals.
+
+The database stores `player_world_state` and `player_atlas_discoveries`, both owned by `player_profiles` through foreign keys. Atlas locations and visit history are included in the private data inventory, version 5 export and account deletion transaction.
+
 ## Commands
 
 | Command | Behavior |
@@ -72,7 +94,7 @@ The `.wallet` command displays the player's balance and ledger-entry count priva
 | `.profile_edit Name Here \| Short bio` | Update display name and bio. Use `-` after the separator to clear the bio. |
 | `.settings private false true` | Example: save visibility, statistics preference and quiet mode. Accepted visibility values are `private` and `public`. |
 | `.stats` | Privately show completed game totals, wins and draws by game. |
-| `.wallet` | Privately show the Moonbits balance and number of earned ledger entries. |
+| `.wallet` | Privately show the Moonbits balance and number of earned ledger entries. |\n| `.achievements` | Privately list the player's unlocked milestones. |\n| `.atlas` | Privately show the current world location, known places and connected routes. |\n| `.travel mosslight-grove` | Travel to a directly connected location; use the Atlas for available routes. |
 | `.privacy_data` | Privately inspect profile, session, result, statistics and wallet record counts. |
 | `.privacy_export` | Receive a JSON attachment containing the current player-owned records. |
 | `.privacy_delete` | Start a deletion request and explain its scope. |
@@ -82,7 +104,7 @@ The same commands are registered as slash commands. When invoked in a guild, per
 
 ## Export format
 
-The version 3 JSON export contains:
+The version 5 JSON export contains:
 
 - Export format version and generation timestamp.
 - Player profile and saved preferences, when a profile exists.
@@ -90,7 +112,7 @@ The version 3 JSON export contains:
 - Completed-result metadata for the requester: game, outcome, action count and completion time.
 - Aggregate per-game completed, win and draw counts.
 - Current Moonbits wallet balance.
-- Wallet ledger entries, including amount, fixed reason, source session, idempotency key and timestamp.
+- Wallet ledger entries, including amount, fixed reason, source session, idempotency key and timestamp.\n- Five achievement milestone records when earned, including their source session and unlock timestamp.\n- The player's current Atlas location and the locations they have discovered, with timestamps and visit counts.
 
 The export deliberately excludes other participants' Discord IDs and raw message content. It describes the current Moonbyte PostgreSQL schema only. Discord independently retains interactions under its own policies.
 
@@ -108,7 +130,7 @@ Deletion runs in one PostgreSQL transaction:
 
 Game state is stored as one shared snapshot. Removing only one participant ID from that snapshot would require a domain migration and could leave a broken or partially recoverable session. The current safe behavior therefore ends every stored session containing the requester, including sessions shared with other players. The command explains this before asking for the explicit `DELETE` confirmation.
 
-The operation covers the current player-owned schema: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets` and `wallet_ledger_entries`. Result rows are removed with their parent sessions; aggregate statistics and wallet records are removed directly. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
+The operation covers the current player-owned schema: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Result rows are removed with their parent sessions; aggregate statistics and wallet records are removed directly. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
 
 ## Engineering invariants
 
@@ -116,7 +138,7 @@ The operation covers the current player-owned schema: `player_profiles`, `game_s
 - User-controlled text is bounded and escaped before being displayed.
 - Private account data is delivered by DM from guild invocations.
 - Export is scoped to the authenticated player and the current schema.
-- Deletion of player and session records is atomic.
+- Deletion of player, session, achievement, wallet and Atlas records is atomic.
 - Achievement unlocks are checked against server-owned aggregate statistics and stored once per player/achievement.\n- The first-completion milestone is fixed, disclosed and non-random.
 - Ledger writes and wallet balance updates share the game-completion transaction.
 - A unique player/game idempotency key prevents repeat completion credits.
