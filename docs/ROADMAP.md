@@ -177,7 +177,8 @@ Exit criteria:
 ## Phase 8 — Vaults, Bazaar and economy
 
 Deliverables:
-- [x] Initial earned-only Moonbits wallet and immutable first-completion ledger entry with idempotency key.\n- Additional transparent reward definitions and deterministic award paths for later systems.
+- [x] Initial earned-only Moonbits wallet and immutable first-completion ledger entry with idempotency key.
+- Additional transparent reward definitions and deterministic award paths for later systems.
 - Personal Vault and collectible archive.
 - Puzzle Vault vertical slice with fixed, published rewards and save checkpoints.
 - Crafting recipes and item provenance.
@@ -185,10 +186,12 @@ Deliverables:
 - Moderation, reporting, rate limits, and guild-scoped controls.
 
 Exit criteria:
-- [x] The current first-completion credit writes an immutable ledger entry and wallet balance in the same PostgreSQL transaction.\n- Every future balance mutation must follow the same invariant.
+- [x] The current first-completion credit writes an immutable ledger entry and wallet balance in the same PostgreSQL transaction.
+- Every future balance mutation must follow the same invariant.
 - Double-spend, duplicate interaction, race, rollback, and self-trade tests pass.
 - No real-money value, wagering, paid random reward, or cash-out feature exists.
-- [x] Profile inventory, export and deletion cover the wallet and ledger tables.\n- Guild-isolation tests must cover future guild-owned economy records.
+- [x] Profile inventory, export and deletion cover the wallet and ledger tables.
+- Guild-isolation tests must cover future guild-owned economy records.
 - Every Vault reward and Bazaar price/fee is shown before confirmation.
 
 ## Phase 9 — Production readiness and measured scale
