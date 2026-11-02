@@ -90,6 +90,7 @@ pub enum GameError {
     OccupiedCell,
     FullColumn,
     AlreadyMatched,
+    AlreadyGuessed,
     SamePosition,
     RuntimeUnavailable,
 }
@@ -116,6 +117,9 @@ impl std::fmt::Display for GameError {
             Self::FullColumn => "That column is full. Choose another column.",
             Self::AlreadyMatched => {
                 "That position is already matched. Choose a face-down position."
+            }
+            Self::AlreadyGuessed => {
+                "You already tried that answer. It does not use another attempt."
             }
             Self::SamePosition => "Choose a different second position.",
             Self::RuntimeUnavailable => "The game runtime is temporarily unavailable. Try again.",
@@ -278,7 +282,16 @@ fn apply_word_scramble(
     if state.attempts_left == 0 {
         return Err(GameError::AlreadyFinished);
     }
-    if answer.trim().eq_ignore_ascii_case(state.answer.as_str()) {
+    let answer = answer.trim().to_ascii_uppercase();
+    if state
+        .guesses
+        .iter()
+        .any(|guess| guess.eq_ignore_ascii_case(&answer))
+    {
+        return Err(GameError::AlreadyGuessed);
+    }
+    state.guesses.push(answer.clone());
+    if answer.eq_ignore_ascii_case(state.answer.as_str()) {
         state.attempts_left = 0;
         return Ok(GameResolution {
             winner_index: Some(0),
@@ -424,5 +437,56 @@ mod tests {
         .expect("correct guess");
         assert_eq!(result.winner_index, Some(0));
         assert!(result.is_complete);
+    }
+
+    #[test]
+    fn repeated_word_scramble_answers_do_not_consume_attempts() {
+        let mut state = GameState::WordScramble(WordScrambleState::default());
+        apply_action(
+            &mut state,
+            0,
+            GameAction::WordAnswer {
+                answer: "planet".into(),
+            },
+        )
+        .expect("first wrong guess");
+        let before = state.clone();
+
+        assert_eq!(
+            apply_action(
+                &mut state,
+                0,
+                GameAction::WordAnswer {
+                    answer: " PLANET ".into(),
+                },
+            ),
+            Err(GameError::AlreadyGuessed)
+        );
+        assert_eq!(state, before);
+        let GameState::WordScramble(scramble) = state else {
+            panic!("expected word scramble state");
+        };
+        assert_eq!(scramble.attempts_left, 2);
+        assert_eq!(scramble.guesses, vec![String::from("PLANET")]);
+    }
+
+    #[test]
+    fn distinct_word_scramble_answers_each_use_one_attempt() {
+        let mut state = GameState::WordScramble(WordScrambleState::default());
+        for (index, answer) in ["planet", "galaxy", "comet"].into_iter().enumerate() {
+            let result = apply_action(
+                &mut state,
+                0,
+                GameAction::WordAnswer {
+                    answer: answer.into(),
+                },
+            )
+            .expect("new guess");
+            let GameState::WordScramble(scramble) = &state else {
+                panic!("expected word scramble state");
+            };
+            assert_eq!(scramble.attempts_left, 2 - index as u8);
+            assert_eq!(result.is_complete, index == 2);
+        }
     }
 }
