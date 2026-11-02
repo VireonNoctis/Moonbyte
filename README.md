@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**The player foundation, first results loop and initial Tavern navigation are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte has persistent profiles, editable display names and bios, private-by-default visibility, saved preferences, completed-game result records, per-game aggregate statistics, private JSON export, data inventory and confirmed deletion. Result/stat writes commit atomically with the final game state and use the session ID as an idempotency key. The `.tavern` Wayfinder links only to the live games, profile and records commands. Achievements, inventory, quests, the full Tavern, Atlas, Vaults, Bazaar and live visual-game API remain follow-up implementation work.
+**The player foundation, first results loop and initial Tavern navigation are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte has persistent profiles, completed-game result records, per-game aggregate statistics, private JSON export, data inventory and confirmed deletion. Each player's first completion of each game type earns a fixed 10 Moonbits once, with a unique ledger key and a wallet update in the same transaction as the game result. The `.wallet` command and Tavern's Ledger destination show the current earned-only balance; purchases, spending, transfers, Vault rewards and Bazaar trading are not enabled. The `.tavern` Wayfinder links only to live games, profile, records and wallet commands.
 
 ## The vision
 
@@ -66,7 +66,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.profile` / `/profile` | Implemented | View your private player profile. |
 | `.profile_edit` / `/profile_edit` | Implemented | Set a display name and short bio. |
 | `.settings` / `/settings` | Implemented | Save profile visibility and player preferences. |
-| `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |
+| `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |\n| `.wallet` / `/wallet` | Implemented | View the earned-only Moonbits balance and ledger-entry count privately. |
 | `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
@@ -75,7 +75,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 
-The Wayfinder currently exposes only three live destinations: Common Tables (`.games`), Your Place (`.profile`), and the Chronicle (`.stats`). It does not pretend that the wider Tavern, party, Atlas, Vault or Bazaar systems are already playable.
+The Wayfinder currently exposes four live destinations: Common Tables (`.games`), Your Place (`.profile`), the Chronicle (`.stats`), and The Ledger (`.wallet`). It does not pretend that the wider Tavern, party, Atlas, Vault or Bazaar systems are already playable.
 
 ### Planned commands
 
@@ -92,7 +92,7 @@ The Wayfinder currently exposes only three live destinations: Common Tables (`.g
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The `.privacy` command is the public overview. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details, exports and deletion receipts are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile, per-game statistic rows, and every session snapshot plus linked result containing the requester’s Discord ID. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
+The `.privacy` command is the public overview. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details, exports and deletion receipts are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile, per-game statistic rows, Moonbits wallet and ledger entries, and every session snapshot plus linked result containing the requester’s Discord ID. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
 
 ## Privacy is a product feature
 
@@ -105,7 +105,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - In-bot export and deletion controls cover the current persisted data; every new player-owned system must extend them before release.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles and preferences, recoverable session snapshots, completed result metadata and per-game aggregate statistics in PostgreSQL. Session-level result records are linked to their parent session and expire with it; aggregate statistics remain until the player requests deletion. Achievements, inventories and quest progression are not persisted yet. Export includes the current profile, session metadata, results and statistics; deletion removes the player's profile/stat rows and every stored session/result containing their ID. It cannot delete Discord’s own records or independent infrastructure backups.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles and preferences, recoverable session snapshots, completed result metadata, per-game aggregate statistics and earned-only Moonbits wallet/ledger rows in PostgreSQL. Session-level result records are linked to their parent session and expire with it; aggregate statistics and wallet milestones remain until the player requests deletion. Achievements, inventory and quest progression are not persisted yet. Export includes the current profile, session metadata, results, statistics, wallet balance and ledger; deletion removes all six current player-owned tables. It cannot delete Discord’s own records or independent infrastructure backups.
 
 ## Technology decisions
 
@@ -132,7 +132,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 ## Documentation
 
 - [Product vision](docs/PRODUCT_VISION.md) — product goals, engagement principles, systems, safety and non-goals.
-- [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
+- [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.\n- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, Moonbits and privacy coverage.\n- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the earned-only economy rules and planned Vault/trading boundaries.
 - [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, private export and deletion coverage.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
@@ -145,7 +145,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, private data inventory/export/deletion, and the initial Tavern Wayfinder are implemented with unit and PostgreSQL integration coverage. The custom-emoji registry has paste-in ID slots and Unicode fallbacks. Achievements, progression, inventory, full Hearth behavior and economy remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, the first-completion Moonbits ledger, private data inventory/export/deletion, and Tavern Wayfinder are implemented with unit and PostgreSQL integration coverage. The custom-emoji registry has paste-in ID slots and Unicode fallbacks. Achievements, progression, inventory, spending, full Hearth behavior, Vaults and Bazaar remain future work.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
@@ -162,7 +162,7 @@ CI runs the repository validator plus Rust formatting, tests, and Clippy. Do not
 
 ## Data and privacy
 
-The current data model stores Discord identifiers in player profiles, session snapshots, result rows and per-game aggregate statistics, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. The Tavern Wayfinder is navigation-only and adds no persisted data. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
+The current data model stores Discord identifiers in player profiles, session snapshots, result rows, per-game aggregate statistics, wallet balances and wallet ledger entries, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. The Tavern Wayfinder is navigation-only and adds no persisted data. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
 
 ## Licensing
 
