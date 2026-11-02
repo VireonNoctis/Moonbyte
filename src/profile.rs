@@ -392,15 +392,15 @@ impl ProfileStore {
         .await?;
         let wallet_ledger_entries = wallet_rows
             .into_iter()
-            .map(|(entry_id, amount_delta, reason, source_id, created_at)| {
-                ExportedWalletEntry {
+            .map(
+                |(entry_id, amount_delta, reason, source_id, created_at)| ExportedWalletEntry {
                     entry_id,
                     amount_delta,
                     reason,
                     source_id,
                     created_at,
-                }
-            })
+                },
+            )
             .collect();
 
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
@@ -481,20 +481,17 @@ impl ProfileStore {
                 .execute(&mut *transaction)
                 .await?
                 .rows_affected();
-        let wallet_ledger_records_removed = sqlx::query(
-            "DELETE FROM wallet_ledger_entries WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
-        let wallet_removed = sqlx::query(
-            "DELETE FROM player_wallets WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected()
+        let wallet_ledger_records_removed =
+            sqlx::query("DELETE FROM wallet_ledger_entries WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+        let wallet_removed = sqlx::query("DELETE FROM player_wallets WHERE discord_user_id = $1")
+            .bind(player_id)
+            .execute(&mut *transaction)
+            .await?
+            .rows_affected()
             > 0;
         let profile_removed = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
             .bind(player_id)
