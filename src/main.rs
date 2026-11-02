@@ -1,8 +1,8 @@
 use std::{process::ExitCode, time::Duration};
 
 use moonbyte::{
-    Data, Error, achievement::AchievementStore, commands, config::Config, database::Database,
-    game::GameRuntime, profile::ProfileStore, wallet::WalletStore,
+    Data, Error, achievement::AchievementStore, atlas::AtlasStore, commands, config::Config,
+    database::Database, game::GameRuntime, profile::ProfileStore, wallet::WalletStore,
 };
 use poise::serenity_prelude as serenity;
 
@@ -24,6 +24,7 @@ async fn run() -> Result<(), Error> {
     let profiles = ProfileStore::new(database.pool());
     let wallets = WalletStore::new(database.pool());
     let achievements = AchievementStore::new(database.pool());
+    let atlas = AtlasStore::new(database.pool());
     let prefix = config.default_prefix().to_owned();
 
     // One central cleanup task enforces the 24-hour inactive-session retention
@@ -55,9 +56,10 @@ async fn run() -> Result<(), Error> {
             let profiles = profiles.clone();
             let wallets = wallets.clone();
             let achievements = achievements.clone();
+            let atlas = atlas.clone();
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data::new(prefix, games, profiles, wallets, achievements))
+                Ok(Data::new(prefix, games, profiles, wallets, achievements, atlas))
             })
         })
         .build();
