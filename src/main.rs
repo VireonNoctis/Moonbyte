@@ -59,7 +59,14 @@ async fn run() -> Result<(), Error> {
             let atlas = atlas.clone();
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data::new(prefix, games, profiles, wallets, achievements, atlas))
+                Ok(Data::new(
+                    prefix,
+                    games,
+                    profiles,
+                    wallets,
+                    achievements,
+                    atlas,
+                ))
             })
         })
         .build();
