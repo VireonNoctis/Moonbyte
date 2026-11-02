@@ -55,7 +55,7 @@ Deliverables:
 - [x] State-machine validation for the first four playable game modules.
 - [x] Guild scope, participant membership and turn ownership checks.
 - [x] Durable session lifecycle and state-machine recovery with PostgreSQL.
-- [x] Player identity and basic profile persistence.
+- [x] Player identity and basic profile persistence.\n- [x] Completed-game result records and per-game aggregate statistics, transactionally tied to session completion.
 - [x] Session creation, joining, leaving and game completion through the Rust runtime.
 - [x] 24-hour inactivity expiry and one central cleanup task.
 - [x] Versioned PostgreSQL session persistence and runtime reconstruction.
@@ -76,7 +76,7 @@ Deliverables:
 - Rebuilt quick-play games with tests.
 - Akinator-style guessing flow reviewed for external service/API dependencies.
 - Review of the existing card collection system and safe progression rules.
-- Game library browsing, per-game statistics, and result screens.
+- Expand the game library beyond the first four games and add polished result screens. Per-game statistics for the current four games are implemented.
 
 Candidate first ports:
 - Coin flip and dice as short, non-wagering games.
@@ -95,9 +95,9 @@ Exit criteria:
 Deliverables:
 - Moonbyte-original mini-games.
 - Puzzle/strategy foundation and optional daily challenge.
-- Player statistics, achievements, inventory, and cosmetic unlocks.
+- [x] Durable per-game statistics for completed sessions.\n- Player achievements, inventory, and cosmetic unlocks.
 - Deterministic shops and earned rewards.
-- [x] Profile and preference commands.\n- [x] Current-schema data inventory, private JSON export and confirmed profile/session deletion.\n- Player result history, achievements, inventory, quest progress and progression.
+- [x] Profile and preference commands.\n- [x] Current-schema data inventory, private JSON export and confirmed profile/session deletion.\n- [x] Completed-result metadata and per-game statistics for the current game catalogue.\n- Player achievements, inventory, quest progress and progression.
 
 Suggested first originals:
 - Memory match.
@@ -265,8 +265,8 @@ These systems must not become independent microservices. Shared contracts remain
 Do not implement the full breadth at once. Release one connected, testable vertical slice at a time.
 
 
-## Current implementation increment — player foundation
+## Current implementation increment — player profiles and game statistics
 
-The current implementation combines four Rust game rules, a PostgreSQL-backed session runtime and the player-foundation vertical slice. The feature adapter exposes game/session commands, profile editing, profile preferences, privacy data inventory, private JSON export and confirmed profile/session deletion. Profiles default to private. Deletion is transactional and ends any stored shared session containing the requester. PostgreSQL integration coverage exercises profile creation, editing, preferences, export, inventory and deletion.
+The implementation combines four Rust game rules, a PostgreSQL-backed session runtime and the player foundation. The feature adapter exposes game/session commands, profile editing, profile preferences, private data inventory/export/deletion and a private statistics view. On completion, a unique result row and per-player/per-game aggregate counters are written in the same transaction as the final session snapshot. Repeated actions cannot award a completion twice. Profile deletion locks and removes matching sessions, linked results, aggregate stats and the profile in one transaction.
 
-This increment does **not** mark the full player platform complete. Game-result history, statistics, achievements, inventory, quests, progression, the Tavern/Atlas/Vault/Bazaar systems, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
+This increment does **not** mark the full player platform complete. Achievements, inventory, quests, progression, additional games, the Tavern/Atlas/Vault/Bazaar systems, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
