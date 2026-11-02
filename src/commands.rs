@@ -319,6 +319,63 @@ pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn atlas(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let snapshot = ctx.data().atlas().snapshot(&player_id).await?;
+    send_private(ctx, crate::atlas::render(&snapshot, ctx.data().prefix())).await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn travel(
+    ctx: Context<'_>,
+    #[description = "A directly connected location ID or name, such as mosslight-grove"]
+    location: String,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let result = match ctx.data().atlas().travel(&player_id, &location).await {
+        Ok(result) => result,
+        Err(crate::atlas::AtlasError::UnknownLocation) => {
+            return send_private(
+                ctx,
+                format!(
+                    "That place is not in the Atlas. Known locations: {}.",
+                    crate::atlas::LOCATION_CATALOGUE
+                        .iter()
+                        .map(|place| format!("{} ({})", place.name, place.id))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ),
+            )
+            .await;
+        }
+        Err(crate::atlas::AtlasError::NotReachable) => {
+            return send_private(
+                ctx,
+                "That destination is not connected to your current location. Open .atlas to see the routes you can travel.",
+            )
+            .await;
+        }
+        Err(error) => return Err(Box::new(error)),
+    };
+
+    let message = if result.moved {
+        format!("You travelled from **{}** to **{}**.", result.from.name, result.to.name)
+    } else {
+        format!("You are already at **{}**.", result.to.name)
+    };
+    send_private(
+        ctx,
+        format!(
+            "{}\n\n{}",
+            message,
+            crate::atlas::render(&result.snapshot, ctx.data().prefix())
+        ),
+    )
+    .await
+}
+
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
     let entries = GameKind::ALL
         .iter()
@@ -496,6 +553,8 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         achievements(),
         stats(),
         tavern(),
+        atlas(),
+        travel(),
         games(),
         play(),
         join(),
@@ -589,6 +648,8 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}achievements / /achievements — view your unlocked achievements\n\
          {safe_prefix}stats / /stats — view completed game statistics\n\
          {safe_prefix}tavern / /tavern — open the Tavern and live Wayfinder\n\
+         {safe_prefix}atlas / /atlas — inspect your world map and known routes\n\
+         {safe_prefix}travel <location> / /travel — follow a connected Atlas route\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
@@ -645,6 +706,8 @@ mod tests {
             ".achievements / /achievements",
             ".stats / /stats",
             ".tavern / /tavern",
+            ".atlas / /atlas",
+            ".travel <location> / /travel",
             ".games / /games",
             ".play <game> / /play",
             ".join <session> / /join",
