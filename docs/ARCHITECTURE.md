@@ -1,6 +1,6 @@
 # Moonbyte Architecture
 
-- Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions and recovery, player profiles/preferences, privacy inventory/export/deletion, and a presentation-only Next.js catalogue are implemented. Live game API, Activity handshake, authoritative visual rendering, player progression and economy remain unimplemented.
+- Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions and recovery, player profiles/preferences, atomic completed-game results, per-game aggregate statistics, privacy inventory/export/deletion, and a presentation-only Next.js catalogue are implemented. Live game API, Activity handshake, authoritative visual rendering, achievements, inventory progression and economy remain unimplemented.
 - Last updated: 2026-10-31.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
@@ -108,7 +108,7 @@ A slow game or render must not stall unrelated sessions. Isolate CPU-heavy rende
 
 PostgreSQL is Moonbyte's persistent system of record. SQLx is compiled with its PostgreSQL driver only; SQLite and ScyllaDB are not part of the runtime.
 
-The first migration creates a monotonic session-ID sequence, a schema migration ledger, a game_sessions table with stable ID, game ID, optional guild ID, lifecycle phase, state version, action count, JSONB session snapshot, timestamps and expiry, plus indexes for expiry and guild/phase queries. Migration 0002 adds player_profiles with a Discord user ID, validated display name, optional bio, private-by-default visibility, statistics/quiet-mode preference flags and lifecycle timestamps.
+The first migration creates a monotonic session-ID sequence, a schema migration ledger, a game_sessions table with stable ID, game ID, optional guild ID, lifecycle phase, state version, action count, JSONB session snapshot, timestamps and expiry, plus indexes for expiry and guild/phase queries. Migration 0002 adds player_profiles with a Discord user ID, validated display name, optional bio, private-by-default visibility, statistics/quiet-mode preference flags and lifecycle timestamps. Migration 0003 adds game_results (one completion row per session, with a foreign key cascade to the session) and player_game_stats (durable per-player/per-game aggregate counters).
 
 Every session mutation runs inside a short database transaction. Mutating actions select the session row FOR UPDATE, deserialize and validate domain state, serialize the new versioned snapshot, update the row and commit before the Discord adapter sends a response. A rejected action drops the transaction without persisting a partial state change. Session reads verify participant and guild scope.
 
@@ -118,7 +118,7 @@ The current supported deployment remains one bot process with one PostgreSQL dat
 
 Backup, restore, managed-database selection, connection-secret provisioning and production encryption-at-rest configuration remain operator/deployment work. Never log the connection URL or claim that selecting PostgreSQL automatically proves encryption at rest.
 
-Future data groups include guild settings, results, achievements, inventory, quest progress, ledger entries and privacy-operation metadata. Player profiles and their initial preference fields now exist. Add each new data group through a reviewed migration and update the privacy inventory, export and deletion contract before enabling the feature.
+Future data groups include guild settings, achievements, inventory, quest progress, ledger entries and privacy-operation metadata. Player profiles, completed-game result metadata and per-game aggregate statistics now exist. Add each new data group through a reviewed migration and update the privacy inventory, export and deletion contract before enabling the feature.
 ## 7. Discord command and interaction adapter
 
 Default prefix: **.** Poise should expose shared command definitions as prefix and slash commands where appropriate.
@@ -234,6 +234,6 @@ The current playable slice is deliberately small and honest about its limits:
 - Mutations use short row-locked transactions; reads and active-session listings enforce participant and guild/DM scope.
 - Poise exposes the implemented operations as shared prefix and slash commands, including `.sessions` for the requester's 10 most recently updated active sessions in the current scope.
 - Session IDs are generated from a PostgreSQL sequence and survive process restarts. They are references, not authentication credentials.
-- The initial player profile, preferences, privacy inventory, private JSON export and confirmed deletion flows are implemented. Result history, achievements, inventory, economy, durable interaction idempotency and the live web game API remain unimplemented.
+- Player profiles, preferences, privacy inventory, private JSON export, confirmed deletion, completed result metadata and aggregate per-game statistics are implemented. Achievements, inventory, economy, durable interaction idempotency and the live web game API remain unimplemented.
 
-This is a functional vertical slice for game rules, player identity, private data controls, Discord commands, PostgreSQL persistence and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is result/progression persistence, idempotent Discord interaction handling and concurrent-session load tests.
+This is a functional vertical slice for game rules, player identity, completed-result/stat persistence, private data controls, Discord commands, PostgreSQL transactions and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is achievements/inventory progression, idempotent Discord interaction handling and concurrent-session load tests.
