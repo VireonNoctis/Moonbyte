@@ -4,6 +4,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 
 const INITIAL_MIGRATION: &str = include_str!("../migrations/0001_postgres_sessions.sql");
 const PLAYER_MIGRATION: &str = include_str!("../migrations/0002_player_profiles.sql");
+const GAME_STATS_MIGRATION: &str = include_str!("../migrations/0003_game_results_and_stats.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -54,7 +55,11 @@ impl Database {
         .execute(&mut *transaction)
         .await?;
 
-        for (version, migration) in [(1_i64, INITIAL_MIGRATION), (2_i64, PLAYER_MIGRATION)] {
+        for (version, migration) in [
+            (1_i64, INITIAL_MIGRATION),
+            (2_i64, PLAYER_MIGRATION),
+            (3_i64, GAME_STATS_MIGRATION),
+        ] {
             let already_applied: bool = sqlx::query_scalar(
                 "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",
             )
