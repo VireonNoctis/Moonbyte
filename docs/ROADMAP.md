@@ -188,7 +188,8 @@ Deliverables:
 Exit criteria:
 - [x] The current first-completion credit writes an immutable ledger entry and wallet balance in the same PostgreSQL transaction.
 - Every future balance mutation must follow the same invariant.
-- [x] Repeat-completion tests prove a player's first-completion reward cannot be claimed again for the same game type.\n- [ ] Broader concurrent-credit, rollback and double-spend tests are required before any spending or transfers are enabled.
+- [x] Repeat-completion tests prove a player's first-completion reward cannot be claimed again for the same game type.
+- [ ] Broader concurrent-credit, rollback and double-spend tests are required before any spending or transfers are enabled.
 - No real-money value, wagering, paid random reward, or cash-out feature exists.
 - [x] Profile inventory, export and deletion cover the wallet and ledger tables.
 - Guild-isolation tests must cover future guild-owned economy records.
