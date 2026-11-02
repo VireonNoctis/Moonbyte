@@ -230,6 +230,52 @@ pub async fn wallet(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let unlocked = ctx
+        .data()
+        .achievements()
+        .list_for_player(&player_id)
+        .await?;
+
+    if unlocked.is_empty() {
+        return send_private(
+            ctx,
+            format!(
+                "**Your Achievement Gallery**\\n\\nNo achievements unlocked yet. \\
+                 Complete games to record your milestones. Use `{}games` to browse.",
+                ctx.data().prefix()
+            ),
+        )
+        .await;
+    }
+
+    let entries = unlocked
+        .iter()
+        .map(|achievement| {
+            format!(
+                "🏅 **{}** · {}\\n{}\\nUnlocked: {}",
+                achievement.title,
+                achievement.category,
+                achievement.description,
+                achievement.unlocked_at
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\\n\\n");
+
+    send_private(
+        ctx,
+        format!(
+            "**Your Achievement Gallery** · {} unlocked\\n\\n{}",
+            unlocked.len(),
+            entries
+        ),
+    )
+    .await
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let stats = ctx.data().profiles().game_stats(&player_id).await?;
@@ -443,6 +489,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         profile_edit(),
         settings(),
         wallet(),
+        achievements(),
         stats(),
         tavern(),
         games(),
@@ -588,6 +635,7 @@ mod tests {
             ".profile_edit <name> | <bio> / /profile_edit",
             ".settings <visibility> <show_stats> <quiet_mode> / /settings",
             ".wallet / /wallet",
+            ".achievements / /achievements",
             ".stats / /stats",
             ".tavern / /tavern",
             ".games / /games",
