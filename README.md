@@ -58,31 +58,41 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.help` / `/help` | Implemented | List commands available in this build. |
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
+| `.tavern` / `/tavern` | Implemented | Open the Tavern home and Wayfinder for live destinations. |
 | `.privacy` / `/privacy` | Implemented | Explain current data handling, privacy controls and their limits. |
+| `.privacy_data` / `/privacy_data` | Implemented | Inspect your current Moonbyte data inventory privately. |
+| `.privacy_export` / `/privacy_export` | Implemented | Receive a private JSON export of current stored records. |
+| `.privacy_delete` / `/privacy_delete` | Implemented | Begin and explicitly confirm deletion of your Moonbyte data. |
+| `.profile` / `/profile` | Implemented | View your private player profile. |
+| `.profile_edit` / `/profile_edit` | Implemented | Set a display name and short bio. |
+| `.settings` / `/settings` | Implemented | Save profile visibility and player preferences. |
+| `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |
 | `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
 | `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
-| `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |\n| `.profile` / `/profile` | Implemented | View your private player profile. |\n| `.profile_edit` / `/profile_edit` | Implemented | Set a display name and short bio. |\n| `.settings` / `/settings` | Implemented | Save profile visibility and player preferences. |\n| `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |\n| `.privacy_data` / `/privacy_data` | Implemented | Inspect your current Moonbyte data inventory privately. |\n| `.privacy_export` / `/privacy_export` | Implemented | Receive a private JSON export of your current stored records. |\n| `.privacy_delete` / `/privacy_delete` | Implemented | Start and explicitly confirm deletion of your Moonbyte profile and sessions. |
+| `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
-| `.daily` / `/daily` | Planned | Open the optional daily challenge. |
 
-| `.collection` / `/collection` | Planned | View collected cards, discoveries, and items. |
+The Wayfinder currently exposes only three live destinations: Common Tables (`.games`), Your Place (`.profile`), and the Chronicle (`.stats`). It does not pretend that the wider Tavern, party, Atlas, Vault or Bazaar systems are already playable.
+
+### Planned commands
+
+| Command | Status | Purpose |
+| --- | --- | --- |
+| `.daily` / `/daily` | Planned | Open an optional daily challenge without attendance penalties. |
+| `.collection` / `/collection` | Planned | View collected cards, discoveries and items. |
 | `.inventory` / `/inventory` | Planned | View usable items and cosmetics. |
 | `.quests` / `/quests` | Planned | Browse active and available quests. |
-| `.party` / `/party` | Planned | Create, invite, or manage a party. |
+| `.party` / `/party` | Planned | Create, invite or manage a party. |
 | `.leaderboard` / `/leaderboard` | Planned | View supported rankings. |
 | `.achievements` / `/achievements` | Planned | Browse earned achievements. |
-
-
-
-| `.settings` / `/settings` | Planned | Configure player and server preferences. |
 | `.stop` / `/stop` | Planned | Leave or end an eligible active session. |
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The `.privacy` command is the public overview. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details and exports are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile plus every currently stored session snapshot containing the requester’s Discord ID. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
+The `.privacy` command is the public overview. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details, exports and deletion receipts are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile, per-game statistic rows, and every session snapshot plus linked result containing the requester’s Discord ID. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
 
 ## Privacy is a product feature
 
@@ -121,17 +131,17 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Documentation
 
-- [Product vision](docs/PRODUCT_VISION.md) — detailed product goals, engagement principles, systems, safety, and non-goals.
-- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, private export and deletion coverage.\n- [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits, and security stance.
-- [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering, and operations.
-- [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts, and release quality gates.
-- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — player inventory, vault experiences, fixed-price trading, and non-wagering economy rules.
-- [Moonbyte World Loom](docs/atlas/README.md) — 400 connected system ideas across 40 domains, ten design volumes, a 40,000+ line specification and the machine-readable mind-map graph.
-- [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation, and verification requirements.
-- [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — what may be reused conceptually and what must be rebuilt or audited.
-- [Roadmap](docs/ROADMAP.md) — phased implementation, deliverables, and exit criteria.
-- [Architecture decisions](docs/DECISIONS/README.md) — accepted decisions and trade-offs.
-- [Engineering instructions](AGENTS.md) — repository rules for contributors and coding agents.
+- [Product vision](docs/PRODUCT_VISION.md) — product goals, engagement principles, systems, safety and non-goals.
+- [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
+- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, private export and deletion coverage.
+- [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
+- [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
+- [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts and release quality gates.
+- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — planned earned-only currency, deterministic Vaults, ledger and fixed-price trade rules.
+- [Moonbyte World Loom](docs/atlas/README.md) — 400 connected system proposals across 40 domains and the machine-readable system graph.
+- [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation and verification requirements.
+- [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — reuse boundaries and source/licence audit requirements.
+- [Roadmap](docs/ROADMAP.md) — implementation phases and acceptance criteria.
 
 ## Development status
 
