@@ -655,6 +655,7 @@ mod postgres_tests {
         assert!(export.contains("per-game statistics"));
         assert!(export.contains("Moonbits wallet balance"));
         assert!(export.contains("wallet_balance"));
+        assert!(export.contains("\"wallet_balance\": 10"));
         assert!(export.contains("first_game_completion"));
         assert!(export.contains(&completed_session.id));
 
@@ -675,14 +676,13 @@ mod postgres_tests {
                 .expect("read deleted profile")
                 .is_none()
         );
-        assert_eq!(
-            store
-                .inventory(&player_id)
-                .await
-                .expect("read deleted inventory")
-                .game_session_records,
-            0
-        );
+        let deleted_inventory = store
+            .inventory(&player_id)
+            .await
+            .expect("read deleted inventory");
+        assert_eq!(deleted_inventory.game_session_records, 0);
+        assert!(!deleted_inventory.wallet_record);
+        assert_eq!(deleted_inventory.wallet_ledger_records, 0);
         assert!(
             runtime.get(&session.id, &player_id, None).await.is_err(),
             "deleted session state must no longer be recoverable"
