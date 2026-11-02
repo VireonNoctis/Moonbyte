@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add the five-entry achievement gallery with server-authoritative milestone checks and idempotent unlock rows.
+- Add the initial five-location Atlas with stable location IDs, reciprocal route edges, personal discovery/visit records and direct-neighbour travel.
+- Add PostgreSQL migration 0006 for player world state and personal Atlas discoveries, both owned by player profiles through foreign keys.
+- Add private `.atlas` and `.travel` prefix/slash commands and expose The Atlas as a live Tavern Wayfinder destination.
+- Extend player inventory, version 5 JSON export and confirmed deletion to include current Atlas location and discovery history.
+- Add route catalogue tests for unique IDs, reciprocal connectivity, full reachability and stable lookup, plus PostgreSQL travel/revisit/privacy lifecycle coverage.
+
 - Add PostgreSQL-backed player profiles with validated display names, short bios, private-by-default visibility and saved preferences.
 - Add private profile commands, a current-schema data inventory, on-demand JSON export and explicit two-step profile deletion.
 - Add atomic player deletion that removes the profile and every game-session snapshot containing that player ID.
