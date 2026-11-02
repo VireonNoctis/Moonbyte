@@ -341,22 +341,27 @@ mod tests {
     #[tokio::test]
     async fn completed_games_write_results_and_stats_once() {
         let runtime = runtime().await;
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos();
+        let player_id = format!("stats-{nonce}");
         let session = runtime
-            .start(GameKind::WordScramble, "stats-player", None)
+            .start(GameKind::WordScramble, &player_id, None)
             .await
             .expect("start word scramble");
         let completed = runtime
-            .act(&session.id, "stats-player", None, "orbit")
+            .act(&session.id, &player_id, None, "orbit")
             .await
             .expect("solve word scramble");
         assert_eq!(completed.phase, GamePhase::Completed);
-        assert_eq!(completed.winner.as_deref(), Some("stats-player"));
+        assert_eq!(completed.winner.as_deref(), Some(&player_id));
 
         let stats: (i64, i64, i64) = sqlx::query_as(
             "SELECT games_played, games_won, draws FROM player_game_stats \
              WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
         )
-        .bind("stats-player")
+        .bind(&player_id)
         .fetch_one(&runtime.pool)
         .await
         .expect("read player stats");
@@ -372,14 +377,14 @@ mod tests {
         assert_eq!(result_count, 1);
 
         assert!(matches!(
-            runtime.act(&session.id, "stats-player", None, "orbit").await,
+            runtime.act(&session.id, &player_id, None, "orbit").await,
             Err(GameRuntimeError::Domain(GameError::NotActive))
         ));
         let after_retry: (i64, i64, i64) = sqlx::query_as(
             "SELECT games_played, games_won, draws FROM player_game_stats \
              WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
         )
-        .bind("stats-player")
+        .bind(&player_id)
         .fetch_one(&runtime.pool)
         .await
         .expect("read stats after duplicate action");
