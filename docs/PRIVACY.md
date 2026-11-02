@@ -37,7 +37,6 @@ The bot may process or store these categories when the relevant feature is enabl
 | Moonbits ledger | Transaction ID, player ID, signed amount, fixed reason, source session, idempotency key and timestamp. | Audit each earned credit and prevent duplicate milestone awards. |
 | Game state | Current turn, board state, action data needed to resume, participants, quest checkpoint. | Run, recover, and fairly resolve games. |
 | Game results | Game ID, outcome, winner ID when applicable, participant IDs, action count and completion time. | Record completed sessions and derive requested per-game statistics. |
-| Player game statistics | Per-game games-played, wins and draws totals. | Show the player their own completed-game record. |
 | Progress and collections | Earned experience, achievements, items, quests, cosmetic unlocks. | Provide persistent progression features. |
 | Guild settings | Enabled games, leaderboard visibility, channel configuration, server preferences. | Apply administrators' choices within that guild. |
 | Operational diagnostics | Event type, command name, error category, timing, pseudonymous correlation ID. | Diagnose outages, bugs, rate limits, and performance without recording message contents. |
@@ -85,7 +84,9 @@ The provider list describes the intended model; it does not claim a production h
 | --- | --- |
 | Active session state | While active, with a maximum 24-hour recovery window after inactivity or interruption unless a game documents a different save model. |
 | Completed game results | Expire with the parent session after 24 hours of inactivity; delete on account deletion. |
-| Player settings and aggregate statistics | Until profile deletion. |\n| Moonbits wallet and ledger | Until profile deletion; session expiry does not remove earned ledger entries. |\n| Achievements, inventory and other progression | Not currently stored. Future retention must be documented with the feature. |
+| Player settings and aggregate statistics | Until profile deletion. |
+| Moonbits wallet and ledger | Until profile deletion; session expiry does not remove earned ledger entries. |
+| Achievements, inventory and other progression | Not currently stored. Future retention must be documented with the feature. |
 | Guild settings | While the bot remains installed and settings are needed; delete or anonymise after removal, target maximum 30 days. |
 | Routine operational logs | Target maximum 30 days, then delete or aggregate without direct identifiers. |
 | Security incident records | Only as long as reasonably necessary; restrict access and document the purpose. |
