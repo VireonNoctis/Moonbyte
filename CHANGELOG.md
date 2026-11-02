@@ -10,6 +10,13 @@
 - Add migration 0003 for completed-game result records and per-player/per-game aggregate statistics.
 - Persist results and update every participant's counters atomically with the completed session snapshot, using the session ID to prevent duplicate awards.
 - Include result metadata and aggregate statistics in privacy inventory/export/deletion.
+- Add the initial Tavern home and typed Wayfinder, linking only to implemented games, player profile, game records and wallet destinations.
+- Add a central custom-emoji registry with five upload-name slots, validated numeric IDs and Unicode fallbacks.
+- Add versioned PostgreSQL migration 0004 for player wallets and immutable wallet ledger entries.
+- Award a fixed 10 Moonbits on each player's first completion of each game type, once per player/game type, in the same transaction as the completed game result and statistics.
+- Add a private `.wallet` command and disclose the reward rule in the game library.
+- Extend data inventory, version 3 JSON export and transactional deletion to wallet and ledger records.
+- Add integration coverage for repeated-completion reward protection and wallet export/deletion.
 
 - Switch the persistence target from the superseded SQLite decision to PostgreSQL through SQLx (PostgreSQL driver only).
 - Add a versioned PostgreSQL migration runner, durable JSONB game-session snapshots, transactional row-locked mutations, restart recovery, 24-hour inactivity expiry and scheduled cleanup.
