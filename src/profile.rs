@@ -502,12 +502,14 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|(location_id, discovered_at, last_visited_at, visits)| ExportedAtlasDiscovery {
-            location_id,
-            discovered_at,
-            last_visited_at,
-            visits,
-        })
+        .map(
+            |(location_id, discovered_at, last_visited_at, visits)| ExportedAtlasDiscovery {
+                location_id,
+                discovered_at,
+                last_visited_at,
+                visits,
+            },
+        )
         .collect();
 
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
@@ -620,21 +622,19 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_optional(&mut *transaction)
         .await?;
-        let world_state_removed = sqlx::query(
-            "DELETE FROM player_world_state WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected()
-            > 0;
-        let atlas_discoveries_removed = sqlx::query(
-            "DELETE FROM player_atlas_discoveries WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+        let world_state_removed =
+            sqlx::query("DELETE FROM player_world_state WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected()
+                > 0;
+        let atlas_discoveries_removed =
+            sqlx::query("DELETE FROM player_atlas_discoveries WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
 
         let profile_removed = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
             .bind(player_id)
@@ -724,8 +724,8 @@ mod postgres_tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::{
-        database::Database,
         atlas::AtlasStore,
+        database::Database,
         game::{GameKind, GameRuntime},
     };
 
@@ -787,7 +787,10 @@ mod postgres_tests {
         assert_eq!(stats[0].games_won, 1);
         let atlas_before = atlas.snapshot(&player_id).await.expect("open player Atlas");
         assert_eq!(atlas_before.current_location.id, "lantern-square");
-        let atlas_trip = atlas.travel(&player_id, "mosslight-grove").await.expect("discover grove");
+        let atlas_trip = atlas
+            .travel(&player_id, "mosslight-grove")
+            .await
+            .expect("discover grove");
         assert_eq!(atlas_trip.to.id, "mosslight-grove");
 
         let inventory = store.inventory(&player_id).await.expect("read inventory");
