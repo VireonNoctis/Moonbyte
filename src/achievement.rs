@@ -180,4 +180,94 @@ mod tests {
             ]
         );
     }
+
+    #[tokio::test]
+    async fn achievements_unlock_at_thresholds_once() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        use crate::database::Database;
+
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must point to the CI PostgreSQL service");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("connect and migrate PostgreSQL");
+        let pool = database.pool();
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos()
+            % 1_000_000_000_000_000_000;
+        let player_id = format!("achievement-{nonce}");
+        let mut transaction = pool.begin().await.expect("begin fixture transaction");
+
+        for (game_id, games_played, games_won) in [
+            ("tic-tac-toe", 3_i64, 2_i64),
+            ("connect-four", 3_i64, 1_i64),
+            ("memory-match", 2_i64, 1_i64),
+            ("word-scramble", 2_i64, 1_i64),
+        ] {
+            sqlx::query(
+                "INSERT INTO player_game_stats \
+                 (discord_user_id, game_id, games_played, games_won, draws) \
+                 VALUES ($1, $2, $3, $4, 0)",
+            )
+            .bind(&player_id)
+            .bind(game_id)
+            .bind(games_played)
+            .bind(games_won)
+            .execute(&mut *transaction)
+            .await
+            .expect("insert deterministic player statistics");
+        }
+
+        let awarded = super::award_for_player_completion(
+            &mut transaction,
+            &player_id,
+            "MB-ACHIEVEMENT-TEST",
+        )
+        .await
+        .expect("award eligible achievements");
+        assert_eq!(awarded, 5);
+
+        let repeated = super::award_for_player_completion(
+            &mut transaction,
+            &player_id,
+            "MB-ACHIEVEMENT-RETRY",
+        )
+        .await
+        .expect("repeat achievement evaluation");
+        assert_eq!(repeated, 0);
+
+        let unlocked: Vec<String> = sqlx::query_scalar(
+            "SELECT achievement_id FROM player_achievements \
+             WHERE discord_user_id = $1 ORDER BY achievement_id",
+        )
+        .bind(&player_id)
+        .fetch_all(&mut *transaction)
+        .await
+        .expect("read unlocked achievement IDs");
+        assert_eq!(
+            unlocked,
+            [
+                "first_clear",
+                "first_victory",
+                "five_wins",
+                "game_collector",
+                "ten_games"
+            ]
+        );
+
+        sqlx::query("DELETE FROM player_achievements WHERE discord_user_id = $1")
+            .bind(&player_id)
+            .execute(&mut *transaction)
+            .await
+            .expect("clean achievement fixture");
+        sqlx::query("DELETE FROM player_game_stats WHERE discord_user_id = $1")
+            .bind(&player_id)
+            .execute(&mut *transaction)
+            .await
+            .expect("clean player stats fixture");
+        transaction.commit().await.expect("commit fixture cleanup");
+    }
 }
