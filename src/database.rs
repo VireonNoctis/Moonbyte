@@ -7,6 +7,7 @@ const PLAYER_MIGRATION: &str = include_str!("../migrations/0002_player_profiles.
 const GAME_STATS_MIGRATION: &str = include_str!("../migrations/0003_game_results_and_stats.sql");
 const WALLET_MIGRATION: &str = include_str!("../migrations/0004_earned_currency_wallet.sql");
 const ACHIEVEMENTS_MIGRATION: &str = include_str!("../migrations/0005_player_achievements.sql");
+const ATLAS_MIGRATION: &str = include_str!("../migrations/0006_player_atlas.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -63,6 +64,7 @@ impl Database {
             (3_i64, GAME_STATS_MIGRATION),
             (4_i64, WALLET_MIGRATION),
             (5_i64, ACHIEVEMENTS_MIGRATION),
+            (6_i64, ATLAS_MIGRATION),
         ] {
             let already_applied: bool = sqlx::query_scalar(
                 "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",
