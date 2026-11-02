@@ -55,7 +55,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Profile record: {}\n\
          Game-session records currently retained: {}\n\n\
          {}\n\n\
-         Use `.privacy-export` to receive a JSON copy, or `.privacy-delete` to begin \
+         Use `.privacy_export` to receive a JSON copy, or `.privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
         if inventory.profile_record { "present" } else { "not created" },
         inventory.game_session_records,
@@ -448,7 +448,7 @@ retained game sessions are stored in PostgreSQL, including session state and Dis
 participant IDs. Sessions are scoped to their originating server and expire after \
 24 hours without activity. Player profiles store a Discord user ID, display name, \
 optional bio, visibility and two preference flags.\n\n\
-Use `.privacy-data` to inspect the records currently associated with you, \
+Use `.privacy_data` to inspect the records currently associated with you, \
 `.privacy-export` to receive a private JSON export, and `.privacy-delete` to begin \
 confirmed deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
 Deletion removes the profile and session snapshots containing your ID from the current \
