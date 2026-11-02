@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime does not yet persist player profiles, inventories or a complete game-results history. The `.privacy` command does not provide a complete data inventory, export or deletion flow. These limited facts describe this code slice only; broader commitments must be verified before production release.
+The current runtime stores player profiles and preferences in `player_profiles` and game-session snapshots in `game_sessions`. It does not yet persist inventories, achievements or a complete game-results history. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current schema. These facts describe the current code slice only; every future persisted feature must extend the same inventory/export/deletion contract before release.
 
 ## 2. Data Moonbyte needs
 
