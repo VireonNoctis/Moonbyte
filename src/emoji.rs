@@ -77,11 +77,12 @@ pub const fn slot(key: EmojiKey) -> EmojiSlot {
 /// Invalid or missing IDs return None so callers can use a Unicode fallback.
 pub fn custom_mention(name: &str, id: Option<&str>) -> Option<String> {
     let id = id?;
-    let valid_name = !name.is_empty()
+    let valid_name = (2..=32).contains(&name.len())
         && name
             .bytes()
             .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_');
-    let valid_id = !id.is_empty() && id.bytes().all(|byte| byte.is_ascii_digit());
+    let valid_id = (17..=20).contains(&id.len())
+        && id.bytes().all(|byte| byte.is_ascii_digit());
 
     if !valid_name || !valid_id {
         return None;
@@ -146,7 +147,15 @@ mod tests {
     fn invalid_or_missing_ids_fall_back_without_broken_markup() {
         assert_eq!(custom_mention("moonbyte", None), None);
         assert_eq!(custom_mention("moonbyte", Some("not-an-id")), None);
-        assert_eq!(custom_mention("moonbyte;spoof", Some("123")), None);
+        assert_eq!(custom_mention("moonbyte", Some("123")), None);
+        assert_eq!(
+            custom_mention("moonbyte;spoof", Some("123456789012345678")),
+            None
+        );
+        assert_eq!(
+            custom_mention("x", Some("123456789012345678")),
+            None
+        );
         assert_eq!(render_with_id("moonbyte", None, "🌙"), "🌙");
         assert_eq!(
             render_with_id("moonbyte", Some("not-an-id"), "🌙"),
