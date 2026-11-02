@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**The first player-foundation slice is implemented on this branch.** In addition to four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte now has persistent player profiles, editable display names and bios, private-by-default visibility, stored preferences, a private JSON export, a data inventory, and a two-step profile deletion flow. Deletion removes the requesting player’s profile and all stored session snapshots containing their Discord ID. Progression, statistics, collections, quests, Vaults, Bazaar and the live visual-game API remain follow-up implementation work.
+**The player foundation and first results loop are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte now has persistent profiles, editable display names and bios, private-by-default visibility, saved preferences, completed-game result records, per-game aggregate statistics, a private JSON export, a data inventory and confirmed deletion. Result/stat writes commit atomically with the final game state and use the session ID as an idempotency key. Session-level results expire with their parent session; aggregate stats remain until account deletion. Achievements, inventory, quests, Vaults, Bazaar and the live visual-game API remain follow-up implementation work.
 
 ## The vision
 
@@ -64,7 +64,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
 | `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
-| `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |\n| `.profile` / `/profile` | Implemented | View your private player profile. |\n| `.profile_edit` / `/profile_edit` | Implemented | Set a display name and short bio. |\n| `.settings` / `/settings` | Implemented | Save profile visibility and player preferences. |\n| `.privacy_data` / `/privacy_data` | Implemented | Inspect your current Moonbyte data inventory privately. |\n| `.privacy_export` / `/privacy_export` | Implemented | Receive a private JSON export of your current stored records. |\n| `.privacy_delete` / `/privacy_delete` | Implemented | Start and explicitly confirm deletion of your Moonbyte profile and sessions. |
+| `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |\n| `.profile` / `/profile` | Implemented | View your private player profile. |\n| `.profile_edit` / `/profile_edit` | Implemented | Set a display name and short bio. |\n| `.settings` / `/settings` | Implemented | Save profile visibility and player preferences. |\n| `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |\n| `.privacy_data` / `/privacy_data` | Implemented | Inspect your current Moonbyte data inventory privately. |\n| `.privacy_export` / `/privacy_export` | Implemented | Receive a private JSON export of your current stored records. |\n| `.privacy_delete` / `/privacy_delete` | Implemented | Start and explicitly confirm deletion of your Moonbyte profile and sessions. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 | `.daily` / `/daily` | Planned | Open the optional daily challenge. |
 
@@ -95,7 +95,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - In-bot export and deletion controls cover the current persisted data; every new player-owned system must extend them before release.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists player profiles and preferences plus game-session snapshots in PostgreSQL. It does not yet persist a complete game-results history, achievements, inventories or progression. The implemented export covers the current profile and session metadata schema; deletion removes the profile and all session snapshots containing the requesting player ID. It cannot delete Discord’s own records or independent infrastructure backups.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles and preferences, recoverable session snapshots, completed result metadata and per-game aggregate statistics in PostgreSQL. Session-level result records are linked to their parent session and expire with it; aggregate statistics remain until the player requests deletion. Achievements, inventories and quest progression are not persisted yet. Export includes the current profile, session metadata, results and statistics; deletion removes the player's profile/stat rows and every stored session/result containing their ID. It cannot delete Discord’s own records or independent infrastructure backups.
 
 ## Technology decisions
 
@@ -135,7 +135,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles, preferences, private data inventory/export and confirmed profile deletion are implemented with unit and PostgreSQL integration coverage. Result history, progression, achievements, inventory and economy remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, private data inventory/export and confirmed profile deletion are implemented with unit and PostgreSQL integration coverage. Achievements, progression, inventory and economy remain future work.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
@@ -152,7 +152,7 @@ CI runs the repository validator plus Rust formatting, tests, and Clippy. Do not
 
 ## Data and privacy
 
-The current data model stores Discord identifiers in player profiles and session snapshots, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. Future features such as achievements, collections and results are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
+The current data model stores Discord identifiers in player profiles, session snapshots, result rows and per-game aggregate statistics, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
 
 ## Licensing
 
