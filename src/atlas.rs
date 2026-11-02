@@ -174,9 +174,9 @@ impl AtlasStore {
         }
 
         sqlx::query(
-            "INSERT INTO player_atlas_discoveries (discord_user_id, location_id, discovered_at, last_visited_at, visit_count) \\
-             VALUES ($1, $2, now(), now(), 1) \\
-             ON CONFLICT (discord_user_id, location_id) DO UPDATE SET \\
+            "INSERT INTO player_atlas_discoveries (discord_user_id, location_id, discovered_at, last_visited_at, visit_count) \
+             VALUES ($1, $2, now(), now(), 1) \
+             ON CONFLICT (discord_user_id, location_id) DO UPDATE SET \
                  last_visited_at = now(), visit_count = player_atlas_discoveries.visit_count + 1",
         )
         .bind(player_id)
@@ -185,7 +185,7 @@ impl AtlasStore {
         .await?;
 
         sqlx::query(
-            "UPDATE player_world_state SET current_location_id = $2, updated_at = now() \\
+            "UPDATE player_world_state SET current_location_id = $2, updated_at = now() \
              WHERE discord_user_id = $1",
         )
         .bind(player_id)
@@ -215,8 +215,8 @@ impl AtlasStore {
             location_by_id(&current_id).ok_or(AtlasError::UnknownStoredLocation)?;
 
         let rows = sqlx::query_as::<_, (String, String, String, i64)>(
-            "SELECT location_id, discovered_at::text, last_visited_at::text, visit_count \\
-             FROM player_atlas_discoveries WHERE discord_user_id = $1 \\
+            "SELECT location_id, discovered_at::text, last_visited_at::text, visit_count \
+             FROM player_atlas_discoveries WHERE discord_user_id = $1 \
              ORDER BY discovered_at ASC, location_id ASC",
         )
         .bind(player_id)
@@ -254,7 +254,7 @@ async fn ensure_starting_point(
     player_id: &str,
 ) -> Result<(), AtlasError> {
     sqlx::query(
-        "INSERT INTO player_atlas_discoveries (discord_user_id, location_id) \\
+        "INSERT INTO player_atlas_discoveries (discord_user_id, location_id) \
          VALUES ($1, $2) ON CONFLICT (discord_user_id, location_id) DO NOTHING",
     )
     .bind(player_id)
@@ -263,7 +263,7 @@ async fn ensure_starting_point(
     .await?;
 
     sqlx::query(
-        "INSERT INTO player_world_state (discord_user_id, current_location_id) \\
+        "INSERT INTO player_world_state (discord_user_id, current_location_id) \
          VALUES ($1, $2) ON CONFLICT (discord_user_id) DO NOTHING",
     )
     .bind(player_id)
@@ -298,7 +298,7 @@ pub fn location_by_id(id: &str) -> Option<AtlasLocation> {
 
 pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
     let safe_prefix = prefix
-        .replace('@', "@\\u{200B}")
+        .replace('@', "@\u{200B}")
         .replace(char::from(96), "ˋ")
         .replace(char::from(92), "＼");
     let known = snapshot
@@ -313,7 +313,7 @@ pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
             )
         })
         .collect::<Vec<_>>()
-        .join("\\n");
+        .join("\n");
     let routes = snapshot
         .available_routes
         .iter()
@@ -323,7 +323,7 @@ pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
                 .iter()
                 .any(|discovery| discovery.location.id == location.id);
             format!(
-                "• **{}** · {}\\n  {safe_prefix}travel {}",
+                "• **{}** · {}\n  {safe_prefix}travel {}",
                 location.name,
                 if charted {
                     "charted route"
@@ -334,15 +334,15 @@ pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
             )
         })
         .collect::<Vec<_>>()
-        .join("\\n");
+        .join("\n");
 
     format!(
-        "**The Atlas — World Index**\\n\\n\\
-         **You are here:** {} · {}\\n{}\\n\\n\\
-         **Known places** · {}/{}\\n{}\\n\\n\\
-         **Routes from here**\\n{}\\n\\n\\
-         Travel follows connected roads only. Revisiting a place is always allowed, \\
-         but it does not grant currency or repeatable rewards. Use {safe_prefix}atlas \\
+        "**The Atlas — World Index**\n\n\
+         **You are here:** {} · {}\n{}\n\n\
+         **Known places** · {}/{}\n{}\n\n\
+         **Routes from here**\n{}\n\n\
+         Travel follows connected roads only. Revisiting a place is always allowed, \
+         but it does not grant currency or repeatable rewards. Use {safe_prefix}atlas \
          at any time to reopen your map.",
         snapshot.current_location.name,
         snapshot.current_location.region,
@@ -459,7 +459,7 @@ mod tests {
         assert!(!unchanged.moved);
 
         let discoveries: Vec<(String, i64)> = sqlx::query_as(
-            "SELECT location_id, visit_count FROM player_atlas_discoveries \\
+            "SELECT location_id, visit_count FROM player_atlas_discoveries \
              WHERE discord_user_id = $1 ORDER BY location_id",
         )
         .bind(&player_id)
