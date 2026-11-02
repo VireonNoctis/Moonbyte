@@ -67,10 +67,18 @@ pub enum AtlasError {
 impl fmt::Display for AtlasError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Database(_) => formatter.write_str("The Atlas is temporarily unavailable. Please try again."),
-            Self::UnknownLocation => formatter.write_str("That location is not in the current Atlas catalogue."),
-            Self::NotReachable => formatter.write_str("That location is not connected to your current route."),
-            Self::UnknownStoredLocation => formatter.write_str("Your saved Atlas location is not recognised by this version of Moonbyte."),
+            Self::Database(_) => {
+                formatter.write_str("The Atlas is temporarily unavailable. Please try again.")
+            }
+            Self::UnknownLocation => {
+                formatter.write_str("That location is not in the current Atlas catalogue.")
+            }
+            Self::NotReachable => {
+                formatter.write_str("That location is not connected to your current route.")
+            }
+            Self::UnknownStoredLocation => formatter.write_str(
+                "Your saved Atlas location is not recognised by this version of Moonbyte.",
+            ),
         }
     }
 }
@@ -203,7 +211,8 @@ impl AtlasStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
-        let current_location = location_by_id(&current_id).ok_or(AtlasError::UnknownStoredLocation)?;
+        let current_location =
+            location_by_id(&current_id).ok_or(AtlasError::UnknownStoredLocation)?;
 
         let rows = sqlx::query_as::<_, (String, String, String, i64)>(
             "SELECT location_id, discovered_at::text, last_visited_at::text, visit_count \\
@@ -266,19 +275,25 @@ async fn ensure_starting_point(
 }
 
 fn normalise_reference(value: &str) -> String {
-    value.trim().to_ascii_lowercase().replace(' ', "-").replace('_', "-")
+    value
+        .trim()
+        .to_ascii_lowercase()
+        .replace(' ', "-")
+        .replace('_', "-")
 }
 
 pub fn find_location(value: &str) -> Option<AtlasLocation> {
     let reference = normalise_reference(value);
-    LOCATION_CATALOGUE
-        .iter()
-        .copied()
-        .find(|location| location.id == reference || normalise_reference(location.name) == reference)
+    LOCATION_CATALOGUE.iter().copied().find(|location| {
+        location.id == reference || normalise_reference(location.name) == reference
+    })
 }
 
 pub fn location_by_id(id: &str) -> Option<AtlasLocation> {
-    LOCATION_CATALOGUE.iter().copied().find(|location| location.id == id)
+    LOCATION_CATALOGUE
+        .iter()
+        .copied()
+        .find(|location| location.id == id)
 }
 
 pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
@@ -310,7 +325,11 @@ pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
             format!(
                 "• **{}** · {}\\n  {safe_prefix}travel {}",
                 location.name,
-                if charted { "charted route" } else { "new discovery" },
+                if charted {
+                    "charted route"
+                } else {
+                    "new discovery"
+                },
                 location.id
             )
         })
@@ -373,8 +392,14 @@ mod tests {
 
     #[test]
     fn location_lookup_accepts_stable_ids_and_display_names() {
-        assert_eq!(find_location("mosslight-grove").unwrap().id, "mosslight-grove");
-        assert_eq!(find_location("Mosslight Grove").unwrap().id, "mosslight-grove");
+        assert_eq!(
+            find_location("mosslight-grove").unwrap().id,
+            "mosslight-grove"
+        );
+        assert_eq!(
+            find_location("Mosslight Grove").unwrap().id,
+            "mosslight-grove"
+        );
         assert_eq!(find_location("missing-place"), None);
     }
 
@@ -412,16 +437,25 @@ mod tests {
             Err(super::AtlasError::NotReachable)
         ));
 
-        let first_trip = store.travel(&player_id, "Mosslight Grove").await.expect("travel");
+        let first_trip = store
+            .travel(&player_id, "Mosslight Grove")
+            .await
+            .expect("travel");
         assert!(first_trip.moved);
         assert_eq!(first_trip.to.id, "mosslight-grove");
         assert_eq!(first_trip.snapshot.discoveries.len(), 2);
 
-        let return_trip = store.travel(&player_id, "lantern-square").await.expect("return");
+        let return_trip = store
+            .travel(&player_id, "lantern-square")
+            .await
+            .expect("return");
         assert!(return_trip.moved);
         assert_eq!(return_trip.to.id, "lantern-square");
 
-        let unchanged = store.travel(&player_id, "Lantern Square").await.expect("already here");
+        let unchanged = store
+            .travel(&player_id, "Lantern Square")
+            .await
+            .expect("already here");
         assert!(!unchanged.moved);
 
         let discoveries: Vec<(String, i64)> = sqlx::query_as(
