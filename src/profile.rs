@@ -366,18 +366,27 @@ impl ProfileStore {
         player_id: &str,
     ) -> Result<PlayerDeletion, ProfileError> {
         let mut transaction = self.pool.begin().await?;
-        let results_removed: i64 = sqlx::query_scalar(
-            "SELECT count(*) FROM game_results \
-             WHERE player_ids @> jsonb_build_array($1::text)",
+        // Lock matching sessions first. A concurrent completion must finish
+        // its result/stat transaction before the privacy deletion can proceed.
+        let session_ids: Vec<String> = sqlx::query_scalar(
+            "SELECT session_id FROM game_sessions \
+             WHERE (session_state -> 'players') @> jsonb_build_array($1::text) \
+             FOR UPDATE",
         )
         .bind(player_id)
-        .fetch_one(&mut *transaction)
+        .fetch_all(&mut *transaction)
         .await?;
-        let sessions_removed = sqlx::query(
-            "DELETE FROM game_sessions \
-             WHERE (session_state -> 'players') @> jsonb_build_array($1::text)",
+        let results_removed = sqlx::query(
+            "DELETE FROM game_results WHERE session_id = ANY($1::text[])",
         )
-        .bind(player_id)
+        .bind(&session_ids)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let sessions_removed = sqlx::query(
+            "DELETE FROM game_sessions WHERE session_id = ANY($1::text[])",
+        )
+        .bind(&session_ids)
         .execute(&mut *transaction)
         .await?
         .rows_affected();
@@ -399,7 +408,7 @@ impl ProfileStore {
         transaction.commit().await?;
         Ok(PlayerDeletion {
             sessions_removed,
-            results_removed: results_removed as u64,
+            results_removed,
             stat_rows_removed,
             profile_removed,
         })
@@ -515,6 +524,8 @@ mod postgres_tests {
         let inventory = store.inventory(&player_id).await.expect("read inventory");
         assert!(inventory.profile_record);
         assert_eq!(inventory.game_session_records, 2);
+        assert_eq!(inventory.game_result_records, 1);
+        assert_eq!(inventory.game_stat_rows, 1);
 
         let export = store.export_json(&player_id).await.expect("export data");
         assert!(export.contains("Moonbyte Pilot"));
