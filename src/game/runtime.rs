@@ -407,13 +407,12 @@ mod tests {
         .await
         .expect("read stats after duplicate action");
         assert_eq!(after_retry, (1, 1, 0));
-        let wallet_after_retry: i64 = sqlx::query_scalar(
-            "SELECT balance FROM player_wallets WHERE discord_user_id = $1",
-        )
-        .bind(&player_id)
-        .fetch_one(&runtime.pool)
-        .await
-        .expect("read wallet after duplicate action");
+        let wallet_after_retry: i64 =
+            sqlx::query_scalar("SELECT balance FROM player_wallets WHERE discord_user_id = $1")
+                .bind(&player_id)
+                .fetch_one(&runtime.pool)
+                .await
+                .expect("read wallet after duplicate action");
         assert_eq!(wallet_after_retry, crate::wallet::FIRST_COMPLETION_REWARD);
     }
 
