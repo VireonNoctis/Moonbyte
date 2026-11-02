@@ -141,20 +141,28 @@ pub async fn profile(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn profile_edit(
     ctx: Context<'_>,
-    #[description = "Your new display name, up to 32 characters"] display_name: String,
-    #[description = "Your short profile bio, up to 160 characters; use - to clear it"]
-    bio: String,
+    #[description = "Display name | short bio; enter - after the separator to clear the bio"]
+    #[rest]
+    changes: String,
 ) -> Result<(), Error> {
+    let Some((display_name, bio)) = changes.split_once('|') else {
+        return send_private(
+            ctx,
+            "Use `.profile_edit Display Name | A short bio`. The display name is limited to 32 characters and the bio to 160.",
+        )
+        .await;
+    };
     let player_id = ctx.author().id.to_string();
     ctx.data()
         .profiles()
         .get_or_create(&player_id, &ctx.author().name)
         .await?;
-    let bio = if bio == "-" { "" } else { bio.as_str() };
+    let bio = bio.trim();
+    let bio = if bio == "-" { "" } else { bio };
     let profile = ctx
         .data()
         .profiles()
-        .update_identity(&player_id, &display_name, bio)
+        .update_identity(&player_id, display_name.trim(), bio)
         .await?;
     send_private(ctx, format!("Profile saved.\n\n{}", render_profile(&profile))).await
 }
@@ -461,11 +469,11 @@ mod tests {
             ".about / /about",
             ".ping / /ping",
             ".privacy / /privacy",
-            ".privacy-data / /privacy_data",
-            ".privacy-export / /privacy_export",
-            ".privacy-delete [DELETE] / /privacy_delete",
+            ".privacy_data / /privacy_data",
+            ".privacy_export / /privacy_export",
+            ".privacy_delete [DELETE] / /privacy_delete",
             ".profile / /profile",
-            ".profile-edit <name> <bio> / /profile_edit",
+            ".profile_edit <name> | <bio> / /profile_edit",
             ".settings <visibility> <show_stats> <quiet_mode> / /settings",
             ".games / /games",
             ".play <game> / /play",
