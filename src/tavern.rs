@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 5] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 6] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -56,6 +56,14 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 5] = [
         command: "achievements",
         emoji: EmojiKey::Crystal,
         fallback: "🏅",
+    },
+    TavernDestination {
+        id: "world-atlas",
+        title: "The Atlas",
+        description: "Inspect your current place, charted discoveries and directly connected routes.",
+        command: "atlas",
+        emoji: EmojiKey::Rocket,
+        fallback: "🧭",
     },
 ];
 
@@ -98,10 +106,10 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 5);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 6);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
-            ["games", "profile", "stats", "wallet", "achievements"]
+            ["games", "profile", "stats", "wallet", "achievements", "atlas"]
         );
 
         let home = render(".");
@@ -112,6 +120,8 @@ mod tests {
         assert!(home.contains("The Ledger"));
         assert!(home.contains(".achievements"));
         assert!(home.contains("The Gallery"));
+        assert!(home.contains(".atlas"));
+        assert!(home.contains("The Atlas"));
         assert!(home.contains("The Common Tables"));
         assert!(home.contains("The Chronicle"));
         assert!(home.contains("only as their systems become playable"));
