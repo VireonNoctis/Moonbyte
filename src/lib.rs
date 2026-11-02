@@ -3,8 +3,10 @@
 pub mod commands;
 pub mod config;
 pub mod database;
+pub mod emoji;
 pub mod game;
 pub mod profile;
+pub mod tavern;
 
 use std::time::{Duration, Instant};
 
