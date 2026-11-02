@@ -337,7 +337,7 @@ impl ProfileStore {
             achievement_rows,
             wallet_record,
             wallet_ledger_records,
-            session_retention: "Sessions and their result records expire 24 hours after the last successful action; wallet milestones remain until account deletion.",
+            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics and wallet milestones remain until account deletion.",
         })
     }
 
@@ -469,7 +469,7 @@ impl ProfileStore {
             .collect();
 
         let export = PlayerExport {
-            format_version: 3,
+            format_version: 4,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -704,7 +704,10 @@ mod postgres_tests {
         assert!(export.contains(&session.id));
         assert!(export.contains("completed game results"));
         assert!(export.contains("per-game statistics"));
+        assert!(export.contains("format_version"));
+        assert!(export.contains("\"format_version\": 4"));
         assert!(export.contains("unlocked achievements"));
+        assert!(export.contains("first_clear"));
         assert!(export.contains("First Steps"));
         assert!(export.contains("Bright Start"));
         assert!(export.contains("Moonbits wallet balance"));
