@@ -25,7 +25,7 @@ Profile visibility is stored now, but a public profile directory, social graph a
 | Command | Behavior |
 | --- | --- |
 | `.profile` | Create the default profile if needed and show it privately. |
-| `.profile_edit Name Here | Short bio` | Update display name and bio. Use `-` after the separator to clear the bio. |
+| `.profile_edit Name Here \| Short bio` | Update display name and bio. Use `-` after the separator to clear the bio. |
 | `.settings private false true` | Example: save visibility, statistics preference and quiet mode. Accepted visibility values are `private` and `public`. |
 | `.privacy_data` | Privately inspect the profile and session record counts. |
 | `.privacy_export` | Receive a JSON attachment containing the profile and stored session metadata. |
