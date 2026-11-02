@@ -349,8 +349,9 @@ mod postgres_tests {
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system clock after epoch")
-            .as_nanos();
-        let player_id = format!("profile-test-{}-{nonce}", std::process::id());
+            .as_nanos()
+            % 1_000_000_000_000_000_000;
+        let player_id = format!("profile-test-{nonce}");
 
         let profile = store
             .get_or_create(&player_id, "Moon Explorer")
