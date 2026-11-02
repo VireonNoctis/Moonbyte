@@ -1,6 +1,7 @@
 //! Moonbyte application foundation, game domain and Discord command modules.
 
 pub mod achievement;
+pub mod atlas;
 pub mod commands;
 pub mod config;
 pub mod database;
@@ -23,6 +24,7 @@ pub struct Data {
     profiles: profile::ProfileStore,
     wallets: wallet::WalletStore,
     achievements: achievement::AchievementStore,
+    atlas: atlas::AtlasStore,
 }
 
 impl Data {
@@ -32,6 +34,7 @@ impl Data {
         profiles: profile::ProfileStore,
         wallets: wallet::WalletStore,
         achievements: achievement::AchievementStore,
+        atlas: atlas::AtlasStore,
     ) -> Self {
         Self {
             prefix,
@@ -40,6 +43,7 @@ impl Data {
             profiles,
             wallets,
             achievements,
+            atlas,
         }
     }
 
@@ -65,5 +69,9 @@ impl Data {
 
     pub fn achievements(&self) -> &achievement::AchievementStore {
         &self.achievements
+    }
+
+    pub fn atlas(&self) -> &atlas::AtlasStore {
+        &self.atlas
     }
 }
