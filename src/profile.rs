@@ -433,11 +433,11 @@ impl ProfileStore {
             .collect();
         let game_statistics = self.game_stats(player_id).await?;
         let achievements = sqlx::query_as::<_, (String, String, String, String, String, String)>(
-            "SELECT d.achievement_id, d.title, d.description, d.category, \\
-             p.source_session_id, p.unlocked_at::text \\
-             FROM player_achievements p \\
-             JOIN achievement_definitions d USING (achievement_id) \\
-             WHERE p.discord_user_id = $1 \\
+            "SELECT d.achievement_id, d.title, d.description, d.category, \
+             p.source_session_id, p.unlocked_at::text \
+             FROM player_achievements p \
+             JOIN achievement_definitions d USING (achievement_id) \
+             WHERE p.discord_user_id = $1 \
              ORDER BY p.unlocked_at ASC, d.achievement_id ASC",
         )
         .bind(player_id)
