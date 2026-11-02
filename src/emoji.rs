@@ -97,12 +97,18 @@ pub fn mention(key: EmojiKey) -> Option<String> {
 
 /// Return the uploaded custom emoji when configured, otherwise a Unicode fallback.
 pub fn render(key: EmojiKey, fallback: &str) -> String {
-    mention(key).unwrap_or_else(|| fallback.to_owned())
+    let emoji = slot(key);
+    render_with_id(emoji.name, emoji.id, fallback)
+}
+
+/// Render one slot independently, which also makes fallback behavior testable.
+pub fn render_with_id(name: &str, id: Option<&str>, fallback: &str) -> String {
+    custom_mention(name, id).unwrap_or_else(|| fallback.to_owned())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{EMOJI_SLOTS, EmojiKey, custom_mention, mention, render};
+    use super::{EMOJI_SLOTS, EmojiKey, custom_mention, render, render_with_id};
 
     #[test]
     fn every_uploaded_name_has_a_paste_in_slot() {
@@ -117,7 +123,15 @@ mod tests {
                 "moonbyte_chat"
             ]
         );
-        assert!(EMOJI_SLOTS.iter().all(|slot| slot.id.is_none()));
+        for slot in EMOJI_SLOTS {
+            if let Some(id) = slot.id {
+                assert!(
+                    custom_mention(slot.name, Some(id)).is_some(),
+                    "invalid configured emoji ID for {}",
+                    slot.name
+                );
+            }
+        }
     }
 
     #[test]
@@ -133,7 +147,13 @@ mod tests {
         assert_eq!(custom_mention("moonbyte", None), None);
         assert_eq!(custom_mention("moonbyte", Some("not-an-id")), None);
         assert_eq!(custom_mention("moonbyte;spoof", Some("123")), None);
-        assert_eq!(mention(EmojiKey::Moonbyte), None);
-        assert_eq!(render(EmojiKey::Crystal, "💎"), "💎");
+        assert_eq!(render_with_id("moonbyte", None, "🌙"), "🌙");
+        assert_eq!(
+            render_with_id("moonbyte", Some("not-an-id"), "🌙"),
+            "🌙"
+        );
+        // A configured ID may produce a custom mention after upload.
+        let crystal = render(EmojiKey::Crystal, "💎");
+        assert!(crystal == "💎" || crystal.starts_with("<:moonbyte_crystal:"));
     }
 }
