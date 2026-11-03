@@ -2,8 +2,8 @@
 
 pub mod achievement;
 pub mod atlas;
-pub mod commands;
 pub mod chronicle;
+pub mod commands;
 pub mod config;
 pub mod consent;
 pub mod database;

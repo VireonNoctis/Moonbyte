@@ -192,11 +192,7 @@ mod tests {
                 .iter()
                 .filter(|fragment| fragment.location_id == location.id)
                 .count();
-            assert_eq!(
-                matches, 1,
-                "missing or duplicated page for {}",
-                location.id
-            );
+            assert_eq!(matches, 1, "missing or duplicated page for {}", location.id);
         }
     }
 
