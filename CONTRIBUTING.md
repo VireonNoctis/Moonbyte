@@ -27,6 +27,7 @@ Moonbyte is a separate Rust Discord bot. Lunar is a source of audited game conce
 ## Quality expectations
 
 - Rust code is formatted with rustfmt and passes Clippy without unexplained warnings.
+- External GitHub Actions use full commit SHAs; Docker-based actions use full SHA-256 image digests.
 - Game logic is deterministic under injected test clocks and random sources.
 - Multiplayer actions validate membership, permissions, and turn ownership.
 - Persistence changes include PostgreSQL migrations, transaction tests, and restart-recovery tests.
