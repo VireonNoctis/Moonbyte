@@ -10,6 +10,9 @@ use poise::serenity_prelude::{ChannelId, CreateAttachment, CreateMessage};
 
 use crate::guild_settings::{GuildCommandSettings, validate_prefix};
 
+const TERMS_DOCUMENT: &str = include_str!("../docs/TERMS_OF_SERVICE.md");
+const PRIVACY_DOCUMENT: &str = include_str!("../docs/PRIVACY.md");
+
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[poise::command(prefix_command, slash_command)]
