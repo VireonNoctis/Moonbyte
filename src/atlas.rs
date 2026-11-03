@@ -486,6 +486,15 @@ mod tests {
             .expect("already here");
         assert!(!unchanged.moved);
 
+        let pages_after_revisiting: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_archive_fragments WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&pool)
+        .await
+        .expect("read Chronicle pages after revisiting known locations");
+        assert_eq!(pages_after_revisiting, 2);
+
         let discoveries: Vec<(String, i64)> = sqlx::query_as(
             "SELECT location_id, visit_count FROM player_atlas_discoveries \
              WHERE discord_user_id = $1 ORDER BY location_id",
