@@ -1,6 +1,6 @@
 # Moonbyte World Loom — complete hierarchy and cross-domain map
 
-> 400 proposals · 40 connected domains · two expansion layers. The machine-readable graph is `world_graph.json`.
+> 400 ideas · 40 connected domains · 7 integration contracts · two expansion layers. The machine-readable graph is `world_graph.json`.
 
 ```mermaid
 mindmap
@@ -698,3 +698,38 @@ flowchart LR
 - Domain edges describe product-level dependencies; idea edges identify concrete connected proposals.
 - An edge is a design contract, not permission to access another system's private records.
 - Read `world_graph.json` for canonical identifiers, rationales, shared invariants and machine-readable structure.
+
+## Wayfarer Thread — cross-system integration layer
+
+The seven contracts coordinate the existing domains without changing the 400-idea catalogue count.
+
+```mermaid
+flowchart TD
+    W[Wayfarer Thread]
+    C[Continuity Moments]
+    P[Unified Player Card]
+    R[Rival and Nemesis]
+    J[Non-punitive Journey]
+    S[Seasonal Almanac]
+    M[Mastery Access]
+    W -->|typed committed events| C
+    W -->|authorised read models| P
+    W -->|unique player-day| J
+    W -->|verified milestones| M
+    W -->|permanent set records| S
+    C -->|first discovery| A[Atlas and Chronicle]
+    C -->|checkpoint| E[Expeditions and Quests]
+    C -->|craft output| I[Inventory and Bazaar]
+    C -->|guild milestone| G[Guildhall and Guild Chronicle]
+    M -->|optional tiers| V[Realms and Vaults]
+    J -->|cosmetic milestone| H[Companion]
+    S -->|published reprise| F[Festival Archive]
+    R -->|mutual opt-in| X[Fair Multiplayer Sessions]
+    T[Trust, Privacy and Accessibility] -. constrains .-> W
+    T -. constrains .-> C
+    T -. constrains .-> P
+    T -. constrains .-> R
+    T -. constrains .-> J
+    T -. constrains .-> S
+    T -. constrains .-> M
+```

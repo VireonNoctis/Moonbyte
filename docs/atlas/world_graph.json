@@ -3,11 +3,11 @@
   "title": "Moonbyte World Loom",
   "status": "design proposal; no feature represented here is implemented merely by being documented",
   "root_id": "moonbyte_world_loom",
-  "line_count_in_volumes": 48295,
+  "line_count_in_volumes": 48610,
   "idea_count": 400,
   "domain_count": 40,
-  "node_count": 441,
-  "edge_count": 2640,
+  "node_count": 448,
+  "edge_count": 2745,
   "graph_semantics": {
     "contains_domain": "The root product contains a domain.",
     "contains_idea": "A domain owns a proposed feature.",
@@ -17,17 +17,27 @@
     "records": "A system stores a durable, privacy-scoped result.",
     "unlocks": "A verified condition grants a published capability.",
     "coordinates": "A system synchronises participants or activities.",
-    "secured_by": "A sensitive transition uses a fairness or transaction contract."
+    "secured_by": "A sensitive transition uses a fairness or transaction contract.",
+    "contains_contract": "The product root contains a cross-cutting integration contract that coordinates multiple domains without owning their private state.",
+    "emits": "An owning domain publishes a typed event only after its source transaction commits.",
+    "consumes": "A connected domain consumes a stable event reference through its own idempotent application service.",
+    "projects_into": "An owning domain exposes an authorised read-only projection for a player-facing surface.",
+    "hands_off_to": "A continuity surface offers an explicit next action without silently executing it."
   },
   "shared_invariants": [
     "Rust owns authoritative game rules, state transitions, permissions, economy and persistence.",
     "Next.js, React and TypeScript provide presentation only; Discord Activities use the official Embedded App SDK.",
-    "SQLite is the initial persistence target; do not add distributed infrastructure without measured need and an accepted decision.",
+    "PostgreSQL through SQLx is the only accepted persistence target; SQLite and ScyllaDB are excluded. Do not add distributed infrastructure without measured need and an accepted decision.",
     "Moonbits are earned-only, non-redeemable and never staked; all trade prices and rewards are disclosed.",
     "No gambling, wagering, paid random rolls, paid loot boxes, cash-out or chance-based tradable rewards.",
     "Healthy replayability comes from content, mastery, choice and cooperation; no punitive streaks, fake scarcity or pressure loops.",
     "All public content is original or rights-cleared, moderated and age-appropriate.",
-    "Every node must support privacy inventory, data export/deletion coverage, accessible fallback and failure recovery."
+    "Every node must support privacy inventory, data export/deletion coverage, accessible fallback and failure recovery.",
+    "The Wayfarer Thread is a typed, post-commit application-event contract, not a standalone broker or separate service.",
+    "Continuity Moments are one-time, dismissible hand-offs; they never silently execute another domain's action.",
+    "Journey days are unique per player and calendar date, count upward and are never reset for absence.",
+    "Mastery may unlock optional challenge tiers but never blocks the base catalogue or main story.",
+    "Formal Rivalries require mutual consent; match rules remain identical to ordinary sessions."
   ],
   "domains": [
     {
@@ -5357,6 +5367,48 @@
       "purpose": "Checks review headings, sentence complexity, contrast, alt text and spoiler warnings.",
       "player_loop": "Run review, revise flags and record approval.",
       "output": "A readability report."
+    },
+    {
+      "id": "wayfarer_thread",
+      "type": "integration_contract",
+      "title": "The Wayfarer Thread",
+      "summary": "Shared player journey and typed domain-event vocabulary; coordinates progress without owning other domains' tables."
+    },
+    {
+      "id": "continuity_moments",
+      "type": "integration_contract",
+      "title": "Continuity Moments",
+      "summary": "Contextual, dismissible one-time hand-offs after committed events, with one optional next action."
+    },
+    {
+      "id": "unified_player_card",
+      "type": "integration_contract",
+      "title": "Unified Player Card",
+      "summary": "Private-first profile projection that composes authorised mastery, journey, companion, Archive, rivalry and guild summaries."
+    },
+    {
+      "id": "rival_nemesis",
+      "type": "integration_contract",
+      "title": "Rival and Nemesis",
+      "summary": "Mutual-consent competition with fair ordinary matches, private head-to-head records and cosmetic recognition."
+    },
+    {
+      "id": "non_punitive_journey",
+      "type": "integration_contract",
+      "title": "Non-punitive Journey",
+      "summary": "Cumulative unique activity days and permanent milestones that never decay or reset."
+    },
+    {
+      "id": "seasonal_almanac",
+      "type": "integration_contract",
+      "title": "Seasonal Almanac",
+      "summary": "Published seasonal schedule, permanent earned-set catalogue and predictable reprise windows."
+    },
+    {
+      "id": "mastery_access",
+      "type": "integration_contract",
+      "title": "Mastery Access",
+      "summary": "Clear, reproducible mastery thresholds unlock optional challenge difficulty and Realm variants."
     }
   ],
   "edges": [
@@ -21199,6 +21251,636 @@
       "to": "creator",
       "relation": "validated_by",
       "rationale": "checks community content readability."
+    },
+    {
+      "from": "moonbyte_world_loom",
+      "to": "wayfarer_thread",
+      "relation": "contains_contract",
+      "rationale": "The Wayfarer Thread is a shared cross-domain contract defined by the final product vision."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "arcade",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates arcade through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "arcade",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "arcade contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "atlas",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates atlas through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "atlas",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "atlas contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "expedition",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates expedition through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "expedition",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "expedition contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "quest",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates quest through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "quest",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "quest contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "mastery",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates mastery through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "mastery",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "mastery contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "character",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates character through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "character",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "character contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "festival",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates festival through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "festival",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "festival contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "guild",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates guild through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "guild",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "guild contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "wayfarer_thread",
+      "to": "trust",
+      "relation": "coordinates",
+      "rationale": "The Wayfarer Thread coordinates trust through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "trust",
+      "to": "wayfarer_thread",
+      "relation": "feeds",
+      "rationale": "trust contributes only its verified, authorised outputs to The Wayfarer Thread."
+    },
+    {
+      "from": "moonbyte_world_loom",
+      "to": "continuity_moments",
+      "relation": "contains_contract",
+      "rationale": "Continuity Moments is a shared cross-domain contract defined by the final product vision."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "atlas",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates atlas through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "atlas",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "atlas contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "expedition",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates expedition through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "expedition",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "expedition contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "craft",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates craft through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "craft",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "craft contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "bazaar",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates bazaar through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "bazaar",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "bazaar contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "mastery",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates mastery through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "mastery",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "mastery contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "character",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates character through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "character",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "character contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "guild",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates guild through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "guild",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "guild contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "continuity_moments",
+      "to": "fellowship",
+      "relation": "coordinates",
+      "rationale": "Continuity Moments coordinates fellowship through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "fellowship",
+      "to": "continuity_moments",
+      "relation": "feeds",
+      "rationale": "fellowship contributes only its verified, authorised outputs to Continuity Moments."
+    },
+    {
+      "from": "moonbyte_world_loom",
+      "to": "unified_player_card",
+      "relation": "contains_contract",
+      "rationale": "Unified Player Card is a shared cross-domain contract defined by the final product vision."
+    },
+    {
+      "from": "unified_player_card",
+      "to": "mastery",
+      "relation": "coordinates",
+      "rationale": "Unified Player Card coordinates mastery through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "mastery",
+      "to": "unified_player_card",
+      "relation": "feeds",
+      "rationale": "mastery contributes only its verified, authorised outputs to Unified Player Card."
+    },
+    {
+      "from": "unified_player_card",
+      "to": "character",
+      "relation": "coordinates",
+      "rationale": "Unified Player Card coordinates character through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "character",
+      "to": "unified_player_card",
+      "relation": "feeds",
+      "rationale": "character contributes only its verified, authorised outputs to Unified Player Card."
+    },
+    {
+      "from": "unified_player_card",
+      "to": "archive",
+      "relation": "coordinates",
+      "rationale": "Unified Player Card coordinates archive through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "archive",
+      "to": "unified_player_card",
+      "relation": "feeds",
+      "rationale": "archive contributes only its verified, authorised outputs to Unified Player Card."
+    },
+    {
+      "from": "unified_player_card",
+      "to": "guild",
+      "relation": "coordinates",
+      "rationale": "Unified Player Card coordinates guild through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "guild",
+      "to": "unified_player_card",
+      "relation": "feeds",
+      "rationale": "guild contributes only its verified, authorised outputs to Unified Player Card."
+    },
+    {
+      "from": "unified_player_card",
+      "to": "festival",
+      "relation": "coordinates",
+      "rationale": "Unified Player Card coordinates festival through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "festival",
+      "to": "unified_player_card",
+      "relation": "feeds",
+      "rationale": "festival contributes only its verified, authorised outputs to Unified Player Card."
+    },
+    {
+      "from": "unified_player_card",
+      "to": "trust",
+      "relation": "coordinates",
+      "rationale": "Unified Player Card coordinates trust through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "trust",
+      "to": "unified_player_card",
+      "relation": "feeds",
+      "rationale": "trust contributes only its verified, authorised outputs to Unified Player Card."
+    },
+    {
+      "from": "unified_player_card",
+      "to": "fellowship",
+      "relation": "coordinates",
+      "rationale": "Unified Player Card coordinates fellowship through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "fellowship",
+      "to": "unified_player_card",
+      "relation": "feeds",
+      "rationale": "fellowship contributes only its verified, authorised outputs to Unified Player Card."
+    },
+    {
+      "from": "moonbyte_world_loom",
+      "to": "rival_nemesis",
+      "relation": "contains_contract",
+      "rationale": "Rival and Nemesis is a shared cross-domain contract defined by the final product vision."
+    },
+    {
+      "from": "rival_nemesis",
+      "to": "multiplayer",
+      "relation": "coordinates",
+      "rationale": "Rival and Nemesis coordinates multiplayer through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "multiplayer",
+      "to": "rival_nemesis",
+      "relation": "feeds",
+      "rationale": "multiplayer contributes only its verified, authorised outputs to Rival and Nemesis."
+    },
+    {
+      "from": "rival_nemesis",
+      "to": "fairness",
+      "relation": "coordinates",
+      "rationale": "Rival and Nemesis coordinates fairness through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "fairness",
+      "to": "rival_nemesis",
+      "relation": "feeds",
+      "rationale": "fairness contributes only its verified, authorised outputs to Rival and Nemesis."
+    },
+    {
+      "from": "rival_nemesis",
+      "to": "fellowship",
+      "relation": "coordinates",
+      "rationale": "Rival and Nemesis coordinates fellowship through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "fellowship",
+      "to": "rival_nemesis",
+      "relation": "feeds",
+      "rationale": "fellowship contributes only its verified, authorised outputs to Rival and Nemesis."
+    },
+    {
+      "from": "rival_nemesis",
+      "to": "archive",
+      "relation": "coordinates",
+      "rationale": "Rival and Nemesis coordinates archive through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "archive",
+      "to": "rival_nemesis",
+      "relation": "feeds",
+      "rationale": "archive contributes only its verified, authorised outputs to Rival and Nemesis."
+    },
+    {
+      "from": "rival_nemesis",
+      "to": "hearth",
+      "relation": "coordinates",
+      "rationale": "Rival and Nemesis coordinates hearth through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "hearth",
+      "to": "rival_nemesis",
+      "relation": "feeds",
+      "rationale": "hearth contributes only its verified, authorised outputs to Rival and Nemesis."
+    },
+    {
+      "from": "rival_nemesis",
+      "to": "character",
+      "relation": "coordinates",
+      "rationale": "Rival and Nemesis coordinates character through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "character",
+      "to": "rival_nemesis",
+      "relation": "feeds",
+      "rationale": "character contributes only its verified, authorised outputs to Rival and Nemesis."
+    },
+    {
+      "from": "moonbyte_world_loom",
+      "to": "non_punitive_journey",
+      "relation": "contains_contract",
+      "rationale": "Non-punitive Journey is a shared cross-domain contract defined by the final product vision."
+    },
+    {
+      "from": "non_punitive_journey",
+      "to": "mastery",
+      "relation": "coordinates",
+      "rationale": "Non-punitive Journey coordinates mastery through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "mastery",
+      "to": "non_punitive_journey",
+      "relation": "feeds",
+      "rationale": "mastery contributes only its verified, authorised outputs to Non-punitive Journey."
+    },
+    {
+      "from": "non_punitive_journey",
+      "to": "character",
+      "relation": "coordinates",
+      "rationale": "Non-punitive Journey coordinates character through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "character",
+      "to": "non_punitive_journey",
+      "relation": "feeds",
+      "rationale": "character contributes only its verified, authorised outputs to Non-punitive Journey."
+    },
+    {
+      "from": "non_punitive_journey",
+      "to": "quest",
+      "relation": "coordinates",
+      "rationale": "Non-punitive Journey coordinates quest through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "quest",
+      "to": "non_punitive_journey",
+      "relation": "feeds",
+      "rationale": "quest contributes only its verified, authorised outputs to Non-punitive Journey."
+    },
+    {
+      "from": "non_punitive_journey",
+      "to": "festival",
+      "relation": "coordinates",
+      "rationale": "Non-punitive Journey coordinates festival through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "festival",
+      "to": "non_punitive_journey",
+      "relation": "feeds",
+      "rationale": "festival contributes only its verified, authorised outputs to Non-punitive Journey."
+    },
+    {
+      "from": "non_punitive_journey",
+      "to": "trust",
+      "relation": "coordinates",
+      "rationale": "Non-punitive Journey coordinates trust through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "trust",
+      "to": "non_punitive_journey",
+      "relation": "feeds",
+      "rationale": "trust contributes only its verified, authorised outputs to Non-punitive Journey."
+    },
+    {
+      "from": "non_punitive_journey",
+      "to": "arcade",
+      "relation": "coordinates",
+      "rationale": "Non-punitive Journey coordinates arcade through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "arcade",
+      "to": "non_punitive_journey",
+      "relation": "feeds",
+      "rationale": "arcade contributes only its verified, authorised outputs to Non-punitive Journey."
+    },
+    {
+      "from": "non_punitive_journey",
+      "to": "expedition",
+      "relation": "coordinates",
+      "rationale": "Non-punitive Journey coordinates expedition through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "expedition",
+      "to": "non_punitive_journey",
+      "relation": "feeds",
+      "rationale": "expedition contributes only its verified, authorised outputs to Non-punitive Journey."
+    },
+    {
+      "from": "moonbyte_world_loom",
+      "to": "seasonal_almanac",
+      "relation": "contains_contract",
+      "rationale": "Seasonal Almanac is a shared cross-domain contract defined by the final product vision."
+    },
+    {
+      "from": "seasonal_almanac",
+      "to": "festival",
+      "relation": "coordinates",
+      "rationale": "Seasonal Almanac coordinates festival through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "festival",
+      "to": "seasonal_almanac",
+      "relation": "feeds",
+      "rationale": "festival contributes only its verified, authorised outputs to Seasonal Almanac."
+    },
+    {
+      "from": "seasonal_almanac",
+      "to": "bazaar",
+      "relation": "coordinates",
+      "rationale": "Seasonal Almanac coordinates bazaar through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "bazaar",
+      "to": "seasonal_almanac",
+      "relation": "feeds",
+      "rationale": "bazaar contributes only its verified, authorised outputs to Seasonal Almanac."
+    },
+    {
+      "from": "seasonal_almanac",
+      "to": "craft",
+      "relation": "coordinates",
+      "rationale": "Seasonal Almanac coordinates craft through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "craft",
+      "to": "seasonal_almanac",
+      "relation": "feeds",
+      "rationale": "craft contributes only its verified, authorised outputs to Seasonal Almanac."
+    },
+    {
+      "from": "seasonal_almanac",
+      "to": "guild",
+      "relation": "coordinates",
+      "rationale": "Seasonal Almanac coordinates guild through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "guild",
+      "to": "seasonal_almanac",
+      "relation": "feeds",
+      "rationale": "guild contributes only its verified, authorised outputs to Seasonal Almanac."
+    },
+    {
+      "from": "seasonal_almanac",
+      "to": "archive",
+      "relation": "coordinates",
+      "rationale": "Seasonal Almanac coordinates archive through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "archive",
+      "to": "seasonal_almanac",
+      "relation": "feeds",
+      "rationale": "archive contributes only its verified, authorised outputs to Seasonal Almanac."
+    },
+    {
+      "from": "seasonal_almanac",
+      "to": "trust",
+      "relation": "coordinates",
+      "rationale": "Seasonal Almanac coordinates trust through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "trust",
+      "to": "seasonal_almanac",
+      "relation": "feeds",
+      "rationale": "trust contributes only its verified, authorised outputs to Seasonal Almanac."
+    },
+    {
+      "from": "moonbyte_world_loom",
+      "to": "mastery_access",
+      "relation": "contains_contract",
+      "rationale": "Mastery Access is a shared cross-domain contract defined by the final product vision."
+    },
+    {
+      "from": "mastery_access",
+      "to": "mastery",
+      "relation": "coordinates",
+      "rationale": "Mastery Access coordinates mastery through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "mastery",
+      "to": "mastery_access",
+      "relation": "feeds",
+      "rationale": "mastery contributes only its verified, authorised outputs to Mastery Access."
+    },
+    {
+      "from": "mastery_access",
+      "to": "arcade",
+      "relation": "coordinates",
+      "rationale": "Mastery Access coordinates arcade through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "arcade",
+      "to": "mastery_access",
+      "relation": "feeds",
+      "rationale": "arcade contributes only its verified, authorised outputs to Mastery Access."
+    },
+    {
+      "from": "mastery_access",
+      "to": "atlas",
+      "relation": "coordinates",
+      "rationale": "Mastery Access coordinates atlas through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "atlas",
+      "to": "mastery_access",
+      "relation": "feeds",
+      "rationale": "atlas contributes only its verified, authorised outputs to Mastery Access."
+    },
+    {
+      "from": "mastery_access",
+      "to": "expedition",
+      "relation": "coordinates",
+      "rationale": "Mastery Access coordinates expedition through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "expedition",
+      "to": "mastery_access",
+      "relation": "feeds",
+      "rationale": "expedition contributes only its verified, authorised outputs to Mastery Access."
+    },
+    {
+      "from": "mastery_access",
+      "to": "vault",
+      "relation": "coordinates",
+      "rationale": "Mastery Access coordinates vault through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "vault",
+      "to": "mastery_access",
+      "relation": "feeds",
+      "rationale": "vault contributes only its verified, authorised outputs to Mastery Access."
+    },
+    {
+      "from": "mastery_access",
+      "to": "fairness",
+      "relation": "coordinates",
+      "rationale": "Mastery Access coordinates fairness through explicit ownership, stable references and scoped events."
+    },
+    {
+      "from": "fairness",
+      "to": "mastery_access",
+      "relation": "feeds",
+      "rationale": "fairness contributes only its verified, authorised outputs to Mastery Access."
     }
   ],
   "expansion_2": {
@@ -21228,5 +21910,181 @@
       "accessibility_plus"
     ],
     "line_count": 25145
-  }
+  },
+  "integration_contracts": [
+    {
+      "id": "wayfarer_thread",
+      "title": "The Wayfarer Thread",
+      "summary": "Shared player journey and typed domain-event vocabulary; coordinates progress without owning other domains' tables.",
+      "domains": [
+        "arcade",
+        "atlas",
+        "expedition",
+        "quest",
+        "mastery",
+        "character",
+        "festival",
+        "guild",
+        "trust"
+      ],
+      "inputs": [
+        "game.session.completed",
+        "atlas.location.discovered",
+        "expedition.completed",
+        "quest.completed"
+      ],
+      "outputs": [
+        "unique daily activity",
+        "stable source references",
+        "authorised progress projections"
+      ],
+      "privacy": "Player-scoped by default; guild scope is explicit; event payloads contain stable IDs only."
+    },
+    {
+      "id": "continuity_moments",
+      "title": "Continuity Moments",
+      "summary": "Contextual, dismissible one-time hand-offs after committed events, with one optional next action.",
+      "domains": [
+        "atlas",
+        "expedition",
+        "craft",
+        "bazaar",
+        "mastery",
+        "character",
+        "guild",
+        "fellowship"
+      ],
+      "inputs": [
+        "committed domain events",
+        "current permissions",
+        "notification preferences"
+      ],
+      "outputs": [
+        "small factual summary",
+        "optional deep link or command"
+      ],
+      "privacy": "Never sends an unsolicited DM or publishes personal state; respects quiet mode and opt-outs."
+    },
+    {
+      "id": "unified_player_card",
+      "title": "Unified Player Card",
+      "summary": "Private-first profile projection that composes authorised mastery, journey, companion, Archive, rivalry and guild summaries.",
+      "domains": [
+        "mastery",
+        "character",
+        "archive",
+        "guild",
+        "festival",
+        "trust",
+        "fellowship"
+      ],
+      "inputs": [
+        "owner-domain read models",
+        "profile visibility",
+        "feature-specific sharing choices"
+      ],
+      "outputs": [
+        "personal Player Card",
+        "separately authorised public/guild projections"
+      ],
+      "privacy": "No direct table reads across domains; hidden sections remain private rather than falling back to raw data."
+    },
+    {
+      "id": "rival_nemesis",
+      "title": "Rival and Nemesis",
+      "summary": "Mutual-consent competition with fair ordinary matches, private head-to-head records and cosmetic recognition.",
+      "domains": [
+        "multiplayer",
+        "fairness",
+        "fellowship",
+        "archive",
+        "hearth",
+        "character"
+      ],
+      "inputs": [
+        "completed match results",
+        "both participants' consent",
+        "block and visibility settings"
+      ],
+      "outputs": [
+        "private rivalry log",
+        "optional cosmetic trophy",
+        "explicit rematch request"
+      ],
+      "privacy": "Suggestion eligibility is quiet; formal rivalry and public display require consent from both participants."
+    },
+    {
+      "id": "non_punitive_journey",
+      "title": "Non-punitive Journey",
+      "summary": "Cumulative unique activity days and permanent milestones that never decay or reset.",
+      "domains": [
+        "mastery",
+        "character",
+        "quest",
+        "festival",
+        "trust",
+        "arcade",
+        "expedition"
+      ],
+      "inputs": [
+        "meaningful completed activity",
+        "unique player/day key"
+      ],
+      "outputs": [
+        "journey-day record",
+        "permanent milestone event",
+        "cosmetic companion stage"
+      ],
+      "privacy": "No attendance penalty; no raw command telemetry; one record per player/date."
+    },
+    {
+      "id": "seasonal_almanac",
+      "title": "Seasonal Almanac",
+      "summary": "Published seasonal schedule, permanent earned-set catalogue and predictable reprise windows.",
+      "domains": [
+        "festival",
+        "bazaar",
+        "craft",
+        "guild",
+        "archive",
+        "trust"
+      ],
+      "inputs": [
+        "versioned event definitions",
+        "fixed challenge outcomes",
+        "published schedule"
+      ],
+      "outputs": [
+        "permanent set record",
+        "Almanac entry",
+        "optional community decoration"
+      ],
+      "privacy": "No fake scarcity or expiry loss; event visibility and notices follow user/guild settings."
+    },
+    {
+      "id": "mastery_access",
+      "title": "Mastery Access",
+      "summary": "Clear, reproducible mastery thresholds unlock optional challenge difficulty and Realm variants.",
+      "domains": [
+        "mastery",
+        "arcade",
+        "atlas",
+        "expedition",
+        "vault",
+        "fairness"
+      ],
+      "inputs": [
+        "verified game results",
+        "personal bests",
+        "published rule versions"
+      ],
+      "outputs": [
+        "rank change",
+        "optional tier eligibility",
+        "Player Card projection"
+      ],
+      "privacy": "Private by default; equal-condition comparisons; never gates base games or the main story."
+    }
+  ],
+  "contract_count": 7
 }

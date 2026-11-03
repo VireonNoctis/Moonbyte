@@ -6,6 +6,38 @@
 
 Each proposal defines its mechanic, player loop, cross-domain connections, Rust ownership, persistence, privacy, Discord and Activity behaviour, accessibility, testing and release gates.
 
+
+## Wayfarer Thread integration contract — volume 10
+
+This volume is part of the authoritative [Moonbyte Final Vision](../MOONBYTE_FINAL_VISION.md). Its proposals exchange verified outcomes through the [World Loom Integration Contract](./INTEGRATION_CONTRACTS.md), never by reaching into another domain's private tables. The hand-offs below make the existing domain graph actionable without changing stable proposal IDs.
+
+### Domain hand-offs
+
+| Owning domain | Declared connections |
+|---|---|
+| **Privacy-Preserving Product Insights** (`insights`) | Insights are constrained by Trust, summarise only approved guild aggregates, measure fairness and render through authorised Platform views. |
+| **Localization, Language and Culturalisation** (`localisation`) | Localisation uses accessibility policy, reviews Creator content, preserves Quest branch meaning and keeps Arcade rules unambiguous. |
+| **New Player Onboarding and Return Journeys** (`onboarding`) | Onboarding begins at Hearth, demonstrates Arcade, continues into Mastery and explains Trust/privacy controls. |
+| **Advanced Accessibility and Interaction Design** (`accessibility_plus`) | Accessibility extends Trust, applies to Arcade modes, is implemented across Platform surfaces and validates Creator content readability. |
+
+### Concrete cross-system moments
+
+- Operational event taxonomy → privacy review → aggregate/cohort threshold → reliability report; no raw message analytics.
+- Source string → context/glossary → semantic review → locale-specific validated puzzle/story output.
+- Optional arrival → first game → Atlas/Chronicle route → skip or leave at every step.
+- Accessible control profile → keyboard/screen-reader/reduced-motion/text fallback → equivalent legal action.
+
+### Shared release rules
+
+- Emit typed domain events only after the source PostgreSQL transaction commits.
+- Consumers validate permissions and use stable idempotency keys; retries never duplicate an outcome.
+- Player, party, guild and server scopes remain distinct. A personal event is not public by default.
+- Rewards, material transformations and difficulty unlocks are deterministic and visible.
+- Pause, resume, leave, mute and opt-out remain available. Absence never erases progress.
+- Export/deletion, accessible alternatives, moderation and recovery tests are required before any proposal is marked live.
+- A graph node is not complete until its implementation, migration (where needed), tests and status link exist.
+
+
 ## Privacy-Preserving Product Insights (`insights`)
 
 Operational insights use aggregates and opt-in preferences, not raw message logging or individual behavioural profiles.
@@ -87,7 +119,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -128,7 +160,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -212,7 +244,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -253,7 +285,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -337,7 +369,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -378,7 +410,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -462,7 +494,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -503,7 +535,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -587,7 +619,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -628,7 +660,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -712,7 +744,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -753,7 +785,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -837,7 +869,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -878,7 +910,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -962,7 +994,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1003,7 +1035,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1087,7 +1119,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1128,7 +1160,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1212,7 +1244,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1253,7 +1285,7 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1342,7 +1374,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1383,7 +1415,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1467,7 +1499,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1508,7 +1540,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1592,7 +1624,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1633,7 +1665,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1717,7 +1749,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1758,7 +1790,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1842,7 +1874,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1883,7 +1915,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1967,7 +1999,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2008,7 +2040,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2092,7 +2124,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2133,7 +2165,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2217,7 +2249,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2258,7 +2290,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2342,7 +2374,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2383,7 +2415,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2467,7 +2499,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2508,7 +2540,7 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2597,7 +2629,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2638,7 +2670,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2722,7 +2754,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2763,7 +2795,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2847,7 +2879,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2888,7 +2920,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2972,7 +3004,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3013,7 +3045,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3097,7 +3129,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3138,7 +3170,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3222,7 +3254,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3263,7 +3295,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3347,7 +3379,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3388,7 +3420,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3472,7 +3504,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3513,7 +3545,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3597,7 +3629,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3638,7 +3670,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3722,7 +3754,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3763,7 +3795,7 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3852,7 +3884,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3893,7 +3925,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3977,7 +4009,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4018,7 +4050,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4102,7 +4134,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4143,7 +4175,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4227,7 +4259,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4268,7 +4300,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4352,7 +4384,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4393,7 +4425,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4477,7 +4509,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4518,7 +4550,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4602,7 +4634,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4643,7 +4675,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4727,7 +4759,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4768,7 +4800,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4852,7 +4884,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4893,7 +4925,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4977,7 +5009,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -5018,7 +5050,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.

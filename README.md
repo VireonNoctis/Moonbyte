@@ -143,6 +143,9 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Documentation
 
+- [Moonbyte Final Vision v4.0](docs/MOONBYTE_FINAL_VISION.md) — the authoritative product constitution and connected-system blueprint.
+- [World Loom Integration Contracts](docs/atlas/INTEGRATION_CONTRACTS.md) — event ownership, idempotency, Continuity Moments and cross-domain hand-offs.
+
 - [Product vision](docs/PRODUCT_VISION.md) — product goals, engagement principles, systems, safety and non-goals.
 - [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
 - [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, achievements, Moonbits and privacy coverage.
@@ -154,7 +157,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
 - [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts and release quality gates.
-- [Moonbyte World Loom](docs/atlas/README.md) — 400 connected system proposals across 40 domains and the machine-readable system graph.
+- [Moonbyte World Loom](docs/atlas/README.md) — 400 connected system proposals across 40 domains, seven integration contracts and the machine-readable system graph.
 - [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation and verification requirements.
 - [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — reuse boundaries and source/licence audit requirements.
 - [Roadmap](docs/ROADMAP.md) — implementation phases and acceptance criteria.

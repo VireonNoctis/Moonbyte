@@ -1,5 +1,7 @@
 # Moonbyte Product Vision
 
+> The canonical product blueprint is [Moonbyte Final Vision v4.0](MOONBYTE_FINAL_VISION.md). Detailed proposals live in the [World Loom Master Atlas](atlas/README.md); cross-domain event and ownership rules live in [Integration Contracts](atlas/INTEGRATION_CONTRACTS.md). This document retains concise product principles and must not contradict those sources.
+
 - Status: Accepted product direction; implementation is not complete.
 - Last updated: 2026-10-31.
 

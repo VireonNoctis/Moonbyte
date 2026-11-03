@@ -4,6 +4,37 @@
 
 Each card is a distinct proposal with a stable graph identity, a player loop, state and ownership boundaries, Discord and Activity surfaces, privacy rules, acceptance tests and explicit cross-system links.
 
+
+## Wayfarer Thread integration contract — v4.0
+
+This volume is part of the authoritative [Moonbyte Final Vision](../MOONBYTE_FINAL_VISION.md). Its proposals must exchange verified outcomes through the [Wayfarer Thread Integration Contract](./INTEGRATION_CONTRACTS.md), not by reaching into another domain's private tables. The graph preserves the original idea IDs and domain relationships; the hand-offs below explain how those relationships become visible player journeys.
+
+### Domain hand-offs
+
+| Owning domain | Declared connections |
+|---|---|
+| **Gathering, Crafting and Workshops** (craft) | supplies Bazaar, catalogues into Archive, equips Homesteads and is prepared by Expeditions |
+| **Collections, Bestiary and Museum** (archive) | receives Vault discoveries, records Atlas lore, catalogues Craft outputs and displays in Homesteads |
+| **Arcade and Original Mini-Games** (arcade) | entered from Hearth, trains Mastery, uses Fairness rules and is played with Fellowship |
+| **Parties, Lobbies and Multiplayer Rules** (multiplayer) | forms parties for Guilds, hosts Arcade games, connects Fellowship and enforces Fairness results |
+
+### Concrete cross-system moments
+
+- Game completion → one authoritative result ID → statistics, achievements, optional Quest progress and Mastery; retries cannot issue a second reward.
+- Known recipe inputs → deterministic Craft output → item provenance → personal collection; Bazaar eligibility is a separate explicit rule.
+- Archive records preserve source IDs and discovery meaning. Account-bound Chronicle pages are never interchangeable with tradeable flavour duplicates.
+- Multiplayer results identify participants, guild scope and rules version so Rivalry, Mastery and Profile consumers validate the same match.
+
+### Shared release rules
+
+- Emit typed domain events only after the source PostgreSQL transaction commits.
+- Consumers validate permissions and use stable idempotency keys; retries never duplicate an outcome.
+- Player, party, guild and server scopes remain distinct. A personal event is not public by default.
+- Every reward, material transformation and difficulty unlock is deterministic and visible.
+- Pause, resume, leave, mute and opt-out remain available. Absence never erases progress.
+- Export/deletion, accessible alternatives, moderation and recovery tests are required before any proposal is marked live.
+
+
 ## Domain 9 — Gathering, Crafting and Workshops
 
 Crafting transforms known inputs into predictable outputs and links exploration, Bazaar demand, homes and collections. It is not a random loot system.
@@ -92,10 +123,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for field gathering: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -119,7 +150,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -207,10 +238,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the recipe codex: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -234,7 +265,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -322,10 +353,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the maker's workshop: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -349,7 +380,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -437,10 +468,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for known quality grades: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -464,7 +495,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -552,10 +583,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for commission bench: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -579,7 +610,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -667,10 +698,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for material reclaim: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -694,7 +725,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -782,10 +813,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for workshop repair: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -809,7 +840,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -897,10 +928,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for pattern and set assembly: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -924,7 +955,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1012,10 +1043,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for guild workshop: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1039,7 +1070,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1127,10 +1158,10 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for recipe research: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1154,7 +1185,7 @@ Crafting transforms known inputs into predictable outputs and links exploration,
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1248,10 +1279,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the grand collection index: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1275,7 +1306,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1363,10 +1394,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the field bestiary: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1390,7 +1421,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1478,10 +1509,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the relic archive: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1505,7 +1536,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1593,10 +1624,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the illustrated compendium: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1620,7 +1651,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1708,10 +1739,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the museum hall: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1735,7 +1766,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1823,10 +1854,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for collection sets: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1850,7 +1881,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1938,10 +1969,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the cosmetic gallery: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1965,7 +1996,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2053,10 +2084,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the living lore index: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2080,7 +2111,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2168,10 +2199,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for collection milestones: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2195,7 +2226,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2283,10 +2314,10 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for collector's provenance view: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2310,7 +2341,7 @@ The Archive preserves discoveries, lore and earned cosmetics. Collection complet
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2404,10 +2435,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the pocket arcade: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2431,7 +2462,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2519,10 +2550,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for optional daily logic desk: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2546,7 +2577,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2634,10 +2665,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the practice school: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2661,7 +2692,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2749,10 +2780,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for puzzle generator and validator: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2776,7 +2807,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2864,10 +2895,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the party game shelf: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2891,7 +2922,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2979,10 +3010,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for asynchronous challenge cards: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3006,7 +3037,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3094,10 +3125,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for friendly arcade league: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3121,7 +3152,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3209,10 +3240,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for replay and review desk: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3236,7 +3267,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3324,10 +3355,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for arcade control profiles: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3351,7 +3382,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3439,10 +3470,10 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for curated game routes: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3466,7 +3497,7 @@ The Arcade is a curated library of short, medium and mastery-based games. Result
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3560,10 +3591,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for universal lobby contract: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3587,7 +3618,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3675,10 +3706,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for party formation desk: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3702,7 +3733,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3790,10 +3821,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for friend-first match finder: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3817,7 +3848,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3905,10 +3936,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for shared turn engine: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3932,7 +3963,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4020,10 +4051,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for simultaneous choice windows: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4047,7 +4078,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4135,10 +4166,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for spectator gallery: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4162,7 +4193,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4250,10 +4281,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for friendly tournament brackets: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4277,7 +4308,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4365,10 +4396,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for shared cooperative boards: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4392,7 +4423,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4480,10 +4511,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for reconnect and rejoin: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4507,7 +4538,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4595,10 +4626,10 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for table votes and host controls: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4622,7 +4653,7 @@ Multiplayer uses one shared session contract for identity, turn ownership, deadl
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
