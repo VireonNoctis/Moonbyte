@@ -18,6 +18,17 @@ use std::time::{Duration, Instant};
 /// Shared error type for the Discord adapter and command handlers.
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
+/// Services shared by the Discord command adapter.
+pub struct DataServices {
+    pub games: game::GameRuntime,
+    pub profiles: profile::ProfileStore,
+    pub wallets: wallet::WalletStore,
+    pub achievements: achievement::AchievementStore,
+    pub atlas: atlas::AtlasStore,
+    pub guild_settings: guild_settings::GuildSettingsStore,
+    pub consents: consent::ConsentStore,
+}
+
 /// Data shared with every Poise command invocation.
 pub struct Data {
     prefix: String,
@@ -32,16 +43,16 @@ pub struct Data {
 }
 
 impl Data {
-    pub fn new(
-        prefix: String,
-        games: game::GameRuntime,
-        profiles: profile::ProfileStore,
-        wallets: wallet::WalletStore,
-        achievements: achievement::AchievementStore,
-        atlas: atlas::AtlasStore,
-        guild_settings: guild_settings::GuildSettingsStore,
-        consents: consent::ConsentStore,
-    ) -> Self {
+    pub fn new(prefix: String, services: DataServices) -> Self {
+        let DataServices {
+            games,
+            profiles,
+            wallets,
+            achievements,
+            atlas,
+            guild_settings,
+            consents,
+        } = services;
         Self {
             prefix,
             started_at: Instant::now(),

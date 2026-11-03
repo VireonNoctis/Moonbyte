@@ -1,7 +1,8 @@
 use std::{process::ExitCode, time::Duration};
 
 use moonbyte::{
-    Data, Error, achievement::AchievementStore, atlas::AtlasStore, commands, config::Config,
+    Data, DataServices, Error, achievement::AchievementStore, atlas::AtlasStore, commands,
+    config::Config,
     consent::ConsentStore, database::Database, game::GameRuntime,
     guild_settings::GuildSettingsStore, profile::ProfileStore, wallet::WalletStore,
 };
@@ -156,13 +157,15 @@ async fn run() -> Result<(), Error> {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(Data::new(
                     prefix,
-                    games,
-                    profiles,
-                    wallets,
-                    achievements,
-                    atlas,
-                    guild_settings,
-                    consents,
+                    DataServices {
+                        games,
+                        profiles,
+                        wallets,
+                        achievements,
+                        atlas,
+                        guild_settings,
+                        consents,
+                    },
                 ))
             })
         })
