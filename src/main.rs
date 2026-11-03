@@ -2,8 +2,7 @@ use std::{process::ExitCode, time::Duration};
 
 use moonbyte::{
     Data, DataServices, Error, achievement::AchievementStore, atlas::AtlasStore, commands,
-    config::Config,
-    consent::ConsentStore, database::Database, game::GameRuntime,
+    config::Config, consent::ConsentStore, database::Database, game::GameRuntime,
     guild_settings::GuildSettingsStore, profile::ProfileStore, wallet::WalletStore,
 };
 use poise::serenity_prelude as serenity;
