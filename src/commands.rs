@@ -947,7 +947,9 @@ current implementation, not a statement about Discord's independent data practic
 
 #[cfg(test)]
 mod tests {
-    use super::{PrefixUpdate, escape_user_text, help_message, parse_prefix_update, render_privacy_overview};
+    use super::{
+        PrefixUpdate, escape_user_text, help_message, parse_prefix_update, render_privacy_overview,
+    };
 
     #[test]
     fn help_lists_commands_registered_in_this_build() {
