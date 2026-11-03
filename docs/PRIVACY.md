@@ -2,7 +2,7 @@
 
 - Policy owner: Moonbyte maintainers.
 - Version: 1.0.0.
-- Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, five achievement milestones, an earned-only Moonbits wallet/ledger, a five-location Atlas with personal discoveries, versioned Terms/Privacy acceptance, data inventory, private version 6 JSON export and confirmed deletion across all current player-owned tables. Inventory, quests, Expeditions, Vaults, spending and Bazaar systems remain planned.
+- Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, five achievement milestones, an earned-only Moonbits wallet/ledger, a five-location Atlas with personal discoveries, Wayfarer activity days, optional daily quests, cosmetic companion milestones and mutually accepted rivalries, versioned Terms/Privacy acceptance, data inventory, private version 7 JSON export and confirmed deletion across all current player-owned tables. Inventory, authored story quests, Expeditions, Vaults, spending and Bazaar systems remain planned.
 - Last updated: 2026-11-03.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -23,7 +23,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-The current runtime stores player profiles/preferences, versioned Terms of Service and Privacy Policy acceptance, game-session snapshots, completed result metadata, per-game statistics, achievement milestones, earned-only wallet/ledger records and personal Atlas location/discovery state in PostgreSQL. It does not yet persist inventory, quests, Expeditions, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Guild command-routing records are separate from player-owned data. They contain the guild ID, custom prefix, optional command-channel ID, last editor ID and timestamps. They are not included in a player's JSON export or player deletion. Resetting the prefix removes the guild override. Guild settings must be removed when the bot is uninstalled or a guild leaves the service; automated uninstall cleanup remains a production operations requirement.
+The current runtime stores player profiles/preferences, versioned Terms of Service and Privacy Policy acceptance, game-session snapshots, completed result metadata, per-game statistics, achievement milestones, earned-only wallet/ledger records and personal Atlas location/discovery state in PostgreSQL. It also persists Wayfarer activity, daily quest rotations/progress and private rivalry records. Inventory, authored story quests, Expeditions, Vault state and Bazaar trades are not yet implemented. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Guild command-routing records are separate from player-owned data. They contain the guild ID, custom prefix, optional command-channel ID, last editor ID and timestamps. They are not included in a player's JSON export or player deletion. Resetting the prefix removes the guild override. Guild settings must be removed when the bot is uninstalled or a guild leaves the service; automated uninstall cleanup remains a production operations requirement.
 
 Every future persisted feature must extend the same inventory/export/deletion contract before release.
 
@@ -42,7 +42,11 @@ The bot may process or store these categories when the relevant feature is enabl
 | Game results | Game ID, outcome, winner ID when applicable, participant IDs, action count and completion time. | Record completed sessions and derive requested per-game statistics. |
 | Achievements | Achievement ID, source session ID and unlock timestamp. | Show fixed, server-authoritative milestones earned through play. |
 | Atlas exploration | Current location ID, discovered location IDs, first discovery time, last visit time and visit count. | Resume the player's position and show their own charted places. |
-| Future inventory and quests | Items, authored quest progress and checkpoints. | Not currently stored; requires reviewed persistence and privacy handling before release. |
+| Wayfarer activity | Player ID and one activity date per calendar day. | Record cumulative, non-punitive player journey days. |
+| Daily quest rotation | Player ID, date, private UUID seed and SHA-512 fingerprint. | Keep a stable three-objective board for that player/day; the private seed is never exported. |
+| Daily quest progress | Quest ID, date, status, progress, target, fixed reward amount and completion/claim timestamps. | Track objectives the player explicitly accepted and prevent duplicate reward claims. |
+| Rivalry records | Two participant IDs, invitation sender/status, match/win/draw counters and timestamps. | Store private head-to-head records after both participants opt in. |
+| Future inventory and authored quests | Items, authored quest graph, story progress and checkpoints. | Not currently stored; requires reviewed persistence and privacy handling before release. |
 | Guild settings | Guild ID, custom command prefix, optional command-channel ID, last editor and configuration timestamps. | Apply moderators' command-routing choices within that guild. |
 | Policy acceptance | Discord user ID, Terms version, Privacy Policy version, acceptance timestamp and optional guild ID. | Confirm that the user accepted the current documents before ordinary commands run. |
 | Operational diagnostics | Event type, command name, error category, timing, pseudonymous correlation ID. | Diagnose outages, bugs, rate limits, and performance without recording message contents. |
@@ -50,7 +54,7 @@ The bot may process or store these categories when the relevant feature is enabl
 
 Moonbyte should not require Lunar account linking, an email address, real name, or separate website account.
 
-The persisted profile fields are the Discord user ID, display name, optional bio, visibility, statistics preference and quiet-mode preference. Profile visibility defaults to private. Session snapshots contain the session ID, game ID, player Discord IDs, optional guild ID, phase, serialised game state, action count, short result text and timestamps. Completed games create a `game_results` row and update `player_game_stats` for each participant in the same PostgreSQL transaction as the final session snapshot. Result rows are linked to their parent session and expire with it after 24 hours of inactivity; aggregate statistics remain until deletion. A player's first completion of each game type also inserts a unique `first_game_completion` ledger entry for 10 Moonbits and updates the wallet in that same transaction. Achievement checks run after aggregate-stat updates in the same transaction; the five current milestone records are unique per player and remain until deletion. The Atlas stores one current location and per-player discovery rows; the five-location route catalogue is static code, while current position, first-discovery time, last-visit time and visit counts are stored in PostgreSQL. Travel only follows a direct route and grants no rewards. Atlas state is personal rather than guild-scoped. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart. Statistics visibility and quiet-mode flags are saved preferences; the private `.stats` command is available, while public profile/leaderboard and optional notification surfaces are not implemented. Spending, transfers, items, quests, Expeditions and trading are not implemented.
+The persisted profile fields are the Discord user ID, display name, optional bio, visibility, statistics preference and quiet-mode preference. Profile visibility defaults to private. Session snapshots contain the session ID, game ID, player Discord IDs, optional guild ID, phase, serialised game state, action count, short result text and timestamps. Completed games create a `game_results` row and update `player_game_stats` for each participant in the same PostgreSQL transaction as the final session snapshot. Result rows are linked to their parent session and expire with it after 24 hours of inactivity; aggregate statistics remain until deletion. A player's first completion of each game type also inserts a unique `first_game_completion` ledger entry for 10 Moonbits and updates the wallet in that same transaction. Achievement checks run after aggregate-stat updates in the same transaction; the five current milestone records are unique per player and remain until deletion. The Atlas stores one current location and per-player discovery rows; the five-location route catalogue is static code, while current position, first-discovery time, last-visit time and visit counts are stored in PostgreSQL. Travel only follows a direct route and grants no rewards. Atlas state is personal rather than guild-scoped. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart. Statistics visibility and quiet-mode flags are saved preferences; the private `.stats` command is available, while public profile/leaderboard and optional notification surfaces are not implemented. Fixed-reward daily objectives, cumulative Wayfarer activity and private opt-in rivalry records are implemented. Spending, transfers, inventory items, authored story-quest networks, Expeditions and trading are not implemented.
 
 ## 3. Message and interaction content
 
@@ -95,7 +99,10 @@ The provider list describes the intended model; it does not claim a production h
 | Moonbits wallet and ledger | Until profile deletion; session expiry does not remove earned ledger entries. |
 | Achievement milestones | Until account deletion. |
 | Personal Atlas location and discovery history | Until account deletion. The authored five-location catalogue is static code, not player data. |
-| Inventory, quests and other future progression | Not currently stored. Future retention must be documented with the feature. |
+| Wayfarer activity and companion milestones | Until account deletion; activity days are cumulative and are not reset by inactivity. |
+| Daily quest rotation and progress | Until account deletion. A completed quest remains claimable after its board date; the private rotation seed is not exported. |
+| Rivalry invitations and match records | Until account deletion by either participant; only post-acceptance matches are recorded. |
+| Inventory, authored story quests and other future progression | Not currently stored. Future retention must be documented with the feature. |
 | Guild settings | While the bot remains installed and settings are needed; delete or anonymise after removal, target maximum 30 days. |
 | Routine operational logs | Target maximum 30 days, then delete or aggregate without direct identifiers. |
 | Security incident records | Only as long as reasonably necessary; restrict access and document the purpose. |
@@ -113,10 +120,10 @@ The current prefix and slash commands provide:
 | `.privacy` | Receive the full current Privacy Policy document. |
 | `.consent` | Check whether the current document versions have been accepted. |
 | `.consent accept` | Explicitly accept the current Terms of Service and Privacy Policy versions. |
-| `.privacy_data` | Privately inspect profile, session, result, statistic, achievement, wallet/ledger and Atlas record counts. |
-| `.privacy_export` | Receive a private version 6 JSON copy of profile, policy acceptance, sessions, results, statistics, achievements, wallet/ledger and Atlas state/discoveries. |
+| `.privacy_data` | Privately inspect profile, session, result, statistic, achievement, wallet/ledger, Atlas, Wayfarer, quest and rivalry record counts. |
+| `.privacy_export` | Receive a private version 7 JSON copy of profile, policy acceptance, sessions, results, statistics, achievements, wallet/ledger, Atlas, Wayfarer activity, daily quest history/fingerprints and rivalry records. The private quest seed is excluded. |
 | `.privacy_delete` | Read the deletion scope and confirmation instructions. |
-| `.privacy_delete DELETE` | Confirm deletion of the profile, statistics, achievements, wallet/ledger, Atlas records and all session snapshots containing the requester. |
+| `.privacy_delete DELETE` | Confirm deletion of the profile, statistics, achievements, wallet/ledger, Atlas and Wayfarer records, daily quest history, rivalries and all session snapshots containing the requester. |
 
 When invoked in a server, profile details, inventories, exports and deletion receipts are sent by direct message; they are never posted to the public channel. The Terms and Privacy documents are delivered as private attachments for slash commands. Prefix invocations can show the documents in the channel where the command was run. The export describes the current schema only and excludes other participants' Discord IDs and raw message content. If DM delivery fails, the command returns an error rather than exposing private data. The Privacy Policy summary and attachment may be shown in the invoking channel for prefix invocations; slash-command policy attachments are ephemeral.
 
@@ -126,14 +133,14 @@ Before any ordinary gameplay, profile, progression, or configuration command run
 
 ### Deletion flow
 
-1. Explain that the profile, aggregate statistics, achievements, Moonbits wallet/ledger, Atlas location/discovery records and every session snapshot containing the requester's Discord ID will be removed.
+1. Explain that the profile, aggregate statistics, achievements, Moonbits wallet/ledger, Atlas records, Wayfarer activity, quest rotations/progress, rivalry records and every session snapshot containing the requester's Discord ID will be removed.
 2. Require the requester to run the explicit second command `.privacy_delete DELETE`.
 3. Use the authenticated Discord command author as the account owner; arbitrary target IDs are not accepted.
 4. Establish the private receipt channel before changing records when deletion is invoked in a server.
-5. Lock all matching session rows and the player's current Atlas world-state row; delete linked `game_results`, session rows, `player_game_stats`, `player_achievements`, `wallet_ledger_entries`, `player_wallets`, `player_world_state`, and `player_atlas_discoveries`, then delete `user_consents` and `player_profiles` in one PostgreSQL transaction.
+5. Lock all matching session rows and the player's current Atlas world-state row; delete linked `game_results`, session rows, `player_game_stats`, `player_achievements`, `wallet_ledger_entries`, `player_wallets`, `player_world_state`, `player_atlas_discoveries`, `player_daily_quests`, `player_quest_rotations`, `player_wayfarer_days` and any `player_rivalries` involving the requester, then delete `user_consents` and `player_profiles` in one PostgreSQL transaction.
 6. Commit before reporting the actual deleted row counts.
 
-The current player-owned schema is `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Result records are deleted with their session; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas rows also have foreign-key ownership by the player profile, so deleting the profile cannot leave orphaned discovery data. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord's own records.
+The current player-owned schema is `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state`, `player_atlas_discoveries`, `player_wayfarer_days`, `player_quest_rotations`, `player_daily_quests` and `player_rivalries`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Result records are deleted with their session; aggregate statistics, achievements, wallet, Atlas, Wayfarer, quest and rivalry records are removed directly. Atlas rows also have foreign-key ownership by the player profile, so deleting the profile cannot leave orphaned discovery data. Wayfarer tables are already included in the same deletion transaction and export contract. Future player-owned tables must be added before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord's own records.
 
 ## 8. Guild privacy
 
@@ -168,13 +175,25 @@ PostgreSQL does not automatically prove that data is encrypted at rest. The proj
 
 Game content should remain age-appropriate and avoid graphic or sexual content. Provide server moderation controls. Do not design mechanics that encourage excessive play, spending, wagering, or disclosure of private information.
 
-## 11. Policy changes and contact
+
+## 11. Wayfarer and rivalry records
+
+The current Wayfarer release stores one activity-day record per player and PostgreSQL calendar date. A completed game or first-time Atlas discovery can create that day's record. Repeat events on the same day do not add extra days. These records support cumulative companion milestones; there is no attendance penalty, countdown, or streak reset.
+
+Opening the daily quest board creates a stable set of three optional objectives from a fixed catalogue. PostgreSQL generates a per-player daily UUID seed; SHA-512 derives the selection order and a stored fingerprint. The seed is not included in player exports. Quest objectives, progress, accepted/completed/claimed state, completion timestamps and fixed Moonbits reward amounts are stored in PostgreSQL. Rewards are claimed once through the wallet ledger. This is a deterministic task rotation, not a random reward mechanic.
+
+Rivalry records store the two participant IDs, invitation sender, mutual-acceptance state, match totals, wins and draws. A rivalry is counted only after the recipient accepts. Only completed two-player sessions between those participants after activation update the record. The Rivalry Hall is private to each participant; this release does not expose public rivalry leaderboards.
+
+The private JSON export includes Wayfarer activity dates, daily quest history, SHA-512 rotation fingerprints, and rivalry invitations/match records. It excludes the private quest seed. Confirmed account deletion removes those rows within the same PostgreSQL transaction as the other player records. Deleting either participant also removes the associated rivalry record.
+
+## 12. Policy changes and contact
+
 
 A change to data categories, purposes, retention, or external providers requires code review and an update to this policy. Significant changes should be announced in release notes before they take effect where practical.
 
 For privacy questions that cannot be completed through the bot, use the repository's published support contact once one is configured. Do not post private personal data in public issues.
 
-## 12. Production launch checklist
+## 13. Production launch checklist
 
 Before public release, verify:
 - Database schema matches the documented data inventory.
@@ -187,4 +206,4 @@ Before public release, verify:
 - Hosting providers and additional processors are documented.
 - Database and backup access controls are verified.
 - Public privacy claims match the deployed implementation.
-- Profile export and deletion cover every currently persisted player table, including Atlas location and discovery records.
+- Profile export and deletion cover every currently persisted player table, including Atlas location/discovery, Wayfarer activity, quest history and rivalry records.

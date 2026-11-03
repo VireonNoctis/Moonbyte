@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-11-03 — Wayfarer progression slice
+
+- Add a daily quest board with three stable optional objectives selected from a fixed catalogue per player/day.
+- Generate rotation seeds with PostgreSQL UUID randomness and derive selections using SHA-512 with domain separation and unbiased rejection sampling; expose only the fingerprint, never the seed.
+- Connect game completions and first-time Atlas discoveries to quest progress and cumulative active-day history inside their source transactions.
+- Add cosmetic companion milestones that never reset and do not grant gameplay advantages.
+- Add private, mutually accepted rivalries that count only later completed two-player sessions.
+- Credit fixed quest rewards through immutable, idempotent Moonbits ledger entries; no wagering, random reward pools, purchases or cash-out are introduced.
+- Extend the PostgreSQL schema, privacy inventory, version 7 player export, deletion receipt, Tavern destinations, command help, tests and docs.
+- Add a responsive React catalogue view for the real Wayfarer objectives without fabricating player progress.
+
 ## Unreleased
 
 - Add a first-use agreement gate for versioned Terms of Service and Privacy Policy documents, with legal and privacy commands available before acceptance.

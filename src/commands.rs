@@ -365,7 +365,11 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Wallet record: {}\n\
          Wallet ledger entries: {}\n\
          Atlas world-state record: {}\n\
-         Atlas discovery records: {}\n\n\
+         Atlas discovery records: {}\n\
+         Wayfarer active days: {}\n\
+         Daily quest rotations: {}\n\
+         Daily quest records: {}\n\
+         Rivalry records: {}\n\n\
          {}\n\n\
          Use `{prefix}privacy_export` to receive a JSON copy, or `{prefix}privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
@@ -395,6 +399,10 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
             "not created"
         },
         inventory.atlas_discovery_records,
+        inventory.wayfarer_active_days,
+        inventory.quest_rotation_records,
+        inventory.daily_quest_records,
+        inventory.rivalry_records,
         inventory.session_retention
     );
     send_private(ctx, message).await
@@ -423,7 +431,7 @@ pub async fn privacy_export(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn privacy_delete(
     ctx: Context<'_>,
-    #[description = "Type DELETE to confirm removal of your Moonbyte profile, achievements, sessions and wallet data"]
+    #[description = "Type DELETE to confirm removal of your profile, sessions, wallet, quests, Wayfarer history and rivalries"]
     confirmation: Option<String>,
 ) -> Result<(), Error> {
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
@@ -436,7 +444,7 @@ pub async fn privacy_delete(
             format!(
                 "**Delete your Moonbyte profile?**\n\n\
              This removes your profile, policy-acceptance record, unlocked achievements, Moonbits wallet and ledger \
-             entries, Atlas location/discovery records, and every stored game-session snapshot \
+             entries, Atlas location/discovery records, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
              containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
              To confirm, run `{prefix}privacy_delete DELETE`. No deletion has happened yet.",
@@ -465,6 +473,10 @@ pub async fn privacy_delete(
          Wallet ledger entries removed: {}\n\
          Atlas world-state record removed: {}\n\
          Atlas discovery records removed: {}\n\
+         Wayfarer activity days removed: {}\n\
+         Daily quest rotations removed: {}\n\
+         Daily quest records removed: {}\n\
+         Rivalry records removed: {}\n\
          Policy acceptance record removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
@@ -490,6 +502,10 @@ pub async fn privacy_delete(
             "no record existed"
         },
         deletion.atlas_discoveries_removed,
+        deletion.wayfarer_days_removed,
+        deletion.quest_rotations_removed,
+        deletion.daily_quest_records_removed,
+        deletion.rivalry_records_removed,
         if deletion.consent_record_removed {
             "yes"
         } else {
@@ -615,6 +631,244 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
         ),
     )
     .await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn quests(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    let quests = ctx.data().wayfarer().daily_quests(&player_id).await?;
+    let entries = quests
+        .iter()
+        .map(|quest| {
+            let progress = format!("{}/{}", quest.progress, quest.target);
+            let action = match quest.status.as_str() {
+                "available" => format!("Accept with .quest accept {}", quest.id),
+                "active" => format!("In progress · {}", progress),
+                "completed" => format!("Ready to claim · .quest claim {}", quest.id),
+                "claimed" => "Reward claimed".to_owned(),
+                _ => "Status unavailable".to_owned(),
+            };
+            format!(
+                "**{}** · {} Moonbits\n{}\n{}\nID: {}",
+                quest.title, quest.reward_moonbits, quest.description, action, quest.id
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    let fingerprint = quests
+        .first()
+        .map(|quest| quest.rotation_fingerprint.chars().take(16).collect::<String>())
+        .unwrap_or_else(|| "unavailable".to_owned());
+    send_private(
+        ctx,
+        format!(
+            "**The Wayfarer · Daily Quest Board**\n\n{}\n\nRotation fingerprint: SHA-512 {fingerprint}…\nThe board is fixed for the day. Accept only the quests you want to pursue; missed days do not remove progress or rewards. Rewards are fixed and credited to your immutable Moonbits ledger when claimed.",
+            entries
+        ),
+    )
+    .await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn quest(
+    ctx: Context<'_>,
+    #[description = "accept or claim"] action: String,
+    #[description = "The quest ID shown on the daily board"] quest_id: String,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    match action.trim().to_ascii_lowercase().as_str() {
+        "accept" => {
+            ctx.data().wayfarer().accept_quest(&player_id, &quest_id).await?;
+            send_private(
+                ctx,
+                format!(
+                    "Quest accepted: {}. Your progress is recorded automatically from completed games and first-time Atlas discoveries. Check .quests to follow it.",
+                    escape_user_text(&quest_id)
+                ),
+            )
+            .await
+        }
+        "claim" => {
+            let reward = ctx.data().wayfarer().claim_quest(&player_id, &quest_id).await?;
+            send_private(
+                ctx,
+                format!(
+                    "Quest complete. **{reward} Moonbits** have been credited to your wallet and recorded in the ledger. The reward cannot be claimed twice."
+                ),
+            )
+            .await
+        }
+        _ => {
+            let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
+            send_private(
+                ctx,
+                format!("Use {prefix}quest accept <quest-id> or {prefix}quest claim <quest-id>."),
+            )
+            .await
+        }
+    }
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn wayfarer(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let snapshot = ctx.data().wayfarer().snapshot(&player_id).await?;
+    let next = snapshot
+        .next_milestone
+        .map(|threshold| format!("{} more active day(s) to the next companion milestone", threshold - snapshot.active_days))
+        .unwrap_or_else(|| "The final currently defined companion milestone is yours.".to_owned());
+    send_private(
+        ctx,
+        format!(
+            "**The Wayfarer Thread**\n\nJourney days: **{}**\nCompanion: **{}**\nJourney stage: **{}**\n{}\n\nMeaningful game completions and first-time Atlas discoveries count once per calendar day. Your total never decreases; missing a day carries no penalty. Optional quests and cosmetic companion milestones never affect game outcomes.",
+            snapshot.active_days, snapshot.companion_name, snapshot.companion_stage, next
+        ),
+    )
+    .await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn companion(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let snapshot = ctx.data().wayfarer().snapshot(&player_id).await?;
+    send_private(
+        ctx,
+        format!(
+            "**{} · Companion Journal**\n\nCurrent stage: **{}**\nJourney days recorded: **{}**\n\nCompanion milestones are cosmetic. They do not boost stats, change game rules, or grant random rewards. Keep exploring at your own pace.",
+            snapshot.companion_name, snapshot.companion_stage, snapshot.active_days
+        ),
+    )
+    .await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn rivals(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let records = ctx.data().wayfarer().rivalries(&player_id).await?;
+    if records.is_empty() {
+        let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
+        return send_private(
+            ctx,
+            format!(
+                "**Rivalry Hall**\n\nNo invitations or rivalries yet. A rivalry starts only when both players opt in. Use {prefix}rival declare @player to invite someone who has opened Moonbyte."
+            ),
+        )
+        .await;
+    }
+
+    let entries = records
+        .iter()
+        .map(|record| {
+            let state = match record.status.as_str() {
+                "pending" if record.invited_by == player_id => "Invitation sent · awaiting response",
+                "pending" => "Invitation received · use .rival accept <id> or .rival decline <id>",
+                "active" => "Active rivalry",
+                "declined" => "Declined",
+                _ => "Unknown status",
+            };
+            if record.status == "active" {
+                format!(
+                    "**<@{}>** · {} · {} matches\nYour wins: {} · Their wins: {} · Draws: {}\nRivalry ID: {}",
+                    record.opponent_id, state, record.matches_played, record.your_wins,
+                    record.opponent_wins, record.draws, record.rivalry_id
+                )
+            } else {
+                format!(
+                    "**<@{}>** · {}\nRivalry ID: {}",
+                    record.opponent_id, state, record.rivalry_id
+                )
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    send_private(
+        ctx,
+        format!(
+            "**Rivalry Hall**\n\n{entries}\n\nOnly matches completed after a rivalry becomes active are counted. Rivalry records are private to their two participants; they do not create public leaderboards."
+        ),
+    )
+    .await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn rival(
+    ctx: Context<'_>,
+    #[description = "declare, accept, or decline"] action: String,
+    #[description = "A player mention for declare, or a rivalry ID for accept/decline"] target: String,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    let action = action.trim().to_ascii_lowercase();
+    match action.as_str() {
+        "declare" => {
+            let opponent_id = parse_discord_user_id(&target)
+                .ok_or("Mention a valid Discord player to invite to a rivalry.")?;
+            let became_active = ctx
+                .data()
+                .wayfarer()
+                .declare_rival(&player_id, &opponent_id)
+                .await?;
+            if became_active {
+                send_private(
+                    ctx,
+                    "You both sent an invitation. Your rivalry is now active; future completed two-player games between you will be recorded.",
+                )
+                .await
+            } else {
+                send_private(
+                    ctx,
+                    format!(
+                        "Rivalry invitation sent to <@{opponent_id}>. It becomes active only after they accept. No match history is collected until both players agree."
+                    ),
+                )
+                .await
+            }
+        }
+        "accept" | "decline" => {
+            let rivalry_id = target
+                .trim()
+                .parse::<i64>()
+                .map_err(|_| "Enter the numeric rivalry ID shown in .rivals.")?;
+            if action == "accept" {
+                ctx.data().wayfarer().accept_rival(&player_id, rivalry_id).await?;
+                send_private(
+                    ctx,
+                    "Rivalry accepted. Future completed two-player games between you will appear in your private Rivalry Hall.",
+                )
+                .await
+            } else {
+                ctx.data().wayfarer().decline_rival(&player_id, rivalry_id).await?;
+                send_private(ctx, "Rivalry invitation declined. No match history will be recorded.")
+                    .await
+            }
+        }
+        _ => {
+            let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
+            send_private(
+                ctx,
+                format!(
+                    "Use {prefix}rival declare @player, {prefix}rival accept <id>, or {prefix}rival decline <id>. View the private list with {prefix}rivals."
+                ),
+            )
+            .await
+        }
+    }
+}
+
+fn parse_discord_user_id(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    let digits = if let Some(inner) = trimmed.strip_prefix("<@").and_then(|v| v.strip_suffix('>')) {
+        inner.strip_prefix('!').unwrap_or(inner)
+    } else {
+        trimmed
+    };
+    if (17..=20).contains(&digits.len()) && digits.bytes().all(|byte| byte.is_ascii_digit()) {
+        Some(digits.to_owned())
+    } else {
+        None
+    }
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -913,6 +1167,10 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
     stats_command.aliases = vec!["st".into()].into();
     let mut achievements_command = achievements();
     achievements_command.aliases = vec!["ach".into()].into();
+    let mut quests_command = quests();
+    quests_command.aliases = vec!["q".into()].into();
+    let mut wayfarer_command = wayfarer();
+    wayfarer_command.aliases = vec!["wf".into()].into();
 
     let mut prefix_command = prefix();
     prefix_command.required_permissions = poise::serenity_prelude::Permissions::MANAGE_GUILD;
@@ -934,6 +1192,12 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         settings(),
         wallet_command,
         achievements_command,
+        quests_command,
+        quest(),
+        wayfarer_command,
+        companion(),
+        rivals(),
+        rival(),
         stats_command,
         tavern_command,
         atlas_command,
@@ -1038,6 +1302,12 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}wallet / /wallet — view your earned-only Moonbits balance\n\
          {safe_prefix}achievements / /achievements — view your unlocked achievements\n\
          {safe_prefix}stats / /stats — view completed game statistics\n\
+         {safe_prefix}quests / /quests — open today's optional quest board\n\
+         {safe_prefix}quest accept|claim <id> / /quest — accept or claim a daily quest\n\
+         {safe_prefix}wayfarer / /wayfarer — view your non-resetting journey record\n\
+         {safe_prefix}companion / /companion — view cosmetic companion milestones\n\
+         {safe_prefix}rivals / /rivals — view private rivalry invitations and records\n\
+         {safe_prefix}rival declare|accept|decline <user/id> / /rival — manage mutual rivalries\n\
          {safe_prefix}tavern / /tavern — open the Tavern and live Wayfinder\n\
          {safe_prefix}atlas / /atlas — inspect your world map and known routes\n\
          {safe_prefix}travel <location> / /travel — follow a connected Atlas route\n\
@@ -1050,7 +1320,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}leave <session> / /leave — end a session you joined\n\
          Prefix shortcuts (prefix commands only):\n\
          {safe_prefix}t → {safe_prefix}tavern · {safe_prefix}g → {safe_prefix}games · {safe_prefix}p → {safe_prefix}play · {safe_prefix}j → {safe_prefix}join · {safe_prefix}l → {safe_prefix}leave\n\
-         {safe_prefix}a → {safe_prefix}atlas · {safe_prefix}tr → {safe_prefix}travel · {safe_prefix}me → {safe_prefix}profile · {safe_prefix}w → {safe_prefix}wallet · {safe_prefix}st → {safe_prefix}stats · {safe_prefix}ach → {safe_prefix}achievements.\n\
+         {safe_prefix}a → {safe_prefix}atlas · {safe_prefix}tr → {safe_prefix}travel · {safe_prefix}me → {safe_prefix}profile · {safe_prefix}w → {safe_prefix}wallet · {safe_prefix}st → {safe_prefix}stats · {safe_prefix}ach → {safe_prefix}achievements · {safe_prefix}q → {safe_prefix}quests · {safe_prefix}wf → {safe_prefix}wayfarer.\n\
          Help, Terms, consent and all privacy commands deliberately have no shortcuts.\n\n\
          Multiplayer sessions are scoped to their originating server. Sessions expire \
          after 24 hours of inactivity."
@@ -1082,7 +1352,7 @@ current implementation, not a statement about Discord's independent data practic
 #[cfg(test)]
 mod tests {
     use super::{
-        PrefixUpdate, escape_user_text, help_message, parse_prefix_update, render_privacy_overview,
+        PrefixUpdate, escape_user_text, help_message, parse_discord_user_id, parse_prefix_update, render_privacy_overview,
     };
 
     #[test]
@@ -1105,6 +1375,12 @@ mod tests {
             ".wallet / /wallet",
             ".achievements / /achievements",
             ".stats / /stats",
+            ".quests / /quests",
+            ".quest accept|claim <id> / /quest",
+            ".wayfarer / /wayfarer",
+            ".companion / /companion",
+            ".rivals / /rivals",
+            ".rival declare|accept|decline <user/id> / /rival",
             ".tavern / /tavern",
             ".atlas / /atlas",
             ".travel <location> / /travel",
@@ -1118,6 +1394,8 @@ mod tests {
         ] {
             assert!(message.contains(command), "missing help entry: {command}");
         }
+        assert!(message.contains(".q → .quests"));
+        assert!(message.contains(".wf → .wayfarer"));
         assert!(message.contains(".t → .tavern"));
         assert!(message.contains(".g → .games"));
         assert!(message.contains(
@@ -1150,6 +1428,8 @@ mod tests {
         assert_eq!(aliases("wallet"), vec!["w"]);
         assert_eq!(aliases("stats"), vec!["st"]);
         assert_eq!(aliases("achievements"), vec!["ach"]);
+        assert_eq!(aliases("quests"), vec!["q"]);
+        assert_eq!(aliases("wayfarer"), vec!["wf"]);
 
         for name in [
             "help",
@@ -1165,6 +1445,24 @@ mod tests {
                 "{name} must not have a short prefix alias"
             );
         }
+    }
+
+    #[test]
+    fn discord_user_id_parser_accepts_mentions_and_rejects_arbitrary_text() {
+        assert_eq!(
+            parse_discord_user_id("<@123456789012345678>"),
+            Some("123456789012345678".to_owned())
+        );
+        assert_eq!(
+            parse_discord_user_id("<@!123456789012345678>"),
+            Some("123456789012345678".to_owned())
+        );
+        assert_eq!(
+            parse_discord_user_id("123456789012345678"),
+            Some("123456789012345678".to_owned())
+        );
+        assert_eq!(parse_discord_user_id("@everyone"), None);
+        assert_eq!(parse_discord_user_id("123"), None);
     }
 
     #[test]

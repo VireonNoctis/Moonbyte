@@ -12,6 +12,7 @@ pub mod guild_settings;
 pub mod profile;
 pub mod tavern;
 pub mod wallet;
+pub mod wayfarer;
 
 use std::time::{Duration, Instant};
 
@@ -27,6 +28,7 @@ pub struct DataServices {
     pub atlas: atlas::AtlasStore,
     pub guild_settings: guild_settings::GuildSettingsStore,
     pub consents: consent::ConsentStore,
+    pub wayfarer: wayfarer::WayfarerStore,
 }
 
 /// Data shared with every Poise command invocation.
@@ -40,6 +42,7 @@ pub struct Data {
     atlas: atlas::AtlasStore,
     guild_settings: guild_settings::GuildSettingsStore,
     consents: consent::ConsentStore,
+    wayfarer: wayfarer::WayfarerStore,
 }
 
 impl Data {
@@ -52,6 +55,7 @@ impl Data {
             atlas,
             guild_settings,
             consents,
+            wayfarer,
         } = services;
         Self {
             prefix,
@@ -63,6 +67,7 @@ impl Data {
             atlas,
             guild_settings,
             consents,
+            wayfarer,
         }
     }
 
@@ -108,5 +113,9 @@ impl Data {
 
     pub fn atlas(&self) -> &atlas::AtlasStore {
         &self.atlas
+    }
+
+    pub fn wayfarer(&self) -> &wayfarer::WayfarerStore {
+        &self.wayfarer
     }
 }

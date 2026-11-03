@@ -35,3 +35,8 @@ The next integration step is to add the official Discord Embedded App SDK behind
 ## Design direction
 
 Original full-colour pixel-world motifs, warm paper surfaces, deep forest ink, and a lime accent. Layouts reflow for narrow mobile screens, focus indicators remain visible, and reduced-motion preferences are respected. The current hero landscape is CSS artwork; it is not presented as a shipped sprite asset.
+
+
+## Wayfarer catalogue
+
+The public landing page includes the current fixed daily-objective catalogue and explains the optional progression model. It intentionally does not fabricate player progress, wallet balances or daily assignments. Private live progress remains in the Discord bot until an authenticated Rust view API and Discord Activity integration are implemented.

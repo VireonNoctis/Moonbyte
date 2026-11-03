@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**The player foundation, results loop, achievements, earned-only wallet, first Atlas slice, guild command routing and versioned policy-consent gate are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte has persistent profiles, completed-game results, per-game statistics, five idempotent achievement milestones, private JSON export/deletion, and the initial Tavern Wayfinder. Each player's first completion of each game type earns a fixed 10 Moonbits once, with an immutable ledger entry and wallet update in the same transaction as the game result. The initial Atlas has five authored locations, a connected route graph, persistent personal discoveries and direct-neighbour travel; it offers no repeatable travel rewards. Spending, transfers, Vault rewards and Bazaar trading are not enabled.
+**The player foundation, results loop, achievements, earned-only wallet, first Atlas slice, Wayfarer quests, companion milestones, mutual rivalries, guild command routing and versioned policy-consent gate are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte has persistent profiles, completed-game results, per-game statistics, five idempotent achievement milestones, private JSON export/deletion, and the initial Tavern Wayfinder. Each player's first completion of each game type earns a fixed 10 Moonbits once, with an immutable ledger entry and wallet update in the same transaction as the game result. The initial Atlas has five authored locations, a connected route graph, persistent personal discoveries and direct-neighbour travel; it offers no repeatable travel rewards. Wayfarer adds three optional daily objectives selected from a five-item catalogue, cumulative non-resetting activity days, cosmetic companion milestones and private mutual rivalries. Completed quest rewards are fixed, disclosed and claimed through the immutable ledger. Spending, transfers, Vault rewards and Bazaar trading are not enabled.
 
 ## The vision
 
@@ -72,6 +72,12 @@ The process default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to ch
 | `.stats` / `/stats` | Implemented | View completed-game totals and per-game wins/draws. |
 | `.wallet` / `/wallet` | Implemented | View the earned-only Moonbits balance and ledger-entry count privately. |
 | `.achievements` / `/achievements` | Implemented | View the five fixed achievement milestones earned through play. |
+| `.quests` / `/quests` | Implemented | Open the daily board, accept optional objectives, and track deterministic fixed rewards. |
+| `.quest accept|claim <id>` / `/quest` | Implemented | Opt into a daily objective or claim its completed ledger reward. |
+| `.wayfarer` / `/wayfarer` | Implemented | View cumulative active days and the non-resetting companion journey. |
+| `.companion` / `/companion` | Implemented | View cosmetic companion milestones; no stat boosts or random drops. |
+| `.rivals` / `/rivals` | Implemented | View private rivalry invitations and mutual-match records. |
+| `.rival declare|accept|decline <user/id>` / `/rival` | Implemented | Manage a rivalry that records matches only after both players opt in. |
 | `.atlas` / `/atlas` | Implemented | View your current location, known places and directly connected routes privately. |
 | `.travel <location>` / `/travel` | Implemented | Travel to a directly connected Atlas location and record its discovery. |
 | `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
@@ -82,7 +88,7 @@ The process default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to ch
 | `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 
-The Wayfinder currently exposes six live destinations: Common Tables (`.games`), Your Place (`.profile`), the Chronicle (`.stats`), The Ledger (`.wallet`), The Gallery (`.achievements`) and The Atlas (`.atlas`). The Atlas destination opens a five-location starter map; Expeditions, story routes, Vaults, parties and Bazaar trading remain planned.
+The Wayfinder currently exposes ten live destinations: Common Tables, Your Place, the Chronicle, the Ledger, the Gallery, the Atlas, the Quest Board, the Wayfarer Thread, the Companion Journal and the private Rivalry Hall. The initial Atlas has five connected locations. Expeditions, story routes, inventory, crafting, Vaults and Bazaar trading remain planned.
 
 ### Planned commands
 
@@ -91,14 +97,13 @@ The Wayfinder currently exposes six live destinations: Common Tables (`.games`),
 | `.daily` / `/daily` | Planned | Open an optional daily challenge without attendance penalties. |
 | `.collection` / `/collection` | Planned | View collected cards, discoveries and items. |
 | `.inventory` / `/inventory` | Planned | View usable items and cosmetics. |
-| `.quests` / `/quests` | Planned | Browse active and available quests. |
 | `.party` / `/party` | Planned | Create, invite or manage a party. |
 | `.leaderboard` / `/leaderboard` | Planned | View supported rankings. |
 | `.stop` / `/stop` | Planned | Leave or end an eligible active session. |
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The `.terms` command provides the full Terms of Service and `.privacy` provides the full Privacy Policy. New users must review both, then run `.consent accept` before ordinary commands are unlocked. A material policy update requires renewed acceptance. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details, exports and deletion receipts are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile, per-game statistic rows, Moonbits wallet and ledger entries, and every session snapshot plus linked result containing the requester’s Discord ID, together with personal Atlas location/discovery records. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
+The `.terms` command provides the full Terms of Service and `.privacy` provides the full Privacy Policy. New users must review both, then run `.consent accept` before ordinary commands are unlocked. A material policy update requires renewed acceptance. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details, exports and deletion receipts are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile, per-game statistic rows, Moonbits wallet and ledger entries, every session snapshot plus linked result containing the requester’s Discord ID, Atlas location/discovery records, Wayfarer activity days, daily quest rotations and progress, and rivalry invitations/match records. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Wayfarer](docs/WAYFARER.md), [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
 
 ## Privacy is a product feature
 

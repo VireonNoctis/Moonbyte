@@ -321,7 +321,21 @@ async fn persist_locked(
                     &snapshot.id,
                 )
                 .await?;
+                crate::wayfarer::record_game_completion(
+                    transaction,
+                    player_id,
+                    snapshot.game.definition().id,
+                    games_won == 1,
+                )
+                .await?;
             }
+
+            crate::wayfarer::record_rivalry_match(
+                transaction,
+                &snapshot.players,
+                winner,
+            )
+            .await?;
         }
     }
     Ok(())

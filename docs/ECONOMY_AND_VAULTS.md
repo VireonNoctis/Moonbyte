@@ -42,10 +42,10 @@ The initial wallet vertical slice implements one narrow rule:
 - Each player receives the first-completion reward only once per game type. Completing the same game type again does not issue another credit.
 - The reward is for completing the activity; it does not depend on winning, losing or drawing.
 - The result row, player statistics, wallet creation, ledger entry and balance increment commit in the same PostgreSQL transaction.
-- Each award uses a unique idempotency key in the form `first-game-completion:<game_id>` for that player.
+- Game milestone awards use `first-game-completion:<game_id>` per player; quest awards use `daily-quest:<quest_date>:<quest_id>`.
 - `.wallet` displays the current balance and ledger-entry count. The Tavern Wayfinder exposes this as The Ledger.
 
-This is a milestone foundation, not a complete economy. Spending, transfers, shop purchases, item rewards, Vault rewards and Bazaar trades are not enabled. The current reason constraint intentionally admits only `first_game_completion`; additional reward types require a reviewed migration and new idempotency/test coverage.
+This is a milestone foundation, not a complete economy. Spending, transfers, shop purchases, item rewards, Vault rewards and Bazaar trades are not enabled. The current reason constraint admits only `first_game_completion` and `daily_quest_completion`. The latter is limited to fixed rewards from accepted daily objectives, uses a player/date/quest idempotency key and is credited atomically with the claimed state. Any additional reward type requires a reviewed migration and new idempotency/test coverage.
 
 Moonbits:
 

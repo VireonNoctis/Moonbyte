@@ -10,6 +10,7 @@ const ACHIEVEMENTS_MIGRATION: &str = include_str!("../migrations/0005_player_ach
 const ATLAS_MIGRATION: &str = include_str!("../migrations/0006_player_atlas.sql");
 const GUILD_COMMAND_MIGRATION: &str = include_str!("../migrations/0007_guild_command_settings.sql");
 const USER_CONSENT_MIGRATION: &str = include_str!("../migrations/0008_user_consents.sql");
+const WAYFARER_MIGRATION: &str = include_str!("../migrations/0009_wayfarer_rivalry.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -69,6 +70,7 @@ impl Database {
             (6_i64, ATLAS_MIGRATION),
             (7_i64, GUILD_COMMAND_MIGRATION),
             (8_i64, USER_CONSENT_MIGRATION),
+            (9_i64, WAYFARER_MIGRATION),
         ] {
             let already_applied: bool = sqlx::query_scalar(
                 "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",

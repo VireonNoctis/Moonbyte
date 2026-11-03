@@ -41,6 +41,60 @@ impl WalletStore {
     }
 }
 
+/// Credit a fixed daily-quest reward using the same immutable ledger as game milestones.
+/// The caller marks the quest claimed in this same transaction.
+pub(crate) async fn award_daily_quest_completion(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+    quest_date: &str,
+    quest_id: &str,
+    reward: i64,
+) -> Result<bool, sqlx::Error> {
+    if reward <= 0 {
+        return Ok(false);
+    }
+
+    sqlx::query(
+        "INSERT INTO player_wallets (discord_user_id) VALUES ($1) \
+         ON CONFLICT (discord_user_id) DO NOTHING",
+    )
+    .bind(player_id)
+    .execute(&mut **transaction)
+    .await?;
+
+    let idempotency_key = format!("daily-quest:{quest_date}:{quest_id}");
+    let source_id = format!("quest:{quest_date}:{quest_id}");
+    let entry_id: Option<i64> = sqlx::query_scalar(
+        "INSERT INTO wallet_ledger_entries \
+         (discord_user_id, amount_delta, reason, source_id, idempotency_key) \
+         VALUES ($1, $2, 'daily_quest_completion', $3, $4) \
+         ON CONFLICT (discord_user_id, idempotency_key) DO NOTHING \
+         RETURNING entry_id",
+    )
+    .bind(player_id)
+    .bind(reward)
+    .bind(source_id)
+    .bind(idempotency_key)
+    .fetch_optional(&mut **transaction)
+    .await?;
+
+    if entry_id.is_none() {
+        return Ok(false);
+    }
+
+    sqlx::query(
+        "UPDATE player_wallets \
+         SET balance = balance + $2, version = version + 1, updated_at = now() \
+         WHERE discord_user_id = $1",
+    )
+    .bind(player_id)
+    .bind(reward)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(true)
+}
+
 /// Credit the first-completion milestone for one player/game pair.
 ///
 /// The unique idempotency key makes the reward one-time per player and game

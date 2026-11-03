@@ -173,6 +173,19 @@ impl AtlasStore {
             return Err(AtlasError::NotReachable);
         }
 
+        let already_discovered: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM player_atlas_discoveries \
+             WHERE discord_user_id = $1 AND location_id = $2)",
+        )
+        .bind(player_id)
+        .bind(destination.id)
+        .fetch_one(&mut *transaction)
+        .await?;
+
+        if !already_discovered {
+            crate::wayfarer::record_atlas_discovery(&mut transaction, player_id).await?;
+        }
+
         sqlx::query(
             "INSERT INTO player_atlas_discoveries (discord_user_id, location_id, discovered_at, last_visited_at, visit_count) \
              VALUES ($1, $2, now(), now(), 1) \

@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 6] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 10] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -65,6 +65,38 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 6] = [
         emoji: EmojiKey::Rocket,
         fallback: "🧭",
     },
+    TavernDestination {
+        id: "quest-board",
+        title: "The Quest Board",
+        description: "Accept optional daily goals and claim fixed ledger-backed rewards.",
+        command: "quests",
+        emoji: EmojiKey::Crystal,
+        fallback: "🗒️",
+    },
+    TavernDestination {
+        id: "wayfarer-thread",
+        title: "The Wayfarer Thread",
+        description: "Review your cumulative journey days and companion milestones.",
+        command: "wayfarer",
+        emoji: EmojiKey::Rocket,
+        fallback: "🧵",
+    },
+    TavernDestination {
+        id: "companion-journal",
+        title: "The Companion Journal",
+        description: "See the cosmetic companion stage earned through meaningful activity.",
+        command: "companion",
+        emoji: EmojiKey::Treasure,
+        fallback: "✨",
+    },
+    TavernDestination {
+        id: "rivalry-hall",
+        title: "The Rivalry Hall",
+        description: "Manage mutual invitations and review private head-to-head records.",
+        command: "rivals",
+        emoji: EmojiKey::Chat,
+        fallback: "⚔️",
+    },
 ];
 
 /// Render the initial Tavern Wayfinder using only live commands.
@@ -106,7 +138,7 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 6);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 10);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
             [
@@ -115,7 +147,11 @@ mod tests {
                 "stats",
                 "wallet",
                 "achievements",
-                "atlas"
+                "atlas",
+                "quests",
+                "wayfarer",
+                "companion",
+                "rivals"
             ]
         );
 
@@ -129,6 +165,12 @@ mod tests {
         assert!(home.contains("The Gallery"));
         assert!(home.contains(".atlas"));
         assert!(home.contains("The Atlas"));
+        assert!(home.contains(".quests"));
+        assert!(home.contains("The Quest Board"));
+        assert!(home.contains(".wayfarer"));
+        assert!(home.contains(".companion"));
+        assert!(home.contains(".rivals"));
+        assert!(home.contains("Rivalry Hall"));
         assert!(home.contains("The Common Tables"));
         assert!(home.contains("The Chronicle"));
         assert!(home.contains("only as their systems become playable"));

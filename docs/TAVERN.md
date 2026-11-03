@@ -11,7 +11,7 @@ The Tavern is the home and discovery entry point in the Moonbyte World Loom. The
 
 ## Live Wayfinder destinations
 
-The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the six destinations that are backed by registered commands:
+The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the ten destinations that are backed by registered commands:
 
 | Stable destination ID | Tavern label | Live command | Current capability |
 | --- | --- | --- | --- |
@@ -21,6 +21,10 @@ The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the six
 | `moonbits-ledger` | The Ledger | `.wallet` / `/wallet` | View the player's earned-only Moonbits balance and first-completion milestones. |
 | `achievement-gallery` | The Gallery | `.achievements` / `/achievements` | View the five fixed achievement milestones. |
 | `world-atlas` | The Atlas | `.atlas` / `/atlas` | View the player's current place, discovered places and directly connected routes. |
+| `quest-board` | The Quest Board | `.quests` / `/quests` | View today's three optional objectives and their fixed rewards. |
+| `wayfarer-thread` | The Wayfarer Thread | `.wayfarer` / `/wayfarer` | View cumulative activity days and the non-resetting journey stage. |
+| `companion-journal` | The Companion Journal | `.companion` / `/companion` | View Mallow's cosmetic companion milestone. |
+| `rivalry-hall` | The Rivalry Hall | `.rivals` / `/rivals` | View private mutual invitations and post-acceptance two-player match records. |
 
 The Wayfinder is generated from this registry rather than maintaining a second handwritten list. Every destination has a stable internal ID, a title, a description and a registered command route. Tests verify the current command targets and visible destinations. The Ledger points only to the read-only wallet summary; it does not enable spending or trading.
 
@@ -32,11 +36,11 @@ The following World Loom proposals are not implemented by the Wayfinder itself a
 
 - Tavern tables, host controls, parties, guild rooms, rumour circles and NPC interactions.
 - The wider Atlas graph beyond the five-location starter map, region-specific discovery layers, expeditions and story chapters.
-- Quests, Puzzle Vaults, inventory, crafting, collections and homesteads.
+- Authored story quests, Puzzle Vaults, inventory, crafting, collections and homesteads. The optional daily quest board is implemented separately as part of the Wayfarer.
 - Moonbits spending, transfers, immutable marketplace ledger operations, reward definitions beyond first-completion milestones, and Vault checkpoints.
 - Bazaar listings, escrow, barter, contracts, settlement and dispute handling.
 
-The full design remains in [the World Loom master atlas](atlas/README.md), [Hearth/Bazaar/Communities volume](atlas/01_hearth_bazaar_and_communities.md), [Atlas/Expeditions/Story volume](atlas/02_atlas_expeditions_and_story.md), and [Economy, Vaults & Bazaar](ECONOMY_AND_VAULTS.md).
+The Wayfarer records activity days, optional daily objectives, fixed ledger rewards, cosmetic companion milestones and mutual rivalries; it does not make the wider quest/story graph live. The full design remains in [the World Loom master atlas](atlas/README.md), [Hearth/Bazaar/Communities volume](atlas/01_hearth_bazaar_and_communities.md), [Atlas/Expeditions/Story volume](atlas/02_atlas_expeditions_and_story.md), and [Economy, Vaults & Bazaar](ECONOMY_AND_VAULTS.md).
 
 ## Atlas starter destination
 

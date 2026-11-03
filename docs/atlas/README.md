@@ -1,6 +1,6 @@
 # Moonbyte World Loom — Master Atlas
 
-- Status: **Expanded product design proposal; partially connected to working code.** The initial Tavern Wayfinder navigation is implemented; the 400 system proposals and their deeper domain behavior remain proposed until each has its own implementation and tests.
+- Status: **Expanded product design proposal; partially connected to working code.** The Tavern Wayfinder, initial Atlas, optional Wayfarer quest board, cumulative activity milestones, cosmetic companion stages and mutual private rivalries are implemented; the 400 system proposals and their deeper domain behavior remain proposed until each has its own implementation and tests.
 - Scope: **400 individual system ideas across 40 connected domains.**
 - Documented idea volume: **48,295 lines** across the ten design volumes (before this index, mind map and machine-readable graph).
 - System graph: [world_graph.json](./world_graph.json) — canonical node IDs, typed edges, rationales and shared invariants.
@@ -8,7 +8,7 @@
 
 ## One world, one graph
 
-Moonbyte is designed as one connected world with several player-facing entrances. The Tavern is the social home and discovery layer. The Atlas and Expeditions make the world explorable. Quests and Vaults provide authored goals. Crafting converts known resources into useful objects. Collections preserve discoveries. The Bazaar circulates eligible earned items through fixed-price trades and transparent barter. Guilds and parties coordinate shared play. The Arcade supplies short sessions and skill practice. Character, mastery, homes and festivals turn the results into personal and community identity.
+Moonbyte is designed as one connected world with several player-facing entrances. The Tavern is the social home and discovery layer. The Atlas and Expeditions make the world explorable. The Wayfarer provides optional daily objectives; the broader Quests and Vaults domains provide authored long-form goals. Crafting converts known resources into useful objects. Collections preserve discoveries. The Bazaar circulates eligible earned items through fixed-price trades and transparent barter. Guilds and parties coordinate shared play. The Arcade supplies short sessions and skill practice. Character, mastery, homes and festivals turn the results into personal and community identity.
 
 The graph is not a collection of unrelated command ideas. It is a contract map: each feature has a stable identifier, one owning domain, typed incoming/outgoing connections, an explicit reason for every cross-system relationship and a consistent implementation boundary.
 
@@ -82,11 +82,11 @@ The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`
 
 ## Implemented vertical-slice links
 
-The initial Tavern home and Wayfinder are implemented in [Tavern and Wayfinder](../TAVERN.md). Its live destinations are the Common Tables, player profile, game record, earned-only ledger, achievement gallery and initial Atlas.
+The initial Tavern home and Wayfinder are implemented in [Tavern and Wayfinder](../TAVERN.md). Its ten live destinations include the Common Tables, player profile, game record, earned-only ledger, achievement gallery, initial Atlas, daily Quest Board, Wayfarer Thread, Companion Journal and private Rivalry Hall.
 
-The Atlas first slice is implemented in [Atlas starter map](../ATLAS.md): five authored locations, reciprocal direct-route connections, personal current-location state, persistent discoveries and bounded travel commands. This does **not** mark the full Atlas domain as complete. The remaining Atlas concepts in Volume II, along with Expeditions, Quests, community maps and narrative routes, remain proposals.
+The Atlas first slice is implemented in [Atlas starter map](../ATLAS.md): five authored locations, reciprocal direct-route connections, personal current-location state, persistent discoveries and bounded travel commands. This does **not** mark the full Atlas domain as complete. The remaining Atlas concepts in Volume II, along with Expeditions, authored story-quest networks, community maps and narrative routes, remain proposals. The separate fixed-catalogue daily quest board is part of the implemented Wayfarer slice.
 
-The player foundation, completed-game statistics, achievements and Moonbits ledger are described in [Player Profiles](../PLAYER_PROFILES.md). The World Loom graph remains a design contract for every node that has not shipped with its own ownership, persistence, permissions, privacy handling and acceptance tests.
+The player foundation, completed-game statistics, achievements, Moonbits ledger and Wayfarer records are described in [Player Profiles](../PLAYER_PROFILES.md) and [Wayfarer](../WAYFARER.md). The World Loom graph remains a design contract for every node that has not shipped with its own ownership, persistence, permissions, privacy handling and acceptance tests.
 
 ## How to use this atlas
 

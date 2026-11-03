@@ -243,3 +243,12 @@ The current playable slice is deliberately small and honest about its limits:
 - Player profiles, preferences, privacy inventory, private JSON export, confirmed deletion, completed result metadata, aggregate per-game statistics and the first-completion wallet/ledger are implemented. Achievements, inventory, spending/transfers, Vaults, Bazaar, durable Discord interaction idempotency and the live web game API remain unimplemented.
 
 This is a functional vertical slice for game rules, player identity, completed-result/stat persistence, private data controls, Discord commands, PostgreSQL transactions and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is achievements/inventory progression, idempotent Discord interaction handling and concurrent-session load tests.
+
+
+## Wayfarer progression and rivalries
+
+`wayfarer::WayfarerStore` owns daily quest rotations, activity-day history, cosmetic companion milestones and opt-in rivalries. Daily quests use a fixed objective catalogue. PostgreSQL supplies each player's daily UUID seed; a domain-separated SHA-512 derivation performs a Fisher–Yates selection with rejection sampling so modulo bias is avoided. The SHA-512 fingerprint is an audit label for the stored rotation; SHA-512 is not treated as entropy, encryption or proof of fair game outcomes.
+
+Game completion calls the Wayfarer progress hook inside the existing result/stat/wallet transaction. First-time Atlas discoveries call the exploration hook inside the Atlas travel transaction; Atlas revisits are not new activity. Quest rewards use a unique wallet-ledger idempotency key and the same transaction as the claimed status. Companion milestones depend on cumulative activity days, do not expire and have no gameplay effect.
+
+Rivalries are canonicalized to one participant pair and begin as pending invitations. Only the recipient may accept or decline; matching bilateral invitations activate directly because both sides have independently opted in. Completed two-player sessions update a record only while its status is active. Rivalry records are private and are covered by player export/deletion.

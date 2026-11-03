@@ -1,4 +1,5 @@
 import { GameLibrary } from "@/components/game-library";
+import { WayfarerSection } from "@/components/wayfarer-section";
 
 export default function HomePage() {
   return (
@@ -18,6 +19,7 @@ export default function HomePage() {
         </a>
         <nav className="header-nav" aria-label="Main navigation">
           <a className="header-nav__active" href="#library">Library</a>
+          <a href="#wayfarer">Journey</a>
           <a href="#how-it-works">How it works</a>
           <a href="https://github.com/VireonNoctis/Moonbyte" rel="noreferrer" target="_blank">Source ↗</a>
         </nav>
@@ -68,9 +70,11 @@ export default function HomePage() {
         <GameLibrary />
       </section>
 
+      <WayfarerSection />
+
       <section className="how-section" id="how-it-works" aria-labelledby="how-title">
         <div className="how-section__intro">
-          <div className="eyebrow"><span>03</span> MADE FOR THE MOMENT</div>
+          <div className="eyebrow"><span>04</span> MADE FOR THE MOMENT</div>
           <h2 id="how-title">A game should fit <em>your life.</em></h2>
           <p>Moonbyte is built around meaningful play, not pressure to keep up.</p>
         </div>

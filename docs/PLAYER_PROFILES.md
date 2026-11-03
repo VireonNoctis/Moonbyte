@@ -1,6 +1,6 @@
 # Player Profiles and Privacy Controls
 
-- Status: Player profiles/preferences, versioned Terms/Privacy acceptance, game results/statistics, five persistent achievement milestones, earned-only Moonbits, the five-location Atlas, per-player discovery history, version 6 private export and confirmed deletion are implemented.
+- Status: Player profiles/preferences, versioned Terms/Privacy acceptance, game results/statistics, five persistent achievements, earned-only Moonbits, the five-location Atlas, Wayfarer activity, daily quests, cosmetic companion milestones, opt-in rivalries, version 7 private export and confirmed deletion are implemented.
 - Storage: PostgreSQL through SQLx.
 - Owner identity: Discord user ID. Moonbyte does not collect email addresses, real names, phone numbers or precise location for these features.
 
@@ -34,7 +34,7 @@ The independent user_consents table stores one current record per Discord user I
 | accepted_at | Timestamp of the explicit acceptance. |
 | accepted_in_guild_id | Optional server where the user accepted; the agreement remains global to their Discord account. |
 
-A material change to either document requires a version bump in the Rust consent module. The next ordinary command then prompts the user to review and accept the current versions. The consent record is included in the data inventory and version 6 export, and is deleted in the same account-deletion transaction as the player's other records.
+A material change to either document requires a version bump in the Rust consent module. The next ordinary command then prompts the user to review and accept the current versions. The consent record is included in the data inventory and version 7 export, and is deleted in the same account-deletion transaction as the player's other records.
 
 ## Completed-game records
 
@@ -98,9 +98,23 @@ The first Atlas slice is a five-location authored map. It stores a player's curr
 - Travel, current-location updates and visit counters are persisted in PostgreSQL.
 - Reopening the Atlas is read-only after initialisation. Travelling to the current location is a no-op.
 - Visiting a location does not grant Moonbits, achievements, items or repeatable rewards.
-- The wider Atlas design, Expeditions, quests, narrative and community mapping remain proposals.
+- The expanded Atlas design, Expeditions, narrative and community mapping remain proposals.
 
-The database stores `player_world_state` and `player_atlas_discoveries`, both owned by `player_profiles` through foreign keys. Atlas locations and visit history are included in the private data inventory, version 6 export and account deletion transaction. The separate user_consents record is exported and deleted alongside these player-owned records.
+The database stores `player_world_state` and `player_atlas_discoveries`, both owned by `player_profiles` through foreign keys. Atlas locations and visit history are included in the private data inventory, version 7 export and account deletion transaction. Wayfarer progress is described below.
+
+## Wayfarer activity, daily quests and companion milestones
+
+The Wayfarer is a cumulative, non-punitive player journey. A completed game or first-time Atlas discovery records one activity day per player/date. Repeated games and visits on the same date do not inflate the day count. Missing days do not reset or reduce progress.
+
+The daily board selects three optional objectives for each player/date from a fixed catalogue: complete one game (5 Moonbits), complete three games (8), win one game (8), complete two different game types (10), or discover one new Atlas location (7). The board does not accept objectives automatically. Players choose with `.quest accept <id>`. Once completed, a player claims with `.quest claim <id>`. The fixed amount is credited via `wallet_ledger_entries` under a unique player/date/quest idempotency key in the same transaction as marking the objective claimed. No random reward table, purchase, stake, cash-out or wager is involved.
+
+PostgreSQL generates a UUID seed once per player/date. SHA-512 with a separate domain derives a deterministic permutation using rejection sampling for unbiased index selection. A fingerprint of the seed and date is visible as a short rotation reference and included in the export; the private seed is excluded. SHA-512 is a hash, not entropy or encryption.
+
+Mallow is the first cosmetic companion. The stages are New Companion (1 day), Pathfinder (3), Trail Scout (7), Wayfinder (14), Starbound (30), Constellation Keeper (60) and Elder Star (100). Stages are cosmetic and do not grant competitive advantages, item drops or currency.
+
+## Mutual rivalries
+
+`.rival declare @player` creates a pending invitation to an existing Moonbyte player. Only the recipient may accept or decline. If both players independently send one another a declaration, the rivalry activates because both have explicitly opted in. Completed two-player game results are counted only after activation. Each participant receives a private view from `.rivals`; there is no public rivalry leaderboard.
 
 ## Commands
 
@@ -114,6 +128,10 @@ The database stores `player_world_state` and `player_atlas_discoveries`, both ow
 | `.stats` | Privately show completed game totals, wins and draws by game. |
 | `.wallet` | Privately show the Moonbits balance and number of earned ledger entries. |
 | `.achievements` | Privately list the player's unlocked milestones. |
+| `.quests` | Open the optional daily board. |
+| `.quest accept <id>` / `.quest claim <id>` | Opt in to an objective or claim its fixed completed reward. |
+| `.wayfarer` / `.companion` | View cumulative journey and companion milestones. |
+| `.rivals` / `.rival` | View or manage mutual rivalry invitations and records. |
 | `.atlas` | Privately show the current world location, known places and connected routes. |
 | `.travel mosslight-grove` | Travel to a directly connected location; use the Atlas for available routes. |
 | `.privacy_data` | Privately inspect profile, session, result, statistic, achievement, wallet/ledger and Atlas record counts. |
@@ -125,7 +143,7 @@ The same commands are registered as slash commands. When invoked in a guild, per
 
 ## Export format
 
-The version 6 JSON export contains:
+The version 7 JSON export contains:
 
 - Export format version and generation timestamp.
 - Player profile and saved preferences, when a profile exists.
@@ -155,7 +173,7 @@ Deletion runs in one PostgreSQL transaction:
 
 Game state is stored as one shared snapshot. Removing only one participant ID from that snapshot would require a domain migration and could leave a broken or partially recoverable session. The current safe behavior therefore ends every stored session containing the requester, including sessions shared with other players. The command explains this before asking for the explicit `DELETE` confirmation.
 
-The operation covers the current player-owned schema: `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Result rows are removed with their parent sessions; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas tables also have foreign-key ownership by the profile. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
+The operation covers the current player-owned schema: `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state`, `player_atlas_discoveries`, `player_wayfarer_days`, `player_quest_rotations`, `player_daily_quests` and `player_rivalries`. Result rows are removed with their parent sessions; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas tables also have foreign-key ownership by the profile. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
 
 ## Engineering invariants
 
@@ -164,11 +182,13 @@ The operation covers the current player-owned schema: `player_profiles`, `user_c
 - Private account data is delivered by DM from guild invocations.
 - Export is scoped to the authenticated player and the current schema.
 - Policy acceptance is versioned, user-owned data and is included in export and deletion.
-- Deletion of player, session, achievement, wallet and Atlas records is atomic.
+- Deletion of player, session, achievement, wallet, Atlas, Wayfarer, quest and rivalry records is atomic.
 - Achievement unlocks are checked against server-owned aggregate statistics and stored once per player/achievement.
 - The first-completion milestone is fixed, disclosed and non-random.
 - Ledger writes and wallet balance updates share the game-completion transaction.
 - A unique player/game idempotency key prevents repeat completion credits.
 - No purchases, cash-out, wagering, staking, or player transfers exist.
 - Future player-owned tables must extend the inventory, export, deletion and retention contract in the same implementation change.
+- Quest seeds are private; player exports include only rotation fingerprints and player-facing quest history.
+- Rivalry match records are private to their two participants and are only collected after mutual acceptance.
 - PostgreSQL tests cover profile creation/editing, preferences, result/stat persistence, first-completion currency, duplicate-completion protection, export, inventory and linked-record deletion.

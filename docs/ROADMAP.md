@@ -1,7 +1,7 @@
 # Moonbyte Roadmap
 
 - Status: In progress.
-- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence/recovery, player profiles/preferences, completed-game results/statistics, five achievement milestones, earned-only Moonbits wallet/ledger, the Tavern Wayfinder, custom emoji registry, and the initial five-location Atlas with private discoveries are implemented. Inventory, quests, Expeditions, production recovery operations and the live visual-game API remain.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence/recovery, player profiles/preferences, completed-game results/statistics, five achievement milestones, earned-only Moonbits wallet/ledger, the 10-destination Tavern Wayfinder, the five-location Atlas, optional daily quests, cumulative companion milestones and mutually accepted private rivalries are implemented. Inventory, crafting, Expeditions, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -39,6 +39,7 @@ Deliverables:
 - [x] Central custom-emoji registry with safe Unicode fallbacks for unconfigured upload IDs.
 - [x] Five achievement milestones with idempotent unlocks.
 - [x] Initial five-location Atlas, personal discovery state and direct-route travel with PostgreSQL/privacy coverage.
+- [x] Wayfarer activity days, optional fixed-reward daily quests, SHA-512 rotation fingerprints, cumulative cosmetic companion milestones, and mutually accepted private rivalry records.
 - [x] Game catalogue and play/session commands for the first four games.
 - [x] Clear configuration and startup errors.
 - [ ] Structured logging and graceful shutdown.
@@ -105,12 +106,13 @@ Deliverables:
 - Moonbyte-original mini-games.
 - Puzzle/strategy foundation and optional daily challenge.
 - [x] Durable per-game statistics for completed sessions.
-- Player achievements, inventory, and cosmetic unlocks.
+- [x] Optional fixed-catalogue daily quests, cumulative Wayfarer activity and cosmetic companion milestones.
+- Player inventory and additional cosmetic unlocks.
 - Deterministic shops and earned rewards.
 - [x] Profile and preference commands.
 - [x] Current-schema data inventory, private JSON export and confirmed profile/session deletion.
 - [x] Completed-result metadata and per-game statistics for the current game catalogue.
-- Player achievements, inventory, quest progress and progression.
+- Player inventory and authored long-form quest/story progression (the daily Wayfarer board is implemented separately).
 
 Suggested first originals:
 - Memory match.
@@ -285,8 +287,22 @@ Do not implement the full breadth at once. Release one connected, testable verti
 
 ## Current implementation increment — player foundation, Tavern and Atlas starter map
 
-The implementation combines four transport-independent Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, five idempotent achievements, an earned-only Moonbits wallet/ledger and private data controls. The Tavern Wayfinder routes to six live destinations: Common Tables, player profile, Chronicle, Ledger, Achievement Gallery and the initial Atlas.
+The implementation combines four transport-independent Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, five idempotent achievements, an earned-only Moonbits wallet/ledger and private data controls. The Tavern Wayfinder routes to ten live destinations: Common Tables, player profile, Chronicle, Ledger, Achievement Gallery, Atlas, Quest Board, Wayfarer Thread, Companion Journal and Rivalry Hall.
 
-The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas data is part of the current privacy inventory, version 6 export and confirmed deletion flow. Versioned consent records are included in the same export and deletion flow.
+The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas and Wayfarer data are part of the current privacy inventory, version 7 export and confirmed deletion flow. Versioned consent records are included in the same export and deletion flow.
 
 This increment does **not** mark the full player platform or World Loom complete. Expeditions, quests, story, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
+
+
+## Phase 2 — Wayfarer progression slice
+
+**Status: Implemented on PR #3; CI verification pending for this branch update.**
+
+- [x] Daily board assigns three stable objectives per player/day from a fixed catalogue.
+- [x] PostgreSQL UUID seed plus domain-separated SHA-512 selection with unbiased index mapping.
+- [x] Game completions and first-time Atlas discoveries update active objectives in their source transaction.
+- [x] Fixed quest rewards use the existing idempotent Moonbits ledger.
+- [x] Cumulative activity days unlock cosmetic companion stages; missed days never subtract progress.
+- [x] Private rival invitations require mutual acceptance; only later completed two-player games count.
+- [x] Export, inventory and confirmed deletion cover every Wayfarer/rivalry table.
+- [ ] Matchmaking/rematch invitations, companion collection, expedition content and the live React game surface remain future milestones.

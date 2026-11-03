@@ -83,6 +83,10 @@ pub struct ProfileInventory {
     pub wallet_ledger_records: i64,
     pub world_state_record: bool,
     pub atlas_discovery_records: i64,
+    pub wayfarer_active_days: i64,
+    pub quest_rotation_records: i64,
+    pub daily_quest_records: i64,
+    pub rivalry_records: i64,
     pub session_retention: &'static str,
 }
 
@@ -105,6 +109,10 @@ pub struct PlayerDeletion {
     pub wallet_removed: bool,
     pub world_state_removed: bool,
     pub atlas_discoveries_removed: u64,
+    pub wayfarer_days_removed: u64,
+    pub quest_rotations_removed: u64,
+    pub daily_quest_records_removed: u64,
+    pub rivalry_records_removed: u64,
     pub consent_record_removed: bool,
     pub profile_removed: bool,
 }
@@ -170,11 +178,43 @@ struct ExportedConsent {
     accepted_in_guild_id: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedDailyQuest {
+    quest_date: String,
+    quest_id: String,
+    status: String,
+    progress: i16,
+    target: i16,
+    reward_moonbits: i64,
+    completed_at: Option<String>,
+    claimed_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ExportedQuestRotation {
+    quest_date: String,
+    commitment_sha512: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ExportedRivalry {
+    rivalry_id: i64,
+    opponent_discord_user_id: String,
+    status: String,
+    invitation_sent_by_you: bool,
+    matches_played: i64,
+    your_wins: i64,
+    opponent_wins: i64,
+    draws: i64,
+    created_at: String,
+    updated_at: String,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 10],
+    data_categories: [&'static str; 14],
     profile: Option<PlayerProfile>,
     consent_record: Option<ExportedConsent>,
     game_sessions: Vec<ExportedSession>,
@@ -185,6 +225,10 @@ struct PlayerExport {
     wallet_ledger_entries: Vec<ExportedWalletEntry>,
     world_state: Option<ExportedWorldState>,
     atlas_discoveries: Vec<ExportedAtlasDiscovery>,
+    wayfarer_activity_days: Vec<String>,
+    daily_quests: Vec<ExportedDailyQuest>,
+    quest_rotation_fingerprints: Vec<ExportedQuestRotation>,
+    rivalries: Vec<ExportedRivalry>,
     limitations: [&'static str; 2],
 }
 
@@ -377,6 +421,30 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
+        let wayfarer_active_days: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_wayfarer_days WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let quest_rotation_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_quest_rotations WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let daily_quest_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_daily_quests WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let rivalry_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_rivalries WHERE player_a_id = $1 OR player_b_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
 
         Ok(ProfileInventory {
             profile_record,
@@ -389,7 +457,11 @@ impl ProfileStore {
             wallet_ledger_records,
             world_state_record,
             atlas_discovery_records,
-            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics, wallet milestones and Atlas discoveries remain until account deletion.",
+            wayfarer_active_days,
+            quest_rotation_records,
+            daily_quest_records,
+            rivalry_records,
+            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics, wallet milestones, Atlas discoveries and Wayfarer history remain until account deletion.",
         })
     }
 
@@ -545,6 +617,82 @@ impl ProfileStore {
         )
         .collect();
 
+        let wayfarer_activity_days: Vec<String> = sqlx::query_scalar(
+            "SELECT activity_date::text FROM player_wayfarer_days \
+             WHERE discord_user_id = $1 ORDER BY activity_date ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let daily_quests = sqlx::query_as::<_, (String, String, String, i16, i16, i64, Option<String>, Option<String>)>(
+            "SELECT quest_date::text, quest_id, status, progress, target, reward_moonbits, \
+             completed_at::text, claimed_at::text FROM player_daily_quests \
+             WHERE discord_user_id = $1 ORDER BY quest_date DESC, quest_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|(quest_date, quest_id, status, progress, target, reward_moonbits, completed_at, claimed_at)| {
+            ExportedDailyQuest {
+                quest_date,
+                quest_id,
+                status,
+                progress,
+                target,
+                reward_moonbits,
+                completed_at,
+                claimed_at,
+            }
+        })
+        .collect();
+
+        // Export only the SHA-512 rotation fingerprint. The private seed is never
+        // included in player exports.
+        let quest_rotation_fingerprints = sqlx::query_as::<_, (String, String)>(
+            "SELECT quest_date::text, commitment_sha512 FROM player_quest_rotations \
+             WHERE discord_user_id = $1 ORDER BY quest_date DESC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|(quest_date, commitment_sha512)| ExportedQuestRotation {
+            quest_date,
+            commitment_sha512,
+        })
+        .collect();
+
+        let rivalries = sqlx::query_as::<_, (i64, String, String, bool, i64, i64, i64, i64, String, String)>(
+            "SELECT rivalry_id, CASE WHEN player_a_id = $1 THEN player_b_id ELSE player_a_id END, \
+             status, invited_by = $1, matches_played, \
+             CASE WHEN player_a_id = $1 THEN player_a_wins ELSE player_b_wins END, \
+             CASE WHEN player_a_id = $1 THEN player_b_wins ELSE player_a_wins END, \
+             draws, created_at::text, updated_at::text \
+             FROM player_rivalries WHERE player_a_id = $1 OR player_b_id = $1 \
+             ORDER BY created_at ASC, rivalry_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|(rivalry_id, opponent_discord_user_id, status, invitation_sent_by_you, matches_played, your_wins, opponent_wins, draws, created_at, updated_at)| {
+            ExportedRivalry {
+                rivalry_id,
+                opponent_discord_user_id,
+                status,
+                invitation_sent_by_you,
+                matches_played,
+                your_wins,
+                opponent_wins,
+                draws,
+                created_at,
+                updated_at,
+            }
+        })
+        .collect();
+
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
             .fetch_one(&self.pool)
             .await?;
@@ -567,7 +715,7 @@ impl ProfileStore {
             .collect();
 
         let export = PlayerExport {
-            format_version: 6,
+            format_version: 7,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -580,6 +728,10 @@ impl ProfileStore {
                 "Moonbits wallet ledger entries",
                 "current Atlas location",
                 "Atlas discoveries and visit history",
+                "Wayfarer activity days",
+                "daily quest selections and progress",
+                "SHA-512 daily quest rotation fingerprints",
+                "mutual rivalry invitations and match records",
             ],
             profile,
             consent_record,
@@ -591,6 +743,10 @@ impl ProfileStore {
             wallet_ledger_entries,
             world_state,
             atlas_discoveries,
+            wayfarer_activity_days,
+            daily_quests,
+            quest_rotation_fingerprints,
+            rivalries,
             limitations: [
                 "Discord independently retains interactions under its own policies.",
                 "This export includes records in the current Moonbyte PostgreSQL schema only.",
@@ -678,6 +834,35 @@ impl ProfileStore {
                 .await?
                 .rows_affected();
 
+        let rivalry_records_removed = sqlx::query(
+            "DELETE FROM player_rivalries WHERE player_a_id = $1 OR player_b_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let daily_quest_records_removed = sqlx::query(
+            "DELETE FROM player_daily_quests WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let quest_rotations_removed = sqlx::query(
+            "DELETE FROM player_quest_rotations WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let wayfarer_days_removed = sqlx::query(
+            "DELETE FROM player_wayfarer_days WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+
         let consent_record_removed =
             sqlx::query("DELETE FROM user_consents WHERE discord_user_id = $1")
                 .bind(player_id)
@@ -701,6 +886,10 @@ impl ProfileStore {
             wallet_removed,
             world_state_removed,
             atlas_discoveries_removed,
+            wayfarer_days_removed,
+            quest_rotations_removed,
+            daily_quest_records_removed,
+            rivalry_records_removed,
             consent_record_removed,
             profile_removed,
         })
@@ -890,6 +1079,10 @@ mod postgres_tests {
         assert_eq!(inventory.wallet_ledger_records, 1);
         assert!(inventory.world_state_record);
         assert_eq!(inventory.atlas_discovery_records, 2);
+        assert_eq!(inventory.wayfarer_active_days, 1);
+        assert_eq!(inventory.quest_rotation_records, 1);
+        assert_eq!(inventory.daily_quest_records, 3);
+        assert_eq!(inventory.rivalry_records, 0);
 
         let export = store.export_json(&player_id).await.expect("export data");
         assert!(export.contains("Moonbyte Pilot"));
@@ -912,7 +1105,15 @@ mod postgres_tests {
         assert!(export.contains("current Atlas location"));
         assert!(export.contains("atlas_discoveries"));
         assert!(export.contains("mosslight-grove"));
-        assert!(export.contains("\"format_version\": 6"));
+        assert!(export.contains("Wayfarer activity days"));
+        assert!(export.contains("daily quest selections and progress"));
+        assert!(export.contains("SHA-512 daily quest rotation fingerprints"));
+        assert!(export.contains("mutual rivalry invitations and match records"));
+        assert!(export.contains("wayfarer_activity_days"));
+        assert!(export.contains("daily_quests"));
+        assert!(export.contains("quest_rotation_fingerprints"));
+        assert!(!export.contains("rotation_seed"), "private quest seed must not be exported");
+        assert!(export.contains("\"format_version\": 7"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
@@ -927,6 +1128,10 @@ mod postgres_tests {
         assert!(deletion.wallet_removed);
         assert!(deletion.world_state_removed);
         assert_eq!(deletion.atlas_discoveries_removed, 2);
+        assert_eq!(deletion.wayfarer_days_removed, 1);
+        assert_eq!(deletion.quest_rotations_removed, 1);
+        assert_eq!(deletion.daily_quest_records_removed, 3);
+        assert_eq!(deletion.rivalry_records_removed, 0);
         assert!(deletion.consent_record_removed);
         assert!(deletion.profile_removed);
         assert!(
@@ -946,6 +1151,10 @@ mod postgres_tests {
         assert_eq!(deleted_inventory.wallet_ledger_records, 0);
         assert!(!deleted_inventory.world_state_record);
         assert_eq!(deleted_inventory.atlas_discovery_records, 0);
+        assert_eq!(deleted_inventory.wayfarer_active_days, 0);
+        assert_eq!(deleted_inventory.quest_rotation_records, 0);
+        assert_eq!(deleted_inventory.daily_quest_records, 0);
+        assert_eq!(deleted_inventory.rivalry_records, 0);
         assert!(!deleted_inventory.consent_record);
         assert!(
             !consents
