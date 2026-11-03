@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add a first-use agreement gate for versioned Terms of Service and Privacy Policy documents, with legal and privacy commands available before acceptance.
+- Add the versioned user-consent record to data inventory, version 6 export and confirmed account deletion.
+- Add the Terms of Service document and serve both full policies as private slash-command attachments.
+- Add prefix-only shortcuts for selected gameplay and navigation commands; keep help, Terms, consent and privacy commands full-length.
+- Synchronize guild command-setting caches with PostgreSQL LISTEN/NOTIFY and clean guild-owned sessions/settings after actual bot removal.
+
 - Add PostgreSQL-backed per-server command prefixes with a safe process-default fallback.
 - Add a Manage Server-only prefix command for viewing, setting, resetting and routing bot commands to one server channel.
 - Apply command-channel restrictions consistently to prefix and slash commands while keeping configuration available from any channel.

@@ -43,6 +43,81 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+#[poise::command(prefix_command, slash_command, ephemeral)]
+pub async fn terms(ctx: Context<'_>) -> Result<(), Error> {
+    let attachment = CreateAttachment::bytes(
+        TERMS_DOCUMENT.as_bytes().to_vec(),
+        "moonbyte-terms-of-service.md",
+    );
+    ctx.send(
+        poise::CreateReply::new()
+            .content(format!(
+                "Moonbyte Terms of Service, version {}. The complete document is attached. Please review it before accepting.",
+                crate::consent::TERMS_VERSION
+            ))
+            .attachment(attachment)
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, slash_command, ephemeral)]
+pub async fn consent(
+    ctx: Context<'_>,
+    #[description = "Type accept after reviewing the Terms of Service and Privacy Policy"]
+    #[rest]
+    action: Option<String>,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
+    match action.as_deref().map(str::trim) {
+        Some(value) if value.eq_ignore_ascii_case("accept") => {
+            let guild_id = ctx.guild_id().map(|id| id.to_string());
+            let record = ctx
+                .data()
+                .consents()
+                .accept(&player_id, guild_id.as_deref())
+                .await?;
+            send_private(
+                ctx,
+                format!(
+                    "Agreement recorded. Terms of Service: v{}; Privacy Policy: v{}; accepted at {}. You're all set. Run your previous command again to continue.",
+                    record.terms_version,
+                    record.privacy_version,
+                    record.accepted_at
+                ),
+            )
+            .await?;
+        }
+        Some(_) => {
+            send_private(
+                ctx,
+                format!(
+                    "To agree to both current documents, review the Terms of Service and Privacy Policy, then run {prefix}consent accept."
+                ),
+            )
+            .await?;
+        }
+        None => {
+            let current = ctx.data().consents().is_current(&player_id).await?;
+            let message = if current {
+                format!(
+                    "Your agreement is up to date. Terms of Service: v{}; Privacy Policy: v{}.",
+                    crate::consent::TERMS_VERSION,
+                    crate::consent::PRIVACY_VERSION
+                )
+            } else {
+                format!(
+                    "Agreement required. Read {prefix}terms and {prefix}privacy, then run {prefix}consent accept."
+                )
+            };
+            send_private(ctx, message).await?;
+        }
+    }
+    Ok(())
+}
+
 #[poise::command(prefix_command, slash_command, guild_only, ephemeral)]
 pub async fn prefix(
     ctx: Context<'_>,
@@ -251,10 +326,23 @@ fn render_guild_settings(settings: Option<&GuildCommandSettings>, default_prefix
     )
 }
 
-#[poise::command(prefix_command, slash_command)]
+#[poise::command(prefix_command, slash_command, ephemeral)]
 pub async fn privacy(ctx: Context<'_>) -> Result<(), Error> {
     let prefix = ctx.data().command_prefix(ctx.guild_id());
-    ctx.say(render_privacy_overview(&prefix)).await?;
+    let attachment = CreateAttachment::bytes(
+        PRIVACY_DOCUMENT.as_bytes().to_vec(),
+        "moonbyte-privacy-policy.md",
+    );
+    ctx.send(
+        poise::CreateReply::new()
+            .content(format!(
+                "{} The complete Privacy Policy is attached. Please review it before accepting.",
+                render_privacy_overview(&prefix)
+            ))
+            .attachment(attachment)
+            .ephemeral(true),
+    )
+    .await?;
     Ok(())
 }
 
@@ -270,6 +358,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Completed result records retained: {}\n\
          Per-game statistic rows: {}\n\
          Achievement records: {}\n\
+         Policy acceptance record: {}\n\
          Wallet record: {}\n\
          Wallet ledger entries: {}\n\
          Atlas world-state record: {}\n\
@@ -286,6 +375,11 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
         inventory.game_result_records,
         inventory.game_stat_rows,
         inventory.achievement_rows,
+        if inventory.consent_record {
+            "present"
+        } else {
+            "not recorded"
+        },
         if inventory.wallet_record {
             "present"
         } else {
@@ -338,7 +432,7 @@ pub async fn privacy_delete(
             ctx,
             format!(
                 "**Delete your Moonbyte profile?**\n\n\
-             This removes your profile, unlocked achievements, Moonbits wallet and ledger \
+             This removes your profile, policy-acceptance record, unlocked achievements, Moonbits wallet and ledger \
              entries, Atlas location/discovery records, and every stored game-session snapshot \
              containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
@@ -367,7 +461,8 @@ pub async fn privacy_delete(
          Wallet record removed: {}\n\
          Wallet ledger entries removed: {}\n\
          Atlas world-state record removed: {}\n\
-         Atlas discovery records removed: {}\n\n\
+         Atlas discovery records removed: {}\n\
+         Policy acceptance record removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
          by other participants or infrastructure backups.",
@@ -391,7 +486,12 @@ pub async fn privacy_delete(
         } else {
             "no record existed"
         },
-        deletion.atlas_discoveries_removed
+        deletion.atlas_discoveries_removed,
+        if deletion.consent_record_removed {
+            "yes"
+        } else {
+            "no record existed"
+        }
     );
     if let Some(dm) = private_channel {
         dm.say(ctx.http(), receipt).await?;
@@ -788,6 +888,29 @@ pub async fn leave(
 }
 
 pub fn all() -> Vec<poise::Command<Data, Error>> {
+    let mut tavern_command = tavern();
+    tavern_command.aliases = vec!["t".into()].into();
+    let mut games_command = games();
+    games_command.aliases = vec!["g".into()].into();
+    let mut play_command = play();
+    play_command.aliases = vec!["p".into()].into();
+    let mut join_command = join();
+    join_command.aliases = vec!["j".into()].into();
+    let mut leave_command = leave();
+    leave_command.aliases = vec!["l".into()].into();
+    let mut atlas_command = atlas();
+    atlas_command.aliases = vec!["a".into()].into();
+    let mut travel_command = travel();
+    travel_command.aliases = vec!["tr".into()].into();
+    let mut profile_command = profile();
+    profile_command.aliases = vec!["me".into()].into();
+    let mut wallet_command = wallet();
+    wallet_command.aliases = vec!["w".into()].into();
+    let mut stats_command = stats();
+    stats_command.aliases = vec!["st".into()].into();
+    let mut achievements_command = achievements();
+    achievements_command.aliases = vec!["ach".into()].into();
+
     let mut prefix_command = prefix();
     prefix_command.required_permissions = poise::serenity_prelude::Permissions::MANAGE_GUILD;
     prefix_command.default_member_permissions = poise::serenity_prelude::Permissions::MANAGE_GUILD;
@@ -796,27 +919,29 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         help(),
         about(),
         ping(),
+        terms(),
+        consent(),
         prefix_command,
         privacy(),
         privacy_data(),
         privacy_export(),
         privacy_delete(),
-        profile(),
+        profile_command,
         profile_edit(),
         settings(),
-        wallet(),
-        achievements(),
-        stats(),
-        tavern(),
-        atlas(),
-        travel(),
-        games(),
-        play(),
-        join(),
+        wallet_command,
+        achievements_command,
+        stats_command,
+        tavern_command,
+        atlas_command,
+        travel_command,
+        games_command,
+        play_command,
+        join_command,
         action(),
         session(),
         sessions(),
-        leave(),
+        leave_command,
     ]
 }
 
@@ -897,8 +1022,10 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}help / /help — list commands\n\
          {safe_prefix}about / /about — describe this build\n\
          {safe_prefix}ping / /ping — check responsiveness and uptime\n\
+         {safe_prefix}terms / /terms — read the Terms of Service\n\
+         {safe_prefix}consent accept / /consent — agree to the current Terms and Privacy Policy\n\
          {safe_prefix}prefix [set|channel|reset] / /prefix — configure this server's prefix and command channel (Manage Server)\n\
-         {safe_prefix}privacy / /privacy — read the current privacy overview\n\
+         {safe_prefix}privacy / /privacy — read the full Privacy Policy\n\
          {safe_prefix}privacy_data / /privacy_data — inspect your stored data\n\
          {safe_prefix}privacy_export / /privacy_export — receive a private JSON export\n\
          {safe_prefix}privacy_delete [DELETE] / /privacy_delete — confirm profile deletion\n\
@@ -917,7 +1044,11 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}action <session> <input> / /action — submit a legal game action\n\
          {safe_prefix}session <session> / /session — inspect your own session\n\
          {safe_prefix}sessions / /sessions — list your active sessions here\n\
-         {safe_prefix}leave <session> / /leave — end a session you joined\n\n\
+         {safe_prefix}leave <session> / /leave — end a session you joined\n\
+         Prefix shortcuts (prefix commands only):\n\
+         {safe_prefix}t → {safe_prefix}tavern · {safe_prefix}g → {safe_prefix}games · {safe_prefix}p → {safe_prefix}play · {safe_prefix}j → {safe_prefix}join · {safe_prefix}l → {safe_prefix}leave\n\
+         {safe_prefix}a → {safe_prefix}atlas · {safe_prefix}tr → {safe_prefix}travel · {safe_prefix}me → {safe_prefix}profile · {safe_prefix}w → {safe_prefix}wallet · {safe_prefix}st → {safe_prefix}stats · {safe_prefix}ach → {safe_prefix}achievements.\n\
+         Help, Terms, consent and all privacy commands deliberately have no shortcuts.\n\n\
          Multiplayer sessions are scoped to their originating server. Sessions expire \
          after 24 hours of inactivity."
     )
@@ -958,6 +1089,8 @@ mod tests {
             ".help / /help",
             ".about / /about",
             ".ping / /ping",
+            ".terms / /terms",
+            ".consent accept / /consent",
             ".prefix [set|channel|reset] / /prefix",
             ".privacy / /privacy",
             ".privacy_data / /privacy_data",
@@ -981,6 +1114,51 @@ mod tests {
             ".leave <session> / /leave",
         ] {
             assert!(message.contains(command), "missing help entry: {command}");
+        }
+        assert!(message.contains(".t → .tavern"));
+        assert!(message.contains(".g → .games"));
+        assert!(message.contains("Help, Terms, consent and all privacy commands deliberately have no shortcuts."));
+    }
+
+    #[test]
+    fn prefix_shortcuts_are_registered_and_legal_privacy_commands_stay_full_length() {
+        let commands = super::all();
+        let aliases = |name: &str| {
+            commands
+                .iter()
+                .find(|command| command.name.as_ref() == name)
+                .unwrap_or_else(|| panic!("missing command {name}"))
+                .aliases
+                .iter()
+                .map(|alias| alias.as_ref())
+                .collect::<Vec<_>>()
+        };
+
+        assert_eq!(aliases("tavern"), vec!["t"]);
+        assert_eq!(aliases("games"), vec!["g"]);
+        assert_eq!(aliases("play"), vec!["p"]);
+        assert_eq!(aliases("join"), vec!["j"]);
+        assert_eq!(aliases("leave"), vec!["l"]);
+        assert_eq!(aliases("atlas"), vec!["a"]);
+        assert_eq!(aliases("travel"), vec!["tr"]);
+        assert_eq!(aliases("profile"), vec!["me"]);
+        assert_eq!(aliases("wallet"), vec!["w"]);
+        assert_eq!(aliases("stats"), vec!["st"]);
+        assert_eq!(aliases("achievements"), vec!["ach"]);
+
+        for name in [
+            "help",
+            "terms",
+            "consent",
+            "privacy",
+            "privacy_data",
+            "privacy_export",
+            "privacy_delete",
+        ] {
+            assert!(
+                aliases(name).is_empty(),
+                "{name} must not have a short prefix alias"
+            );
         }
     }
 

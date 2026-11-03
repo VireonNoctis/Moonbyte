@@ -2,8 +2,8 @@ use std::{process::ExitCode, time::Duration};
 
 use moonbyte::{
     Data, Error, achievement::AchievementStore, atlas::AtlasStore, commands, config::Config,
-    database::Database, game::GameRuntime, guild_settings::GuildSettingsStore,
-    profile::ProfileStore, wallet::WalletStore,
+    consent::ConsentStore, database::Database, game::GameRuntime,
+    guild_settings::GuildSettingsStore, profile::ProfileStore, wallet::WalletStore,
 };
 use poise::serenity_prelude as serenity;
 
@@ -27,6 +27,7 @@ async fn run() -> Result<(), Error> {
     let achievements = AchievementStore::new(database.pool());
     let atlas = AtlasStore::new(database.pool());
     let guild_settings = GuildSettingsStore::new(database.pool()).await?;
+    let consents = ConsentStore::new(database.pool());
     let prefix = config.default_prefix().to_owned();
 
     // One central cleanup task enforces the 24-hour inactive-session retention
@@ -48,8 +49,37 @@ async fn run() -> Result<(), Error> {
             commands: commands::all(),
             command_check: Some(|ctx| {
                 Box::pin(async move {
-                    // Keep server configuration recoverable from every channel.
-                    if ctx.command().name.as_ref() == "prefix" {
+                    let command_name = ctx.command().name.as_ref();
+                    let legal_or_privacy_command = matches!(
+                        command_name,
+                        "terms" | "privacy" | "privacy_data" | "privacy_export"
+                            | "privacy_delete" | "consent"
+                    );
+
+                    // Legal documents and privacy controls remain available before acceptance.
+                    if !legal_or_privacy_command {
+                        let player_id = ctx.author().id.to_string();
+                        if !ctx.data().consents().is_current(&player_id).await? {
+                            let prefix = ctx
+                                .data()
+                                .command_prefix(ctx.guild_id())
+                                .replace('@', "@\u{200B}")
+                                .replace(char::from(96), "ˋ")
+                                .replace(char::from(92), "＼");
+                            ctx.send(
+                                poise::CreateReply::new()
+                                    .content(format!(
+                                        "Before you continue, please review the Terms of Service and Privacy Policy.\n\n{prefix}terms — read the Terms of Service\n{prefix}privacy — read the full Privacy Policy\n\nAfter reviewing both, run {prefix}consent accept to agree.\nAcceptance is saved against these document versions. Material policy updates require acceptance again.\n\nYour privacy commands remain available without accepting."
+                                    ))
+                                    .ephemeral(true),
+                            )
+                            .await?;
+                            return Ok(false);
+                        }
+                    }
+
+                    // Legal/privacy access and prefix configuration remain recoverable from any channel.
+                    if legal_or_privacy_command || command_name == "prefix" {
                         return Ok(true);
                     }
 
@@ -74,6 +104,26 @@ async fn run() -> Result<(), Error> {
                     Ok(false)
                 })
             }),
+            event_handler: |framework, event| {
+                Box::pin(async move {
+                    if let serenity::FullEvent::GuildDelete { incomplete, .. } = event {
+                        // Temporary outages also emit GuildDelete; retain guild data for those.
+                        if !incomplete.unavailable {
+                            let cleanup = framework
+                                .user_data
+                                .guild_settings()
+                                .remove_guild_data(&incomplete.id.to_string())
+                                .await?;
+                            eprintln!(
+                                "Moonbyte: removed {} command settings and {} active sessions from a departed guild.",
+                                cleanup.command_settings_removed,
+                                cleanup.sessions_removed
+                            );
+                        }
+                    }
+                    Ok(())
+                })
+            },
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: None,
                 dynamic_prefix: Some(|partial| {
@@ -101,6 +151,7 @@ async fn run() -> Result<(), Error> {
             let achievements = achievements.clone();
             let atlas = atlas.clone();
             let guild_settings = guild_settings.clone();
+            let consents = consents.clone();
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(Data::new(
@@ -111,6 +162,7 @@ async fn run() -> Result<(), Error> {
                     achievements,
                     atlas,
                     guild_settings,
+                    consents,
                 ))
             })
         })

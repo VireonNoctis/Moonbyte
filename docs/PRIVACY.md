@@ -1,7 +1,8 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, five achievement milestones, an earned-only Moonbits wallet/ledger, a five-location Atlas with personal discoveries, data inventory, private version 5 JSON export and confirmed deletion across all current player-owned tables. Inventory, quests, Expeditions, Vaults, spending and Bazaar systems remain planned.
+- Version: 1.0.0.
+- Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, five achievement milestones, an earned-only Moonbits wallet/ledger, a five-location Atlas with personal discoveries, versioned Terms/Privacy acceptance, data inventory, private version 6 JSON export and confirmed deletion across all current player-owned tables. Inventory, quests, Expeditions, Vaults, spending and Bazaar systems remain planned.
 - Last updated: 2026-11-03.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
@@ -22,7 +23,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-The current runtime stores player profiles/preferences, game-session snapshots, completed result metadata, per-game statistics, achievement milestones, earned-only wallet/ledger records and personal Atlas location/discovery state in PostgreSQL. It does not yet persist inventory, quests, Expeditions, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Guild command-routing records are separate from player-owned data. They contain the guild ID, custom prefix, optional command-channel ID, last editor ID and timestamps. They are not included in a player's JSON export or player deletion. Resetting the prefix removes the guild override. Guild settings must be removed when the bot is uninstalled or a guild leaves the service; automated uninstall cleanup remains a production operations requirement.
+The current runtime stores player profiles/preferences, versioned Terms of Service and Privacy Policy acceptance, game-session snapshots, completed result metadata, per-game statistics, achievement milestones, earned-only wallet/ledger records and personal Atlas location/discovery state in PostgreSQL. It does not yet persist inventory, quests, Expeditions, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Guild command-routing records are separate from player-owned data. They contain the guild ID, custom prefix, optional command-channel ID, last editor ID and timestamps. They are not included in a player's JSON export or player deletion. Resetting the prefix removes the guild override. Guild settings must be removed when the bot is uninstalled or a guild leaves the service; automated uninstall cleanup remains a production operations requirement.
 
 Every future persisted feature must extend the same inventory/export/deletion contract before release.
 
@@ -43,6 +44,7 @@ The bot may process or store these categories when the relevant feature is enabl
 | Atlas exploration | Current location ID, discovered location IDs, first discovery time, last visit time and visit count. | Resume the player's position and show their own charted places. |
 | Future inventory and quests | Items, authored quest progress and checkpoints. | Not currently stored; requires reviewed persistence and privacy handling before release. |
 | Guild settings | Guild ID, custom command prefix, optional command-channel ID, last editor and configuration timestamps. | Apply moderators' command-routing choices within that guild. |
+| Policy acceptance | Discord user ID, Terms version, Privacy Policy version, acceptance timestamp and optional guild ID. | Confirm that the user accepted the current documents before ordinary commands run. |
 | Operational diagnostics | Event type, command name, error category, timing, pseudonymous correlation ID. | Diagnose outages, bugs, rate limits, and performance without recording message contents. |
 | Security records | Limited identifiers and event metadata associated with an incident. | Protect the bot and investigate abuse. |
 
@@ -89,6 +91,7 @@ The provider list describes the intended model; it does not claim a production h
 | Active session state | While active, with a maximum 24-hour recovery window after inactivity or interruption unless a game documents a different save model. |
 | Completed game results | Expire with the parent session after 24 hours of inactivity; delete on account deletion. |
 | Player settings and aggregate statistics | Until profile deletion. |
+| Terms and Privacy acceptance | Keep the latest accepted versions until player deletion; replace the record when the user accepts a newer document version. |
 | Moonbits wallet and ledger | Until profile deletion; session expiry does not remove earned ledger entries. |
 | Achievement milestones | Until account deletion. |
 | Personal Atlas location and discovery history | Until account deletion. The authored five-location catalogue is static code, not player data. |
@@ -106,13 +109,20 @@ The current prefix and slash commands provide:
 
 | Command | Purpose |
 | --- | --- |
-| `.privacy` | Read a short privacy summary. |
+| `.terms` | Receive the current Terms of Service document. |
+| `.privacy` | Receive the full current Privacy Policy document. |
+| `.consent` | Check whether the current document versions have been accepted. |
+| `.consent accept` | Explicitly accept the current Terms of Service and Privacy Policy versions. |
 | `.privacy_data` | Privately inspect profile, session, result, statistic, achievement, wallet/ledger and Atlas record counts. |
-| `.privacy_export` | Receive a private version 5 JSON copy of profile, sessions, results, statistics, achievements, wallet/ledger and Atlas state/discoveries. |
+| `.privacy_export` | Receive a private version 6 JSON copy of profile, policy acceptance, sessions, results, statistics, achievements, wallet/ledger and Atlas state/discoveries. |
 | `.privacy_delete` | Read the deletion scope and confirmation instructions. |
 | `.privacy_delete DELETE` | Confirm deletion of the profile, statistics, achievements, wallet/ledger, Atlas records and all session snapshots containing the requester. |
 
-When invoked in a server, profile details, inventories, exports and deletion receipts are sent by direct message; they are never posted to the public channel. The export describes the current schema only and excludes other participants' Discord IDs and raw message content. If DM delivery fails, the command returns an error rather than exposing private data. The public `.privacy` overview may be shown in the invoking channel.
+When invoked in a server, profile details, inventories, exports and deletion receipts are sent by direct message; they are never posted to the public channel. The Terms and Privacy documents are delivered as private attachments for slash commands. Prefix invocations can show the documents in the channel where the command was run. The export describes the current schema only and excludes other participants' Discord IDs and raw message content. If DM delivery fails, the command returns an error rather than exposing private data. The Privacy Policy summary and attachment may be shown in the invoking channel for prefix invocations; slash-command policy attachments are ephemeral.
+
+### Consent gate
+
+Before any ordinary gameplay, profile, progression, or configuration command runs, the bot checks whether the user accepted the current Terms and Privacy Policy versions. A user who has not accepted is shown instructions for the full-document commands and the explicit acceptance command. The `.terms`, `.privacy`, `.consent`, `.privacy_data`, `.privacy_export` and `.privacy_delete` commands remain available without acceptance so users can review the documents and use privacy controls. Acceptance is keyed to the Discord user ID, stores both document versions and the acceptance timestamp, and is updated when either document version changes. Acceptance is not an analytics or advertising signal.
 
 ### Deletion flow
 
@@ -120,10 +130,10 @@ When invoked in a server, profile details, inventories, exports and deletion rec
 2. Require the requester to run the explicit second command `.privacy_delete DELETE`.
 3. Use the authenticated Discord command author as the account owner; arbitrary target IDs are not accepted.
 4. Establish the private receipt channel before changing records when deletion is invoked in a server.
-5. Lock all matching session rows and the player's current Atlas world-state row; delete linked `game_results`, session rows, `player_game_stats`, `player_achievements`, `wallet_ledger_entries`, `player_wallets`, `player_world_state`, and `player_atlas_discoveries`, then delete `player_profiles` in one PostgreSQL transaction.
+5. Lock all matching session rows and the player's current Atlas world-state row; delete linked `game_results`, session rows, `player_game_stats`, `player_achievements`, `wallet_ledger_entries`, `player_wallets`, `player_world_state`, and `player_atlas_discoveries`, then delete `user_consents` and `player_profiles` in one PostgreSQL transaction.
 6. Commit before reporting the actual deleted row counts.
 
-The current player-owned schema is `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Result records are deleted with their session; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas rows also have foreign-key ownership by the player profile, so deleting the profile cannot leave orphaned discovery data. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord's own records.
+The current player-owned schema is `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Because session state is one shared JSONB snapshot, every stored session containing the requester is removed, which can end a session for co-participants. Result records are deleted with their session; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas rows also have foreign-key ownership by the player profile, so deleting the profile cannot leave orphaned discovery data. Future player-owned tables must be added to the same deletion transaction and export contract before those features ship. The user may still appear in Discord messages, copies held by other server members, or infrastructure backups. Moonbyte cannot delete Discord's own records.
 
 ## 8. Guild privacy
 

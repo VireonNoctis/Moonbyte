@@ -2,7 +2,7 @@
 
 - Status: Four playable games, PostgreSQL sessions, player profiles, game results/statistics, earned-only Moonbits and the initial Tavern Wayfinder are implemented.
 - Framework: Poise on Serenity.
-- Default prefix: period; override with DEFAULT_PREFIX. Servers can set a guild-specific prefix with the Manage Server-only prefix command.
+- Default prefix: period; override with DEFAULT_PREFIX. Servers can set a guild-specific prefix with the Manage Server-only prefix command. First-time users must review and accept both current policy versions before ordinary commands are enabled.
 
 ## Available commands
 
@@ -11,9 +11,11 @@
 | .help | /help | Lists commands available in this build and the configured prefix. |
 | .about | /about | Shows the application version and implementation boundaries. |
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. |
+| .terms | /terms | Receives the current Terms of Service document. |
+| .consent | /consent | Checks acceptance status; use accept after reviewing both policy documents. |
 | .prefix | /prefix | Manage Server only; reads or updates the guild prefix and optional command channel. |
 | .tavern | /tavern | Opens the Tavern home and Wayfinder for implemented destinations. |
-| .privacy | /privacy | Explains current data handling and privacy limits. |
+| .privacy | /privacy | Receives the full Privacy Policy document and summary. |
 | .privacy_data | /privacy_data | Privately inspects the requester's current data inventory. |
 | .privacy_export | /privacy_export | Sends a private JSON export attachment. |
 | .privacy_delete | /privacy_delete | Starts deletion confirmation. |
@@ -34,7 +36,11 @@
 | .sessions | /sessions | Lists up to 10 most recently updated, non-expired sessions the requester participates in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
 
+Before normal commands run, new users must review the Terms of Service with .terms and the full Privacy Policy with .privacy, then explicitly agree using .consent accept. A material update to either document requires renewed acceptance. Legal and privacy commands remain available while blocked.
+
 Server moderators with Manage Server can use .prefix to view settings, .prefix set ! #bot-commands to set a prefix and command channel, .prefix channel #bot-commands to change only the channel, .prefix channel off to allow every channel, or .prefix reset to restore the process default. The equivalent slash command accepts the same instruction in its changes field. The configuration command remains available from any channel so a server can recover from an incorrect channel setting. When a command channel is set, every other prefix and slash command is restricted to it. DMs continue to use the process default prefix.
+
+Poise prefix aliases are available only for the listed short forms: .t for .tavern, .g for .games, .p for .play, .j for .join, .l for .leave, .a for .atlas, .tr for .travel, .me for .profile, .w for .wallet, .st for .stats and .ach for .achievements. They do not create slash-command names. Help, Terms, consent and all privacy commands deliberately have no shortcuts.
 
 All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, quest or RPG features as working.
 
@@ -48,7 +54,7 @@ All commands use shared Rust handlers for prefix and slash invocation. The help 
 ## Privacy controls and scope
 
 1. Run `.privacy_data` to inspect profile, session, result, statistic, achievement, wallet/ledger and Atlas state/discovery records associated with the requester.
-2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The version 5 export contains the player's profile, session metadata, completed-result metadata, aggregate statistics, achievement records, wallet balance/ledger and Atlas current-location/discovery history, but not other participants' IDs or raw message content.
+2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. The version 6 export contains the player's profile, policy acceptance, session metadata, completed-result metadata, aggregate statistics, achievement records, wallet balance/ledger and Atlas current-location/discovery history, but not other participants' IDs or raw message content.
 3. Run `.privacy_delete` to read the exact deletion scope. Nothing is deleted at this step.
 4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile, statistic and achievement rows, Moonbits wallet/ledger, Atlas current-location/discovery records, plus every stored game-session snapshot and linked result containing that Discord ID.
 

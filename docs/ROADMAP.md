@@ -31,6 +31,9 @@ Deliverables:
 - [x] Serenity client with Tokio runtime and Poise command framework.
 - [x] Default period prefix, guild-specific prefix overrides and global slash-command registration.
 - [x] Manage Server command for setting the allowed command channel across prefix and slash invocations.
+- [x] Versioned Terms of Service and Privacy Policy review/acceptance gate with privacy controls available before acceptance.
+- [x] PostgreSQL LISTEN/NOTIFY invalidation for guild command-settings caches.
+- [x] Remove guild-owned command settings and active game sessions after confirmed bot removal from a guild.
 - [x] Help, about, privacy overview, and minimal diagnostics (`ping`).
 - [x] Initial Tavern home and Wayfinder command, linked only to implemented games, profile, statistics, wallet, achievements and Atlas destinations.
 - [x] Central custom-emoji registry with safe Unicode fallbacks for unconfigured upload IDs.
@@ -284,6 +287,6 @@ Do not implement the full breadth at once. Release one connected, testable verti
 
 The implementation combines four transport-independent Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, five idempotent achievements, an earned-only Moonbits wallet/ledger and private data controls. The Tavern Wayfinder routes to six live destinations: Common Tables, player profile, Chronicle, Ledger, Achievement Gallery and the initial Atlas.
 
-The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas data is part of the current privacy inventory, version 5 export and confirmed deletion flow.
+The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas data is part of the current privacy inventory, version 6 export and confirmed deletion flow. Versioned consent records are included in the same export and deletion flow.
 
 This increment does **not** mark the full player platform or World Loom complete. Expeditions, quests, story, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.

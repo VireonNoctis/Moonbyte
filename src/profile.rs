@@ -74,6 +74,7 @@ pub struct PlayerProfile {
 #[derive(Debug, Clone, Serialize)]
 pub struct ProfileInventory {
     pub profile_record: bool,
+    pub consent_record: bool,
     pub game_session_records: i64,
     pub game_result_records: i64,
     pub game_stat_rows: i64,
@@ -104,6 +105,7 @@ pub struct PlayerDeletion {
     pub wallet_removed: bool,
     pub world_state_removed: bool,
     pub atlas_discoveries_removed: u64,
+    pub consent_record_removed: bool,
     pub profile_removed: bool,
 }
 
@@ -160,12 +162,21 @@ struct ExportedAtlasDiscovery {
     visits: i64,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedConsent {
+    terms_version: String,
+    privacy_version: String,
+    accepted_at: String,
+    accepted_in_guild_id: Option<String>,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 9],
+    data_categories: [&'static str; 10],
     profile: Option<PlayerProfile>,
+    consent_record: Option<ExportedConsent>,
     game_sessions: Vec<ExportedSession>,
     game_results: Vec<ExportedResult>,
     game_statistics: Vec<PlayerGameStat>,
@@ -309,6 +320,12 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
+        let consent_record: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM user_consents WHERE discord_user_id = $1)",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
         // Include expired-but-not-yet-cleaned rows: they still physically exist.
         let game_session_records: i64 = sqlx::query_scalar(
             "SELECT count(*) FROM game_sessions \
@@ -363,6 +380,7 @@ impl ProfileStore {
 
         Ok(ProfileInventory {
             profile_record,
+            consent_record,
             game_session_records,
             game_result_records,
             game_stat_rows,
@@ -401,6 +419,23 @@ impl ProfileStore {
 
     pub async fn export_json(&self, player_id: &str) -> Result<String, ProfileError> {
         let profile = self.get(player_id).await?;
+        let consent_record = sqlx::query_as::<_, (String, String, String, Option<String>)>(
+            "SELECT terms_version, privacy_version, accepted_at::text, accepted_in_guild_id \
+             FROM user_consents WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_optional(&self.pool)
+        .await?
+        .map(
+            |(terms_version, privacy_version, accepted_at, accepted_in_guild_id)| {
+                ExportedConsent {
+                    terms_version,
+                    privacy_version,
+                    accepted_at,
+                    accepted_in_guild_id,
+                }
+            },
+        );
         let rows = sqlx::query_as::<_, (String, String, String, i64, String, String, String)>(
             "SELECT session_id, game_id, phase, action_count, created_at::text, \
              updated_at::text, expires_at::text FROM game_sessions \
@@ -534,10 +569,11 @@ impl ProfileStore {
             .collect();
 
         let export = PlayerExport {
-            format_version: 5,
+            format_version: 6,
             exported_at,
             data_categories: [
                 "player profile and preferences",
+                "Terms of Service and privacy-policy acceptance record",
                 "game session metadata",
                 "completed game results",
                 "per-game statistics",
@@ -548,6 +584,7 @@ impl ProfileStore {
                 "Atlas discoveries and visit history",
             ],
             profile,
+            consent_record,
             game_sessions,
             game_results,
             game_statistics,
@@ -568,6 +605,15 @@ impl ProfileStore {
     /// Ending shared sessions is intentional: each snapshot contains every participant ID.
     pub async fn delete_account(&self, player_id: &str) -> Result<PlayerDeletion, ProfileError> {
         let mut transaction = self.pool.begin().await?;
+        // Serialize against a concurrent acceptance so account deletion cannot
+        // leave a policy-consent row behind after its transaction commits.
+        sqlx::query(
+            "SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?;
+
         // Lock matching sessions first. A concurrent completion must finish
         // its result/stat transaction before the privacy deletion can proceed.
         let session_ids: Vec<String> = sqlx::query_scalar(
@@ -636,6 +682,13 @@ impl ProfileStore {
                 .await?
                 .rows_affected();
 
+        let consent_record_removed =
+            sqlx::query("DELETE FROM user_consents WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected()
+                > 0;
         let profile_removed = sqlx::query("DELETE FROM player_profiles WHERE discord_user_id = $1")
             .bind(player_id)
             .execute(&mut *transaction)
@@ -652,6 +705,7 @@ impl ProfileStore {
             wallet_removed,
             world_state_removed,
             atlas_discoveries_removed,
+            consent_record_removed,
             profile_removed,
         })
     }
@@ -725,6 +779,7 @@ mod postgres_tests {
 
     use crate::{
         atlas::AtlasStore,
+        consent::ConsentStore,
         database::Database,
         game::{GameKind, GameRuntime},
     };
@@ -741,12 +796,38 @@ mod postgres_tests {
         let store = ProfileStore::new(database.pool());
         let runtime = GameRuntime::new(database.pool());
         let atlas = AtlasStore::new(database.pool());
+        let consents = ConsentStore::new(database.pool());
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system clock after epoch")
             .as_nanos()
             % 1_000_000_000_000_000_000;
         let player_id = format!("profile-test-{nonce}");
+
+        consents
+            .accept(&player_id, Some("guild-consent-test"))
+            .await
+            .expect("record current policy acceptance");
+        assert!(
+            consents.is_current(&player_id).await.expect("read consent state"),
+            "the current document versions should be accepted"
+        );
+        sqlx::query(
+            "UPDATE user_consents SET terms_version = '0.9.0' WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .execute(&database.pool())
+        .await
+        .expect("simulate a superseded Terms version");
+        assert!(
+            !consents.is_current(&player_id).await.expect("check superseded consent"),
+            "a previous Terms version must not unlock commands"
+        );
+        consents
+            .accept(&player_id, Some("guild-consent-test"))
+            .await
+            .expect("accept the updated policy versions");
+        assert!(consents.is_current(&player_id).await.expect("check renewed consent"));
 
         let profile = store
             .get_or_create(&player_id, "Moon Explorer")
@@ -795,6 +876,7 @@ mod postgres_tests {
 
         let inventory = store.inventory(&player_id).await.expect("read inventory");
         assert!(inventory.profile_record);
+        assert!(inventory.consent_record);
         assert_eq!(inventory.game_session_records, 2);
         assert_eq!(inventory.game_result_records, 1);
         assert_eq!(inventory.game_stat_rows, 1);
@@ -810,6 +892,10 @@ mod postgres_tests {
         assert!(export.contains("completed game results"));
         assert!(export.contains("per-game statistics"));
         assert!(export.contains("format_version"));
+        assert!(export.contains("Terms of Service and privacy-policy acceptance record"));
+        assert!(export.contains("terms_version"));
+        assert!(export.contains("privacy_version"));
+        assert!(export.contains("1.0.0"));
         assert!(export.contains("unlocked achievements"));
         assert!(export.contains("first_clear"));
         assert!(export.contains("First Steps"));
@@ -821,7 +907,7 @@ mod postgres_tests {
         assert!(export.contains("current Atlas location"));
         assert!(export.contains("atlas_discoveries"));
         assert!(export.contains("mosslight-grove"));
-        assert!(export.contains("\"format_version\": 5"));
+        assert!(export.contains("\"format_version\": 6"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
@@ -836,6 +922,7 @@ mod postgres_tests {
         assert!(deletion.wallet_removed);
         assert!(deletion.world_state_removed);
         assert_eq!(deletion.atlas_discoveries_removed, 2);
+        assert!(deletion.consent_record_removed);
         assert!(deletion.profile_removed);
         assert!(
             store
@@ -854,6 +941,8 @@ mod postgres_tests {
         assert_eq!(deleted_inventory.wallet_ledger_records, 0);
         assert!(!deleted_inventory.world_state_record);
         assert_eq!(deleted_inventory.atlas_discovery_records, 0);
+        assert!(!deleted_inventory.consent_record);
+        assert!(!consents.is_current(&player_id).await.expect("read deleted consent"));
         assert!(
             runtime.get(&session.id, &player_id, None).await.is_err(),
             "deleted session state must no longer be recoverable"

@@ -52,7 +52,7 @@ The same handlers are available as slash commands. In a server, the map and trav
 
 Both tables reference `player_profiles(discord_user_id)` with `ON DELETE CASCADE`. The current-location field also references the player's discovery row using a deferred composite foreign key. This prevents world state from pointing at a location that is not recorded as discovered.
 
-Migration 0006 adds the schema and a history index. The player data inventory reports both the current world-state row and discovery count. Version 5 JSON export contains the current location and each discovered location's timestamps and visit count. Confirmed account deletion locks and removes the world-state row and discovery records in the same transaction as the other player-owned data.
+Migration 0006 adds the schema and a history index. The player data inventory reports both the current world-state row and discovery count. Version 6 JSON export contains the policy acceptance record, current location and each discovered location's timestamps and visit count. Confirmed account deletion locks and removes the world-state row and discovery records in the same transaction as the other player-owned data.
 
 ## Tests and acceptance criteria
 
@@ -65,7 +65,7 @@ The Atlas tests cover:
 - Rejection of a non-adjacent route.
 - Successful travel, return travel, and no-op travel to the current location.
 - Discovery timestamps and visit counts in PostgreSQL.
-- Inclusion of world state and discoveries in privacy inventory/export/deletion.
+- Inclusion of world state and discoveries in privacy inventory/export/deletion, alongside the versioned Terms and Privacy acceptance record.
 
 The Atlas is not the full World Loom map. Multi-region world generation, route hazards, Expeditions, shared party discovery, guild maps, authored story, quests, NPCs, landmarks beyond these five locations and visual map rendering are not implemented by this slice. They must each be added as separately tested vertical slices with their own ownership and privacy contracts.
 

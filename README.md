@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**The player foundation, results loop, achievements, earned-only wallet and first Atlas slice are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte has persistent profiles, completed-game results, per-game statistics, five idempotent achievement milestones, private JSON export/deletion, and the initial Tavern Wayfinder. Each player's first completion of each game type earns a fixed 10 Moonbits once, with an immutable ledger entry and wallet update in the same transaction as the game result. The initial Atlas has five authored locations, a connected route graph, persistent personal discoveries and direct-neighbour travel; it offers no repeatable travel rewards. Spending, transfers, Vault rewards and Bazaar trading are not enabled.
+**The player foundation, results loop, achievements, earned-only wallet, first Atlas slice, guild command routing and versioned policy-consent gate are implemented on this branch.** Alongside four transport-independent Rust games and durable PostgreSQL sessions, Moonbyte has persistent profiles, completed-game results, per-game statistics, five idempotent achievement milestones, private JSON export/deletion, and the initial Tavern Wayfinder. Each player's first completion of each game type earns a fixed 10 Moonbits once, with an immutable ledger entry and wallet update in the same transaction as the game result. The initial Atlas has five authored locations, a connected route graph, persistent personal discoveries and direct-neighbour travel; it offers no repeatable travel rewards. Spending, transfers, Vault rewards and Bazaar trading are not enabled.
 
 ## The vision
 
@@ -58,9 +58,11 @@ The process default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to ch
 | `.help` / `/help` | Implemented | List commands available in this build. |
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
+| `.terms` / `/terms` | Implemented | Receive the current Terms of Service document. |
+| `.consent accept` / `/consent` | Implemented | Explicitly agree to the current Terms and Privacy Policy versions. |
 | `.prefix` / `/prefix` | Implemented | Manage Server moderators configure the guild prefix and optional command channel. |
 | `.tavern` / `/tavern` | Implemented | Open the Tavern home and Wayfinder for live destinations. |
-| `.privacy` / `/privacy` | Implemented | Explain current data handling, privacy controls and their limits. |
+| `.privacy` / `/privacy` | Implemented | Receive the full Privacy Policy document and summary. |
 | `.privacy_data` / `/privacy_data` | Implemented | Inspect your current Moonbyte data inventory privately. |
 | `.privacy_export` / `/privacy_export` | Implemented | Receive a private JSON export of current stored records. |
 | `.privacy_delete` / `/privacy_delete` | Implemented | Begin and explicitly confirm deletion of your Moonbyte data. |
@@ -96,7 +98,7 @@ The Wayfinder currently exposes six live destinations: Common Tables (`.games`),
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The `.privacy` command is the public overview. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details, exports and deletion receipts are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile, per-game statistic rows, Moonbits wallet and ledger entries, and every session snapshot plus linked result containing the requester’s Discord ID, together with personal Atlas location/discovery records. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
+The `.terms` command provides the full Terms of Service and `.privacy` provides the full Privacy Policy. New users must review both, then run `.consent accept` before ordinary commands are unlocked. A material policy update requires renewed acceptance. Use `.privacy_data`, `.privacy_export`, and `.privacy_delete` for private account controls; when invoked in a server, account details, exports and deletion receipts are delivered by DM. Deletion requires the explicit second command `.privacy_delete DELETE` and removes the profile, per-game statistic rows, Moonbits wallet and ledger entries, and every session snapshot plus linked result containing the requester’s Discord ID, together with personal Atlas location/discovery records. This intentionally ends shared sessions whose snapshot contains multiple participant IDs. See [Player Profiles](docs/PLAYER_PROFILES.md), [Command reference](docs/COMMANDS.md), and [Privacy Policy](docs/PRIVACY.md) for exact coverage and limits.
 
 ## Privacy is a product feature
 
@@ -109,7 +111,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - In-bot export and deletion controls cover the current persisted data; every new player-owned system must extend them before release.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles/preferences, session snapshots, completed results, per-game statistics, achievements, earned-only Moonbits wallet/ledger rows, personal Atlas state and discovery history in PostgreSQL. Session-level results expire with their parent session; aggregate statistics, achievements, wallet milestones and Atlas discoveries remain until account deletion. Inventory, quests, Expeditions, Vaults and Bazaar trades are not persisted yet. Version 5 export includes the current profile, session metadata, results, statistics, achievements, wallet/ledger and Atlas state; deletion covers all nine current player-owned tables plus any shared session snapshots containing the requester. It cannot delete Discord’s own records or independent infrastructure backups.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles/preferences, session snapshots, completed results, per-game statistics, achievements, earned-only Moonbits wallet/ledger rows, personal Atlas state and discovery history in PostgreSQL. Session-level results expire with their parent session; aggregate statistics, achievements, wallet milestones and Atlas discoveries remain until account deletion. Inventory, quests, Expeditions, Vaults and Bazaar trades are not persisted yet. Version 6 export includes the current profile, Terms/Privacy acceptance record, session metadata, results, statistics, achievements, wallet/ledger and Atlas state; deletion covers all ten current player-owned tables plus any shared session snapshots containing the requester. It cannot delete Discord’s own records or independent infrastructure backups.
 
 ## Technology decisions
 
@@ -139,6 +141,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
 - [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, achievements, Moonbits and privacy coverage.
 - [Guild command configuration](docs/GUILD_CONFIGURATION.md) — per-server prefixes, moderator permissions and command-channel routing.
+- [Terms of Service](docs/TERMS_OF_SERVICE.md) — rules for using Moonbyte and the current agreement version.
 - [Atlas starter map](docs/ATLAS.md) — the five authored locations, direct-route travel and personal discovery contract.
 - [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the implemented first-completion ledger and planned Vault/trading boundaries.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.

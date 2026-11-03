@@ -4,6 +4,7 @@ pub mod achievement;
 pub mod atlas;
 pub mod commands;
 pub mod config;
+pub mod consent;
 pub mod database;
 pub mod emoji;
 pub mod game;
@@ -27,6 +28,7 @@ pub struct Data {
     achievements: achievement::AchievementStore,
     atlas: atlas::AtlasStore,
     guild_settings: guild_settings::GuildSettingsStore,
+    consents: consent::ConsentStore,
 }
 
 impl Data {
@@ -38,6 +40,7 @@ impl Data {
         achievements: achievement::AchievementStore,
         atlas: atlas::AtlasStore,
         guild_settings: guild_settings::GuildSettingsStore,
+        consents: consent::ConsentStore,
     ) -> Self {
         Self {
             prefix,
@@ -48,6 +51,7 @@ impl Data {
             achievements,
             atlas,
             guild_settings,
+            consents,
         }
     }
 
@@ -65,6 +69,10 @@ impl Data {
 
     pub fn guild_settings(&self) -> &guild_settings::GuildSettingsStore {
         &self.guild_settings
+    }
+
+    pub fn consents(&self) -> &consent::ConsentStore {
+        &self.consents
     }
 
     pub fn uptime(&self) -> Duration {

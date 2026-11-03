@@ -1,6 +1,6 @@
 # Player Profiles and Privacy Controls
 
-- Status: Player profiles/preferences, game results/statistics, five persistent achievement milestones, earned-only Moonbits, the five-location Atlas, per-player discovery history, private export and confirmed deletion are implemented.
+- Status: Player profiles/preferences, versioned Terms/Privacy acceptance, game results/statistics, five persistent achievement milestones, earned-only Moonbits, the five-location Atlas, per-player discovery history, version 6 private export and confirmed deletion are implemented.
 - Storage: PostgreSQL through SQLx.
 - Owner identity: Discord user ID. Moonbyte does not collect email addresses, real names, phone numbers or precise location for these features.
 
@@ -19,6 +19,22 @@ The `player_profiles` table stores:
 | `created_at`, `updated_at` | Profile lifecycle timestamps. |
 
 Profile visibility is stored now, but a public profile directory, social graph and leaderboard are not implemented. Profile commands return personal data through DM when called in a server. The statistics and quiet-mode flags are preferences for future public/social surfaces; this build does not send unsolicited player notifications. The `.stats` command and private profile view show the player's own completed-game aggregates.
+
+## Terms and Privacy acceptance
+
+The global command gate requires explicit acceptance of the current Terms of Service and Privacy Policy versions before ordinary gameplay, profile, progression or guild-configuration commands can run. The full documents are available through the legal commands, and privacy controls remain available before acceptance.
+
+The independent user_consents table stores one current record per Discord user ID:
+
+| Field | Purpose |
+| --- | --- |
+| discord_user_id | Owner of the agreement record. |
+| terms_version | Version of the Terms of Service explicitly accepted. |
+| privacy_version | Version of the Privacy Policy explicitly accepted. |
+| accepted_at | Timestamp of the explicit acceptance. |
+| accepted_in_guild_id | Optional server where the user accepted; the agreement remains global to their Discord account. |
+
+A material change to either document requires a version bump in the Rust consent module. The next ordinary command then prompts the user to review and accept the current versions. The consent record is included in the data inventory and version 6 export, and is deleted in the same account-deletion transaction as the player's other records.
 
 ## Completed-game records
 
@@ -84,12 +100,14 @@ The first Atlas slice is a five-location authored map. It stores a player's curr
 - Visiting a location does not grant Moonbits, achievements, items or repeatable rewards.
 - The wider Atlas design, Expeditions, quests, narrative and community mapping remain proposals.
 
-The database stores `player_world_state` and `player_atlas_discoveries`, both owned by `player_profiles` through foreign keys. Atlas locations and visit history are included in the private data inventory, version 5 export and account deletion transaction.
+The database stores `player_world_state` and `player_atlas_discoveries`, both owned by `player_profiles` through foreign keys. Atlas locations and visit history are included in the private data inventory, version 6 export and account deletion transaction. The separate user_consents record is exported and deleted alongside these player-owned records.
 
 ## Commands
 
 | Command | Behavior |
 | --- | --- |
+| `.terms` | Receive the current Terms of Service document. |
+| `.consent` | Check the current agreement status; use `.consent accept` after reviewing both documents. |
 | `.profile` | Create the default profile if needed and show it privately with the player's aggregate statistics. |
 | `.profile_edit Name Here \| Short bio` | Update display name and bio. Use `-` after the separator to clear the bio. |
 | `.settings private false true` | Example: save visibility, statistics preference and quiet mode. Accepted visibility values are `private` and `public`. |
@@ -107,10 +125,11 @@ The same commands are registered as slash commands. When invoked in a guild, per
 
 ## Export format
 
-The version 5 JSON export contains:
+The version 6 JSON export contains:
 
 - Export format version and generation timestamp.
 - Player profile and saved preferences, when a profile exists.
+- The current Terms of Service and Privacy Policy versions, acceptance timestamp and optional accepting guild ID, when an acceptance record exists.
 - Session IDs, game IDs, phase, action counts and session timestamps for snapshots containing the requester.
 - Completed-result metadata for the requester: game, outcome, action count and completion time.
 - Aggregate per-game completed, win and draw counts.
@@ -130,12 +149,13 @@ Deletion runs in one PostgreSQL transaction:
 3. Delete every `player_game_stats` and `player_achievements` row for the requester.
 4. Delete the requester's `wallet_ledger_entries` rows and `player_wallets` row.
 5. Lock and delete the requester's `player_world_state` row, then delete their `player_atlas_discoveries` rows.
-6. Delete the matching `player_profiles` row.
+6. Delete the requester's `user_consents` row.
+7. Delete the matching `player_profiles` row.
 7. Commit all changes together and report the affected row counts.
 
 Game state is stored as one shared snapshot. Removing only one participant ID from that snapshot would require a domain migration and could leave a broken or partially recoverable session. The current safe behavior therefore ends every stored session containing the requester, including sessions shared with other players. The command explains this before asking for the explicit `DELETE` confirmation.
 
-The operation covers the current player-owned schema: `player_profiles`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Result rows are removed with their parent sessions; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas tables also have foreign-key ownership by the profile. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
+The operation covers the current player-owned schema: `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state` and `player_atlas_discoveries`. Result rows are removed with their parent sessions; aggregate statistics, achievements, wallet records and Atlas records are removed directly. Atlas tables also have foreign-key ownership by the profile. Deletion does not remove Discord messages, copies held by other players, Discord account data, or independent infrastructure backups.
 
 ## Engineering invariants
 
@@ -143,6 +163,7 @@ The operation covers the current player-owned schema: `player_profiles`, `game_s
 - User-controlled text is bounded and escaped before being displayed.
 - Private account data is delivered by DM from guild invocations.
 - Export is scoped to the authenticated player and the current schema.
+- Policy acceptance is versioned, user-owned data and is included in export and deletion.
 - Deletion of player, session, achievement, wallet and Atlas records is atomic.
 - Achievement unlocks are checked against server-owned aggregate statistics and stored once per player/achievement.
 - The first-completion milestone is fixed, disclosed and non-random.
