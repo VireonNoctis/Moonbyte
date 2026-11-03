@@ -11,16 +11,17 @@ The Tavern is the home and discovery entry point in the Moonbyte World Loom. The
 
 ## Live Wayfinder destinations
 
-The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the ten destinations that are backed by registered commands:
+The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the eleven destinations that are backed by registered commands:
 
 | Stable destination ID | Tavern label | Live command | Current capability |
 | --- | --- | --- | --- |
 | `arcade` | The Common Tables | `.games` / `/games` | Browse four playable games; start solo games or multiplayer lobbies. |
 | `player-profile` | Your Place | `.profile` / `/profile` | View the player's private profile and preferences. |
-| `player-record` | The Chronicle | `.stats` / `/stats` | View completed-game totals, wins and draws. |
+| `player-record` | Your Record | `.stats` / `/stats` | View completed-game totals, wins and draws. |
 | `moonbits-ledger` | The Ledger | `.wallet` / `/wallet` | View the player's earned-only Moonbits balance and first-completion milestones. |
 | `achievement-gallery` | The Gallery | `.achievements` / `/achievements` | View the five fixed achievement milestones. |
 | `world-atlas` | The Atlas | `.atlas` / `/atlas` | View the player's current place, discovered places and directly connected routes. |
+| `archive-chronicle` | The Chronicle | `.chronicle` / `/chronicle` | Read private lore pages unlocked by first-time Atlas discoveries. |
 | `quest-board` | The Quest Board | `.quests` / `/quests` | View today's three optional objectives and their fixed rewards. |
 | `wayfarer-thread` | The Wayfarer Thread | `.wayfarer` / `/wayfarer` | View cumulative activity days and the non-resetting journey stage. |
 | `companion-journal` | The Companion Journal | `.companion` / `/companion` | View Mallow's cosmetic companion milestone. |
@@ -53,7 +54,7 @@ The first Atlas destination is implemented as a bounded world-map slice, not the
 - No travel currency, achievement or repeatable reward is issued.
 - The `.atlas` response is private; browsing does not expose one player's location to a public channel.
 
-The Atlas data is owned by the authenticated player's profile. Export, inventory and confirmed deletion cover `player_world_state` and `player_atlas_discoveries`. Expeditions, multi-region content, narrative routes, guild maps and player-created map content remain planned.
+The Atlas and Chronicle data are owned by the authenticated player's profile. Export, inventory and confirmed deletion cover `player_world_state`, `player_atlas_discoveries` and `player_archive_fragments`. Expeditions, multi-region content, narrative routes, guild maps and player-created map content remain planned.
 ## Emoji registry
 
 The bot's five upload names are declared in `src/emoji.rs`:

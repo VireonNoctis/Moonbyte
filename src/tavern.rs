@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 10] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 11] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -35,7 +35,7 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 10] = [
     },
     TavernDestination {
         id: "player-record",
-        title: "The Chronicle",
+        title: "Your Record",
         description: "Review completed games, wins and draws from your own record.",
         command: "stats",
         emoji: EmojiKey::Crystal,
@@ -64,6 +64,14 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 10] = [
         command: "atlas",
         emoji: EmojiKey::Rocket,
         fallback: "🧭",
+    },
+    TavernDestination {
+        id: "archive-chronicle",
+        title: "The Chronicle",
+        description: "Read private lore pages recorded by your first Atlas discoveries.",
+        command: "chronicle",
+        emoji: EmojiKey::Treasure,
+        fallback: "📖",
     },
     TavernDestination {
         id: "quest-board",
@@ -138,7 +146,7 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 10);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 11);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
             [
@@ -148,6 +156,7 @@ mod tests {
                 "wallet",
                 "achievements",
                 "atlas",
+                "chronicle",
                 "quests",
                 "wayfarer",
                 "companion",
@@ -164,6 +173,7 @@ mod tests {
         assert!(home.contains(".achievements"));
         assert!(home.contains("The Gallery"));
         assert!(home.contains(".atlas"));
+        assert!(home.contains(".chronicle"));
         assert!(home.contains("The Atlas"));
         assert!(home.contains(".quests"));
         assert!(home.contains("The Quest Board"));

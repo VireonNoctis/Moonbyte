@@ -87,6 +87,7 @@ pub struct ProfileInventory {
     pub quest_rotation_records: i64,
     pub daily_quest_records: i64,
     pub rivalry_records: i64,
+    pub archive_fragment_records: i64,
     pub session_retention: &'static str,
 }
 
@@ -109,6 +110,7 @@ pub struct PlayerDeletion {
     pub wallet_removed: bool,
     pub world_state_removed: bool,
     pub atlas_discoveries_removed: u64,
+    pub archive_fragments_removed: u64,
     pub wayfarer_days_removed: u64,
     pub quest_rotations_removed: u64,
     pub daily_quest_records_removed: u64,
@@ -171,6 +173,13 @@ struct ExportedAtlasDiscovery {
 }
 
 #[derive(Debug, Clone, Serialize)]
+struct ExportedArchiveFragment {
+    fragment_id: String,
+    location_id: String,
+    unlocked_at: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 struct ExportedConsent {
     terms_version: String,
     privacy_version: String,
@@ -214,7 +223,7 @@ struct ExportedRivalry {
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 14],
+    data_categories: [&'static str; 15],
     profile: Option<PlayerProfile>,
     consent_record: Option<ExportedConsent>,
     game_sessions: Vec<ExportedSession>,
@@ -225,6 +234,7 @@ struct PlayerExport {
     wallet_ledger_entries: Vec<ExportedWalletEntry>,
     world_state: Option<ExportedWorldState>,
     atlas_discoveries: Vec<ExportedAtlasDiscovery>,
+    archive_fragments: Vec<ExportedArchiveFragment>,
     wayfarer_activity_days: Vec<String>,
     daily_quests: Vec<ExportedDailyQuest>,
     quest_rotation_fingerprints: Vec<ExportedQuestRotation>,
@@ -421,6 +431,13 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
+        let archive_fragment_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_archive_fragments WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+
         let wayfarer_active_days: i64 = sqlx::query_scalar(
             "SELECT count(*) FROM player_wayfarer_days WHERE discord_user_id = $1",
         )
@@ -461,7 +478,8 @@ impl ProfileStore {
             quest_rotation_records,
             daily_quest_records,
             rivalry_records,
-            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics, wallet milestones, Atlas discoveries and Wayfarer history remain until account deletion.",
+            archive_fragment_records,
+            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics, wallet milestones, Atlas discoveries, Chronicle pages and Wayfarer history remain until account deletion.",
         })
     }
 
@@ -617,6 +635,23 @@ impl ProfileStore {
         )
         .collect();
 
+        let archive_fragments = sqlx::query_as::<_, (String, String, String)>(
+            "SELECT fragment_id, location_id, unlocked_at::text FROM player_archive_fragments \
+             WHERE discord_user_id = $1 ORDER BY unlocked_at ASC, fragment_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(
+            |(fragment_id, location_id, unlocked_at)| ExportedArchiveFragment {
+                fragment_id,
+                location_id,
+                unlocked_at,
+            },
+        )
+        .collect();
+
         let wayfarer_activity_days: Vec<String> = sqlx::query_scalar(
             "SELECT activity_date::text FROM player_wayfarer_days \
              WHERE discord_user_id = $1 ORDER BY activity_date ASC",
@@ -765,7 +800,7 @@ impl ProfileStore {
             .collect();
 
         let export = PlayerExport {
-            format_version: 7,
+            format_version: 8,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -778,6 +813,7 @@ impl ProfileStore {
                 "Moonbits wallet ledger entries",
                 "current Atlas location",
                 "Atlas discoveries and visit history",
+                "Chronicle archive fragments and first-discovery timestamps",
                 "Wayfarer activity days",
                 "daily quest selections and progress",
                 "SHA-512 daily quest rotation fingerprints",
@@ -793,6 +829,7 @@ impl ProfileStore {
             wallet_ledger_entries,
             world_state,
             atlas_discoveries,
+            archive_fragments,
             wayfarer_activity_days,
             daily_quests,
             quest_rotation_fingerprints,
@@ -877,6 +914,13 @@ impl ProfileStore {
                 .await?
                 .rows_affected()
                 > 0;
+        let archive_fragments_removed =
+            sqlx::query("DELETE FROM player_archive_fragments WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+
         let atlas_discoveries_removed =
             sqlx::query("DELETE FROM player_atlas_discoveries WHERE discord_user_id = $1")
                 .bind(player_id)
@@ -932,6 +976,7 @@ impl ProfileStore {
             wallet_removed,
             world_state_removed,
             atlas_discoveries_removed,
+            archive_fragments_removed,
             wayfarer_days_removed,
             quest_rotations_removed,
             daily_quest_records_removed,
@@ -1150,6 +1195,9 @@ mod postgres_tests {
         assert!(export.contains("first_game_completion"));
         assert!(export.contains("current Atlas location"));
         assert!(export.contains("atlas_discoveries"));
+        assert!(export.contains("Chronicle archive fragments and first-discovery timestamps"));
+        assert!(export.contains("archive_fragments"));
+        assert!(export.contains("lantern_first_light"));
         assert!(export.contains("mosslight-grove"));
         assert!(export.contains("Wayfarer activity days"));
         assert!(export.contains("daily quest selections and progress"));
@@ -1162,7 +1210,7 @@ mod postgres_tests {
             !export.contains("rotation_seed"),
             "private quest seed must not be exported"
         );
-        assert!(export.contains("\"format_version\": 7"));
+        assert!(export.contains("\"format_version\": 8"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
@@ -1177,6 +1225,7 @@ mod postgres_tests {
         assert!(deletion.wallet_removed);
         assert!(deletion.world_state_removed);
         assert_eq!(deletion.atlas_discoveries_removed, 2);
+        assert_eq!(deletion.archive_fragments_removed, 2);
         assert_eq!(deletion.wayfarer_days_removed, 1);
         assert_eq!(deletion.quest_rotations_removed, 1);
         assert_eq!(deletion.daily_quest_records_removed, 3);
@@ -1200,6 +1249,7 @@ mod postgres_tests {
         assert_eq!(deleted_inventory.wallet_ledger_records, 0);
         assert!(!deleted_inventory.world_state_record);
         assert_eq!(deleted_inventory.atlas_discovery_records, 0);
+        assert_eq!(deleted_inventory.archive_fragment_records, 0);
         assert_eq!(deleted_inventory.wayfarer_active_days, 0);
         assert_eq!(deleted_inventory.quest_rotation_records, 0);
         assert_eq!(deleted_inventory.daily_quest_records, 0);

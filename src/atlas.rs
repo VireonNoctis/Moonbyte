@@ -197,6 +197,8 @@ impl AtlasStore {
         .execute(&mut *transaction)
         .await?;
 
+        crate::chronicle::record_discovery(&mut transaction, player_id, destination.id).await?;
+
         sqlx::query(
             "UPDATE player_world_state SET current_location_id = $2, updated_at = now() \
              WHERE discord_user_id = $1",
@@ -284,6 +286,7 @@ async fn ensure_starting_point(
     .execute(&mut **transaction)
     .await?;
 
+    crate::chronicle::record_discovery(transaction, player_id, STARTING_LOCATION).await?;
     Ok(())
 }
 
@@ -440,6 +443,14 @@ mod tests {
         let initial = store.snapshot(&player_id).await.expect("open Atlas");
         assert_eq!(initial.current_location.id, "lantern-square");
         assert_eq!(initial.discoveries.len(), 1);
+        let starting_pages: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_archive_fragments WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&pool)
+        .await
+        .expect("read initial Chronicle page");
+        assert_eq!(starting_pages, 1);
 
         assert!(matches!(
             store.travel(&player_id, "starfall-observatory").await,
@@ -453,6 +464,14 @@ mod tests {
         assert!(first_trip.moved);
         assert_eq!(first_trip.to.id, "mosslight-grove");
         assert_eq!(first_trip.snapshot.discoveries.len(), 2);
+        let discovered_pages: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_archive_fragments WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&pool)
+        .await
+        .expect("read newly discovered Chronicle page");
+        assert_eq!(discovered_pages, 2);
 
         let return_trip = store
             .travel(&player_id, "lantern-square")
@@ -490,5 +509,6 @@ mod tests {
         assert!(deletion.profile_removed);
         assert!(deletion.world_state_removed);
         assert_eq!(deletion.atlas_discoveries_removed, 2);
+        assert_eq!(deletion.archive_fragments_removed, 2);
     }
 }

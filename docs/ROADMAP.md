@@ -246,7 +246,7 @@ Backlog ideas must not delay the runtime, game engine, privacy foundation, or fi
 1. Establish the authoritative Rust game/session contract, player identity and PostgreSQL persistence.
 2. Deliver the Tavern as a navigable entry surface with one polished solo game and one cooperative game.
 3. Expand the implemented five-location Atlas with region profiles, then add a bounded Expedition and one authored Quest/Vault route.
-4. Add Archive records and deterministic progression so discoveries persist and can be exported/deleted.
+4. [x] Add the first private Chronicle archive records and deterministic first-discovery unlocks with export/deletion coverage. Broader Archive and collection systems remain.
 5. Add known-input crafting and item provenance.
 6. Add fixed-price Bazaar listings only after immutable ledger, escrow, idempotency and double-spend tests pass.
 7. Add guild projects, community events and creator tooling only after guild isolation and moderation workflows are complete.
@@ -287,9 +287,9 @@ Do not implement the full breadth at once. Release one connected, testable verti
 
 ## Current implementation increment — player foundation, Tavern and Atlas starter map
 
-The implementation combines four transport-independent Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, five idempotent achievements, an earned-only Moonbits wallet/ledger and private data controls. The Tavern Wayfinder routes to ten live destinations: Common Tables, player profile, Chronicle, Ledger, Achievement Gallery, Atlas, Quest Board, Wayfarer Thread, Companion Journal and Rivalry Hall.
+The implementation combines four transport-independent Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, five idempotent achievements, an earned-only Moonbits wallet/ledger and private data controls. The Tavern Wayfinder routes to eleven live destinations: Common Tables, player profile, game record, earned-only ledger, Achievement Gallery, Atlas, private Chronicle, Quest Board, Wayfarer Thread, Companion Journal and Rivalry Hall.
 
-The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas and Wayfarer data are part of the current privacy inventory, version 7 export and confirmed deletion flow. Versioned consent records are included in the same export and deletion flow.
+The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas, Chronicle and Wayfarer data are part of the current privacy inventory, version 8 export and confirmed deletion flow. Versioned consent records are included in the same export and deletion flow.
 
 This increment does **not** mark the full player platform or World Loom complete. Expeditions, quests, story, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
 

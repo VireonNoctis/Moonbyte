@@ -366,6 +366,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Wallet ledger entries: {}\n\
          Atlas world-state record: {}\n\
          Atlas discovery records: {}\n\
+         Chronicle archive pages: {}\n\
          Wayfarer active days: {}\n\
          Daily quest rotations: {}\n\
          Daily quest records: {}\n\
@@ -399,6 +400,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
             "not created"
         },
         inventory.atlas_discovery_records,
+        inventory.archive_fragment_records,
         inventory.wayfarer_active_days,
         inventory.quest_rotation_records,
         inventory.daily_quest_records,
@@ -431,7 +433,7 @@ pub async fn privacy_export(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn privacy_delete(
     ctx: Context<'_>,
-    #[description = "Type DELETE to confirm removal of your profile, sessions, wallet, quests, Wayfarer history and rivalries"]
+    #[description = "Type DELETE to confirm removal of your profile, sessions, wallet, Chronicle pages, quests, Wayfarer history and rivalries"]
     confirmation: Option<String>,
 ) -> Result<(), Error> {
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
@@ -444,7 +446,7 @@ pub async fn privacy_delete(
             format!(
                 "**Delete your Moonbyte profile?**\n\n\
              This removes your profile, policy-acceptance record, unlocked achievements, Moonbits wallet and ledger \
-             entries, Atlas location/discovery records, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
+             entries, Atlas location/discovery records, Chronicle archive pages, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
              containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
              To confirm, run `{prefix}privacy_delete DELETE`. No deletion has happened yet.",
@@ -473,6 +475,7 @@ pub async fn privacy_delete(
          Wallet ledger entries removed: {}\n\
          Atlas world-state record removed: {}\n\
          Atlas discovery records removed: {}\n\
+         Chronicle archive pages removed: {}\n\
          Wayfarer activity days removed: {}\n\
          Daily quest rotations removed: {}\n\
          Daily quest records removed: {}\n\
@@ -502,6 +505,7 @@ pub async fn privacy_delete(
             "no record existed"
         },
         deletion.atlas_discoveries_removed,
+        deletion.archive_fragments_removed,
         deletion.wayfarer_days_removed,
         deletion.quest_rotations_removed,
         deletion.daily_quest_records_removed,
@@ -961,6 +965,19 @@ pub async fn atlas(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn chronicle(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
+    ctx.data().atlas().snapshot(&player_id).await?;
+    let snapshot = ctx.data().chronicle().snapshot(&player_id).await?;
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
+    send_private(ctx, crate::chronicle::render(&snapshot, &prefix)).await
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn travel(
     ctx: Context<'_>,
     #[description = "A directly connected location ID or name, such as mosslight-grove"]
@@ -1238,6 +1255,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         stats_command,
         tavern_command,
         atlas_command,
+        chronicle(),
         travel_command,
         games_command,
         play_command,

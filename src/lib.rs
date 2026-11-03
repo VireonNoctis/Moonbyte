@@ -3,6 +3,7 @@
 pub mod achievement;
 pub mod atlas;
 pub mod commands;
+pub mod chronicle;
 pub mod config;
 pub mod consent;
 pub mod database;
@@ -26,6 +27,7 @@ pub struct DataServices {
     pub wallets: wallet::WalletStore,
     pub achievements: achievement::AchievementStore,
     pub atlas: atlas::AtlasStore,
+    pub chronicle: chronicle::ChronicleStore,
     pub guild_settings: guild_settings::GuildSettingsStore,
     pub consents: consent::ConsentStore,
     pub wayfarer: wayfarer::WayfarerStore,
@@ -40,6 +42,7 @@ pub struct Data {
     wallets: wallet::WalletStore,
     achievements: achievement::AchievementStore,
     atlas: atlas::AtlasStore,
+    chronicle: chronicle::ChronicleStore,
     guild_settings: guild_settings::GuildSettingsStore,
     consents: consent::ConsentStore,
     wayfarer: wayfarer::WayfarerStore,
@@ -53,6 +56,7 @@ impl Data {
             wallets,
             achievements,
             atlas,
+            chronicle,
             guild_settings,
             consents,
             wayfarer,
@@ -65,6 +69,7 @@ impl Data {
             wallets,
             achievements,
             atlas,
+            chronicle,
             guild_settings,
             consents,
             wayfarer,
@@ -113,6 +118,10 @@ impl Data {
 
     pub fn atlas(&self) -> &atlas::AtlasStore {
         &self.atlas
+    }
+
+    pub fn chronicle(&self) -> &chronicle::ChronicleStore {
+        &self.chronicle
     }
 
     pub fn wayfarer(&self) -> &wayfarer::WayfarerStore {

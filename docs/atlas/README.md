@@ -82,9 +82,9 @@ The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`
 
 ## Implemented vertical-slice links
 
-The initial Tavern home and Wayfinder are implemented in [Tavern and Wayfinder](../TAVERN.md). Its ten live destinations include the Common Tables, player profile, game record, earned-only ledger, achievement gallery, initial Atlas, daily Quest Board, Wayfarer Thread, Companion Journal and private Rivalry Hall.
+The initial Tavern home and Wayfinder are implemented in [Tavern and Wayfinder](../TAVERN.md). Its eleven live destinations include the Common Tables, player profile, game record, earned-only ledger, achievement gallery, initial Atlas, private Chronicle, daily Quest Board, Wayfarer Thread, Companion Journal and private Rivalry Hall.
 
-The Atlas first slice is implemented in [Atlas starter map](../ATLAS.md): five authored locations, reciprocal direct-route connections, personal current-location state, persistent discoveries and bounded travel commands. This does **not** mark the full Atlas domain as complete. The remaining Atlas concepts in Volume II, along with Expeditions, authored story-quest networks, community maps and narrative routes, remain proposals. The separate fixed-catalogue daily quest board is part of the implemented Wayfarer slice.
+The Atlas first slice is implemented in [Atlas starter map](../ATLAS.md): five authored locations, reciprocal direct-route connections, personal current-location state, persistent discoveries and bounded travel commands. First-time discoveries also unlock one private lore page in [The Chronicle](../CHRONICLE.md), with existing players backfilled and page records included in export/deletion. This does **not** mark the full Atlas domain as complete. The remaining Atlas concepts in Volume II, along with Expeditions, authored story-quest networks, community maps and narrative routes, remain proposals. The separate fixed-catalogue daily quest board is part of the implemented Wayfarer slice.
 
 The player foundation, completed-game statistics, achievements, Moonbits ledger and Wayfarer records are described in [Player Profiles](../PLAYER_PROFILES.md) and [Wayfarer](../WAYFARER.md). The World Loom graph remains a design contract for every node that has not shipped with its own ownership, persistence, permissions, privacy handling and acceptance tests.
 

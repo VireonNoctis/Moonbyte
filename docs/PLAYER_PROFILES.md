@@ -1,6 +1,6 @@
 # Player Profiles and Privacy Controls
 
-- Status: Player profiles/preferences, versioned Terms/Privacy acceptance, game results/statistics, five persistent achievements, earned-only Moonbits, the five-location Atlas, Wayfarer activity, daily quests, cosmetic companion milestones, opt-in rivalries, version 7 private export and confirmed deletion are implemented.
+- Status: Player profiles/preferences, versioned Terms/Privacy acceptance, game results/statistics, five persistent achievements, earned-only Moonbits, the five-location Atlas, Wayfarer activity, daily quests, cosmetic companion milestones, opt-in rivalries, private Chronicle pages, version 8 private export and confirmed deletion are implemented.
 - Storage: PostgreSQL through SQLx.
 - Owner identity: Discord user ID. Moonbyte does not collect email addresses, real names, phone numbers or precise location for these features.
 
@@ -100,7 +100,7 @@ The first Atlas slice is a five-location authored map. It stores a player's curr
 - Visiting a location does not grant Moonbits, achievements, items or repeatable rewards.
 - The expanded Atlas design, Expeditions, narrative and community mapping remain proposals.
 
-The database stores `player_world_state` and `player_atlas_discoveries`, both owned by `player_profiles` through foreign keys. Atlas locations and visit history are included in the private data inventory, version 7 export and account deletion transaction. Wayfarer progress is described below.
+The database stores `player_world_state`, `player_atlas_discoveries` and `player_archive_fragments`, owned through the player profile's foreign-key chain. Atlas locations, visit history and Chronicle page IDs/timestamps are included in the private data inventory, version 8 export and account deletion transaction. Wayfarer progress is described below.
 
 ## Wayfarer activity, daily quests and companion milestones
 

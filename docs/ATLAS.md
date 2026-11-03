@@ -1,6 +1,6 @@
 # Atlas — Five-location starter map
 
-- Status: The initial Atlas vertical slice is implemented. The wider Atlas domain, Expeditions, quests, narrative routes and community mapping remain proposed.
+- Status: The initial Atlas and its first-discovery Chronicle connection are implemented. The wider Atlas domain, Expeditions, authored story quests, narrative routes and community mapping remain proposed.
 - Rust owner: `src/atlas.rs`.
 - Discord adapter: `src/commands.rs`.
 - Tavern entry: `.tavern` → The Atlas → `.atlas`.
@@ -41,7 +41,7 @@ The same handlers are available as slash commands. In a server, the map and trav
 - Requesting the current location is a no-op and does not increment the visit count.
 - Revisiting a previously discovered location updates its last-visited time and visit count.
 - Travel does not issue Moonbits, achievements, items, experience or any other repeatable reward.
-- The static location catalogue contains no user-authored executable content.
+- The static location catalogue contains no user-authored executable content. A first-time discovery also unlocks one authored page in the player's private Chronicle; revisits do not duplicate pages or create rewards.
 
 ## PostgreSQL model
 
@@ -49,6 +49,7 @@ The same handlers are available as slash commands. In a server, the map and trav
 | --- | --- |
 | `player_atlas_discoveries` | One row per player/location with discovery timestamp, latest visit timestamp and visit count. |
 | `player_world_state` | One row per player containing the current location and update timestamp. |
+| `player_archive_fragments` | One row per player/location, storing the page ID and first-unlock timestamp. |
 
 Both tables reference `player_profiles(discord_user_id)` with `ON DELETE CASCADE`. The current-location field also references the player's discovery row using a deferred composite foreign key. This prevents world state from pointing at a location that is not recorded as discovered.
 

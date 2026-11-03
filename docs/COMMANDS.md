@@ -1,6 +1,6 @@
 # Moonbyte Command Reference
 
-- Status: Four playable games, PostgreSQL sessions, player profiles, game results/statistics, achievements, earned-only Moonbits, the five-location Atlas and the Wayfarer progression slice are implemented.
+- Status: Four playable games, PostgreSQL sessions, player profiles, game results/statistics, achievements, earned-only Moonbits, the five-location Atlas, private Chronicle pages and the Wayfarer progression slice are implemented.
 - Framework: Poise on Serenity.
 - Default prefix: period; override with DEFAULT_PREFIX. Servers can set a guild-specific prefix with the Manage Server-only prefix command. First-time users must review and accept both current policy versions before ordinary commands are enabled.
 
@@ -34,6 +34,7 @@
 | .rival declare @player / accept <id> / decline <id> | /rival | Manages bilateral, opt-in rivalries. |
 | .atlas | /atlas | Privately displays the player's current place, discoveries and connected routes. |
 | .travel <location> | /travel | Travels to a directly connected location and records the visit. |
+| .chronicle | /chronicle | Privately reads lore pages unlocked by first-time Atlas discoveries. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |

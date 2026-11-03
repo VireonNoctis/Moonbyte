@@ -1,10 +1,10 @@
 use std::{process::ExitCode, time::Duration};
 
 use moonbyte::{
-    Data, DataServices, Error, achievement::AchievementStore, atlas::AtlasStore, commands,
-    config::Config, consent::ConsentStore, database::Database, game::GameRuntime,
-    guild_settings::GuildSettingsStore, profile::ProfileStore, wallet::WalletStore,
-    wayfarer::WayfarerStore,
+    Data, DataServices, Error, achievement::AchievementStore, atlas::AtlasStore,
+    chronicle::ChronicleStore, commands, config::Config, consent::ConsentStore,
+    database::Database, game::GameRuntime, guild_settings::GuildSettingsStore,
+    profile::ProfileStore, wallet::WalletStore, wayfarer::WayfarerStore,
 };
 use poise::serenity_prelude as serenity;
 
@@ -27,6 +27,7 @@ async fn run() -> Result<(), Error> {
     let wallets = WalletStore::new(database.pool());
     let achievements = AchievementStore::new(database.pool());
     let atlas = AtlasStore::new(database.pool());
+    let chronicle = ChronicleStore::new(database.pool());
     let guild_settings = GuildSettingsStore::new(database.pool()).await?;
     let consents = ConsentStore::new(database.pool());
     let wayfarer = WayfarerStore::new(database.pool());
@@ -165,6 +166,7 @@ async fn run() -> Result<(), Error> {
                         wallets,
                         achievements,
                         atlas,
+                        chronicle,
                         guild_settings,
                         consents,
                         wayfarer,
