@@ -109,6 +109,8 @@ The player foundation, completed-game statistics, achievements, Moonbits ledger 
 
 ## Recommended first connected vertical slice
 
+The current next implementation cut for the Atlas/Expedition branch is [Expedition Foundation v1](../EXPEDITION_FOUNDATION.md). It deliberately starts with one verified route through the existing five-location Atlas before expanding into the full Expedition, Quest and Vault catalogue.
+
 1. Shared session and player identity contract.
 2. Tavern home with the Wayfinder and Common Tables.
 3. One polished mini-game and one small cooperative puzzle.

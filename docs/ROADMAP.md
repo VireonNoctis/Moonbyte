@@ -3,7 +3,7 @@
 > Product scope and cross-system relationships are governed by [Moonbyte Final Vision v4.0](MOONBYTE_FINAL_VISION.md) and the [World Loom Integration Contracts](atlas/INTEGRATION_CONTRACTS.md). Roadmap status below reflects implementation, not proposal count.
 
 - Status: In progress.
-- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence/recovery, player profiles/preferences, completed-game results/statistics, five achievement milestones, earned-only Moonbits wallet/ledger, the 10-destination Tavern Wayfinder, the five-location Atlas, optional daily quests, cumulative companion milestones and mutually accepted private rivalries are implemented. Inventory, crafting, Expeditions, production recovery operations and the live visual-game API remain.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence/recovery, player profiles/preferences, completed-game results/statistics, five achievement milestones, earned-only Moonbits wallet/ledger, the 11-destination Tavern Wayfinder, the five-location Atlas, optional daily quests, cumulative companion milestones and mutually accepted private rivalries are implemented. Inventory, crafting, bounded Expeditions, authored story quests, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 

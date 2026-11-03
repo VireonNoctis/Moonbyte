@@ -4,6 +4,8 @@
 
 Each card is a distinct proposal with a stable graph identity, a player loop, state and ownership boundaries, Discord and Activity surfaces, privacy rules, acceptance tests and explicit cross-system links.
 
+**First implementation cut:** [Expedition Foundation v1](../EXPEDITION_FOUNDATION.md) narrows this volume to one authored Lantern Road route, durable versioned checkpoints, solo/consenting-party progression, and explicit Atlas, Chronicle, Wayfarer and privacy hand-offs. It is a roadmap specification only; none of the 40 volume proposals become live merely through documentation.
+
 
 ## Wayfarer Thread integration contract — v4.0
 
