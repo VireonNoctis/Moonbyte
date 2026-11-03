@@ -169,19 +169,21 @@ impl WayfarerStore {
 
         Ok(rows
             .into_iter()
-            .filter_map(|(quest_date, id, status, progress, target, reward_moonbits, fingerprint)| {
-                quest_definition(&id).map(|definition| DailyQuest {
-                    quest_date,
-                    id,
-                    title: definition.title.to_owned(),
-                    description: definition.description.to_owned(),
-                    status,
-                    progress,
-                    target,
-                    reward_moonbits,
-                    rotation_fingerprint: fingerprint,
-                })
-            })
+            .filter_map(
+                |(quest_date, id, status, progress, target, reward_moonbits, fingerprint)| {
+                    quest_definition(&id).map(|definition| DailyQuest {
+                        quest_date,
+                        id,
+                        title: definition.title.to_owned(),
+                        description: definition.description.to_owned(),
+                        status,
+                        progress,
+                        target,
+                        reward_moonbits,
+                        rotation_fingerprint: fingerprint,
+                    })
+                },
+            )
             .collect())
     }
 
@@ -290,7 +292,21 @@ impl WayfarerStore {
     }
 
     pub async fn rivalries(&self, player_id: &str) -> Result<Vec<RivalryRecord>, WayfarerError> {
-        let rows = sqlx::query_as::<_, (i64, String, String, String, i64, i64, i64, i64, String, String)>(
+        let rows = sqlx::query_as::<
+            _,
+            (
+                i64,
+                String,
+                String,
+                String,
+                i64,
+                i64,
+                i64,
+                i64,
+                String,
+                String,
+            ),
+        >(
             "SELECT rivalry_id, \
              CASE WHEN player_a_id = $1 THEN player_b_id ELSE player_a_id END, \
              status, invited_by, matches_played, \
@@ -305,8 +321,8 @@ impl WayfarerStore {
         .await?;
         Ok(rows
             .into_iter()
-            .map(|(rivalry_id, opponent_id, status, invited_by, matches_played, your_wins, opponent_wins, draws, created_at, updated_at)| {
-                RivalryRecord {
+            .map(
+                |(
                     rivalry_id,
                     opponent_id,
                     status,
@@ -317,8 +333,21 @@ impl WayfarerStore {
                     draws,
                     created_at,
                     updated_at,
-                }
-            })
+                )| {
+                    RivalryRecord {
+                        rivalry_id,
+                        opponent_id,
+                        status,
+                        invited_by,
+                        matches_played,
+                        your_wins,
+                        opponent_wins,
+                        draws,
+                        created_at,
+                        updated_at,
+                    }
+                },
+            )
             .collect())
     }
 
@@ -362,7 +391,9 @@ impl WayfarerStore {
         .await?;
 
         let became_active = match existing {
-            Some((status, _)) if status == "active" => return Err(WayfarerError::RivalAlreadyActive),
+            Some((status, _)) if status == "active" => {
+                return Err(WayfarerError::RivalAlreadyActive);
+            }
             Some((status, invited_by)) if status == "declined" && invited_by != player_id => {
                 // The player who originally declined may later opt in by initiating a fresh invite.
                 sqlx::query(
@@ -411,7 +442,11 @@ impl WayfarerStore {
         Ok(became_active)
     }
 
-    pub async fn accept_rival(&self, player_id: &str, rivalry_id: i64) -> Result<(), WayfarerError> {
+    pub async fn accept_rival(
+        &self,
+        player_id: &str,
+        rivalry_id: i64,
+    ) -> Result<(), WayfarerError> {
         let changed = sqlx::query(
             "UPDATE player_rivalries SET status = 'active', updated_at = now() \
              WHERE rivalry_id = $1 AND status = 'pending' AND invited_by <> $2 \
@@ -429,7 +464,11 @@ impl WayfarerStore {
         }
     }
 
-    pub async fn decline_rival(&self, player_id: &str, rivalry_id: i64) -> Result<(), WayfarerError> {
+    pub async fn decline_rival(
+        &self,
+        player_id: &str,
+        rivalry_id: i64,
+    ) -> Result<(), WayfarerError> {
         let changed = sqlx::query(
             "UPDATE player_rivalries SET status = 'declined', updated_at = now() \
              WHERE rivalry_id = $1 AND status = 'pending' AND invited_by <> $2 \
@@ -449,7 +488,10 @@ impl WayfarerStore {
 }
 
 fn quest_definition(id: &str) -> Option<QuestDefinition> {
-    DAILY_QUEST_CATALOGUE.iter().copied().find(|quest| quest.id == id)
+    DAILY_QUEST_CATALOGUE
+        .iter()
+        .copied()
+        .find(|quest| quest.id == id)
 }
 
 fn companion_stage(active_days: i64) -> (&'static str, Option<i64>) {
@@ -656,7 +698,11 @@ async fn progress_active_quests(
             continue;
         }
         let next = progress.saturating_add(1).min(target);
-        let status = if next >= target { "completed" } else { "active" };
+        let status = if next >= target {
+            "completed"
+        } else {
+            "active"
+        };
         sqlx::query(
             "UPDATE player_daily_quests SET progress = $3, completed_game_ids = $4, \
              status = $5, completed_at = CASE WHEN $5 = 'completed' \
@@ -737,9 +783,16 @@ mod tests {
         let next_day = select_daily_quests("test-seed", "2026-11-04");
         assert_eq!(first, repeated);
         assert_eq!(first.len(), 3);
-        assert_eq!(first.iter().collect::<std::collections::HashSet<_>>().len(), 3);
+        assert_eq!(
+            first.iter().collect::<std::collections::HashSet<_>>().len(),
+            3
+        );
         assert_ne!(first, next_day);
-        assert!(first.iter().all(|id| DAILY_QUEST_CATALOGUE.iter().any(|quest| quest.id == *id)));
+        assert!(
+            first
+                .iter()
+                .all(|id| DAILY_QUEST_CATALOGUE.iter().any(|quest| quest.id == *id))
+        );
     }
 
     #[test]
@@ -750,7 +803,6 @@ mod tests {
         assert_ne!(hash, commitment("seed", "2026-11-04"));
     }
 
-
     #[tokio::test]
     async fn daily_quest_rotation_is_persisted_and_reward_is_credited_once() {
         use crate::{database::Database, profile::ProfileStore};
@@ -760,23 +812,49 @@ mod tests {
         let database = Database::connect(&url).await.expect("connect and migrate");
         let profiles = ProfileStore::new(database.pool());
         let store = super::WayfarerStore::new(database.pool());
-        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).expect("clock").as_nanos()
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos()
             % 100_000_000_000_000_000;
         let player_id = format!("1{nonce:017}");
-        profiles.get_or_create(&player_id, "Quest Tester").await.expect("create profile");
+        profiles
+            .get_or_create(&player_id, "Quest Tester")
+            .await
+            .expect("create profile");
 
-        let first = store.daily_quests(&player_id).await.expect("create daily board");
-        let second = store.daily_quests(&player_id).await.expect("load saved daily board");
-        assert_eq!(first, second, "the same player must receive one stable board each day");
+        let first = store
+            .daily_quests(&player_id)
+            .await
+            .expect("create daily board");
+        let second = store
+            .daily_quests(&player_id)
+            .await
+            .expect("load saved daily board");
+        assert_eq!(
+            first, second,
+            "the same player must receive one stable board each day"
+        );
         assert_eq!(first.len(), 3);
         assert_eq!(
-            first.iter().map(|quest| quest.id.as_str()).collect::<std::collections::HashSet<_>>().len(),
+            first
+                .iter()
+                .map(|quest| quest.id.as_str())
+                .collect::<std::collections::HashSet<_>>()
+                .len(),
             3
         );
-        assert!(first.iter().all(|quest| quest.rotation_fingerprint.len() == 128));
+        assert!(
+            first
+                .iter()
+                .all(|quest| quest.rotation_fingerprint.len() == 128)
+        );
 
         let quest = &first[0];
-        store.accept_quest(&player_id, &quest.id).await.expect("accept quest");
+        store
+            .accept_quest(&player_id, &quest.id)
+            .await
+            .expect("accept quest");
         sqlx::query(
             "UPDATE player_daily_quests SET progress = target, status = 'completed', completed_at = now() \\
              WHERE discord_user_id = $1 AND quest_date = CURRENT_DATE AND quest_id = $2",
@@ -787,22 +865,27 @@ mod tests {
         .await
         .expect("prepare completed quest fixture");
 
-        let reward = store.claim_quest(&player_id, &quest.id).await.expect("claim reward");
+        let reward = store
+            .claim_quest(&player_id, &quest.id)
+            .await
+            .expect("claim reward");
         assert_eq!(reward, quest.reward_moonbits);
         assert!(matches!(
             store.claim_quest(&player_id, &quest.id).await,
             Err(super::WayfarerError::QuestAlreadyClaimed)
         ));
-        let balance: i64 = sqlx::query_scalar(
-            "SELECT balance FROM player_wallets WHERE discord_user_id = $1",
-        )
-        .bind(&player_id)
-        .fetch_one(&database.pool())
-        .await
-        .expect("read wallet");
+        let balance: i64 =
+            sqlx::query_scalar("SELECT balance FROM player_wallets WHERE discord_user_id = $1")
+                .bind(&player_id)
+                .fetch_one(&database.pool())
+                .await
+                .expect("read wallet");
         assert_eq!(balance, reward);
 
-        profiles.delete_account(&player_id).await.expect("remove test player data");
+        profiles
+            .delete_account(&player_id)
+            .await
+            .expect("remove test player data");
     }
 
     #[tokio::test]
@@ -814,21 +897,52 @@ mod tests {
         let database = Database::connect(&url).await.expect("connect and migrate");
         let profiles = ProfileStore::new(database.pool());
         let store = super::WayfarerStore::new(database.pool());
-        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).expect("clock").as_nanos()
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos()
             % 100_000_000_000_000_000;
         let first_id = format!("1{nonce:017}");
         let second_id = format!("2{nonce:017}");
-        profiles.get_or_create(&first_id, "First Pilot").await.expect("create first profile");
-        profiles.get_or_create(&second_id, "Second Pilot").await.expect("create second profile");
+        profiles
+            .get_or_create(&first_id, "First Pilot")
+            .await
+            .expect("create first profile");
+        profiles
+            .get_or_create(&second_id, "Second Pilot")
+            .await
+            .expect("create second profile");
 
-        assert!(!store.declare_rival(&first_id, &second_id).await.expect("send invite"));
-        let invitation = store.rivalries(&first_id).await.expect("read invitation")
-            .into_iter().next().expect("one pending invitation");
+        assert!(
+            !store
+                .declare_rival(&first_id, &second_id)
+                .await
+                .expect("send invite")
+        );
+        let invitation = store
+            .rivalries(&first_id)
+            .await
+            .expect("read invitation")
+            .into_iter()
+            .next()
+            .expect("one pending invitation");
         assert_eq!(invitation.status, "pending");
-        assert!(store.accept_rival(&first_id, invitation.rivalry_id).await.is_err());
-        store.accept_rival(&second_id, invitation.rivalry_id).await.expect("recipient accepts");
+        assert!(
+            store
+                .accept_rival(&first_id, invitation.rivalry_id)
+                .await
+                .is_err()
+        );
+        store
+            .accept_rival(&second_id, invitation.rivalry_id)
+            .await
+            .expect("recipient accepts");
 
-        let mut transaction = database.pool().begin().await.expect("begin match transaction");
+        let mut transaction = database
+            .pool()
+            .begin()
+            .await
+            .expect("begin match transaction");
         super::record_rivalry_match(
             &mut transaction,
             &[first_id.clone(), second_id.clone()],
@@ -845,8 +959,14 @@ mod tests {
         assert_eq!(first_record[0].your_wins, 1);
         assert_eq!(second_record[0].opponent_wins, 1);
 
-        profiles.delete_account(&first_id).await.expect("delete first test profile");
-        profiles.delete_account(&second_id).await.expect("delete second test profile");
+        profiles
+            .delete_account(&first_id)
+            .await
+            .expect("delete first test profile");
+        profiles
+            .delete_account(&second_id)
+            .await
+            .expect("delete second test profile");
     }
 
     #[test]

@@ -625,7 +625,19 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?;
 
-        let daily_quests = sqlx::query_as::<_, (String, String, String, i16, i16, i64, Option<String>, Option<String>)>(
+        let daily_quests = sqlx::query_as::<
+            _,
+            (
+                String,
+                String,
+                String,
+                i16,
+                i16,
+                i64,
+                Option<String>,
+                Option<String>,
+            ),
+        >(
             "SELECT quest_date::text, quest_id, status, progress, target, reward_moonbits, \
              completed_at::text, claimed_at::text FROM player_daily_quests \
              WHERE discord_user_id = $1 ORDER BY quest_date DESC, quest_id ASC",
@@ -634,8 +646,8 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|(quest_date, quest_id, status, progress, target, reward_moonbits, completed_at, claimed_at)| {
-            ExportedDailyQuest {
+        .map(
+            |(
                 quest_date,
                 quest_id,
                 status,
@@ -644,8 +656,19 @@ impl ProfileStore {
                 reward_moonbits,
                 completed_at,
                 claimed_at,
-            }
-        })
+            )| {
+                ExportedDailyQuest {
+                    quest_date,
+                    quest_id,
+                    status,
+                    progress,
+                    target,
+                    reward_moonbits,
+                    completed_at,
+                    claimed_at,
+                }
+            },
+        )
         .collect();
 
         // Export only the SHA-512 rotation fingerprint. The private seed is never
@@ -664,7 +687,21 @@ impl ProfileStore {
         })
         .collect();
 
-        let rivalries = sqlx::query_as::<_, (i64, String, String, bool, i64, i64, i64, i64, String, String)>(
+        let rivalries = sqlx::query_as::<
+            _,
+            (
+                i64,
+                String,
+                String,
+                bool,
+                i64,
+                i64,
+                i64,
+                i64,
+                String,
+                String,
+            ),
+        >(
             "SELECT rivalry_id, CASE WHEN player_a_id = $1 THEN player_b_id ELSE player_a_id END, \
              status, invited_by = $1, matches_played, \
              CASE WHEN player_a_id = $1 THEN player_a_wins ELSE player_b_wins END, \
@@ -677,8 +714,8 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|(rivalry_id, opponent_discord_user_id, status, invitation_sent_by_you, matches_played, your_wins, opponent_wins, draws, created_at, updated_at)| {
-            ExportedRivalry {
+        .map(
+            |(
                 rivalry_id,
                 opponent_discord_user_id,
                 status,
@@ -689,8 +726,21 @@ impl ProfileStore {
                 draws,
                 created_at,
                 updated_at,
-            }
-        })
+            )| {
+                ExportedRivalry {
+                    rivalry_id,
+                    opponent_discord_user_id,
+                    status,
+                    invitation_sent_by_you,
+                    matches_played,
+                    your_wins,
+                    opponent_wins,
+                    draws,
+                    created_at,
+                    updated_at,
+                }
+            },
+        )
         .collect();
 
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
@@ -834,34 +884,30 @@ impl ProfileStore {
                 .await?
                 .rows_affected();
 
-        let rivalry_records_removed = sqlx::query(
-            "DELETE FROM player_rivalries WHERE player_a_id = $1 OR player_b_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
-        let daily_quest_records_removed = sqlx::query(
-            "DELETE FROM player_daily_quests WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
-        let quest_rotations_removed = sqlx::query(
-            "DELETE FROM player_quest_rotations WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
-        let wayfarer_days_removed = sqlx::query(
-            "DELETE FROM player_wayfarer_days WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+        let rivalry_records_removed =
+            sqlx::query("DELETE FROM player_rivalries WHERE player_a_id = $1 OR player_b_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+        let daily_quest_records_removed =
+            sqlx::query("DELETE FROM player_daily_quests WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+        let quest_rotations_removed =
+            sqlx::query("DELETE FROM player_quest_rotations WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+        let wayfarer_days_removed =
+            sqlx::query("DELETE FROM player_wayfarer_days WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
 
         let consent_record_removed =
             sqlx::query("DELETE FROM user_consents WHERE discord_user_id = $1")
@@ -1112,7 +1158,10 @@ mod postgres_tests {
         assert!(export.contains("wayfarer_activity_days"));
         assert!(export.contains("daily_quests"));
         assert!(export.contains("quest_rotation_fingerprints"));
-        assert!(!export.contains("rotation_seed"), "private quest seed must not be exported");
+        assert!(
+            !export.contains("rotation_seed"),
+            "private quest seed must not be exported"
+        );
         assert!(export.contains("\"format_version\": 7"));
         assert!(export.contains(&completed_session.id));
 

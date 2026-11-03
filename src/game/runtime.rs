@@ -330,12 +330,7 @@ async fn persist_locked(
                 .await?;
             }
 
-            crate::wayfarer::record_rivalry_match(
-                transaction,
-                &snapshot.players,
-                winner,
-            )
-            .await?;
+            crate::wayfarer::record_rivalry_match(transaction, &snapshot.players, winner).await?;
         }
     }
     Ok(())

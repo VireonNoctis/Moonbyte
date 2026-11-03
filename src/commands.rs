@@ -636,7 +636,10 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn quests(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
-    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     let quests = ctx.data().wayfarer().daily_quests(&player_id).await?;
     let entries = quests
         .iter()
@@ -658,7 +661,13 @@ pub async fn quests(ctx: Context<'_>) -> Result<(), Error> {
         .join("\n\n");
     let fingerprint = quests
         .first()
-        .map(|quest| quest.rotation_fingerprint.chars().take(16).collect::<String>())
+        .map(|quest| {
+            quest
+                .rotation_fingerprint
+                .chars()
+                .take(16)
+                .collect::<String>()
+        })
         .unwrap_or_else(|| "unavailable".to_owned());
     send_private(
         ctx,
@@ -677,10 +686,16 @@ pub async fn quest(
     #[description = "The quest ID shown on the daily board"] quest_id: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
-    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     match action.trim().to_ascii_lowercase().as_str() {
         "accept" => {
-            ctx.data().wayfarer().accept_quest(&player_id, &quest_id).await?;
+            ctx.data()
+                .wayfarer()
+                .accept_quest(&player_id, &quest_id)
+                .await?;
             send_private(
                 ctx,
                 format!(
@@ -691,7 +706,11 @@ pub async fn quest(
             .await
         }
         "claim" => {
-            let reward = ctx.data().wayfarer().claim_quest(&player_id, &quest_id).await?;
+            let reward = ctx
+                .data()
+                .wayfarer()
+                .claim_quest(&player_id, &quest_id)
+                .await?;
             send_private(
                 ctx,
                 format!(
@@ -717,7 +736,12 @@ pub async fn wayfarer(ctx: Context<'_>) -> Result<(), Error> {
     let snapshot = ctx.data().wayfarer().snapshot(&player_id).await?;
     let next = snapshot
         .next_milestone
-        .map(|threshold| format!("{} more active day(s) to the next companion milestone", threshold - snapshot.active_days))
+        .map(|threshold| {
+            format!(
+                "{} more active day(s) to the next companion milestone",
+                threshold - snapshot.active_days
+            )
+        })
         .unwrap_or_else(|| "The final currently defined companion milestone is yours.".to_owned());
     send_private(
         ctx,
@@ -796,10 +820,14 @@ pub async fn rivals(ctx: Context<'_>) -> Result<(), Error> {
 pub async fn rival(
     ctx: Context<'_>,
     #[description = "declare, accept, or decline"] action: String,
-    #[description = "A player mention for declare, or a rivalry ID for accept/decline"] target: String,
+    #[description = "A player mention for declare, or a rivalry ID for accept/decline"]
+    target: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
-    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     let action = action.trim().to_ascii_lowercase();
     match action.as_str() {
         "declare" => {
@@ -832,16 +860,25 @@ pub async fn rival(
                 .parse::<i64>()
                 .map_err(|_| "Enter the numeric rivalry ID shown in .rivals.")?;
             if action == "accept" {
-                ctx.data().wayfarer().accept_rival(&player_id, rivalry_id).await?;
+                ctx.data()
+                    .wayfarer()
+                    .accept_rival(&player_id, rivalry_id)
+                    .await?;
                 send_private(
                     ctx,
                     "Rivalry accepted. Future completed two-player games between you will appear in your private Rivalry Hall.",
                 )
                 .await
             } else {
-                ctx.data().wayfarer().decline_rival(&player_id, rivalry_id).await?;
-                send_private(ctx, "Rivalry invitation declined. No match history will be recorded.")
-                    .await
+                ctx.data()
+                    .wayfarer()
+                    .decline_rival(&player_id, rivalry_id)
+                    .await?;
+                send_private(
+                    ctx,
+                    "Rivalry invitation declined. No match history will be recorded.",
+                )
+                .await
             }
         }
         _ => {
@@ -1352,7 +1389,8 @@ current implementation, not a statement about Discord's independent data practic
 #[cfg(test)]
 mod tests {
     use super::{
-        PrefixUpdate, escape_user_text, help_message, parse_discord_user_id, parse_prefix_update, render_privacy_overview,
+        PrefixUpdate, escape_user_text, help_message, parse_discord_user_id, parse_prefix_update,
+        render_privacy_overview,
     };
 
     #[test]
