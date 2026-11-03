@@ -251,7 +251,9 @@ async fn run_settings_listener(
                             break;
                         }
                         Err(error) => {
-                            eprintln!("Moonbyte: unable to reconnect the guild settings listener: {error}");
+                            eprintln!(
+                                "Moonbyte: unable to reconnect the guild settings listener: {error}"
+                            );
                         }
                     }
                 }
@@ -376,7 +378,10 @@ mod postgres_tests {
         .expect("second process receives guild-removal notification");
 
         assert!(
-            runtime.get(&session.id, &player_id, Some(&guild_id)).await.is_err(),
+            runtime
+                .get(&session.id, &player_id, Some(&guild_id))
+                .await
+                .is_err(),
             "guild-owned session data must be removed when the bot leaves the guild"
         );
     }

@@ -51,12 +51,10 @@ impl ConsentStore {
     ) -> Result<ConsentRecord, sqlx::Error> {
         let mut transaction = self.pool.begin().await?;
         // Serialize acceptance against account deletion for this Discord user.
-        sqlx::query(
-            "SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?;
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
+            .bind(player_id)
+            .execute(&mut *transaction)
+            .await?;
 
         let (terms_version, privacy_version, accepted_at, accepted_in_guild_id) =
             sqlx::query_as::<_, (String, String, String, Option<String>)>(

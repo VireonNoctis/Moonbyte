@@ -427,13 +427,11 @@ impl ProfileStore {
         .fetch_optional(&self.pool)
         .await?
         .map(
-            |(terms_version, privacy_version, accepted_at, accepted_in_guild_id)| {
-                ExportedConsent {
-                    terms_version,
-                    privacy_version,
-                    accepted_at,
-                    accepted_in_guild_id,
-                }
+            |(terms_version, privacy_version, accepted_at, accepted_in_guild_id)| ExportedConsent {
+                terms_version,
+                privacy_version,
+                accepted_at,
+                accepted_in_guild_id,
             },
         );
         let rows = sqlx::query_as::<_, (String, String, String, i64, String, String, String)>(
@@ -607,12 +605,10 @@ impl ProfileStore {
         let mut transaction = self.pool.begin().await?;
         // Serialize against a concurrent acceptance so account deletion cannot
         // leave a policy-consent row behind after its transaction commits.
-        sqlx::query(
-            "SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?;
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
+            .bind(player_id)
+            .execute(&mut *transaction)
+            .await?;
 
         // Lock matching sessions first. A concurrent completion must finish
         // its result/stat transaction before the privacy deletion can proceed.
@@ -809,25 +805,34 @@ mod postgres_tests {
             .await
             .expect("record current policy acceptance");
         assert!(
-            consents.is_current(&player_id).await.expect("read consent state"),
+            consents
+                .is_current(&player_id)
+                .await
+                .expect("read consent state"),
             "the current document versions should be accepted"
         );
-        sqlx::query(
-            "UPDATE user_consents SET terms_version = '0.9.0' WHERE discord_user_id = $1",
-        )
-        .bind(&player_id)
-        .execute(&database.pool())
-        .await
-        .expect("simulate a superseded Terms version");
+        sqlx::query("UPDATE user_consents SET terms_version = '0.9.0' WHERE discord_user_id = $1")
+            .bind(&player_id)
+            .execute(&database.pool())
+            .await
+            .expect("simulate a superseded Terms version");
         assert!(
-            !consents.is_current(&player_id).await.expect("check superseded consent"),
+            !consents
+                .is_current(&player_id)
+                .await
+                .expect("check superseded consent"),
             "a previous Terms version must not unlock commands"
         );
         consents
             .accept(&player_id, Some("guild-consent-test"))
             .await
             .expect("accept the updated policy versions");
-        assert!(consents.is_current(&player_id).await.expect("check renewed consent"));
+        assert!(
+            consents
+                .is_current(&player_id)
+                .await
+                .expect("check renewed consent")
+        );
 
         let profile = store
             .get_or_create(&player_id, "Moon Explorer")
@@ -942,7 +947,12 @@ mod postgres_tests {
         assert!(!deleted_inventory.world_state_record);
         assert_eq!(deleted_inventory.atlas_discovery_records, 0);
         assert!(!deleted_inventory.consent_record);
-        assert!(!consents.is_current(&player_id).await.expect("read deleted consent"));
+        assert!(
+            !consents
+                .is_current(&player_id)
+                .await
+                .expect("read deleted consent")
+        );
         assert!(
             runtime.get(&session.id, &player_id, None).await.is_err(),
             "deleted session state must no longer be recoverable"

@@ -1117,7 +1117,9 @@ mod tests {
         }
         assert!(message.contains(".t → .tavern"));
         assert!(message.contains(".g → .games"));
-        assert!(message.contains("Help, Terms, consent and all privacy commands deliberately have no shortcuts."));
+        assert!(message.contains(
+            "Help, Terms, consent and all privacy commands deliberately have no shortcuts."
+        ));
     }
 
     #[test]
