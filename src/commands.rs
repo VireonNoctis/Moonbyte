@@ -253,13 +253,15 @@ fn render_guild_settings(settings: Option<&GuildCommandSettings>, default_prefix
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn privacy(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.say(PRIVACY_OVERVIEW).await?;
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
+    ctx.say(render_privacy_overview(&prefix)).await?;
     Ok(())
 }
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
+    let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     let inventory = ctx.data().profiles().inventory(&player_id).await?;
     let message = format!(
         "**Your Moonbyte data inventory**\n\n\
@@ -273,7 +275,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Atlas world-state record: {}\n\
          Atlas discovery records: {}\n\n\
          {}\n\n\
-         Use `.privacy_export` to receive a JSON copy, or `.privacy_delete` to begin \
+         Use `{prefix}privacy_export` to receive a JSON copy, or `{prefix}privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
         if inventory.profile_record {
             "present"
@@ -327,18 +329,21 @@ pub async fn privacy_delete(
     #[description = "Type DELETE to confirm removal of your Moonbyte profile, achievements, sessions and wallet data"]
     confirmation: Option<String>,
 ) -> Result<(), Error> {
+    let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     if !confirmation
         .as_deref()
         .is_some_and(|value| value.eq_ignore_ascii_case("DELETE"))
     {
         return send_private(
             ctx,
-            "**Delete your Moonbyte profile?**\n\n\
+            format!(
+                "**Delete your Moonbyte profile?**\n\n\
              This removes your profile, unlocked achievements, Moonbits wallet and ledger \
              entries, Atlas location/discovery records, and every stored game-session snapshot \
              containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
-             To confirm, run `.privacy_delete DELETE`. No deletion has happened yet.",
+             To confirm, run `{prefix}privacy_delete DELETE`. No deletion has happened yet.",
+            ),
         )
         .await;
     }
@@ -418,9 +423,10 @@ pub async fn profile_edit(
     changes: String,
 ) -> Result<(), Error> {
     let Some((display_name, bio)) = changes.split_once('|') else {
+        let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
         return send_private(
             ctx,
-            "Use `.profile_edit Display Name | A short bio`. The display name is limited to 32 characters and the bio to 160.",
+            format!("Use `{prefix}profile_edit Display Name | A short bio`. The display name is limited to 32 characters and the bio to 160."),
         )
         .await;
     };
@@ -567,6 +573,7 @@ pub async fn travel(
     location: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
     ctx.data()
         .profiles()
         .get_or_create(&player_id, &ctx.author().name)
@@ -590,14 +597,13 @@ pub async fn travel(
         Err(crate::atlas::AtlasError::NotReachable) => {
             return send_private(
                 ctx,
-                "That destination is not connected to your current location. Open .atlas to see the routes you can travel.",
+                format!("That destination is not connected to your current location. Open `{}`atlas` to see the routes you can travel.", escape_user_text(&prefix)),
             )
             .await;
         }
         Err(error) => return Err(Box::new(error)),
     };
 
-    let prefix = ctx.data().command_prefix(ctx.guild_id());
     let message = if result.moved {
         format!(
             "You travelled from **{}** to **{}**.",
@@ -619,6 +625,7 @@ pub async fn travel(
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
+    let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     let entries = GameKind::ALL
         .iter()
         .map(|kind| {
@@ -637,7 +644,7 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
     ctx.say(format!(
         "**Moonbyte Game Library**\n\n{entries}\n\n\
          First completion of each game type grants {} Moonbits once per player. \
-         Repeat completions do not grant more. Use `.wallet` to view your balance.",
+         Repeat completions do not grant more. Use `{prefix}wallet` to view your balance.",
         crate::wallet::FIRST_COMPLETION_REWARD
     ))
     .await?;
@@ -657,9 +664,10 @@ pub async fn play(
         .games()
         .start(game, &player_id, guild_id.as_deref())
         .await?;
+    let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     let intro = if snapshot.phase == GamePhase::WaitingForPlayers {
         format!(
-            "Lobby created. Another player in this server can join with .join {}.",
+            "Lobby created. Another player in this server can join with `{prefix}join {}`.",
             snapshot.id
         )
     } else {
@@ -841,6 +849,11 @@ fn render_profile(profile: &PlayerProfile, stats: &[crate::profile::PlayerGameSt
     )
 }
 
+fn render_privacy_overview(prefix: &str) -> String {
+    let prefix = escape_user_text(prefix);
+    PRIVACY_OVERVIEW.replace("`.privacy", &format!("`{prefix}privacy"))
+}
+
 fn render_statistics(stats: &[crate::profile::PlayerGameStat]) -> String {
     if stats.is_empty() {
         return String::from("**Game statistics**\n\nNo completed games are recorded yet.");
@@ -934,7 +947,7 @@ current implementation, not a statement about Discord's independent data practic
 
 #[cfg(test)]
 mod tests {
-    use super::{PrefixUpdate, escape_user_text, help_message, parse_prefix_update};
+    use super::{PrefixUpdate, escape_user_text, help_message, parse_prefix_update, render_privacy_overview};
 
     #[test]
     fn help_lists_commands_registered_in_this_build() {
@@ -996,6 +1009,16 @@ mod tests {
         assert!(parse_prefix_update(Some("reset extra")).is_err());
     }
 
+    #[test]
+    fn privacy_overview_uses_the_guild_prefix() {
+        let message = render_privacy_overview("mb!");
+        assert!(message.contains("`mb!privacy_data`"));
+        assert!(message.contains("`mb!privacy_export`"));
+        assert!(message.contains("`mb!privacy_delete`"));
+        assert!(!message.contains("`.privacy_data`"));
+    }
+
+    #[test]
     fn user_content_cannot_create_mentions_or_markdown() {
         let escaped = escape_user_text("@everyone **hello** `code`");
         assert!(!escaped.contains("@everyone"));
