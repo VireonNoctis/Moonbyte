@@ -856,7 +856,7 @@ mod tests {
             .await
             .expect("accept quest");
         sqlx::query(
-            "UPDATE player_daily_quests SET progress = target, status = 'completed', completed_at = now() \\
+            "UPDATE player_daily_quests SET progress = target, status = 'completed', completed_at = now() \
              WHERE discord_user_id = $1 AND quest_date = CURRENT_DATE AND quest_id = $2",
         )
         .bind(&player_id)
