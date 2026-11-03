@@ -112,4 +112,4 @@ See [Player Profiles](PLAYER_PROFILES.md) and [Privacy Policy](PRIVACY.md) for e
 
 ## Still planned
 
-Inventory, Expeditions, authored story, parties, public leaderboards, personal Vaults, crafting, Bazaar trading, a live authenticated game API, Discord Activity integration and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
+Inventory, bounded Expeditions, authored story routes, parties, public leaderboards, personal Vaults, crafting, Bazaar trading, a live authenticated game API, Discord Activity integration and server administration remain planned. The optional daily Wayfarer quest board is implemented; it is distinct from authored story quests. The proposed Expedition command family is documented in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md) and is not registered in this build. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.

@@ -289,16 +289,18 @@ Do not implement the full breadth at once. Release one connected, testable verti
 
 ## Current implementation increment — player foundation, Tavern and Atlas starter map
 
+The current branch has completed the initial player-foundation and Wayfarer progression vertical slices. The next planned runtime slice is Expedition Foundation v1; its scope and acceptance gates are specified in [EXPEDITION_FOUNDATION.md](EXPEDITION_FOUNDATION.md).
+
 The implementation combines four transport-independent Rust game rules, a PostgreSQL-backed session runtime, player profiles/preferences, atomic completed-game results, per-game statistics, five idempotent achievements, an earned-only Moonbits wallet/ledger and private data controls. The Tavern Wayfinder routes to eleven live destinations: Common Tables, player profile, game record, earned-only ledger, Achievement Gallery, Atlas, private Chronicle, Quest Board, Wayfarer Thread, Companion Journal and Rivalry Hall.
 
 The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas, Chronicle and Wayfarer data are part of the current privacy inventory, version 8 export and confirmed deletion flow. Versioned consent records are included in the same export and deletion flow.
 
-This increment does **not** mark the full player platform or World Loom complete. Expeditions, quests, story, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates.
+This increment does **not** mark the full player platform or World Loom complete. Bounded Expeditions and authored story-quest routes, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates. The optional daily Wayfarer quest board is already implemented.
 
 
-## Phase 2 — Wayfarer progression slice
+## Completed increment — Wayfarer progression slice
 
-**Status: Implemented on PR #3; CI verification pending for this branch update.**
+**Status: Implemented on PR #3.** The code head `895f47f6c2bf17a685d1d32840a7c1ef1604e93e` passed GitHub Actions CI run #418, including repository validation, formatting, PostgreSQL-backed workspace tests and Clippy. A subsequent documentation-only commit must pass its own PR checks before merge.
 
 - [x] Daily board assigns three stable objectives per player/day from a fixed catalogue.
 - [x] PostgreSQL UUID seed plus domain-separated SHA-512 selection with unbiased index mapping.
@@ -308,3 +310,42 @@ This increment does **not** mark the full player platform or World Loom complete
 - [x] Private rival invitations require mutual acceptance; only later completed two-player games count.
 - [x] Export, inventory and confirmed deletion cover every Wayfarer/rivalry table.
 - [ ] Matchmaking/rematch invitations, companion collection, expedition content and the live React game surface remain future milestones.
+
+
+## Next major implementation slice — Expedition Foundation v1
+
+**Status: Planned next; no Expedition runtime, tables or commands are implemented yet.**
+**Specification:** [Expedition Foundation v1](EXPEDITION_FOUNDATION.md).
+
+The next slice should turn the existing five-location Atlas into one bounded, replayable journey without prematurely implementing the full Atlas/Quest/Vault/Bazaar catalogue. The first authored route is **The Lantern Road**:
+
+`Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory`.
+
+The route uses only existing reciprocal Atlas edges and authored Chronicle content. It is versioned and deterministic. Solo play is supported; a shared run supports one to four consenting players in one Discord guild. A player must be at the route's starting location before joining. The run records its own progress, while each participant's Atlas/Chronicle effects are applied through their owning services.
+
+### Delivery sequence
+
+1. **Definition and state machine:** introduce a stable expedition ID and content version; define recruiting, active, paused, completed and cancelled states; specify participant/host transitions and optimistic row-version checks.
+2. **PostgreSQL persistence:** add the next ordered migration for runs, participants and checkpoint history. Add foreign keys, unique constraints and indexes for one active run per player, one checkpoint completion per run/version/checkpoint, guild scope and safe cleanup.
+3. **Transactional application service:** validate membership, route adjacency, participant scope, run version and checkpoint order. Commit each checkpoint once. Reuse Atlas, Chronicle and Wayfarer domain operations through their service boundaries; do not write directly to another domain's tables.
+4. **Discord interaction layer:** add `.expedition list|start|join|status|advance|pause|resume|leave` prefix and slash surfaces. Explain the route, group scope and personal Atlas effects before joining. Keep responses private where they reveal personal progress.
+5. **Privacy and lifecycle:** add export/inventory coverage and confirmed deletion for Expedition-owned data. Removing one participant must not erase another participant's history; transfer host ownership to the earliest remaining participant or pause safely.
+6. **Reliability and accessibility:** test restart recovery, duplicate and concurrent advances, cancellation, participant departure, host departure, permission changes, Discord delivery failure, text-only fallback and reduced-motion behavior.
+
+### Release acceptance gate
+
+- [ ] One authored route is fully traversable; every route edge exists in the current Atlas graph.
+- [ ] Solo runs and one-to-four-player guild runs use the same authoritative Rust state machine.
+- [ ] Players explicitly consent to join; no one is added to a run or moved on the Atlas without confirmation.
+- [ ] Start, advance, checkpoint, pause, resume, leave and completion are durable and idempotent.
+- [ ] Checkpoint writes and each participant's Atlas discovery/Chronicle unlock are atomic or have a documented retry-safe hand-off.
+- [ ] Repeated commands, concurrent requests and expired Discord interactions cannot duplicate progress or effects.
+- [ ] A run can be paused indefinitely and resumed later. Missing a day, leaving a run or taking a break never removes progress or rewards.
+- [ ] Export, inventory, deletion, guild isolation and log-redaction tests cover all new records.
+- [ ] The route is usable without colour, animation or a browser Activity; Discord-native controls remain functional.
+- [ ] README, architecture, command reference, privacy policy, final vision, Atlas and roadmap all distinguish shipped behavior from the planned Expedition slice.
+
+### Explicitly out of scope for v1
+
+No inventory, gathering, crafting, Vaults, Bazaar listings, barter, trade escrow, new currency rewards, random loot, public matchmaking, public leaderboards, creator-authored routes, dynamic world events or Discord Activity game client. No attendance deadlines, punitive streaks, decay, FOMO, forced notifications or gameplay advantage for spending. These can be considered only after the core Expedition contract is proven.
+

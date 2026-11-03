@@ -101,6 +101,7 @@ The Wayfinder currently exposes eleven live destinations: Common Tables, Your Pl
 | `.party` / `/party` | Planned | Create, invite or manage a party. |
 | `.leaderboard` / `/leaderboard` | Planned | View supported rankings. |
 | `.stop` / `/stop` | Planned | Leave or end an eligible active session. |
+| `.expedition` / `/expedition` | Planned | Browse and join bounded, checkpointed Atlas expeditions; see [Expedition Foundation](docs/EXPEDITION_FOUNDATION.md). |
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
@@ -117,7 +118,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - In-bot export and deletion controls cover the current persisted data; every new player-owned system must extend them before release.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles/preferences, session snapshots, completed results, per-game statistics, achievements, earned-only Moonbits wallet/ledger rows, personal Atlas state and discovery history in PostgreSQL. Session-level results expire with their parent session; aggregate statistics, achievements, wallet milestones and Atlas discoveries remain until account deletion. Inventory, quests, Expeditions, Vaults and Bazaar trades are not persisted yet. Version 6 export includes the current profile, Terms/Privacy acceptance record, session metadata, results, statistics, achievements, wallet/ledger and Atlas state; deletion covers all ten current player-owned tables plus any shared session snapshots containing the requester. It cannot delete Discord’s own records or independent infrastructure backups.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles/preferences, session snapshots, completed results, per-game statistics, achievements, earned-only Moonbits wallet/ledger rows, personal Atlas state and discovery history in PostgreSQL. Session-level results expire with their parent session; aggregate statistics, achievements, wallet milestones and Atlas discoveries remain until account deletion. Inventory, authored story quests, Expeditions, Vaults and Bazaar trades are not yet implemented; the optional daily Wayfarer quests are persisted. Version 8 export includes the current profile, Terms/Privacy acceptance record, session metadata, results, statistics, achievements, wallet/ledger, Atlas state and private Chronicle fragment IDs, linked locations and unlock timestamps. Confirmed deletion covers current player-owned records and shared session snapshots containing the requester, while preserving other participants’ independent data where applicable. It cannot delete Discord’s own records or independent infrastructure backups.
 
 ## Technology decisions
 
@@ -152,6 +153,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Guild command configuration](docs/GUILD_CONFIGURATION.md) — per-server prefixes, moderator permissions and command-channel routing.
 - [Terms of Service](docs/TERMS_OF_SERVICE.md) — rules for using Moonbyte and the current agreement version.
 - [Atlas starter map](docs/ATLAS.md) — the five authored locations, direct-route travel and personal discovery contract.
+- [Expedition Foundation](docs/EXPEDITION_FOUNDATION.md) — the next planned bounded route, persistence, checkpoint, privacy and release gates.
 - [The Chronicle](docs/CHRONICLE.md) — the first private Archive slice, connected to Atlas discoveries.
 - [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the implemented first-completion ledger and planned Vault/trading boundaries.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
@@ -164,7 +166,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime with guild-specific prefix and command-channel configuration. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, the first-completion Moonbits ledger, the six-destination Tavern Wayfinder, the five-location Atlas, private data inventory/export/deletion and the custom-emoji registry are implemented with unit and PostgreSQL integration coverage. The Atlas only allows direct-route travel and issues no travel rewards. Inventory, quests, Expeditions, authored story, spending, full Hearth behavior, Vaults and Bazaar remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime with guild-specific prefix and command-channel configuration. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, the first-completion Moonbits ledger, the eleven-destination Tavern Wayfinder, the five-location Atlas, private data inventory/export/deletion and the custom-emoji registry are implemented with unit and PostgreSQL integration coverage. The Atlas only allows direct-route travel and issues no travel rewards. Inventory, authored story quests and Expeditions, spending, full Hearth behavior, Vaults and Bazaar remain future work; the optional Wayfarer daily quest board is implemented.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
@@ -181,7 +183,7 @@ CI runs the repository validator plus Rust formatting, tests, and Clippy. Do not
 
 ## Data and privacy
 
-The current data model stores Discord identifiers in player profiles, session snapshots, result rows, per-game aggregate statistics, wallet balances and wallet ledger entries, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. The Tavern Wayfinder is navigation-only and adds no persisted data. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated. Command routing stores the guild ID, custom prefix and optional command-channel ID; it is not part of an individual player's export or profile deletion.
+The current data model stores Discord identifiers in player profiles, session snapshots, result rows, per-game aggregates, wallet balances and ledger entries, achievement milestones, Atlas state/discoveries, private Chronicle fragments, Wayfarer activity days, daily quest rotations/progress and mutual-rivalry records. Profile data includes a display name, optional bio, visibility and player preferences. The Tavern Wayfinder is navigation-only and adds no separate persisted state. Collections and inventory are not yet implemented. Raw message content is not retained as gameplay analytics. Players can inspect, export and request deletion of their current player-owned data. Guild command configuration remains separately scoped and is not part of an individual player export or deletion.
 
 ## Licensing
 

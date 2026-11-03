@@ -1,7 +1,7 @@
 # Moonbyte Architecture
 
-- Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions/recovery, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, earned-only Moonbits wallet/ledger, privacy inventory/export/deletion, six-destination Tavern Wayfinder, five-slot custom-emoji registry and the five-location Atlas starter map are implemented. The Atlas persists personal current-location/discovery state and permits direct-route travel only. Spending/transfers, inventory, Expeditions, quests, Vaults, Bazaar, broader Hearth systems, live game API, Activity handshake and authoritative visual rendering remain unimplemented.
-- Last updated: 2026-11-03.
+- Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions/recovery, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, earned-only Moonbits wallet/ledger, private Chronicle, optional Wayfarer daily quests/activity/companion milestones/mutual rivalries, privacy inventory/export/deletion, eleven-destination Tavern Wayfinder, guild command routing and the five-location Atlas starter map are implemented. The Atlas persists personal current-location/discovery state and permits direct-route travel only. Spending/transfers, inventory, bounded Expeditions, authored story quests, Vaults, Bazaar, broader Hearth systems, live game API, Activity handshake and authoritative visual rendering remain unimplemented.
+- Last updated: 2026-11-04.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
 
@@ -240,9 +240,9 @@ The current playable slice is deliberately small and honest about its limits:
 - Mutations use short row-locked transactions; reads and active-session listings enforce participant and guild/DM scope.
 - Poise exposes the implemented operations as shared prefix and slash commands, including `.sessions` for the requester's 10 most recently updated active sessions in the current scope.
 - Session IDs are generated from a PostgreSQL sequence and survive process restarts. They are references, not authentication credentials.
-- Player profiles, preferences, privacy inventory, private JSON export, confirmed deletion, completed result metadata, aggregate per-game statistics and the first-completion wallet/ledger are implemented. Achievements, inventory, spending/transfers, Vaults, Bazaar, durable Discord interaction idempotency and the live web game API remain unimplemented.
+- Player profiles, preferences, privacy inventory, private JSON export, confirmed deletion, completed result metadata, aggregate per-game statistics, five achievement milestones, the first-completion wallet/ledger, five-location personal Atlas, private Chronicle pages and the Wayfarer quest/activity/companion/rivalry records are implemented. Inventory, spending/transfers, Expeditions, authored story quests, Vaults, Bazaar, durable Discord interaction idempotency and the live web game API remain unimplemented.
 
-This is a functional vertical slice for game rules, player identity, completed-result/stat persistence, private data controls, Discord commands, PostgreSQL transactions and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is achievements/inventory progression, idempotent Discord interaction handling and concurrent-session load tests.
+This is a functional vertical slice for game rules, player identity, completed-result/stat persistence, private data controls, Discord commands, PostgreSQL transactions and single-process restart recovery—not yet a production-ready multi-instance deployment. The next planned domain slice is [Expedition Foundation v1](EXPEDITION_FOUNDATION.md), followed by durable Discord interaction idempotency, concurrency/load tests and the authenticated visual-game API.
 
 
 ## Wayfarer progression and rivalries

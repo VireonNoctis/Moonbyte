@@ -73,9 +73,9 @@ The Atlas is not the full World Loom map. Multi-region world generation, route h
 ## Future connection points
 
 The stable location IDs are intended to become the shared spatial references used by:
-- Expeditions, which will select routes and checkpoints.
+- [Expedition Foundation v1](EXPEDITION_FOUNDATION.md), which is the next planned consumer of stable Atlas route IDs and checkpoint discoveries; its runtime is not yet implemented.
 - Quests, which will anchor authored objectives to locations.
 - The Archive, which will preserve confirmed discoveries and lore.
 - Guild projects, which may add optional shared map contributions after guild isolation is implemented.
 
-These connections remain product design contracts until the corresponding services, persistence, permissions, export/deletion coverage and acceptance tests exist.
+These connections remain product design contracts until the corresponding services, persistence, permissions, export/deletion coverage and acceptance tests exist. The first bounded Expedition proposal is specified in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md); it must pass those gates before being described as live.

@@ -209,4 +209,9 @@ The second design layer covers the capabilities that support a deep world over t
 
 It adds 200 proposals across 20 further domains, all connected to the first graph. Its purpose is to make the product coherent and maintainable at scale, not to create disconnected mechanics. Stable content IDs, service ownership, dependency validation, privacy-scoped view models and reversible releases keep the world consistent.
 
-The [Moonbyte World Loom master atlas](atlas/README.md) documents both layers: 400 proposals across 40 domains and 48,295 lines of feature specifications. All proposals remain design work until implemented and tested. Rust owns authoritative rules and persistence, Next.js/React/TypeScript present authorised state, PostgreSQL is the selected database, and the game remains earned-only, non-wagering, privacy-conscious and playable without attendance pressure.
+The [Moonbyte World Loom master atlas](atlas/README.md) documents both layers: 400 proposals across 40 domains and 48,610 lines of feature specifications. All proposals remain design work until implemented and tested. Rust owns authoritative rules and persistence, Next.js/React/TypeScript present authorised state, PostgreSQL is the selected database, and the game remains earned-only, non-wagering, privacy-conscious and playable without attendance pressure.
+
+
+## Next implementation slice
+
+The next planned runtime milestone is [Expedition Foundation v1](EXPEDITION_FOUNDATION.md): a fixed, bounded route through the implemented starter Atlas, with durable checkpoints, optional solo or mutually accepted group play, pause/resume and complete privacy coverage. It is a planned slice, not an existing feature. The wider World Loom remains a design catalogue until each domain is implemented and verified.

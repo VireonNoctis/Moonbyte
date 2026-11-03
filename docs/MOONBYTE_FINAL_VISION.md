@@ -191,7 +191,7 @@ The rest of the World Loom remains a design proposal until code, migrations, com
 
 ## 12. Release order and acceptance gates
 
-1. **Expedition foundation:** one authored, bounded route; durable checkpoint state; pause/resume/leave; Atlas and Chronicle handoff; optional Wayfarer objective; export/deletion coverage.
+1. **[Expedition foundation](EXPEDITION_FOUNDATION.md):** one authored, bounded route; durable checkpoint state; pause/resume/leave; Atlas and Chronicle handoff; optional Wayfarer activity projection; export/deletion coverage.
 2. **Inventory and provenance:** stable item IDs, earned source and account ownership before crafting or trade.
 3. **Known-input crafting:** fixed recipes, validated ingredients, transactional output, no random yield.
 4. **Puzzle Vault:** clear rules, published rewards, save checkpoints and verifiable completion.
@@ -204,3 +204,7 @@ The rest of the World Loom remains a design proposal until code, migrations, com
 A slice is complete only when its owning Rust module controls every state transition; PostgreSQL constraints prevent duplicate or partial writes; Discord and Activity surfaces share the same application service; events have stable schemas and idempotency rules; player and guild data are scoped with complete privacy coverage; tests cover normal, invalid, duplicate, concurrent, rollback, pause/leave and recovery paths; and README, roadmap, volumes, graph and decision records agree with the code.
 
 **The central rule:** a new system is not finished when it has a command. It is finished when its state, consequences, privacy, presentation and relationships work together as one part of Moonbyte.
+
+## Current next-slice reference
+
+The first delivery boundary for the Expedition foundation is defined in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md). It narrows the much larger Atlas/Expedition/Quest proposals to one authored route and explicit release gates; no Expedition behavior should be considered live until its Rust service, migration, commands, privacy coverage and tests are merged.
