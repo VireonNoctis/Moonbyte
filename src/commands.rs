@@ -62,7 +62,7 @@ pub async fn prefix(
         Ok(action) => action,
         Err(problem) => {
             ctx.say(format!(
-                "**Server command settings**\\n\\n{problem}\\n\\nUsage: prefix set ! #bot-commands | prefix channel #bot-commands | prefix channel off | prefix reset."
+                "**Server command settings**\n\n{problem}\n\nUsage: prefix set ! #bot-commands | prefix channel #bot-commands | prefix channel off | prefix reset."
             ))
             .await?;
             return Ok(());
@@ -82,7 +82,10 @@ pub async fn prefix(
             ))
             .await?;
         }
-        PrefixUpdate::Set { prefix: new_prefix, channel } => {
+        PrefixUpdate::Set {
+            prefix: new_prefix,
+            channel,
+        } => {
             let channel_id = match channel.as_deref() {
                 Some(value) => match resolve_guild_channel(ctx, guild_id, value).await? {
                     Some(channel_id) => Some(channel_id),
@@ -109,7 +112,7 @@ pub async fn prefix(
 
             let settings = ctx.data().guild_settings().get(&guild_key);
             ctx.say(format!(
-                "Server settings saved.\\n\\n{}",
+                "Server settings saved.\n\n{}",
                 render_guild_settings(settings.as_ref(), ctx.data().prefix())
             ))
             .await?;
@@ -143,7 +146,7 @@ pub async fn prefix(
 
             let settings = ctx.data().guild_settings().get(&guild_key);
             ctx.say(format!(
-                "Command channel updated.\\n\\n{}",
+                "Command channel updated.\n\n{}",
                 render_guild_settings(settings.as_ref(), ctx.data().prefix())
             ))
             .await?;
@@ -157,7 +160,10 @@ pub async fn prefix(
 enum PrefixUpdate {
     Show,
     Reset,
-    Set { prefix: String, channel: Option<String> },
+    Set {
+        prefix: String,
+        channel: Option<String>,
+    },
     Channel(Option<String>),
 }
 
@@ -183,7 +189,9 @@ fn parse_prefix_update(input: Option<&str>) -> Result<PrefixUpdate, &'static str
             })
         }
         Some("channel") => {
-            let channel = parts.next().ok_or("Provide a channel mention, ID, or off.")?;
+            let channel = parts
+                .next()
+                .ok_or("Provide a channel mention, ID, or off.")?;
             let channel = if channel.eq_ignore_ascii_case("off") {
                 None
             } else {
@@ -228,10 +236,7 @@ async fn resolve_guild_channel(
     })
 }
 
-fn render_guild_settings(
-    settings: Option<&GuildCommandSettings>,
-    default_prefix: &str,
-) -> String {
+fn render_guild_settings(settings: Option<&GuildCommandSettings>, default_prefix: &str) -> String {
     let prefix = settings
         .map(|settings| settings.prefix.as_str())
         .unwrap_or(default_prefix);
@@ -240,7 +245,7 @@ fn render_guild_settings(
         .map(|id| format!("<#{id}>"))
         .unwrap_or_else(|| "Every channel".to_owned());
     format!(
-        "**Server command settings**\\n\\nPrefix: {}\\nCommand channel: {}\\n\\nUse prefix set <prefix> [#channel] to update the prefix.\\nUse prefix channel <#channel|off> to change the command channel.\\nUse prefix reset to restore defaults.\\n\\nWhen a command channel is configured, all other commands are accepted only there. The prefix configuration command remains available from every channel.",
+        "**Server command settings**\n\nPrefix: {}\nCommand channel: {}\n\nUse prefix set <prefix> [#channel] to update the prefix.\nUse prefix channel <#channel|off> to change the command channel.\nUse prefix reset to restore defaults.\n\nWhen a command channel is configured, all other commands are accepted only there. The prefix configuration command remains available from every channel.",
         escape_user_text(prefix),
         channel
     )
@@ -777,8 +782,7 @@ pub async fn leave(
 pub fn all() -> Vec<poise::Command<Data, Error>> {
     let mut prefix_command = prefix();
     prefix_command.required_permissions = poise::serenity_prelude::Permissions::MANAGE_GUILD;
-    prefix_command.default_member_permissions =
-        poise::serenity_prelude::Permissions::MANAGE_GUILD;
+    prefix_command.default_member_permissions = poise::serenity_prelude::Permissions::MANAGE_GUILD;
 
     vec![
         help(),
@@ -930,7 +934,7 @@ current implementation, not a statement about Discord's independent data practic
 
 #[cfg(test)]
 mod tests {
-    use super::{escape_user_text, help_message, parse_prefix_update, PrefixUpdate};
+    use super::{PrefixUpdate, escape_user_text, help_message, parse_prefix_update};
 
     #[test]
     fn help_lists_commands_registered_in_this_build() {
@@ -976,7 +980,10 @@ mod tests {
                 channel: Some("123456789012345678".to_owned()),
             })
         );
-        assert_eq!(parse_prefix_update(Some("channel off")), Ok(PrefixUpdate::Channel(None)));
+        assert_eq!(
+            parse_prefix_update(Some("channel off")),
+            Ok(PrefixUpdate::Channel(None))
+        );
         assert_eq!(parse_prefix_update(Some("reset")), Ok(PrefixUpdate::Reset));
     }
 

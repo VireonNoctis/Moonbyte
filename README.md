@@ -51,13 +51,14 @@ The visual library now has a first **Next.js + React + TypeScript** catalogue fo
 
 ## Command model
 
-The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
+The process default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it. Server moderators can override it per guild and optionally restrict bot commands to one channel with `.prefix`.
 
 | Command | Status | Purpose |
 | --- | --- | --- |
 | `.help` / `/help` | Implemented | List commands available in this build. |
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
+| `.prefix` / `/prefix` | Implemented | Manage Server moderators configure the guild prefix and optional command channel. |
 | `.tavern` / `/tavern` | Implemented | Open the Tavern home and Wayfinder for live destinations. |
 | `.privacy` / `/privacy` | Implemented | Explain current data handling, privacy controls and their limits. |
 | `.privacy_data` / `/privacy_data` | Implemented | Inspect your current Moonbyte data inventory privately. |
@@ -136,7 +137,9 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 - [Product vision](docs/PRODUCT_VISION.md) — product goals, engagement principles, systems, safety and non-goals.
 - [Tavern and Wayfinder](docs/TAVERN.md) — the implemented home navigation and its live destination boundary.
-- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, achievements, Moonbits and privacy coverage.\n- [Atlas starter map](docs/ATLAS.md) — the five authored locations, direct-route travel and personal discovery contract.
+- [Player profiles](docs/PLAYER_PROFILES.md) — identity, preferences, game records, achievements, Moonbits and privacy coverage.
+- [Guild command configuration](docs/GUILD_CONFIGURATION.md) — per-server prefixes, moderator permissions and command-channel routing.
+- [Atlas starter map](docs/ATLAS.md) — the five authored locations, direct-route travel and personal discovery contract.
 - [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the implemented first-completion ledger and planned Vault/trading boundaries.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
 - [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering and operations.
@@ -148,7 +151,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, the first-completion Moonbits ledger, the six-destination Tavern Wayfinder, the five-location Atlas, private data inventory/export/deletion and the custom-emoji registry are implemented with unit and PostgreSQL integration coverage. The Atlas only allows direct-route travel and issues no travel rewards. Inventory, quests, Expeditions, authored story, spending, full Hearth behavior, Vaults and Bazaar remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime with guild-specific prefix and command-channel configuration. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, the first-completion Moonbits ledger, the six-destination Tavern Wayfinder, the five-location Atlas, private data inventory/export/deletion and the custom-emoji registry are implemented with unit and PostgreSQL integration coverage. The Atlas only allows direct-route travel and issues no travel rewards. Inventory, quests, Expeditions, authored story, spending, full Hearth behavior, Vaults and Bazaar remain future work.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
@@ -165,7 +168,7 @@ CI runs the repository validator plus Rust formatting, tests, and Clippy. Do not
 
 ## Data and privacy
 
-The current data model stores Discord identifiers in player profiles, session snapshots, result rows, per-game aggregate statistics, wallet balances and wallet ledger entries, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. The Tavern Wayfinder is navigation-only and adds no persisted data. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
+The current data model stores Discord identifiers in player profiles, session snapshots, result rows, per-game aggregate statistics, wallet balances and wallet ledger entries, plus a display name, optional bio, visibility, two profile preference flags and recoverable session state. The Tavern Wayfinder is navigation-only and adds no persisted data. Achievements, collections and inventory are not persisted yet. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated. Command routing stores the guild ID, custom prefix and optional command-channel ID; it is not part of an individual player's export or profile deletion.
 
 ## Licensing
 

@@ -11,5 +11,6 @@ Architecture Decision Records (ADRs) explain decisions that are expensive to rev
 - [0005 — Live-only Tavern navigation and configurable emoji IDs](0005-tavern-wayfinder-and-emoji-registry.md)
 - [0006 — Earned-only Moonbits and first-completion ledger](0006-earned-only-moonbits-ledger.md)
 - [0007 — Authored Atlas routes and private player discoveries](0007-authored-atlas-and-player-discoveries.md)
+- [0008 — Guild command routing and prefixes](0008-guild-command-routing.md)
 
 Update this index when a decision is added or superseded. Do not silently erase the reasoning behind an earlier choice.

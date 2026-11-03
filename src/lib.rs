@@ -56,10 +56,7 @@ impl Data {
     }
 
     /// Resolve the active guild prefix, falling back to DEFAULT_PREFIX.
-    pub fn command_prefix(
-        &self,
-        guild_id: Option<poise::serenity_prelude::GuildId>,
-    ) -> String {
+    pub fn command_prefix(&self, guild_id: Option<poise::serenity_prelude::GuildId>) -> String {
         guild_id
             .and_then(|id| self.guild_settings.get(&id.to_string()))
             .map(|settings| settings.prefix)

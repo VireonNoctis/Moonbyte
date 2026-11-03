@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add PostgreSQL-backed per-server command prefixes with a safe process-default fallback.
+- Add a Manage Server-only prefix command for viewing, setting, resetting and routing bot commands to one server channel.
+- Apply command-channel restrictions consistently to prefix and slash commands while keeping configuration available from any channel.
+- Cache guild routing settings so ordinary messages do not cause PostgreSQL lookups.
+- Correct a literal escaped newline in the README documentation index.
+
 - Add the five-entry achievement gallery with server-authoritative milestone checks and idempotent unlock rows.
 - Add the initial five-location Atlas with stable location IDs, reciprocal route edges, personal discovery/visit records and direct-neighbour travel.
 - Add PostgreSQL migration 0006 for player world state and personal Atlas discoveries, both owned by player profiles through foreign keys.

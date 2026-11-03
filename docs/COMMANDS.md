@@ -2,7 +2,7 @@
 
 - Status: Four playable games, PostgreSQL sessions, player profiles, game results/statistics, earned-only Moonbits and the initial Tavern Wayfinder are implemented.
 - Framework: Poise on Serenity.
-- Default prefix: period; override with DEFAULT_PREFIX.
+- Default prefix: period; override with DEFAULT_PREFIX. Servers can set a guild-specific prefix with the Manage Server-only prefix command.
 
 ## Available commands
 
@@ -11,6 +11,7 @@
 | .help | /help | Lists commands available in this build and the configured prefix. |
 | .about | /about | Shows the application version and implementation boundaries. |
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. |
+| .prefix | /prefix | Manage Server only; reads or updates the guild prefix and optional command channel. |
 | .tavern | /tavern | Opens the Tavern home and Wayfinder for implemented destinations. |
 | .privacy | /privacy | Explains current data handling and privacy limits. |
 | .privacy_data | /privacy_data | Privately inspects the requester's current data inventory. |
@@ -32,6 +33,8 @@
 | .session <session> | /session | Reads the current snapshot of a session in which the requester participates. |
 | .sessions | /sessions | Lists up to 10 most recently updated, non-expired sessions the requester participates in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
+
+Server moderators with Manage Server can use .prefix to view settings, .prefix set ! #bot-commands to set a prefix and command channel, .prefix channel #bot-commands to change only the channel, .prefix channel off to allow every channel, or .prefix reset to restore the process default. The equivalent slash command accepts the same instruction in its changes field. The configuration command remains available from any channel so a server can recover from an incorrect channel setting. When a command channel is set, every other prefix and slash command is restricted to it. DMs continue to use the process default prefix.
 
 All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, quest or RPG features as working.
 

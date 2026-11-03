@@ -29,7 +29,8 @@ Deliverables:
 - [x] Cargo application workspace and committed lockfile.
 - [x] Configuration loading and validation from environment variables.
 - [x] Serenity client with Tokio runtime and Poise command framework.
-- [x] Default period prefix and global slash-command registration.
+- [x] Default period prefix, guild-specific prefix overrides and global slash-command registration.
+- [x] Manage Server command for setting the allowed command channel across prefix and slash invocations.
 - [x] Help, about, privacy overview, and minimal diagnostics (`ping`).
 - [x] Initial Tavern home and Wayfinder command, linked only to implemented games, profile, statistics, wallet, achievements and Atlas destinations.
 - [x] Central custom-emoji registry with safe Unicode fallbacks for unconfigured upload IDs.
@@ -188,6 +189,7 @@ Deliverables:
 - Crafting recipes and item provenance.
 - Fixed-price Bazaar listings, barter, escrow, receipts, and trade history.
 - Moderation, reporting, rate limits, and guild-scoped controls.
+- [x] Persist guild prefix and command-channel settings independently of player profiles.
 
 Exit criteria:
 - [x] The current first-completion credit writes an immutable ledger entry and wallet balance in the same PostgreSQL transaction.

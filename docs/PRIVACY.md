@@ -2,7 +2,7 @@
 
 - Policy owner: Moonbyte maintainers.
 - Status: Current runtime includes PostgreSQL-backed player profiles/preferences, game sessions/results/statistics, five achievement milestones, an earned-only Moonbits wallet/ledger, a five-location Atlas with personal discoveries, data inventory, private version 5 JSON export and confirmed deletion across all current player-owned tables. Inventory, quests, Expeditions, Vaults, spending and Bazaar systems remain planned.
-- Last updated: 2026-11-02.
+- Last updated: 2026-11-03.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
 ## 1. Our stance
@@ -22,7 +22,9 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-The current runtime stores player profiles/preferences, game-session snapshots, completed result metadata, per-game statistics, achievement milestones, earned-only wallet/ledger records and personal Atlas location/discovery state in PostgreSQL. It does not yet persist inventory, quests, Expeditions, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Every future persisted feature must extend the same inventory/export/deletion contract before release.
+The current runtime stores player profiles/preferences, game-session snapshots, completed result metadata, per-game statistics, achievement milestones, earned-only wallet/ledger records and personal Atlas location/discovery state in PostgreSQL. It does not yet persist inventory, quests, Expeditions, Vault state or Bazaar trades. The `.privacy_data`, `.privacy_export` and `.privacy_delete` commands inspect, export and delete records in the current player-owned schema. Guild command-routing records are separate from player-owned data. They contain the guild ID, custom prefix, optional command-channel ID, last editor ID and timestamps. They are not included in a player's JSON export or player deletion. Resetting the prefix removes the guild override. Guild settings must be removed when the bot is uninstalled or a guild leaves the service; automated uninstall cleanup remains a production operations requirement.
+
+Every future persisted feature must extend the same inventory/export/deletion contract before release.
 
 ## 2. Data Moonbyte needs
 
@@ -40,7 +42,7 @@ The bot may process or store these categories when the relevant feature is enabl
 | Achievements | Achievement ID, source session ID and unlock timestamp. | Show fixed, server-authoritative milestones earned through play. |
 | Atlas exploration | Current location ID, discovered location IDs, first discovery time, last visit time and visit count. | Resume the player's position and show their own charted places. |
 | Future inventory and quests | Items, authored quest progress and checkpoints. | Not currently stored; requires reviewed persistence and privacy handling before release. |
-| Guild settings | Enabled games, leaderboard visibility, channel configuration, server preferences. | Apply administrators' choices within that guild. |
+| Guild settings | Guild ID, custom command prefix, optional command-channel ID, last editor and configuration timestamps. | Apply moderators' command-routing choices within that guild. |
 | Operational diagnostics | Event type, command name, error category, timing, pseudonymous correlation ID. | Diagnose outages, bugs, rate limits, and performance without recording message contents. |
 | Security records | Limited identifiers and event metadata associated with an incident. | Protect the bot and investigate abuse. |
 
