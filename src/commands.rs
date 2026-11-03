@@ -6,13 +6,16 @@ use crate::{
     game::{GameKind, GamePhase},
     profile::PlayerProfile,
 };
-use poise::serenity_prelude::{CreateAttachment, CreateMessage};
+use poise::serenity_prelude::{ChannelId, CreateAttachment, CreateMessage};
+
+use crate::guild_settings::{GuildCommandSettings, validate_prefix};
 
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.say(help_message(ctx.data().prefix())).await?;
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
+    ctx.say(help_message(&prefix)).await?;
     Ok(())
 }
 
@@ -38,6 +41,209 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     ))
     .await?;
     Ok(())
+}
+
+#[poise::command(prefix_command, slash_command, guild_only, ephemeral)]
+pub async fn prefix(
+    ctx: Context<'_>,
+    #[description = "show | set <prefix> [#channel] | channel <#channel|off> | reset"]
+    #[rest]
+    changes: Option<String>,
+) -> Result<(), Error> {
+    let Some(guild_id) = ctx.guild_id() else {
+        ctx.say("Server command settings are only available inside a Discord server.")
+            .await?;
+        return Ok(());
+    };
+
+    let guild_key = guild_id.to_string();
+    let current = ctx.data().guild_settings().get(&guild_key);
+    let action = match parse_prefix_update(changes.as_deref()) {
+        Ok(action) => action,
+        Err(problem) => {
+            ctx.say(format!(
+                "**Server command settings**\\n\\n{problem}\\n\\nUsage: prefix set ! #bot-commands | prefix channel #bot-commands | prefix channel off | prefix reset."
+            ))
+            .await?;
+            return Ok(());
+        }
+    };
+
+    match action {
+        PrefixUpdate::Show => {
+            ctx.say(render_guild_settings(current.as_ref(), ctx.data().prefix()))
+                .await?;
+        }
+        PrefixUpdate::Reset => {
+            ctx.data().guild_settings().reset(&guild_key).await?;
+            ctx.say(format!(
+                "Server settings reset. The default prefix is now {} and commands are allowed in every channel.",
+                escape_user_text(ctx.data().prefix())
+            ))
+            .await?;
+        }
+        PrefixUpdate::Set { prefix: new_prefix, channel } => {
+            let channel_id = match channel.as_deref() {
+                Some(value) => match resolve_guild_channel(ctx, guild_id, value).await? {
+                    Some(channel_id) => Some(channel_id),
+                    None => {
+                        ctx.say("That channel is not available in this server. Mention a channel from this server.")
+                            .await?;
+                        return Ok(());
+                    }
+                },
+                None => current
+                    .as_ref()
+                    .and_then(|settings| settings.command_channel_id.clone()),
+            };
+
+            ctx.data()
+                .guild_settings()
+                .save(
+                    &guild_key,
+                    &new_prefix,
+                    channel_id.as_deref(),
+                    &ctx.author().id.to_string(),
+                )
+                .await?;
+
+            let settings = ctx.data().guild_settings().get(&guild_key);
+            ctx.say(format!(
+                "Server settings saved.\\n\\n{}",
+                render_guild_settings(settings.as_ref(), ctx.data().prefix())
+            ))
+            .await?;
+        }
+        PrefixUpdate::Channel(channel) => {
+            let channel_id = match channel.as_deref() {
+                Some(value) => match resolve_guild_channel(ctx, guild_id, value).await? {
+                    Some(channel_id) => Some(channel_id),
+                    None => {
+                        ctx.say("That channel is not available in this server. Mention a channel from this server.")
+                            .await?;
+                        return Ok(());
+                    }
+                },
+                None => None,
+            };
+            let active_prefix = current
+                .as_ref()
+                .map(|settings| settings.prefix.clone())
+                .unwrap_or_else(|| ctx.data().prefix().to_owned());
+
+            ctx.data()
+                .guild_settings()
+                .save(
+                    &guild_key,
+                    &active_prefix,
+                    channel_id.as_deref(),
+                    &ctx.author().id.to_string(),
+                )
+                .await?;
+
+            let settings = ctx.data().guild_settings().get(&guild_key);
+            ctx.say(format!(
+                "Command channel updated.\\n\\n{}",
+                render_guild_settings(settings.as_ref(), ctx.data().prefix())
+            ))
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum PrefixUpdate {
+    Show,
+    Reset,
+    Set { prefix: String, channel: Option<String> },
+    Channel(Option<String>),
+}
+
+fn parse_prefix_update(input: Option<&str>) -> Result<PrefixUpdate, &'static str> {
+    let Some(input) = input.map(str::trim).filter(|value| !value.is_empty()) else {
+        return Ok(PrefixUpdate::Show);
+    };
+
+    let mut parts = input.split_whitespace();
+    match parts.next() {
+        Some("show") if parts.next().is_none() => Ok(PrefixUpdate::Show),
+        Some("reset") if parts.next().is_none() => Ok(PrefixUpdate::Reset),
+        Some("set") => {
+            let prefix = parts.next().ok_or("Provide a prefix after set.")?;
+            validate_prefix(prefix)?;
+            let channel = parts.next().map(parse_channel_reference).transpose()?;
+            if parts.next().is_some() {
+                return Err("Use only one optional channel after the new prefix.");
+            }
+            Ok(PrefixUpdate::Set {
+                prefix: prefix.to_owned(),
+                channel,
+            })
+        }
+        Some("channel") => {
+            let channel = parts.next().ok_or("Provide a channel mention, ID, or off.")?;
+            let channel = if channel.eq_ignore_ascii_case("off") {
+                None
+            } else {
+                Some(parse_channel_reference(channel)?)
+            };
+            if parts.next().is_some() {
+                return Err("The channel setting accepts one channel or off.");
+            }
+            Ok(PrefixUpdate::Channel(channel))
+        }
+        _ => Err("Unknown option. Use show, set, channel, or reset."),
+    }
+}
+
+fn parse_channel_reference(value: &str) -> Result<String, &'static str> {
+    let value = value
+        .strip_prefix("<#")
+        .and_then(|value| value.strip_suffix('>'))
+        .unwrap_or(value);
+    let id = value
+        .parse::<u64>()
+        .ok()
+        .filter(|id| *id != 0)
+        .ok_or("Mention a channel from this server, or provide its numeric channel ID.")?;
+    Ok(id.to_string())
+}
+
+async fn resolve_guild_channel(
+    ctx: Context<'_>,
+    guild_id: poise::serenity_prelude::GuildId,
+    channel_id: &str,
+) -> Result<Option<String>, Error> {
+    let parsed_id = channel_id.parse::<u64>()?;
+    let channel = ChannelId::new(parsed_id)
+        .to_channel(ctx.serenity_context())
+        .await?;
+    Ok(match channel {
+        poise::serenity_prelude::Channel::Guild(channel) if channel.guild_id == guild_id => {
+            Some(channel.id.to_string())
+        }
+        _ => None,
+    })
+}
+
+fn render_guild_settings(
+    settings: Option<&GuildCommandSettings>,
+    default_prefix: &str,
+) -> String {
+    let prefix = settings
+        .map(|settings| settings.prefix.as_str())
+        .unwrap_or(default_prefix);
+    let channel = settings
+        .and_then(|settings| settings.command_channel_id.as_deref())
+        .map(|id| format!("<#{id}>"))
+        .unwrap_or_else(|| "Every channel".to_owned());
+    format!(
+        "**Server command settings**\\n\\nPrefix: {}\\nCommand channel: {}\\n\\nUse prefix set <prefix> [#channel] to update the prefix.\\nUse prefix channel <#channel|off> to change the command channel.\\nUse prefix reset to restore defaults.\\n\\nWhen a command channel is configured, all other commands are accepted only there. The prefix configuration command remains available from every channel.",
+        escape_user_text(prefix),
+        channel
+    )
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -252,6 +458,7 @@ pub async fn wallet(ctx: Context<'_>) -> Result<(), Error> {
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
     let player_id = ctx.author().id.to_string();
     let unlocked = ctx
         .data()
@@ -265,7 +472,7 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
             format!(
                 "**Your Achievement Gallery**\n\nNo achievements unlocked yet. \
                  Complete games to record your milestones. Use `{}games` to browse.",
-                ctx.data().prefix()
+                prefix
             ),
         )
         .await;
@@ -330,7 +537,8 @@ pub async fn settings(
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
-    let message = crate::tavern::render(ctx.data().prefix());
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
+    let message = crate::tavern::render(&prefix);
     ctx.say(message).await?;
     Ok(())
 }
@@ -343,7 +551,8 @@ pub async fn atlas(ctx: Context<'_>) -> Result<(), Error> {
         .get_or_create(&player_id, &ctx.author().name)
         .await?;
     let snapshot = ctx.data().atlas().snapshot(&player_id).await?;
-    send_private(ctx, crate::atlas::render(&snapshot, ctx.data().prefix())).await
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
+    send_private(ctx, crate::atlas::render(&snapshot, &prefix)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -383,6 +592,7 @@ pub async fn travel(
         Err(error) => return Err(Box::new(error)),
     };
 
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
     let message = if result.moved {
         format!(
             "You travelled from **{}** to **{}**.",
@@ -396,7 +606,7 @@ pub async fn travel(
         format!(
             "{}\n\n{}",
             message,
-            crate::atlas::render(&result.snapshot, ctx.data().prefix())
+            crate::atlas::render(&result.snapshot, &prefix)
         ),
     )
     .await
@@ -565,10 +775,16 @@ pub async fn leave(
 }
 
 pub fn all() -> Vec<poise::Command<Data, Error>> {
+    let mut prefix_command = prefix();
+    prefix_command.required_permissions = poise::serenity_prelude::Permissions::MANAGE_GUILD;
+    prefix_command.default_member_permissions =
+        poise::serenity_prelude::Permissions::MANAGE_GUILD;
+
     vec![
         help(),
         about(),
         ping(),
+        prefix_command,
         privacy(),
         privacy_data(),
         privacy_export(),
@@ -664,6 +880,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}help / /help — list commands\n\
          {safe_prefix}about / /about — describe this build\n\
          {safe_prefix}ping / /ping — check responsiveness and uptime\n\
+         {safe_prefix}prefix [set|channel|reset] / /prefix — configure this server's prefix and command channel (Manage Server)\n\
          {safe_prefix}privacy / /privacy — read the current privacy overview\n\
          {safe_prefix}privacy_data / /privacy_data — inspect your stored data\n\
          {safe_prefix}privacy_export / /privacy_export — receive a private JSON export\n\
@@ -713,7 +930,7 @@ current implementation, not a statement about Discord's independent data practic
 
 #[cfg(test)]
 mod tests {
-    use super::{escape_user_text, help_message};
+    use super::{escape_user_text, help_message, parse_prefix_update, PrefixUpdate};
 
     #[test]
     fn help_lists_commands_registered_in_this_build() {
@@ -722,6 +939,7 @@ mod tests {
             ".help / /help",
             ".about / /about",
             ".ping / /ping",
+            ".prefix [set|channel|reset] / /prefix",
             ".privacy / /privacy",
             ".privacy_data / /privacy_data",
             ".privacy_export / /privacy_export",
@@ -748,6 +966,29 @@ mod tests {
     }
 
     #[test]
+    fn prefix_parser_supports_show_set_channel_and_reset() {
+        assert_eq!(parse_prefix_update(None), Ok(PrefixUpdate::Show));
+        assert_eq!(parse_prefix_update(Some("show")), Ok(PrefixUpdate::Show));
+        assert_eq!(
+            parse_prefix_update(Some("set mb! <#123456789012345678>")),
+            Ok(PrefixUpdate::Set {
+                prefix: "mb!".to_owned(),
+                channel: Some("123456789012345678".to_owned()),
+            })
+        );
+        assert_eq!(parse_prefix_update(Some("channel off")), Ok(PrefixUpdate::Channel(None)));
+        assert_eq!(parse_prefix_update(Some("reset")), Ok(PrefixUpdate::Reset));
+    }
+
+    #[test]
+    fn prefix_parser_rejects_invalid_prefixes_and_extra_arguments() {
+        assert!(parse_prefix_update(Some("set two words")).is_err());
+        assert!(parse_prefix_update(Some("set ! 123 456")).is_err());
+        assert!(parse_prefix_update(Some("channel")).is_err());
+        assert!(parse_prefix_update(Some("channel not-a-channel")).is_err());
+        assert!(parse_prefix_update(Some("reset extra")).is_err());
+    }
+
     fn user_content_cannot_create_mentions_or_markdown() {
         let escaped = escape_user_text("@everyone **hello** `code`");
         assert!(!escaped.contains("@everyone"));

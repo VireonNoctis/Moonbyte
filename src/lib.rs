@@ -7,6 +7,7 @@ pub mod config;
 pub mod database;
 pub mod emoji;
 pub mod game;
+pub mod guild_settings;
 pub mod profile;
 pub mod tavern;
 pub mod wallet;
@@ -25,6 +26,7 @@ pub struct Data {
     wallets: wallet::WalletStore,
     achievements: achievement::AchievementStore,
     atlas: atlas::AtlasStore,
+    guild_settings: guild_settings::GuildSettingsStore,
 }
 
 impl Data {
@@ -35,6 +37,7 @@ impl Data {
         wallets: wallet::WalletStore,
         achievements: achievement::AchievementStore,
         atlas: atlas::AtlasStore,
+        guild_settings: guild_settings::GuildSettingsStore,
     ) -> Self {
         Self {
             prefix,
@@ -44,11 +47,27 @@ impl Data {
             wallets,
             achievements,
             atlas,
+            guild_settings,
         }
     }
 
     pub fn prefix(&self) -> &str {
         &self.prefix
+    }
+
+    /// Resolve the active guild prefix, falling back to DEFAULT_PREFIX.
+    pub fn command_prefix(
+        &self,
+        guild_id: Option<poise::serenity_prelude::GuildId>,
+    ) -> String {
+        guild_id
+            .and_then(|id| self.guild_settings.get(&id.to_string()))
+            .map(|settings| settings.prefix)
+            .unwrap_or_else(|| self.prefix.clone())
+    }
+
+    pub fn guild_settings(&self) -> &guild_settings::GuildSettingsStore {
+        &self.guild_settings
     }
 
     pub fn uptime(&self) -> Duration {

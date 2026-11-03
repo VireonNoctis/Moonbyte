@@ -2,7 +2,8 @@ use std::{process::ExitCode, time::Duration};
 
 use moonbyte::{
     Data, Error, achievement::AchievementStore, atlas::AtlasStore, commands, config::Config,
-    database::Database, game::GameRuntime, profile::ProfileStore, wallet::WalletStore,
+    database::Database, game::GameRuntime, guild_settings::GuildSettingsStore,
+    profile::ProfileStore, wallet::WalletStore,
 };
 use poise::serenity_prelude as serenity;
 
@@ -25,6 +26,7 @@ async fn run() -> Result<(), Error> {
     let wallets = WalletStore::new(database.pool());
     let achievements = AchievementStore::new(database.pool());
     let atlas = AtlasStore::new(database.pool());
+    let guild_settings = GuildSettingsStore::new(database.pool()).await?;
     let prefix = config.default_prefix().to_owned();
 
     // One central cleanup task enforces the 24-hour inactive-session retention
@@ -44,8 +46,49 @@ async fn run() -> Result<(), Error> {
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: commands::all(),
+            command_check: Some(|ctx| {
+                Box::pin(async move {
+                    // Keep server configuration recoverable from every channel.
+                    if ctx.command().name.as_ref() == "prefix" {
+                        return Ok(true);
+                    }
+
+                    let Some(guild_id) = ctx.guild_id() else {
+                        return Ok(true);
+                    };
+                    let Some(settings) = ctx.data().guild_settings().get(&guild_id.to_string()) else {
+                        return Ok(true);
+                    };
+                    let Some(channel_id) = settings.command_channel_id else {
+                        return Ok(true);
+                    };
+
+                    if channel_id == ctx.channel_id().to_string() {
+                        return Ok(true);
+                    }
+
+                    ctx.say(format!(
+                        "Commands for this server are configured in <#{channel_id}>. Use /prefix there or from any channel to update the setting."
+                    ))
+                    .await?;
+                    Ok(false)
+                })
+            }),
             prefix_options: poise::PrefixFrameworkOptions {
-                prefix: Some(prefix.clone().into()),
+                prefix: None,
+                dynamic_prefix: Some(|partial| {
+                    Box::pin(async move {
+                        let data = partial.framework.user_data;
+                        let settings = partial
+                            .guild_id
+                            .and_then(|guild_id| data.guild_settings().get(&guild_id.to_string()));
+                        let prefix = settings
+                            .map(|settings| settings.prefix)
+                            .unwrap_or_else(|| data.prefix().to_owned());
+                        Ok(Some(prefix.into()))
+                    })
+                }),
+                mention_as_prefix: true,
                 ..Default::default()
             },
             ..Default::default()
@@ -57,6 +100,7 @@ async fn run() -> Result<(), Error> {
             let wallets = wallets.clone();
             let achievements = achievements.clone();
             let atlas = atlas.clone();
+            let guild_settings = guild_settings.clone();
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(Data::new(
@@ -66,6 +110,7 @@ async fn run() -> Result<(), Error> {
                     wallets,
                     achievements,
                     atlas,
+                    guild_settings,
                 ))
             })
         })
