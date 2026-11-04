@@ -20,6 +20,8 @@ Use npm run typecheck and npm run build before publishing.
 - A redesigned field-guide landing page with original pixel-inspired CSS artwork.
 - Searchable and filterable cards for the four games currently implemented in the Rust runtime.
 - Four statically generated game guide routes under /games/[slug], sourced from the same catalogue as the landing page.
+- A shared React design system for brand marks, site navigation/footer, field-guide labels, status markers, tactile links and panel surfaces.
+- A branded not-found route and site-wide keyboard skip link.
 - Reusable React artwork, section-label and guide-fact components shared by the game catalogue and detail pages.
 - Per-game command handoff, session type, player count, estimated duration, controls and explicit starter-build notes where relevant.
 - An interactive Atlas map showing the five authored locations and their direct route relationships.

@@ -36,6 +36,10 @@ The visual studies draw from the physical-button and receipt-like interaction ex
 - GameArtwork is shared by catalogue cards and detail-page hero panels.
 - SectionEyebrow keeps numbered field-guide labels consistent.
 - GuideFact renders compact definition-list facts for game guides.
+- SiteHeader, SiteFooter and BrandMark provide consistent page chrome across the home page, game guides and not-found route.
+- ActionLink, FieldPanel and StatusIndicator are small primitives for tactile navigation, shared surfaces and truthful live-state labels.
+- The root layout provides a keyboard skip link; every page exposes the shared main-content target.
+- The custom not-found route uses existing navigation and catalogue links instead of inventing a destination.
 - Search, map selection and clipboard status remain small client components; static game routes and editorial composition remain server rendered.
 
 ## Truthful data contract

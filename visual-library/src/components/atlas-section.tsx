@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CopyCommandButton } from "@/components/copy-command";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 
 type AtlasPlace = {
   id: string;
@@ -93,7 +94,7 @@ export function AtlasSection() {
     <section className="atlas-section" id="atlas" aria-labelledby="atlas-title">
       <div className="atlas-section__heading">
         <div>
-          <div className="eyebrow eyebrow--light"><span className="eyebrow__index">03</span><span>THE WORLD INDEX</span></div>
+          <SectionEyebrow index="03" label="THE WORLD INDEX" light />
           <h2 id="atlas-title">Five places.<br /><em>One connected map.</em></h2>
         </div>
         <p>

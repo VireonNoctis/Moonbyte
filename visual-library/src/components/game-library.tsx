@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CopyCommandButton } from "@/components/copy-command";
+import { StatusIndicator } from "@/components/ui/status-indicator";
 import { GameArtwork } from "@/components/game-artwork";
 import { categories, games, type CategoryFilter, type GameDefinition } from "@/lib/catalog";
 
@@ -12,7 +13,7 @@ function GameCard({ game, index }: { game: GameDefinition; index: number }) {
       <div className="game-card__art-wrap">
         <div className="game-card__topline">
           <span className="game-card__category">{game.category}</span>
-          <span className="playable-label"><i aria-hidden="true" />PLAYABLE</span>
+          <StatusIndicator className="playable-label" label="PLAYABLE" />
         </div>
         <GameArtwork game={game} />
         <span className="game-card__index">MB / 0{index + 1}</span>

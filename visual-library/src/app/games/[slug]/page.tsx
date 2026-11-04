@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 import { CopyCommandButton } from "@/components/copy-command";
 import { GameArtwork } from "@/components/game-artwork";
 import { GuideFact } from "@/components/ui/guide-fact";
+import { FieldPanel } from "@/components/ui/field-panel";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { SiteHeader } from "@/components/ui/site-header";
+import { StatusIndicator } from "@/components/ui/status-indicator";
 import { games } from "@/lib/catalog";
 
 type GamePageProps = {
@@ -49,22 +53,9 @@ export default async function GamePage({ params }: GamePageProps) {
         <span>FIELD GUIDE / GAME 0{gameIndex + 1}</span>
       </div>
 
-      <header className="site-header">
-        <Link className="brand" href="/" aria-label="Moonbyte home">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span>
-          <span className="brand__wordmark">moonbyte</span>
-          <span className="brand__edition">FIELD GUIDE 01</span>
-        </Link>
-        <nav className="primary-nav" aria-label="Main navigation">
-          <Link href="/#catalogue" aria-current="page">Arcade</Link>
-          <Link href="/#atlas">Atlas</Link>
-          <Link href="/#tavern">Tavern</Link>
-          <Link href="/#wayfarer">Wayfarer</Link>
-        </nav>
-        <Link className="header-action" href="/#catalogue">All games <span aria-hidden="true">↗</span></Link>
-      </header>
+      <SiteHeader active="arcade" actionLabel="All games" />
 
-      <main className="game-guide" id="top">
+      <main className="game-guide" id="main-content" tabIndex={-1}>
         <div className="game-guide__breadcrumb">
           <Link href="/#catalogue">THE COMMON TABLES</Link>
           <span aria-hidden="true">/</span>
@@ -77,7 +68,7 @@ export default async function GamePage({ params }: GamePageProps) {
           <div className={"game-guide__art game-guide__art--" + game.palette}>
             <div className="game-guide__art-topline">
               <span>MOONBYTE / {String(gameIndex + 1).padStart(2, "0")}</span>
-              <span className="playable-label"><i aria-hidden="true" />LIVE IN DISCORD</span>
+              <StatusIndicator className="playable-label" label="LIVE IN DISCORD" />
             </div>
             <GameArtwork game={game} featured />
             <div className="game-guide__art-footer">
@@ -90,7 +81,7 @@ export default async function GamePage({ params }: GamePageProps) {
             <SectionEyebrow index={"0" + String(gameIndex + 2)} label="THE COMMON TABLES" />
             <div className="game-guide__category-row">
               <span className="game-guide__category">{game.category}</span>
-              <span className="game-guide__status"><i /> PLAYABLE NOW</span>
+              <StatusIndicator className="game-guide__status" label="PLAYABLE NOW" />
             </div>
             <h1 id="game-title">{game.name}<span>.</span></h1>
             <p className="game-guide__description">{game.description}</p>
@@ -115,7 +106,7 @@ export default async function GamePage({ params }: GamePageProps) {
             <p>Moonbyte handles the game session in Discord. This page is your field guide; copying a command does not start a match or change saved progress.</p>
           </div>
 
-          <div className="game-guide__instruction-card">
+          <FieldPanel className="game-guide__instruction-card" tone="quiet">
             <article>
               <span className="game-guide__step">01</span>
               <div>
@@ -143,7 +134,7 @@ export default async function GamePage({ params }: GamePageProps) {
                 Copy command
               </CopyCommandButton>
             </div>
-          </div>
+          </FieldPanel>
         </section>
 
         <section className="game-guide__build-note" aria-labelledby="build-note-title">
@@ -181,18 +172,7 @@ export default async function GamePage({ params }: GamePageProps) {
         </section>
       </main>
 
-      <footer className="site-footer">
-        <Link className="brand brand--footer" href="/" aria-label="Moonbyte home">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span>
-          <span className="brand__wordmark">moonbyte</span>
-        </Link>
-        <p>A little world of games, right inside Discord.</p>
-        <div className="footer-links">
-          <a href="https://github.com/VireonNoctis/Moonbyte" rel="noreferrer" target="_blank">Repository <span aria-hidden="true">↗</span></a>
-          <Link href="/#catalogue">All games <span aria-hidden="true">↗</span></Link>
-        </div>
-        <span className="footer-note">ORIGINAL WORLDS · HONEST PROGRESS · NO PRESSURE</span>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

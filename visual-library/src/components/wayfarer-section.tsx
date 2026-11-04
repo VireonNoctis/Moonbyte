@@ -1,4 +1,5 @@
 import { CopyCommandButton } from "@/components/copy-command";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 
 const objectives = [
   {
@@ -47,7 +48,7 @@ export function WayfarerSection() {
   return (
     <section className="wayfarer-section content-section" id="wayfarer" aria-labelledby="wayfarer-title">
       <div className="wayfarer-intro">
-        <div className="eyebrow"><span className="eyebrow__index">05</span><span>THE WAYFARER THREAD</span></div>
+        <SectionEyebrow index="05" label="THE WAYFARER THREAD" />
         <h2 id="wayfarer-title">Progress that <em>stays yours.</em></h2>
         <p>
           Optional goals connect the arcade to the wider world. Journey days

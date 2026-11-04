@@ -2,14 +2,11 @@ import { AtlasSection } from "@/components/atlas-section";
 import { GameLibrary } from "@/components/game-library";
 import { TavernSection } from "@/components/tavern-section";
 import { WayfarerSection } from "@/components/wayfarer-section";
-
-function BrandMark() {
-  return (
-    <span className="brand-mark" aria-hidden="true">
-      <i /><i /><i /><i />
-    </span>
-  );
-}
+import { ActionLink } from "@/components/ui/action-link";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
+import { SiteFooter } from "@/components/ui/site-footer";
+import { SiteHeader } from "@/components/ui/site-header";
+import { StatusIndicator } from "@/components/ui/status-indicator";
 
 export default function HomePage() {
   return (
@@ -22,32 +19,12 @@ export default function HomePage() {
         <a href="#catalogue">Explore the library <span aria-hidden="true">↘</span></a>
       </div>
 
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="Moonbyte home">
-          <BrandMark />
-          <span className="brand__wordmark">moonbyte</span>
-          <span className="brand__edition">FIELD GUIDE 01</span>
-        </a>
+      <SiteHeader />
 
-        <nav className="primary-nav" aria-label="Main navigation">
-          <a href="#catalogue">Arcade</a>
-          <a href="#atlas">Atlas</a>
-          <a href="#tavern">Tavern</a>
-          <a href="#wayfarer">Wayfarer</a>
-        </nav>
-
-        <a className="header-action" href="#catalogue">
-          Find a game <span aria-hidden="true">↗</span>
-        </a>
-      </header>
-
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero__copy">
-            <div className="eyebrow">
-              <span className="eyebrow__index">01</span>
-              <span>PIXEL WORLDS · QUICK GAMES · SHARED ADVENTURES</span>
-            </div>
+            <SectionEyebrow index="01" label="PIXEL WORLDS · QUICK GAMES · SHARED ADVENTURES" />
             <h1 id="hero-title">A little world.<br /><em>A lot to discover.</em></h1>
             <p className="hero__description">
               Moonbyte brings games, puzzles and a growing world into the
@@ -55,12 +32,12 @@ export default function HomePage() {
               or follow a path somewhere new.
             </p>
             <div className="hero__actions">
-              <a className="button button--primary button--large" href="#catalogue">
+              <ActionLink href="/#catalogue" size="large">
                 Browse the arcade <span aria-hidden="true">↘</span>
-              </a>
-              <a className="text-link" href="#atlas">
+              </ActionLink>
+              <ActionLink href="/#atlas" variant="quiet">
                 See the world <span aria-hidden="true">→</span>
-              </a>
+              </ActionLink>
             </div>
             <div className="hero__footnote">
               <span className="hero__footnote-mark" aria-hidden="true">✳</span>
@@ -124,7 +101,7 @@ export default function HomePage() {
             <span>Live Tavern destinations</span>
           </div>
           <div className="fact fact--note">
-            <span className="fact__live"><i /> CURRENT BUILD</span>
+            <StatusIndicator className="fact__live" label="CURRENT BUILD" />
             <span>Only implemented features are shown as playable.</span>
           </div>
         </section>
@@ -132,7 +109,7 @@ export default function HomePage() {
         <section className="content-section catalogue-section" id="catalogue" aria-labelledby="catalogue-title">
           <div className="section-heading">
             <div>
-              <div className="eyebrow"><span className="eyebrow__index">02</span><span>THE COMMON TABLES</span></div>
+              <SectionEyebrow index="02" label="THE COMMON TABLES" />
               <h2 id="catalogue-title">Pick your <em>next move.</em></h2>
             </div>
             <p>
@@ -149,7 +126,7 @@ export default function HomePage() {
 
         <section className="principles-section" id="principles" aria-labelledby="principles-title">
           <div className="principles-intro">
-            <div className="eyebrow"><span className="eyebrow__index">06</span><span>BUILT AROUND PEOPLE</span></div>
+            <SectionEyebrow index="06" label="BUILT AROUND PEOPLE" />
             <h2 id="principles-title">A game should fit <em>your life.</em></h2>
             <p>
               The world can be deep without asking for all your time. The best
@@ -176,18 +153,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="site-footer">
-        <a className="brand brand--footer" href="#top" aria-label="Moonbyte home">
-          <BrandMark />
-          <span className="brand__wordmark">moonbyte</span>
-        </a>
-        <p>A little world of games, right inside Discord.</p>
-        <div className="footer-links">
-          <a href="https://github.com/VireonNoctis/Moonbyte" rel="noreferrer" target="_blank">Repository <span aria-hidden="true">↗</span></a>
-          <a href="https://github.com/VireonNoctis/Moonbyte/blob/main/docs/MOONBYTE_FINAL_VISION.md" rel="noreferrer" target="_blank">Product vision <span aria-hidden="true">↗</span></a>
-        </div>
-        <span className="footer-note">ORIGINAL WORLDS · HONEST PROGRESS · NO PRESSURE</span>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
