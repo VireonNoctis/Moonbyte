@@ -679,4 +679,231 @@ mod tests {
             Err(ExpeditionError::InvalidChoice)
         ));
     }
+
+    #[tokio::test]
+    async fn shared_lantern_road_is_transactional_private_and_deletable() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        use crate::{
+            atlas::AtlasStore,
+            database::Database,
+            profile::ProfileStore,
+            wayfarer::WayfarerStore,
+        };
+
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must point to the CI PostgreSQL service");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("connect and migrate PostgreSQL");
+        let pool = database.pool();
+        let profiles = ProfileStore::new(pool.clone());
+        let atlas = AtlasStore::new(pool.clone());
+        let wayfarer = WayfarerStore::new(pool.clone());
+        let store = super::ExpeditionStore::new(pool);
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos()
+            % 1_000_000_000_000_000_000;
+        let host_id = format!("exp-host-{nonce:x}");
+        let member_id = format!("exp-member-{nonce:x}");
+        let outsider_id = format!("exp-outsider-{nonce:x}");
+        let guild_id = format!("exp-guild-{nonce:x}");
+
+        profiles
+            .get_or_create(&host_id, "Expedition Host")
+            .await
+            .expect("create host profile");
+        profiles
+            .get_or_create(&member_id, "Expedition Member")
+            .await
+            .expect("create member profile");
+        profiles
+            .get_or_create(&outsider_id, "Expedition Observer")
+            .await
+            .expect("create outsider profile");
+        atlas.snapshot(&host_id).await.expect("host starting place");
+        atlas.snapshot(&member_id).await.expect("member starting place");
+        atlas.snapshot(&outsider_id).await.expect("outsider starting place");
+
+        let recruiting = store
+            .start(&host_id, Some(&guild_id), true)
+            .await
+            .expect("create recruiting group run");
+        assert_eq!(recruiting.state, "recruiting");
+        assert!(matches!(
+            store
+                .snapshot(&outsider_id, Some(&guild_id), recruiting.run_id)
+                .await,
+            Err(super::ExpeditionError::NotParticipant)
+        ));
+        assert!(matches!(
+            store
+                .snapshot(&host_id, Some("another-guild"), recruiting.run_id)
+                .await,
+            Err(super::ExpeditionError::WrongGuild)
+        ));
+        assert!(matches!(
+            atlas.travel(&host_id, "mosslight-grove").await,
+            Err(crate::atlas::AtlasError::ExpeditionInProgress)
+        ));
+
+        let joined = store
+            .join(&member_id, &guild_id, recruiting.run_id)
+            .await
+            .expect("member explicitly joins");
+        assert_eq!(joined.participants.len(), 2);
+        assert!(matches!(
+            store
+                .begin(&member_id, Some(&guild_id), recruiting.run_id)
+                .await,
+            Err(super::ExpeditionError::NotHost)
+        ));
+        store
+            .begin(&host_id, Some(&guild_id), recruiting.run_id)
+            .await
+            .expect("host begins group run");
+
+        store
+            .pause(&member_id, Some(&guild_id), recruiting.run_id)
+            .await
+            .expect("participant can pause");
+        assert!(matches!(
+            store
+                .advance(
+                    &host_id,
+                    Some(&guild_id),
+                    recruiting.run_id,
+                    "mosslight-grove",
+                    "inspect"
+                )
+                .await,
+            Err(super::ExpeditionError::NotActive)
+        ));
+        store
+            .resume(&host_id, Some(&guild_id), recruiting.run_id)
+            .await
+            .expect("participant can resume");
+
+        let grove = store
+            .advance(
+                &host_id,
+                Some(&guild_id),
+                recruiting.run_id,
+                "mosslight-grove",
+                "inspect",
+            )
+            .await
+            .expect("commit first checkpoint");
+        assert_eq!(grove.checkpoint_index, 1);
+        assert!(matches!(
+            store
+                .advance(
+                    &member_id,
+                    Some(&guild_id),
+                    recruiting.run_id,
+                    "ember-archive",
+                    "lantern"
+                )
+                .await,
+            Err(super::ExpeditionError::IncorrectAnswer)
+        ));
+        assert!(matches!(
+            store
+                .advance(
+                    &member_id,
+                    Some(&guild_id),
+                    recruiting.run_id,
+                    "starfall-observatory",
+                    "chart"
+                )
+                .await,
+            Err(super::ExpeditionError::StaleCheckpoint)
+        ));
+
+        let after_host_leave = store
+            .leave(&host_id, Some(&guild_id), recruiting.run_id)
+            .await
+            .expect("host leaves without deleting shared history");
+        assert_eq!(
+            after_host_leave.host.as_deref(),
+            Some(member_id.as_str()),
+            "host ownership transfers to the earliest remaining participant"
+        );
+
+        store
+            .advance(
+                &member_id,
+                Some(&guild_id),
+                recruiting.run_id,
+                "ember-archive",
+                "star",
+            )
+            .await
+            .expect("solve the archive clue");
+        let completed = store
+            .advance(
+                &member_id,
+                Some(&guild_id),
+                recruiting.run_id,
+                "starfall-observatory",
+                "chart",
+            )
+            .await
+            .expect("complete the route");
+        assert_eq!(completed.state, "completed");
+        assert_eq!(completed.checkpoint_index, 3);
+
+        let host_atlas = atlas.snapshot(&host_id).await.expect("host's saved Atlas");
+        let member_atlas = atlas.snapshot(&member_id).await.expect("member's saved Atlas");
+        assert_eq!(host_atlas.current_location.id, "mosslight-grove");
+        assert_eq!(member_atlas.current_location.id, "starfall-observatory");
+        assert!(
+            wayfarer
+                .snapshot(&member_id)
+                .await
+                .expect("Wayfarer record")
+                .active_days
+                >= 1
+        );
+
+        let inventory = profiles
+            .inventory(&member_id)
+            .await
+            .expect("Expedition data inventory");
+        assert_eq!(inventory.expedition_run_records, 1);
+        assert_eq!(inventory.expedition_checkpoint_records, 3);
+        let export = profiles
+            .export_json(&member_id)
+            .await
+            .expect("Expedition export");
+        assert!(export.contains("lantern-road"));
+        assert!(export.contains("ember-archive"));
+        assert!(export.contains(&recruiting.run_id.to_string()));
+
+        let host_deletion = profiles
+            .delete_account(&host_id)
+            .await
+            .expect("remove host account without removing the other participant's history");
+        assert_eq!(host_deletion.expedition_participations_removed, 1);
+        assert_eq!(host_deletion.expedition_runs_removed, 0);
+        let member_run = store
+            .snapshot(&member_id, Some(&guild_id), recruiting.run_id)
+            .await
+            .expect("remaining participant retains the completed run");
+        assert_eq!(member_run.state, "completed");
+
+        let member_deletion = profiles
+            .delete_account(&member_id)
+            .await
+            .expect("remove final participant and orphaned run history");
+        assert_eq!(member_deletion.expedition_participations_removed, 1);
+        assert_eq!(member_deletion.expedition_runs_removed, 1);
+        profiles
+            .delete_account(&outsider_id)
+            .await
+            .expect("remove test observer account");
+    }
+
 }

@@ -866,7 +866,7 @@ impl ProfileStore {
         >(
             "SELECT r.expedition_run_id, r.route_id, r.content_version, r.guild_id,
              r.state, r.current_checkpoint_index,
-             r.host_discord_user_id = p.discord_user_id,
+             COALESCE(r.host_discord_user_id = p.discord_user_id, FALSE),
              p.joined_at::text, p.left_at::text, r.created_at::text,
              r.started_at::text, r.completed_at::text
              FROM expedition_runs r
@@ -1415,7 +1415,7 @@ mod postgres_tests {
             !export.contains("rotation_seed"),
             "private quest seed must not be exported"
         );
-        assert!(export.contains("\"format_version\": 8"));
+        assert!(export.contains("\"format_version\": 9"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
