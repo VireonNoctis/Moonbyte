@@ -170,9 +170,7 @@ impl GameRuntime {
         if session.guild_id() != guild_id {
             return Err(GameError::WrongGuild.into());
         }
-        if expected_action_count
-            .is_some_and(|expected| session.snapshot().action_count != expected)
-        {
+        if expected_action_count.is_some_and(|expected| session.snapshot().action_count != expected) {
             return Err(GameRuntimeError::StaleAction);
         }
         let action = GameAction::parse(session.game(), input)?;

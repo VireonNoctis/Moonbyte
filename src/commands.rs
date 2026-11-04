@@ -41,9 +41,7 @@ fn parse_game_component_id(custom_id: &str) -> Option<(String, u32, u8)> {
 
 fn game_action_input(game: GameKind, value: u8) -> Option<String> {
     match game {
-        GameKind::TicTacToe if value < 9 => {
-            Some(format!("{},{}", value / 3 + 1, value % 3 + 1))
-        }
+        GameKind::TicTacToe if value < 9 => Some(format!("{},{}", value / 3 + 1, value % 3 + 1)),
         GameKind::ConnectFour if (1..=7).contains(&value) => Some(value.to_string()),
         GameKind::MemoryMatch if (1..=8).contains(&value) => Some(value.to_string()),
         GameKind::WordScramble => None,
@@ -98,9 +96,7 @@ fn game_reply(content: String, snapshot: &SessionSnapshot) -> poise::CreateReply
     let content = if components.is_empty() {
         content
     } else {
-        format!(
-            "{content}\n\nChoose a numbered button below, or use the command format above."
-        )
+        format!("{content}\n\nChoose a numbered button below, or use the command format above.")
     };
 
     let reply = poise::CreateReply::new().content(content);
@@ -196,17 +192,13 @@ pub async fn handle_game_component(
             ))
             .components(game_components(&current));
         interaction
-            .create_response(
-                discord,
-                CreateInteractionResponse::UpdateMessage(refreshed),
-            )
+            .create_response(discord, CreateInteractionResponse::UpdateMessage(refreshed))
             .await?;
         return Ok(());
     }
 
     let Some(input) = game_action_input(current.game, value) else {
-        return component_notice(discord, interaction, "That game control is not valid.")
-            .await;
+        return component_notice(discord, interaction, "That game control is not valid.").await;
     };
 
     match data
@@ -225,10 +217,7 @@ pub async fn handle_game_component(
                 .content(snapshot.render())
                 .components(game_components(&snapshot));
             interaction
-                .create_response(
-                    discord,
-                    CreateInteractionResponse::UpdateMessage(updated),
-                )
+                .create_response(discord, CreateInteractionResponse::UpdateMessage(updated))
                 .await?;
             tracing::debug!(
                 event = "game_component_action_applied",
@@ -242,15 +231,12 @@ pub async fn handle_game_component(
                 .await?;
             let refreshed = CreateInteractionResponseMessage::new()
                 .content(format!(
-                    "{}\\n\\nThis board was refreshed because another move was accepted first.",
+                    "{}\n\nThis board was refreshed because another move was accepted first.",
                     latest.render()
                 ))
                 .components(game_components(&latest));
             interaction
-                .create_response(
-                    discord,
-                    CreateInteractionResponse::UpdateMessage(refreshed),
-                )
+                .create_response(discord, CreateInteractionResponse::UpdateMessage(refreshed))
                 .await?;
         }
         Err(error) => {
