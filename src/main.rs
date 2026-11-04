@@ -4,6 +4,7 @@ use moonbyte::{
     Data, DataServices, Error, achievement::AchievementStore, atlas::AtlasStore,
     chronicle::ChronicleStore, commands, config::Config, consent::ConsentStore, database::Database,
     game::GameRuntime, guild_settings::GuildSettingsStore, profile::ProfileStore,
+    expedition::ExpeditionStore,
     wallet::WalletStore, wayfarer::WayfarerStore,
 };
 use poise::serenity_prelude as serenity;
@@ -31,6 +32,7 @@ async fn run() -> Result<(), Error> {
     let guild_settings = GuildSettingsStore::new(database.pool()).await?;
     let consents = ConsentStore::new(database.pool());
     let wayfarer = WayfarerStore::new(database.pool());
+    let expeditions = ExpeditionStore::new(database.pool());
     let prefix = config.default_prefix().to_owned();
 
     // One central cleanup task enforces the 24-hour inactive-session retention
@@ -156,6 +158,7 @@ async fn run() -> Result<(), Error> {
             let guild_settings = guild_settings.clone();
             let consents = consents.clone();
             let wayfarer = wayfarer.clone();
+            let expeditions = expeditions.clone();
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(Data::new(
@@ -170,6 +173,7 @@ async fn run() -> Result<(), Error> {
                         guild_settings,
                         consents,
                         wayfarer,
+                        expeditions,
                     },
                 ))
             })

@@ -62,6 +62,8 @@ pub enum AtlasError {
     UnknownLocation,
     NotReachable,
     UnknownStoredLocation,
+    UnexpectedLocation,
+    ExpeditionInProgress,
 }
 
 impl fmt::Display for AtlasError {
@@ -78,6 +80,12 @@ impl fmt::Display for AtlasError {
             }
             Self::UnknownStoredLocation => formatter.write_str(
                 "Your saved Atlas location is not recognised by this version of Moonbyte.",
+            ),
+            Self::UnexpectedLocation => formatter.write_str(
+                "Your saved Atlas position no longer matches this Expedition checkpoint.",
+            ),
+            Self::ExpeditionInProgress => formatter.write_str(
+                "Your Atlas movement is managed by an active Expedition. Pause or leave that run first.",
             ),
         }
     }
@@ -167,6 +175,16 @@ impl AtlasStore {
                 to: destination,
                 snapshot,
             });
+        }
+
+        let expedition_active: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM expedition_participants WHERE discord_user_id = $1 AND is_active)",
+        )
+        .bind(player_id)
+        .fetch_one(&mut *transaction)
+        .await?;
+        if expedition_active {
+            return Err(AtlasError::ExpeditionInProgress);
         }
 
         if !current.routes_to.contains(&destination.id) {
@@ -287,6 +305,66 @@ async fn ensure_starting_point(
     .await?;
 
     crate::chronicle::record_discovery(transaction, player_id, STARTING_LOCATION).await?;
+    Ok(())
+}
+
+
+/// Apply a route checkpoint inside the caller's Expedition transaction.
+/// Atlas, Chronicle and Expedition history therefore commit or roll back together.
+pub(crate) async fn apply_expedition_travel(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+    expected_from: &str,
+    destination_id: &str,
+) -> Result<(), AtlasError> {
+    let from = location_by_id(expected_from).ok_or(AtlasError::UnknownLocation)?;
+    let destination = location_by_id(destination_id).ok_or(AtlasError::UnknownLocation)?;
+    if !from.routes_to.contains(&destination.id) {
+        return Err(AtlasError::NotReachable);
+    }
+
+    let current_id: String = sqlx::query_scalar(
+        "SELECT current_location_id FROM player_world_state WHERE discord_user_id = $1 FOR UPDATE",
+    )
+    .bind(player_id)
+    .fetch_one(&mut **transaction)
+    .await?;
+    if current_id != expected_from {
+        return Err(AtlasError::UnexpectedLocation);
+    }
+
+    let already_discovered: bool = sqlx::query_scalar(
+        "SELECT EXISTS (SELECT 1 FROM player_atlas_discoveries WHERE discord_user_id = $1 AND location_id = $2)",
+    )
+    .bind(player_id)
+    .bind(destination.id)
+    .fetch_one(&mut **transaction)
+    .await?;
+    if !already_discovered {
+        crate::wayfarer::record_atlas_discovery(transaction, player_id).await?;
+    }
+
+    sqlx::query(
+        "INSERT INTO player_atlas_discoveries (discord_user_id, location_id, discovered_at, last_visited_at, visit_count)
+         VALUES ($1, $2, now(), now(), 1)
+         ON CONFLICT (discord_user_id, location_id) DO UPDATE SET
+             last_visited_at = now(), visit_count = player_atlas_discoveries.visit_count + 1",
+    )
+    .bind(player_id)
+    .bind(destination.id)
+    .execute(&mut **transaction)
+    .await?;
+
+    crate::chronicle::record_discovery(transaction, player_id, destination.id).await?;
+
+    sqlx::query(
+        "UPDATE player_world_state SET current_location_id = $2, updated_at = now()
+         WHERE discord_user_id = $1",
+    )
+    .bind(player_id)
+    .bind(destination.id)
+    .execute(&mut **transaction)
+    .await?;
     Ok(())
 }
 
