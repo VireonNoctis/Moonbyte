@@ -44,7 +44,7 @@ Deliverables:
 - [x] Wayfarer activity days, optional fixed-reward daily quests, SHA-512 rotation fingerprints, cumulative cosmetic companion milestones, and mutually accepted private rivalry records.
 - [x] Game catalogue and play/session commands for the first four games.
 - [x] Clear configuration and startup errors.
-- [ ] Structured logging and graceful shutdown.
+- [ ] Structured logging.\n- [x] Graceful shutdown on Ctrl-C and Unix SIGTERM, with Discord shards asked to close cleanly.
 - [x] PostgreSQL connection pool, schema migration runner, durable game-session repository and JSONB state snapshots.
 - [ ] Production backup/restore automation and a rehearsed recovery procedure.
 - [x] CI for formatting, Clippy, compilation, and tests.
