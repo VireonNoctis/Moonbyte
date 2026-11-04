@@ -192,7 +192,7 @@ async fn run() -> Result<(), Error> {
         result = client.start() => {
             result?;
         }
-        signal = tokio::signal::ctrl_c() => {
+        signal = shutdown_signal() => {
             signal?;
             eprintln!("Moonbyte: shutdown signal received; closing Discord gateway shards.");
             shard_manager.shutdown_all().await;
@@ -200,4 +200,22 @@ async fn run() -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+/// Wait for the platform's normal process-termination signal.
+async fn shutdown_signal() -> Result<(), std::io::Error> {
+    #[cfg(unix)]
+    {
+        let mut terminate =
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
+        tokio::select! {
+            result = tokio::signal::ctrl_c() => result,
+            _ = terminate.recv() => Ok(()),
+        }
+    }
+
+    #[cfg(not(unix))]
+    {
+        tokio::signal::ctrl_c().await
+    }
 }
