@@ -564,10 +564,7 @@ async fn is_active_member(
     Ok(sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM expedition_participants WHERE expedition_run_id = $1 AND discord_user_id = $2 AND is_active)")
         .bind(id).bind(player).fetch_one(&mut **tx).await?)
 }
-async fn lock_player(
-    tx: &mut Transaction<'_, Postgres>,
-    player: &str,
-) -> Result<(), sqlx::Error> {
+async fn lock_player(tx: &mut Transaction<'_, Postgres>, player: &str) -> Result<(), sqlx::Error> {
     sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
         .bind(player)
         .execute(&mut **tx)
@@ -893,8 +890,14 @@ mod tests {
             .snapshot(&member_id)
             .await
             .expect("member's Atlas before deletion");
-        assert_eq!(host_atlas_before_deletion.current_location.id, "mosslight-grove");
-        assert_eq!(member_atlas_before_deletion.current_location.id, "mosslight-grove");
+        assert_eq!(
+            host_atlas_before_deletion.current_location.id,
+            "mosslight-grove"
+        );
+        assert_eq!(
+            member_atlas_before_deletion.current_location.id,
+            "mosslight-grove"
+        );
 
         let host_deletion = profiles
             .delete_account(&host_id)

@@ -910,38 +910,37 @@ impl ProfileStore {
             },
         )
         .collect();
-        let expedition_checkpoints =
-            sqlx::query_as::<_, (i64, String, i16, String, bool, String)>(
-                "SELECT h.expedition_run_id, h.checkpoint_id, h.checkpoint_index,
+        let expedition_checkpoints = sqlx::query_as::<_, (i64, String, i16, String, bool, String)>(
+            "SELECT h.expedition_run_id, h.checkpoint_id, h.checkpoint_index,
                  h.choice_id, COALESCE(h.completed_by = $2, FALSE), h.completed_at::text
                  FROM expedition_checkpoint_history h
                  JOIN expedition_participants p USING (expedition_run_id)
                  WHERE p.discord_user_id = $1
                  ORDER BY h.expedition_run_id ASC, h.checkpoint_index ASC",
-            )
-            .bind(player_id)
-            .bind(player_id)
-            .fetch_all(&self.pool)
-            .await?
-            .into_iter()
-            .map(
-                |(
-                    expedition_run_id,
-                    checkpoint_id,
-                    checkpoint_index,
-                    choice_id,
-                    completed_by_you,
-                    completed_at,
-                )| ExportedExpeditionCheckpoint {
-                    expedition_run_id,
-                    checkpoint_id,
-                    checkpoint_index,
-                    choice_id,
-                    completed_by_you,
-                    completed_at,
-                },
-            )
-            .collect();
+        )
+        .bind(player_id)
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(
+            |(
+                expedition_run_id,
+                checkpoint_id,
+                checkpoint_index,
+                choice_id,
+                completed_by_you,
+                completed_at,
+            )| ExportedExpeditionCheckpoint {
+                expedition_run_id,
+                checkpoint_id,
+                checkpoint_index,
+                choice_id,
+                completed_by_you,
+                completed_at,
+            },
+        )
+        .collect();
 
         let export = PlayerExport {
             format_version: 9,
@@ -1223,7 +1222,8 @@ impl ProfileStore {
             daily_quest_records_removed,
             rivalry_records_removed,
             expedition_participations_removed,
-            expedition_runs_host_transferred: u64::try_from(expedition_runs_host_transferred).unwrap_or_default(),
+            expedition_runs_host_transferred: u64::try_from(expedition_runs_host_transferred)
+                .unwrap_or_default(),
             expedition_runs_cancelled: u64::try_from(expedition_runs_cancelled).unwrap_or_default(),
             expedition_runs_removed,
             consent_record_removed,
