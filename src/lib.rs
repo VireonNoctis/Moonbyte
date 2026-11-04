@@ -8,6 +8,7 @@ pub mod config;
 pub mod consent;
 pub mod database;
 pub mod emoji;
+pub mod expedition;
 pub mod game;
 pub mod guild_settings;
 pub mod profile;
@@ -31,6 +32,7 @@ pub struct DataServices {
     pub guild_settings: guild_settings::GuildSettingsStore,
     pub consents: consent::ConsentStore,
     pub wayfarer: wayfarer::WayfarerStore,
+    pub expeditions: expedition::ExpeditionStore,
 }
 
 /// Data shared with every Poise command invocation.
@@ -46,6 +48,7 @@ pub struct Data {
     guild_settings: guild_settings::GuildSettingsStore,
     consents: consent::ConsentStore,
     wayfarer: wayfarer::WayfarerStore,
+    expeditions: expedition::ExpeditionStore,
 }
 
 impl Data {
@@ -60,6 +63,7 @@ impl Data {
             guild_settings,
             consents,
             wayfarer,
+            expeditions,
         } = services;
         Self {
             prefix,
@@ -73,6 +77,7 @@ impl Data {
             guild_settings,
             consents,
             wayfarer,
+            expeditions,
         }
     }
 
@@ -126,5 +131,9 @@ impl Data {
 
     pub fn wayfarer(&self) -> &wayfarer::WayfarerStore {
         &self.wayfarer
+    }
+
+    pub fn expeditions(&self) -> &expedition::ExpeditionStore {
+        &self.expeditions
     }
 }
