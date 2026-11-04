@@ -88,6 +88,8 @@ pub struct ProfileInventory {
     pub daily_quest_records: i64,
     pub rivalry_records: i64,
     pub archive_fragment_records: i64,
+    pub expedition_run_records: i64,
+    pub expedition_checkpoint_records: i64,
     pub session_retention: &'static str,
 }
 
@@ -115,6 +117,8 @@ pub struct PlayerDeletion {
     pub quest_rotations_removed: u64,
     pub daily_quest_records_removed: u64,
     pub rivalry_records_removed: u64,
+    pub expedition_participations_removed: u64,
+    pub expedition_runs_cancelled: u64,
     pub consent_record_removed: bool,
     pub profile_removed: bool,
 }
@@ -219,11 +223,36 @@ struct ExportedRivalry {
     updated_at: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedExpeditionRun {
+    expedition_run_id: i64,
+    route_id: String,
+    content_version: i16,
+    guild_id: Option<String>,
+    state: String,
+    checkpoint_index: i16,
+    was_host: bool,
+    joined_at: String,
+    left_at: Option<String>,
+    created_at: String,
+    started_at: Option<String>,
+    completed_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ExportedExpeditionCheckpoint {
+    expedition_run_id: i64,
+    checkpoint_id: String,
+    checkpoint_index: i16,
+    choice_id: String,
+    completed_at: String,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 15],
+    data_categories: [&'static str; 17],
     profile: Option<PlayerProfile>,
     consent_record: Option<ExportedConsent>,
     game_sessions: Vec<ExportedSession>,
@@ -239,7 +268,9 @@ struct PlayerExport {
     daily_quests: Vec<ExportedDailyQuest>,
     quest_rotation_fingerprints: Vec<ExportedQuestRotation>,
     rivalries: Vec<ExportedRivalry>,
-    limitations: [&'static str; 2],
+    expedition_runs: Vec<ExportedExpeditionRun>,
+    expedition_checkpoints: Vec<ExportedExpeditionCheckpoint>,
+    limitations: [&'static str; 3],
 }
 
 /// Owns the persistent player profile boundary. Game rules never depend on it.
@@ -462,6 +493,20 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
+        let expedition_run_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM expedition_participants WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let expedition_checkpoint_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM expedition_checkpoint_history h
+             JOIN expedition_participants p USING (expedition_run_id)
+             WHERE p.discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
 
         Ok(ProfileInventory {
             profile_record,
@@ -479,7 +524,9 @@ impl ProfileStore {
             daily_quest_records,
             rivalry_records,
             archive_fragment_records,
-            session_retention: "Sessions and their result records expire after 24 hours of inactivity; achievements, aggregate statistics, wallet milestones, Atlas discoveries, Chronicle pages and Wayfarer history remain until account deletion.",
+            expedition_run_records,
+            expedition_checkpoint_records,
+            session_retention: "Game sessions and their result records expire after 24 hours of inactivity. Expedition participation and route history remain until account deletion; active runs are safely cancelled when no active participants remain.",
         })
     }
 
@@ -799,8 +846,50 @@ impl ProfileStore {
             )
             .collect();
 
+        let expedition_runs = sqlx::query_as::<_, (i64, String, i16, Option<String>, String, i16, bool, String, Option<String>, String, Option<String>, Option<String>)>(
+            "SELECT r.expedition_run_id, r.route_id, r.content_version, r.guild_id,
+             r.state, r.current_checkpoint_index,
+             r.host_discord_user_id = p.discord_user_id,
+             p.joined_at::text, p.left_at::text, r.created_at::text,
+             r.started_at::text, r.completed_at::text
+             FROM expedition_runs r
+             JOIN expedition_participants p USING (expedition_run_id)
+             WHERE p.discord_user_id = $1
+             ORDER BY r.created_at DESC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|(expedition_run_id, route_id, content_version, guild_id, state,
+              checkpoint_index, was_host, joined_at, left_at, created_at,
+              started_at, completed_at)| ExportedExpeditionRun {
+            expedition_run_id, route_id, content_version, guild_id, state,
+            checkpoint_index, was_host, joined_at, left_at, created_at,
+            started_at, completed_at,
+        })
+        .collect();
+        let expedition_checkpoints = sqlx::query_as::<_, (i64, String, i16, String, String)>(
+            "SELECT h.expedition_run_id, h.checkpoint_id, h.checkpoint_index,
+             h.choice_id, h.completed_at::text
+             FROM expedition_checkpoint_history h
+             JOIN expedition_participants p USING (expedition_run_id)
+             WHERE p.discord_user_id = $1
+             ORDER BY h.expedition_run_id ASC, h.checkpoint_index ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|(expedition_run_id, checkpoint_id, checkpoint_index, choice_id, completed_at)| {
+            ExportedExpeditionCheckpoint {
+                expedition_run_id, checkpoint_id, checkpoint_index, choice_id, completed_at,
+            }
+        })
+        .collect();
+
         let export = PlayerExport {
-            format_version: 8,
+            format_version: 9,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -818,6 +907,8 @@ impl ProfileStore {
                 "daily quest selections and progress",
                 "SHA-512 daily quest rotation fingerprints",
                 "mutual rivalry invitations and match records",
+                "your Expedition participation and run history",
+                "shared Expedition checkpoint history",
             ],
             profile,
             consent_record,
@@ -834,9 +925,12 @@ impl ProfileStore {
             daily_quests,
             quest_rotation_fingerprints,
             rivalries,
+            expedition_runs,
+            expedition_checkpoints,
             limitations: [
                 "Discord independently retains interactions under its own policies.",
                 "This export includes records in the current Moonbyte PostgreSQL schema only.",
+                "Expedition details include only your own participation and shared checkpoint history, not other players' private profiles.",
             ],
         };
         Ok(serde_json::to_string_pretty(&export)?)
@@ -953,6 +1047,58 @@ impl ProfileStore {
                 .await?
                 .rows_affected();
 
+        let affected_expedition_runs: Vec<i64> = sqlx::query_scalar(
+            "SELECT expedition_run_id FROM expedition_participants
+             WHERE discord_user_id = $1 ORDER BY expedition_run_id",
+        )
+        .bind(player_id)
+        .fetch_all(&mut *transaction)
+        .await?;
+        let _locked_expedition_runs = sqlx::query_scalar::<_, i64>(
+            "SELECT expedition_run_id FROM expedition_runs
+             WHERE expedition_run_id = ANY($1::bigint[])
+             ORDER BY expedition_run_id FOR UPDATE",
+        )
+        .bind(&affected_expedition_runs)
+        .fetch_all(&mut *transaction)
+        .await?;
+        let expedition_runs_cancelled = sqlx::query(
+            "UPDATE expedition_runs r SET
+             host_discord_user_id = CASE WHEN r.host_discord_user_id = $1 THEN (
+                 SELECT p.discord_user_id FROM expedition_participants p
+                 WHERE p.expedition_run_id = r.expedition_run_id
+                   AND p.discord_user_id <> $1 AND p.is_active
+                 ORDER BY p.joined_at ASC, p.discord_user_id ASC LIMIT 1
+             ) ELSE r.host_discord_user_id END,
+             state = CASE WHEN r.state IN ('recruiting', 'active', 'paused')
+               AND NOT EXISTS (
+                 SELECT 1 FROM expedition_participants p
+                 WHERE p.expedition_run_id = r.expedition_run_id
+                   AND p.discord_user_id <> $1 AND p.is_active
+               ) THEN 'cancelled' ELSE r.state END,
+             cancelled_at = CASE WHEN r.state IN ('recruiting', 'active', 'paused')
+               AND NOT EXISTS (
+                 SELECT 1 FROM expedition_participants p
+                 WHERE p.expedition_run_id = r.expedition_run_id
+                   AND p.discord_user_id <> $1 AND p.is_active
+               ) THEN COALESCE(r.cancelled_at, now()) ELSE r.cancelled_at END,
+             row_version = row_version + 1, updated_at = now()
+             WHERE r.expedition_run_id = ANY($2::bigint[])
+               AND r.state IN ('recruiting', 'active', 'paused')",
+        )
+        .bind(player_id)
+        .bind(&affected_expedition_runs)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let expedition_participations_removed = sqlx::query(
+            "DELETE FROM expedition_participants WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+
         let consent_record_removed =
             sqlx::query("DELETE FROM user_consents WHERE discord_user_id = $1")
                 .bind(player_id)
@@ -981,6 +1127,8 @@ impl ProfileStore {
             quest_rotations_removed,
             daily_quest_records_removed,
             rivalry_records_removed,
+            expedition_participations_removed,
+            expedition_runs_cancelled,
             consent_record_removed,
             profile_removed,
         })
