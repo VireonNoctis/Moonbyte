@@ -1,7 +1,7 @@
 # Moonbyte Visual Library — Design System
 
 > Visual direction and implementation contract for the Next.js + React field guide.
-> Status: first design-system implementation; live game/session integration is not yet shipped.
+> Status: public catalogue and static guides for the four implemented games; authenticated gameplay integration is not yet shipped.
 
 ## Product role
 
@@ -24,17 +24,26 @@ The visual studies draw from the physical-button and receipt-like interaction ex
 
 1. **Field Guide hero:** product promise, direct catalogue and Atlas entry points, and an original CSS landscape illustration.
 2. **Current build facts:** four playable games, five authored Atlas locations and eleven registered Tavern destinations.
-3. **Common Tables:** searchable, filterable cards for the four implemented games. Each card shows player count, typical session range, controls and the real prefix command.
-4. **World Index:** a selectable map of the five authored Atlas locations. Route lines match the Rust catalogue. Selecting a place reveals its region, description, Chronicle title and direct neighbours.
-5. **Tavern Wayfinder:** the eleven destinations currently backed by registered Rust commands. The command list is sourced from src/tavern.rs and should be kept in sync with its tests.
-6. **Wayfarer Thread:** the fixed five-objective catalogue, cumulative journey principles and the .quests entry point.
-7. **Product principles:** explain play without pressure, connected systems and honest feature status.
+3. **Common Tables:** searchable, filterable cards for the four implemented games. Each card shows player count, typical session range, controls and the real prefix command; each card links to a statically generated game guide.
+4. **Game guides:** four static routes generated from the same typed catalogue as the cards. Each includes original game artwork, category, player/session facts, command handoff, a three-step quick start, current-build notes and links to the other live games. Unknown/planned game slugs return not-found rather than showing a mock game.
+5. **World Index:** a selectable map of the five authored Atlas locations. Route lines match the Rust catalogue. Selecting a place reveals its region, description, Chronicle title and direct neighbours.
+6. **Tavern Wayfinder:** the eleven destinations currently backed by registered Rust commands. The command list is sourced from src/tavern.rs and should be kept in sync with its tests.
+7. **Wayfarer Thread:** the fixed five-objective catalogue, cumulative journey principles and the .quests entry point.
+8. **Product principles:** explain play without pressure, connected systems and honest feature status.
+
+## Reusable React elements
+
+- GameArtwork is shared by catalogue cards and detail-page hero panels.
+- SectionEyebrow keeps numbered field-guide labels consistent.
+- GuideFact renders compact definition-list facts for game guides.
+- Search, map selection and clipboard status remain small client components; static game routes and editorial composition remain server rendered.
 
 ## Truthful data contract
 
 The public field guide is not authenticated and has no live player-view API. It must not invent or cache personal state.
 
-- Game names, commands, player counts, estimated durations and controls come from the reviewed current catalogue.
+- Game names, commands, player counts, estimated durations, session type and controls come from the reviewed current catalogue.
+- Starter limitations are explicit: Memory Match currently uses a fixed starter board and Word Scramble currently contains one starter puzzle.
 - The Atlas shows the authored world graph only. It does not claim to show the visitor's current location or discoveries.
 - Tavern destinations are listed only if a registered command backs them.
 - The Wayfarer section shows the five possible objective definitions. Three are selected per player/day; the site does not guess which three were assigned.

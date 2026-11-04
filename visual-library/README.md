@@ -19,6 +19,9 @@ Use npm run typecheck and npm run build before publishing.
 
 - A redesigned field-guide landing page with original pixel-inspired CSS artwork.
 - Searchable and filterable cards for the four games currently implemented in the Rust runtime.
+- Four statically generated game guide routes under /games/[slug], sourced from the same catalogue as the landing page.
+- Reusable React artwork, section-label and guide-fact components shared by the game catalogue and detail pages.
+- Per-game command handoff, session type, player count, estimated duration, controls and explicit starter-build notes where relevant.
 - An interactive Atlas map showing the five authored locations and their direct route relationships.
 - The eleven Tavern destinations currently backed by registered commands.
 - The five fixed Wayfarer daily-objective definitions, without fabricating a player's daily assignment or progress.
@@ -30,6 +33,8 @@ Use npm run typecheck and npm run build before publishing.
 This frontend is presentation-only. It does not decide legal moves, player identity, guild membership, session phase, outcomes, rewards, balances, trade rules or persistence. Rust remains authoritative.
 
 The Atlas section shows the static authored map, not a visitor's private location. The Wayfarer section shows the objective catalogue, not a player's assignment. Profile, wallet, stats, current quest state, Chronicle unlocks and rivalry history remain private in Discord until an authenticated Rust view API exists.
+
+The game detail pages are generated from the four implemented catalogue entries. They explain the actual command and controls, but do not start sessions, accept player actions or emulate game rules. Planned games do not have detail routes.
 
 The official Discord Embedded App SDK handshake and authenticated game API are not implemented by this visual-library slice. Do not accept user identity or game outcomes from browser-supplied values. An Activity handshake is not a substitute for backend authorization.
 
