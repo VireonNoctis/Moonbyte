@@ -6,7 +6,7 @@ use sqlx::PgPool;
 /// Bump this whenever the Terms of Service materially change.
 pub const TERMS_VERSION: &str = "1.0.0";
 /// Bump this whenever the Privacy Policy materially changes.
-pub const PRIVACY_VERSION: &str = "1.1.0";
+pub const PRIVACY_VERSION: &str = "1.2.0";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ConsentRecord {

@@ -171,6 +171,13 @@ impl ExpeditionStore {
          .fetch_one(&mut *tx).await?;
         sqlx::query("INSERT INTO expedition_participants (expedition_run_id, discord_user_id) VALUES ($1, $2)")
             .bind(id).bind(player).execute(&mut *tx).await?;
+        sqlx::query(
+            "UPDATE expedition_runs SET row_version = row_version + 1, updated_at = now()
+             WHERE expedition_run_id = $1",
+        )
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
         tx.commit().await?;
         self.snapshot(player, guild, id).await
     }
@@ -182,9 +189,18 @@ impl ExpeditionStore {
         id: i64,
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
-        let (saved_guild, state, shared) = sqlx::query_as::<_, (Option<String>, String, bool)>(
-            "SELECT guild_id, state, shared FROM expedition_runs WHERE expedition_run_id = $1 FOR UPDATE",
-        ).bind(id).fetch_optional(&mut *tx).await?.ok_or(ExpeditionError::RunNotFound)?;
+        let (route_id, content_version, saved_guild, state, shared) =
+            sqlx::query_as::<_, (String, i16, Option<String>, String, bool)>(
+                "SELECT route_id, content_version, guild_id, state, shared
+                 FROM expedition_runs WHERE expedition_run_id = $1 FOR UPDATE",
+            )
+            .bind(id)
+            .fetch_optional(&mut *tx)
+            .await?
+            .ok_or(ExpeditionError::RunNotFound)?;
+        if route_id != ROUTE_ID || content_version != ROUTE_VERSION {
+            return Err(ExpeditionError::UnknownRoute);
+        }
         if !shared || saved_guild.as_deref() != Some(guild) {
             return Err(ExpeditionError::WrongGuild);
         }
@@ -212,6 +228,7 @@ impl ExpeditionStore {
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
         let row = lock_run(&mut tx, id).await?;
+        ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         if row.host.as_deref() != Some(player) {
             return Err(ExpeditionError::NotHost);
@@ -236,9 +253,7 @@ impl ExpeditionStore {
         id: i64,
     ) -> Result<Snapshot, ExpeditionError> {
         let row = load_run(&self.pool, id).await?;
-        if row.route_id != ROUTE_ID || row.content_version != ROUTE_VERSION {
-            return Err(ExpeditionError::UnknownRoute);
-        }
+        ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         let member: bool = sqlx::query_scalar(
             "SELECT EXISTS (SELECT 1 FROM expedition_participants WHERE expedition_run_id = $1 AND discord_user_id = $2)",
@@ -284,6 +299,7 @@ impl ExpeditionStore {
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
         let row = lock_run(&mut tx, id).await?;
+        ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         if row.state != "active" {
             return Err(ExpeditionError::NotActive);
@@ -369,6 +385,7 @@ impl ExpeditionStore {
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
         let row = lock_run(&mut tx, id).await?;
+        ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         if !is_active_member(&mut tx, id, player).await? {
             return Err(ExpeditionError::NotActiveParticipant);
@@ -394,6 +411,7 @@ impl ExpeditionStore {
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
         let row = lock_run(&mut tx, id).await?;
+        ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         if matches!(row.state.as_str(), "completed" | "cancelled") {
             return Err(ExpeditionError::NotActive);
@@ -435,6 +453,7 @@ impl ExpeditionStore {
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
         let row = lock_run(&mut tx, id).await?;
+        ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         if row.host.as_deref() != Some(player) {
             return Err(ExpeditionError::NotHost);
@@ -461,6 +480,14 @@ struct RunRow {
     checkpoint_index: i16,
     row_version: i64,
 }
+fn ensure_supported_route(row: &RunRow) -> Result<(), ExpeditionError> {
+    if row.route_id == ROUTE_ID && row.content_version == ROUTE_VERSION {
+        Ok(())
+    } else {
+        Err(ExpeditionError::UnknownRoute)
+    }
+}
+
 async fn load_run(pool: &PgPool, id: i64) -> Result<RunRow, ExpeditionError> {
     query_run("SELECT route_id, content_version, guild_id, host_discord_user_id, shared, state, current_checkpoint_index, row_version FROM expedition_runs WHERE expedition_run_id = $1", pool, id).await
 }
@@ -789,16 +816,29 @@ mod tests {
             .await
             .expect("participant can resume");
 
-        let grove = store
-            .advance(
+        let (host_advance, member_advance) = tokio::join!(
+            store.advance(
                 &host_id,
                 Some(&guild_id),
                 recruiting.run_id,
                 "mosslight-grove",
                 "inspect",
-            )
-            .await
-            .expect("commit first checkpoint");
+            ),
+            store.advance(
+                &member_id,
+                Some(&guild_id),
+                recruiting.run_id,
+                "mosslight-grove",
+                "listen",
+            ),
+        );
+        let grove = match (host_advance, member_advance) {
+            (Ok(snapshot), Err(ExpeditionError::StaleCheckpoint))
+            | (Err(ExpeditionError::StaleCheckpoint), Ok(snapshot)) => snapshot,
+            (host_result, member_result) => panic!(
+                "exactly one checkpoint attempt must commit; host={host_result:?}, member={member_result:?}"
+            ),
+        };
         assert_eq!(grove.checkpoint_index, 1);
         assert!(matches!(
             store

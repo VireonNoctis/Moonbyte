@@ -1043,7 +1043,7 @@ pub async fn travel(
 pub async fn expedition(
     ctx: Context<'_>,
     #[description = "list, start, join, begin, status, advance, pause, resume, leave, or cancel"]
-    action: String,
+    action: Option<String>,
     #[description = "Route ID or run ID"] target: Option<String>,
     #[description = "Run mode for start, or checkpoint ID and choice for advance"]
     #[rest]
@@ -1052,7 +1052,10 @@ pub async fn expedition(
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let prefix = ctx.data().command_prefix(ctx.guild_id());
-    let action = action.trim().to_ascii_lowercase();
+    let action = action
+        .unwrap_or_else(|| "list".to_owned())
+        .trim()
+        .to_ascii_lowercase();
 
     match action.as_str() {
         "list" => send_private(ctx, crate::expedition::render_catalogue(&prefix)).await,
@@ -1466,6 +1469,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}tavern / /tavern — open the Tavern and live Wayfinder\n\
          {safe_prefix}atlas / /atlas — inspect your world map and known routes\n\
          {safe_prefix}travel <location> / /travel — follow a connected Atlas route\n\
+         {safe_prefix}expedition list|start|join|begin|status|advance|pause|resume|leave|cancel / /expedition — play the Lantern Road\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
@@ -1540,6 +1544,7 @@ mod tests {
             ".tavern / /tavern",
             ".atlas / /atlas",
             ".travel <location> / /travel",
+            ".expedition list|start|join|begin|status|advance|pause|resume|leave|cancel / /expedition",
             ".games / /games",
             ".play <game> / /play",
             ".join <session> / /join",
