@@ -128,8 +128,7 @@ Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The curr
 | Command framework | **Poise** | Shared prefix and slash command definitions. |
 | Persistent storage | **PostgreSQL** | Transactional database for session persistence, recovery and future player systems. |
 | Database access | **SQLx with PostgreSQL only** | Async connection pooling, migrations, JSONB state snapshots and transactional row locking. |
-| Visual library | **Next.js + React + TypeScript** | Catalogue browsing, responsive game UI, and Activity-capable views. |
-| Discord embedded UI | **Discord Embedded App SDK** | Connects the web frontend to Discord when running as an Activity. |
+| Discord presentation | **Serenity embeds, buttons, select menus and modals** | Native player interface for commands, games and connected systems. |
 | Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
 
 PostgreSQL uses versioned migrations, indexes, bounded connection pooling, JSONB session snapshots, and short row-locked transactions. The supported deployment remains one bot process until cross-process interaction idempotency and load behavior are tested.
@@ -161,7 +160,6 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation and verification requirements.
 - [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — reuse boundaries and source/licence audit requirements.
 - [Roadmap](docs/ROADMAP.md) — implementation phases and acceptance criteria.
-- [Visual Library Design System](docs/VISUAL_LIBRARY.md) — React field-guide structure, design language, truthful data boundary and accessibility contract.
 
 ## Development status
 

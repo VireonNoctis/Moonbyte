@@ -347,5 +347,5 @@ The route uses only existing reciprocal Atlas edges and authored Chronicle conte
 
 ### Explicitly out of scope for v1
 
-No inventory, gathering, crafting, Vaults, Bazaar listings, barter, trade escrow, new currency rewards, random loot, public matchmaking, public leaderboards, creator-authored routes, dynamic world events or Discord Activity game client. No attendance deadlines, punitive streaks, decay, FOMO, forced notifications or gameplay advantage for spending. These can be considered only after the core Expedition contract is proven.
+No inventory, gathering, crafting, Vaults, Bazaar listings, barter, trade escrow, new currency rewards, random loot, public matchmaking, public leaderboards, creator-authored routes or dynamic world events. No attendance deadlines, punitive streaks, decay, FOMO, forced notifications or gameplay advantage for spending. These can be considered only after the core Expedition contract is proven.
 
