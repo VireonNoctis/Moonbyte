@@ -32,7 +32,7 @@ Every listed title is a candidate, not a promise that it already exists. The cat
 
 ## The player experience
 
-- Discover games through a browsable library with categories, descriptions, player counts, estimated session length, and rules.
+- Discover games through `.games` and the Tavern Wayfinder, with categories, descriptions, player counts, estimated session length, and rules.
 - Start solo play or invite friends into a lobby.
 - Interact using Discord messages, buttons, select menus, and modals.
 - See clear boards, expressive sprites, colourful scenes, and readable result screens.
@@ -40,14 +40,12 @@ Every listed title is a candidate, not a promise that it already exists. The cat
 - Leave or pause supported sessions without being nagged or punished.
 - Find a different experience when a game is completed.
 
-## Visual Library
+## Discord-native presentation
 
-The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the four implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
+Moonbyte is played inside Discord. The bot uses messages, embeds, buttons, select menus, modals and shared prefix/slash commands to present the current games and connected world. Rust services assemble each response from authorised game and player state.
 
-- Discord Activity integration using the official Embedded App SDK remains planned and is not yet implemented.
-- A normal HTTPS browser fallback remains available for catalogue discovery and supported views.
-- The Rust/Tokio backend remains authoritative for game rules, session state, fairness, player progression, and PostgreSQL persistence.
-- Standard bot commands still use Discord messages, embeds, buttons, select menus, and modals. React is not rendered inside an ordinary Discord embed.
+Original full-colour pixel-art images and custom emoji can be added where they materially improve a board, map or result screen. They are optional presentation assets, never a separate client or source of game state. Every important action and result remains understandable through Discord-native text and controls. No website or React frontend is required for ordinary play.
+
 
 ## Command model
 

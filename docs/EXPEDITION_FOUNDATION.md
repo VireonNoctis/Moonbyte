@@ -30,7 +30,7 @@ The first release uses fixed authored checkpoint text and clear player choices. 
 | 2 | The Ember Archive | Solve an authored, text-first archive puzzle and confirm the selected route clue. | Chronicle / Puzzle rules |
 | 3 | Starfall Observatory | Complete the route, review the journey and return to the Atlas. | Atlas / Chronicle / Wayfarer |
 
-The initial route must remain playable with Discord-native text and controls. A React/Discord Activity presentation can follow after the authoritative Rust service and authenticated visual API exist.
+The route is delivered entirely through Discord-native text, embeds, buttons and select menus. No browser or Activity client is required.
 
 ## 3. Player loop
 
@@ -135,7 +135,7 @@ Do not add new collection categories unrelated to the Expedition. Do not log che
 - No wagering, paid entry, tradable chance reward, cash-out or real-money value.
 - Give a plain-text alternative for every map, sprite, button state and route clue.
 - Do not communicate state only through colour; label the current checkpoint and available actions.
-- Honour reduced-motion preferences in a future visual surface; Discord-native text must remain complete without motion.
+- Keep Discord-native text and controls complete without motion or image assets.
 - Keep puzzle instructions age-appropriate, non-graphic and solvable without external links.
 
 ## 11. Delivery plan

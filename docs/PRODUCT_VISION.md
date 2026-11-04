@@ -21,7 +21,7 @@ The product should feel like opening an original handheld arcade in a Discord se
 
 ## 3. The player experience
 
-A player should be able to discover a game through a visual library, start solo play or a lobby, understand rules before play, use Discord buttons/menus/modals, leave or resume supported sessions, earn appropriate progression, and find something else to play after completing a game.
+A player should be able to discover a game through `.games` and the Tavern, start solo play or a lobby, understand rules before play, use Discord buttons/menus/modals, leave or resume supported sessions, earn appropriate progression, and find something else to play after completing a game.
 
 Discord is the client surface. A Moonbyte game should not assume a continuously animated canvas, frame-perfect input, or a 60-FPS connection. Fast turn-based interactions and short timed rounds are the natural fit.
 
@@ -91,16 +91,18 @@ Do not implement fake scarcity, manipulative FOMO, loss-aversion streaks, infini
 
 Candidates are not promises that every title will ship. See [GAME_CATALOGUE.md](GAME_CATALOGUE.md).
 
-## 7. Visual library and rich Discord experiences
+## 7. Discord-native visual presentation
 
-Moonbyte's visual library uses **Next.js + React + TypeScript**. It provides a browsable catalogue, detailed game pages, richer lobby views, and interfaces for games that benefit from a full web surface.
+Moonbyte is a Discord game bot, and Discord is the complete primary player interface. The default experience uses Rust-backed commands, messages, embeds, buttons, select menus and modals.
 
-The visual library is a frontend, not a second game engine:
-- Rust/Tokio remains authoritative for game rules, validation, randomness, session state, progression, economy, and PostgreSQL persistence.
-- The frontend receives authorised view models and submits player actions to the backend.
-- Discord-native commands continue to use messages, embeds, buttons, menus, and modals.
-- When running inside Discord, the frontend can integrate the official Embedded App SDK as an Activity. An HTTPS browser fallback supports discovery and compatible views.
-- React is not injected into normal Discord embeds. The Activity is a separate web app embedded within the Discord client.
+- Rust/Tokio remains authoritative for identity, rules, session state, action validation, fairness, progression and PostgreSQL persistence.
+- Use compact embeds and well-labelled message components to make boards, lobbies, route checkpoints and results easy to understand.
+- Prefer select menus for bounded choices and buttons for immediate, explicit actions. Use modals for genuinely free-form inputs only.
+- Keep private data in ephemeral or DM responses, according to the owning feature's privacy contract.
+- Original full-colour pixel-art images and custom emoji may be attached where they improve comprehension or world identity. Text and accessible labels remain sufficient to understand critical state.
+- No website, Next.js workspace, React client, browser fallback or Discord Activity is part of the current product requirement. Any such client would require a separate approved use case and architecture decision.
+
+The visual direction is an asset and interaction language for Discord—not a separate web product.
 
 ## 8. Progression, Vaults and Bazaar
 
@@ -178,7 +180,7 @@ The policy is a target commitment and must be implemented and verified before pr
 
 - Not a replacement for Lunar's anime/manga or general community features.
 - Not a wrapper that calls Lunar at runtime.
-- Not a frame-based real-time game engine disguised as a Discord bot. Rich game views use a separate Next.js/React Activity-capable frontend.
+- Not a frame-based real-time game engine disguised as a Discord bot. Rich game views use Discord-native embeds and components, with optional attached art.
 - Not a monochrome console clone or copy of protected Nintendo branding.
 - Not a betting, wagering, or paid chance platform.
 - Not designed to make players unable to stop.
@@ -198,7 +200,7 @@ The Tavern is the social home and discovery surface. The Atlas gives every regio
 
 This is specified in the [Moonbyte World Loom master atlas](atlas/README.md): 200 individual proposals across 20 domains, five detailed volumes, a Mermaid map and a machine-readable graph with typed edges and an explanation for every cross-system relationship. The atlas is a product design proposal, not an implementation claim or a promise to ship every idea.
 
-The graph has one governing rule: systems exchange stable domain events and references rather than directly manipulating one another's private state. Rust remains authoritative for rules, sessions, permissions, progression, economy, fairness and PostgreSQL persistence. Next.js + React + TypeScript remain presentation-only. The first release should prove a small connected vertical slice before expanding the catalogue.
+The graph has one governing rule: systems exchange stable domain events and references rather than directly manipulating one another's private state. Rust remains authoritative for rules, sessions, permissions, progression, economy, fairness and PostgreSQL persistence. Discord-native messages and components are the presentation layer. The first release should prove a small connected vertical slice before expanding the catalogue.
 
 The expanded world remains subject to the existing boundaries: earned-only non-redeemable currency, no gambling or paid chance, transparent fixed rewards, original or rights-cleared content, privacy by design, accessible text fallbacks, and replayability without manipulative engagement mechanics.
 
@@ -209,7 +211,7 @@ The second design layer covers the capabilities that support a deep world over t
 
 It adds 200 proposals across 20 further domains, all connected to the first graph. Its purpose is to make the product coherent and maintainable at scale, not to create disconnected mechanics. Stable content IDs, service ownership, dependency validation, privacy-scoped view models and reversible releases keep the world consistent.
 
-The [Moonbyte World Loom master atlas](atlas/README.md) documents both layers: 400 proposals across 40 domains and 48,610 lines of feature specifications. All proposals remain design work until implemented and tested. Rust owns authoritative rules and persistence, Next.js/React/TypeScript present authorised state, PostgreSQL is the selected database, and the game remains earned-only, non-wagering, privacy-conscious and playable without attendance pressure.
+The [Moonbyte World Loom master atlas](atlas/README.md) documents both layers: 400 proposals across 40 domains and 48,610 lines of feature specifications. All proposals remain design work until implemented and tested. Rust owns authoritative rules and persistence, Discord-native messages present authorised state, PostgreSQL is the selected database, and the game remains earned-only, non-wagering, privacy-conscious and playable without attendance pressure.
 
 
 ## Next implementation slice

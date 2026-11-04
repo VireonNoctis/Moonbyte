@@ -1,23 +1,27 @@
-# ADR 0003: Visual Library and Verifiable Game Randomness
+# ADR 0003: Discord-native Presentation and Verifiable Game Randomness
 
-- Status: Accepted product/architecture direction.
-- Date: 2026-10-31.
+- Status: Accepted; this decision supersedes the earlier proposal for a separate React/Activity frontend.
+- Date: 2026-11-04.
 
 ## Context
 
-Moonbyte needs a richer visual game library while remaining Discord-first, and it needs transparent randomness for game outcomes that players may wish to verify. Ordinary Discord messages and embeds cannot host a full React component tree. A web application can be embedded in Discord as an Activity through Discord's Embedded App SDK, subject to Activity configuration and platform requirements.
+Moonbyte is a Discord game bot. The primary player experience should live in Discord's native interaction model: messages, embeds, buttons, select menus, modals, and shared prefix/slash commands. A separate website, React application, or Discord Activity is not required to make the bot useful and adds an independent deployment and security surface.
+
+Moonbyte still needs a distinctive visual identity. Original full-colour pixel-art assets and custom emoji may improve selected game boards, maps and result screens, but they are presentation resources—not a second application or authority for game state.
+
+The project also needs transparent randomness for outcomes that players may wish to verify.
 
 ## Decisions
 
-### Visual library
+### Discord-native presentation
 
-- Build the visual library using **Next.js + React + TypeScript**.
-- Treat it as a frontend surface for game discovery, rich boards, lobbies, and Activity-capable game views.
-- Use Discord's official Embedded App SDK when the frontend is launched as a Discord Activity.
-- Keep a normal HTTPS browser fallback for discovery and compatible views.
-- The frontend never owns authoritative game rules, wallet balances, trades, or persistent session state. Rust services remain authoritative.
-- Keep bot tokens and database credentials server-side. Never expose them in browser bundles.
-- Standard bot commands continue to use Discord-native messages, embeds, buttons, select menus, and modals. React does not render inside a normal embed.
+- Discord is the primary and sufficient client for Moonbyte.
+- Use Serenity/Poise messages, embeds, buttons, select menus and modals for interactive experiences.
+- Rust domain and application services remain authoritative for game rules, session state, player identity, permissions, progression, economy and persistence.
+- Use original full-colour pixel-art images or custom emoji only where they materially improve clarity or world identity.
+- Every important state and action must retain a text-first Discord representation; colour or imagery alone must not carry critical information.
+- Do not add a website, Next.js, React frontend, browser game client or Discord Activity without a new, concrete product requirement and an accepted architecture decision.
+- Do not add art pipelines, generated assets or rendering services speculatively. Begin with Discord-native components and introduce assets as individual features need them.
 
 ### Fairness
 
@@ -34,13 +38,13 @@ Moonbyte needs a richer visual game library while remaining Discord-first, and i
 
 ## Consequences
 
-- The repository gains a separate visual frontend project and deployment surface once implementation begins.
-- Activity integration requires Discord application configuration, URL mapping, HTTPS hosting, and Embedded App SDK testing.
-- Rust remains the authority for game state, rules, randomness, permissions, and persistence.
-- Randomized games require reproducible test vectors and transcript verification before release.
-- A separate browser/Activity frontend adds deployment and security work; it should be introduced only as the product's planned visual library, not as an unrelated dashboard.
+- The bot remains one Rust/Tokio/Serenity/Poise application with PostgreSQL persistence.
+- There is no frontend workspace, Node dependency tree, frontend deployment or Activity hosting requirement.
+- Discord-native UI remains complete without an image asset; original art can be attached to messages when a feature justifies it.
+- Rust remains the authority for game state, rules, randomness, permissions and persistence.
+- Randomised games require reproducible test vectors and transcript verification before release.
 
 ## References
 
-- [Discord Activities overview](https://discord.com/developers/docs/activities/overview)
-- [Discord Embedded App SDK](https://discord.com/developers/docs/developer-tools/embedded-app-sdk)
+- [Discord message components](https://discord.com/developers/docs/components/overview)
+- [Discord embeds](https://discord.com/developers/docs/resources/message#embed-object)

@@ -3,7 +3,7 @@
 > Product scope and cross-system relationships are governed by [Moonbyte Final Vision v4.0](MOONBYTE_FINAL_VISION.md) and the [World Loom Integration Contracts](atlas/INTEGRATION_CONTRACTS.md). Roadmap status below reflects implementation, not proposal count.
 
 - Status: In progress.
-- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence/recovery, player profiles/preferences, completed-game results/statistics, five achievement milestones, earned-only Moonbits wallet/ledger, the 11-destination Tavern Wayfinder, the five-location Atlas, optional daily quests, cumulative companion milestones and mutually accepted private rivalries are implemented. Inventory, crafting, bounded Expeditions, authored story quests, production recovery operations and the live visual-game API remain.
+- The Rust/Discord runtime, four playable game modules, PostgreSQL session persistence/recovery, player profiles/preferences, completed-game results/statistics, five achievement milestones, earned-only Moonbits wallet/ledger, the 11-destination Tavern Wayfinder, the five-location Atlas, optional daily quests, cumulative companion milestones and mutually accepted private rivalries are implemented. Inventory, crafting, bounded Expeditions, authored story quests, production recovery operations remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -48,8 +48,8 @@ Deliverables:
 - [x] PostgreSQL connection pool, schema migration runner, durable game-session repository and JSONB state snapshots.
 - [ ] Production backup/restore automation and a rehearsed recovery procedure.
 - [x] CI for formatting, Clippy, compilation, and tests.
-- [x] Next.js + React + TypeScript visual-library workspace with responsive catalogue, search, filters, game cards, and command handoff.
-- [ ] Discord Activity integration spike using the Embedded App SDK, with browser fallback.
+- [x] Discord-native commands, embeds and message components for the implemented game and player surfaces.
+- [ ] Consistent presentation helpers and original full-colour art assets where a live bot feature materially benefits from them.
 
 Exit criteria:
 - Bot connects and reconnects without leaking tasks.
@@ -170,21 +170,21 @@ Exit criteria:
 - Content and reward rules are documented and fair.
 - Story progress can be paused without penalty.
 
-## Phase 7 — Visual library and richer interaction
+## Phase 7 — Discord-native visual presentation
 
 Deliverables:
-- Next.js + React + TypeScript visual library for the approved catalogue.
-- Responsive game pages, lobby views, player-facing game view models, and pixel-art asset integration.
-- Discord Activity integration through the official Embedded App SDK.
-- HTTPS browser fallback for catalogue discovery and compatible game views.
-- Authenticated Rust API boundary; the frontend never owns game outcomes, inventory, balances, or persistence.
+- Consistent Rust helpers for embeds, action rows, selects, modals and private/public response policy.
+- Game-specific boards and result screens that use Discord-native components and remain understandable in text.
+- Original full-colour pixel-art attachments or custom emoji only for features where artwork materially improves the experience.
+- Reusable message layouts for lobbies, checkpoints, journey summaries and Tavern destinations.
+- Interaction acknowledgement, edit/follow-up handling, rate-limit behavior and delivery-failure recovery.
 
 Exit criteria:
-- Ordinary bot embeds and commands remain functional without the frontend.
-- Activity launch, refresh, reconnect, participant changes, and close behavior are tested.
-- Frontend cannot mutate state without backend authorisation.
-- Bot credentials and private seeds never enter frontend bundles.
-- Mobile, web, and desktop Activity behavior is tested against current Discord requirements.
+- Every advertised action is backed by a registered Rust handler and server-side validation.
+- Private information is delivered privately and public channel content respects feature visibility.
+- Important state is readable without colour or image assets.
+- Commands and games remain fully usable without any website, frontend workspace or Discord Activity.
+- Discord interaction failures do not reverse committed PostgreSQL state.
 
 ## Phase 8 — Vaults, Bazaar and economy
 
@@ -258,7 +258,7 @@ Backlog ideas must not delay the runtime, game engine, privacy foundation, or fi
 
 - Every implemented node has a stable ID, owning domain, documented input/output contract and typed graph relationships.
 - Every cross-system edge is backed by a real service contract or explicitly labelled as a future proposal.
-- Rust remains the sole authority for state, outcomes, economy and permissions; the React Activity remains presentation-only.
+- Rust remains the sole authority for state, outcomes, economy and permissions; Discord-native messages are the presentation layer.
 - PostgreSQL migration, session-recovery, privacy export/deletion and guild-isolation tests cover every new persisted record.
 - Bazaar transactions are atomic and deterministic; no stake, wager, paid chance or cash-value mechanism is introduced.
 - All new game sessions have visible rules, clear stop/pause controls, accessibility fallbacks and duplicate-action protection.
@@ -269,7 +269,7 @@ Backlog ideas must not delay the runtime, game engine, privacy foundation, or fi
 
 **Status: Product design proposal only; not implemented.**
 
-The [World Loom](atlas/README.md) contains 400 proposals across 40 connected domains. The second layer adds ecological context, transport, settlement services, optional professions, creature habitats, evidence-led research, mystery networks, authored character continuity, construction, restoration, civic governance, content operations, safe declarative extensions, Discord Activity continuity, economy stewardship, security, privacy-preserving insights, localisation, onboarding and advanced accessibility.
+The [World Loom](atlas/README.md) contains 400 proposals across 40 connected domains. The second layer adds ecological context, transport, settlement services, optional professions, creature habitats, evidence-led research, mystery networks, authored character continuity, construction, restoration, civic governance, content operations, safe declarative extensions, Discord-native interaction continuity, economy stewardship, security, privacy-preserving insights, localisation, onboarding and advanced accessibility.
 
 These systems must not become independent microservices. Shared contracts remain central: stable content IDs, typed domain events, narrow Rust application services, PostgreSQL transactions, authenticated Discord identity, privacy-scoped view models and one versioned content pipeline.
 
@@ -295,7 +295,7 @@ The implementation combines four transport-independent Rust game rules, a Postgr
 
 The Atlas slice is a five-location, reciprocal route graph with a persistent current location and per-player discovery/visit history. The `.atlas` and `.travel` commands are private in guild contexts; travel is restricted to direct connected routes and produces no repeatable reward. Atlas, Chronicle and Wayfarer data are part of the current privacy inventory, version 8 export and confirmed deletion flow. Versioned consent records are included in the same export and deletion flow.
 
-This increment does **not** mark the full player platform or World Loom complete. Bounded Expeditions and authored story-quest routes, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, the authenticated visual game API, Discord Activity integration and production recovery operations remain follow-up gates. The optional daily Wayfarer quest board is already implemented.
+This increment does **not** mark the full player platform or World Loom complete. Bounded Expeditions and authored story-quest routes, inventory, crafting, Vaults, Bazaar, community maps, guild rooms, more games, production recovery operations remain follow-up gates. The optional daily Wayfarer quest board is already implemented.
 
 
 ## Completed increment — Wayfarer progression slice
@@ -309,7 +309,7 @@ This increment does **not** mark the full player platform or World Loom complete
 - [x] Cumulative activity days unlock cosmetic companion stages; missed days never subtract progress.
 - [x] Private rival invitations require mutual acceptance; only later completed two-player games count.
 - [x] Export, inventory and confirmed deletion cover every Wayfarer/rivalry table.
-- [ ] Matchmaking/rematch invitations, companion collection, expedition content and the live React game surface remain future milestones.
+- [ ] Matchmaking/rematch invitations, companion collection, expedition content and richer Discord-native game presentation remains a future milestone.
 
 
 ## Next major implementation slice — Expedition Foundation v1

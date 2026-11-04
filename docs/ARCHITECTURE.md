@@ -1,6 +1,6 @@
 # Moonbyte Architecture
 
-- Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions/recovery, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, earned-only Moonbits wallet/ledger, private Chronicle, optional Wayfarer daily quests/activity/companion milestones/mutual rivalries, privacy inventory/export/deletion, eleven-destination Tavern Wayfinder, guild command routing and the five-location Atlas starter map are implemented. The Atlas persists personal current-location/discovery state and permits direct-route travel only. Spending/transfers, inventory, bounded Expeditions, authored story quests, Vaults, Bazaar, broader Hearth systems, live game API, Activity handshake and authoritative visual rendering remain unimplemented.
+- Status: Rust workspace, four transport-independent games, PostgreSQL-backed sessions/recovery, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, earned-only Moonbits wallet/ledger, private Chronicle, optional Wayfarer daily quests/activity/companion milestones/mutual rivalries, privacy inventory/export/deletion, eleven-destination Tavern Wayfinder, guild command routing and the five-location Atlas starter map are implemented. Expeditions, authored story quests, inventory, crafting, Vaults, Bazaar, durable Discord interaction idempotency, structured logging, graceful shutdown and production recovery operations remain unimplemented.
 - Last updated: 2026-11-04.
 
 This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
@@ -15,12 +15,12 @@ This document describes intended boundaries and constraints. It must be revised 
 | Command framework | Poise |
 | Persistent storage | PostgreSQL |
 | Database access | SQLx with PostgreSQL support only |
-| Visual library | Next.js + React + TypeScript |
-| Discord Activity bridge | Official Discord Embedded App SDK |
+| Discord presentation | Serenity messages, embeds, buttons, select menus and modals |
+| Visual assets | Original full-colour pixel art and custom emoji, only where useful |
 | Logging and diagnostics | Structured tracing |
 | Art pipeline | Original pixel-art source assets and cached rendered output |
 
-Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter exposes the Tavern Wayfinder, private Atlas and direct-route travel, game catalogue, start/join/action/session/leave operations, player profiles/preferences, private statistics, achievement gallery, read-only Moonbits wallet and privacy controls in addition to help, about, ping and the privacy overview. `src/tavern.rs` owns the stable navigation destination registry; it only points to commands that are registered in the current build. `src/emoji.rs` owns custom emoji names and optional numeric Discord IDs, validates IDs before building markup, and supplies Unicode fallbacks. Four game modules run without Discord types. The session runtime loads and mutates versioned JSONB session snapshots in PostgreSQL. Mutations use short row-locked transactions; game rules remain independent of Discord and database types. `visual-library/` contains a real Next.js app for browsing only the implemented catalogue; it deliberately does not duplicate authoritative game logic or claim to host live sessions.
+Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter exposes the Tavern Wayfinder, private Atlas and direct-route travel, game catalogue, start/join/action/session/leave operations, player profiles/preferences, private statistics, achievement gallery, read-only Moonbits wallet and privacy controls in addition to help, about, ping and the privacy overview. `src/tavern.rs` owns the stable navigation destination registry; it only points to commands that are registered in the current build. `src/emoji.rs` owns custom emoji names and optional numeric Discord IDs, validates IDs before building markup, and supplies Unicode fallbacks. Four game modules run without Discord types. The session runtime loads and mutates versioned JSONB session snapshots in PostgreSQL. Mutations use short row-locked transactions; game rules remain independent of Discord and database types.
 
 References: [Poise documentation](https://docs.rs/poise/latest/poise/), [Serenity documentation](https://docs.rs/serenity/latest/serenity/), [Tokio documentation](https://docs.rs/tokio/latest/tokio/).
 
@@ -56,9 +56,8 @@ The runtime should be one deployable bot process first. Separate services, queue
 | Player/progression services | Profiles, statistics, achievements, inventory, and reward policy. | Guild-private configuration. |
 | Privacy service | Data inventory, export, deletion orchestration, retention requests, and privacy command responses. | Bypassing repositories or claiming deletion before it completes. |
 | Persistence layer | PostgreSQL repositories, versioned migrations, short transactions, JSONB state snapshots and expiry cleanup. | Discord API calls. |
-| Rendering layer | Convert game view models and assets into cached image output or frontend-ready view models. | Mutating game state. |
-| Visual library frontend | Next.js pages, React components, catalogue, lobbies, and Activity UI. | Authoritative rules, balances, permissions, or direct database access. |
-| Activity bridge | Embedded App SDK handshake and Discord client capabilities. | Owning player identity or trusted game state. |
+| Rendering layer | Convert authorised game view models into Discord-native message, embed and component payloads; attach original art only where it improves comprehension. | Mutating game state. |
+
 | Operations layer | Configuration, structured diagnostics, graceful shutdown, and health signals. | Game-specific decisions. |
 
 The primary dependency direction is from adapters toward application services and domain rules. Game logic must remain testable without a live Discord connection.
@@ -170,21 +169,20 @@ Pixel art is a first-class part of the product.
 
 Do not commit generated caches. Do not use third-party assets unless their licence allows the intended distribution.
 
-## 10. Visual library and Discord Activity boundary
+## 10. Discord-native visual presentation
 
-The visual library is a separate **Next.js + React + TypeScript** application. It can run as a normal HTTPS web app and, where configured, as a Discord Activity embedded in the Discord client.
+Discord is the complete primary client surface. The bot should make ordinary play, lobbies, route journeys and player controls usable through Discord messages and interactions without requiring a browser or Activity.
 
-- Use Discord's official Embedded App SDK for Activity handshake and supported client integration.
-- Keep Discord-native bot commands and ordinary embeds available as the baseline/fallback interface.
-- The frontend requests authorised view models and sends intent/action requests to the Rust application API.
-- The Rust backend validates the Discord identity/session context, guild, membership, permissions, game phase, and turn ownership for every state-changing action.
-- Never trust client-side validation, client-supplied balances, client-supplied item ownership, or client-generated game outcomes.
-- Do not expose the bot token, database URL/credentials, server seed before reveal, or backend credentials to browser code.
-- Use HTTPS, strict origin/CORS policy, secure session handling, Content Security Policy appropriate to Discord Activity hosting, and bounded API requests.
-- Treat Activity startup, reload, participant changes, and disconnects as normal lifecycle events. The backend remains authoritative if the frontend reloads.
-- Do not duplicate game rules in TypeScript. Share schemas/types where useful, but keep game outcomes and state transitions in Rust.
+- Prefer embeds for structured state summaries and buttons/select menus for bounded choices.
+- Use modals only for inputs that cannot be expressed clearly as predefined choices.
+- Acknowledge interactions promptly, defer when necessary, and edit the original response after a durable state transition.
+- Use ephemeral responses for private profile, quest, Atlas, Chronicle, rivalry and run details.
+- Keep public channel messages scoped to information that is intended to be visible to the guild.
+- Build all messages from authorised Rust view models; do not let the presentation adapter invent state.
+- Original full-colour images and custom emoji are optional enhancements. Provide meaningful text and labels for every visual state.
+- Do not add a web frontend, React application or Discord Activity without a new product requirement, threat review and accepted architecture decision.
 
-Official references: [Discord Activities](https://discord.com/developers/docs/activities/overview) and [Embedded App SDK](https://discord.com/developers/docs/developer-tools/embedded-app-sdk).
+The presentation adapter does not own game rules, identity, permissions, persistence, fairness or progression.
 
 ## 11. Security and trust boundaries
 
@@ -242,7 +240,7 @@ The current playable slice is deliberately small and honest about its limits:
 - Session IDs are generated from a PostgreSQL sequence and survive process restarts. They are references, not authentication credentials.
 - Player profiles, preferences, privacy inventory, private JSON export, confirmed deletion, completed result metadata, aggregate per-game statistics, five achievement milestones, the first-completion wallet/ledger, five-location personal Atlas, private Chronicle pages and the Wayfarer quest/activity/companion/rivalry records are implemented. Inventory, spending/transfers, Expeditions, authored story quests, Vaults, Bazaar, durable Discord interaction idempotency and the live web game API remain unimplemented.
 
-This is a functional vertical slice for game rules, player identity, completed-result/stat persistence, private data controls, Discord commands, PostgreSQL transactions and single-process restart recovery—not yet a production-ready multi-instance deployment. The next planned domain slice is [Expedition Foundation v1](EXPEDITION_FOUNDATION.md), followed by durable Discord interaction idempotency, concurrency/load tests and the authenticated visual-game API.
+This is a functional vertical slice for game rules, player identity, completed-result/stat persistence, private data controls, Discord commands, PostgreSQL transactions and single-process restart recovery—not yet a production-ready multi-instance deployment. The next planned domain slice is [Expedition Foundation v1](EXPEDITION_FOUNDATION.md), followed by durable Discord interaction idempotency, concurrency/load tests and production recovery work.
 
 
 ## Wayfarer progression and rivalries

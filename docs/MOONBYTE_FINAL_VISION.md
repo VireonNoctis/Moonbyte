@@ -20,8 +20,9 @@ The design is expansive, but release is incremental. Four hundred proposals acro
 
 - **Application and game rules:** Rust, Tokio, Serenity and Poise.
 - **Persistence:** PostgreSQL through SQLx. PostgreSQL is the only accepted application database. SQLite and ScyllaDB are excluded; do not introduce Redis, a message broker, a separate service or distributed storage without measured need and a new accepted architecture decision.
-- **Visual library:** Next.js, React and TypeScript. React is used for visual surfaces and the official Discord Embedded App SDK Activity, not injected into ordinary Discord embeds.
-- **Authority boundary:** Rust owns state transitions, rules, randomness, permissions, progression, inventory, ledgers, trades, fairness transcripts and persistence. React receives authorised view models and submits actions for server-side validation.
+- **Player interface:** Discord-native commands, messages, embeds, buttons, select menus and modals. Original full-colour pixel-art images and custom emoji are optional message assets, not a separate client.
+- **Authority boundary:** Rust owns state transitions, rules, randomness, permissions, progression, inventory, ledgers, trades, fairness transcripts and persistence. Discord presentation is generated from authorised Rust view models and submitted actions are validated server-side.
+- **No web-client requirement:** A website, Next.js/React frontend, browser game client or Discord Activity is not part of the current product requirement. Introduce one only after a concrete need and a new accepted architecture decision.
 - **Stable Rust:** CI follows the latest stable toolchain and records the compiler version used for each run. The current verified CI toolchain is Rust 1.99.1.
 - **No Lunar runtime dependency:** Moonbyte owns its own source, game rules, storage, identity, commands, deployment and release lifecycle. Every reused concept or asset must pass source, dependency and licence review.
 
@@ -199,7 +200,7 @@ The rest of the World Loom remains a design proposal until code, migrations, com
 6. **Bazaar:** fixed-price listing and explicit barter only after escrow, ledger, idempotency, anti-farming and concurrency tests.
 7. **Mastery and profile projection:** clear rank thresholds, authorised unified Player Card and optional Realm variants.
 8. **Seasonal Almanac and continuity polish:** published calendar, reprises, player-controlled handoffs and content archive.
-9. **Discord Activity and production readiness:** official SDK, mobile/accessibility, recovery, backup/restore, rate-limit and privacy drills.
+9. **Discord interaction and production readiness:** message-component lifecycle, accessibility, recovery, backup/restore, rate-limit and privacy drills.
 
 A slice is complete only when its owning Rust module controls every state transition; PostgreSQL constraints prevent duplicate or partial writes; Discord and Activity surfaces share the same application service; events have stable schemas and idempotency rules; player and guild data are scoped with complete privacy coverage; tests cover normal, invalid, duplicate, concurrent, rollback, pause/leave and recovery paths; and README, roadmap, volumes, graph and decision records agree with the code.
 
