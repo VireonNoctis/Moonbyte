@@ -119,6 +119,7 @@ pub struct PlayerDeletion {
     pub rivalry_records_removed: u64,
     pub expedition_participations_removed: u64,
     pub expedition_runs_cancelled: u64,
+    pub expedition_runs_removed: u64,
     pub consent_record_removed: bool,
     pub profile_removed: bool,
 }
@@ -1098,6 +1099,18 @@ impl ProfileStore {
         .execute(&mut *transaction)
         .await?
         .rows_affected();
+        let expedition_runs_removed = sqlx::query(
+            "DELETE FROM expedition_runs r
+             WHERE r.expedition_run_id = ANY($1::bigint[])
+               AND NOT EXISTS (
+                 SELECT 1 FROM expedition_participants p
+                 WHERE p.expedition_run_id = r.expedition_run_id
+               )",
+        )
+        .bind(&affected_expedition_runs)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
 
         let consent_record_removed =
             sqlx::query("DELETE FROM user_consents WHERE discord_user_id = $1")
@@ -1129,6 +1142,7 @@ impl ProfileStore {
             rivalry_records_removed,
             expedition_participations_removed,
             expedition_runs_cancelled,
+            expedition_runs_removed,
             consent_record_removed,
             profile_removed,
         })

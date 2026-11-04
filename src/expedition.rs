@@ -101,6 +101,10 @@ impl std::error::Error for ExpeditionError {
         }
     }
 }
+impl From<AtlasError> for ExpeditionError {
+    fn from(error: AtlasError) -> Self { Self::Atlas(error) }
+}
+
 impl From<sqlx::Error> for ExpeditionError {
     fn from(error: sqlx::Error) -> Self {
         if matches!(&error, sqlx::Error::Database(db) if db.code().as_deref() == Some("23505")) {
@@ -168,6 +172,9 @@ impl ExpeditionStore {
 
     pub async fn snapshot(&self, player: &str, guild: Option<&str>, id: i64) -> Result<Snapshot, ExpeditionError> {
         let row = load_run(&self.pool, id).await?;
+        if row.route_id != ROUTE_ID || row.content_version != ROUTE_VERSION {
+            return Err(ExpeditionError::UnknownRoute);
+        }
         scope(&row.guild_id, guild)?;
         let member: bool = sqlx::query_scalar(
             "SELECT EXISTS (SELECT 1 FROM expedition_participants WHERE expedition_run_id = $1 AND discord_user_id = $2)",

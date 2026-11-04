@@ -370,7 +370,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Wayfarer active days: {}\n\
          Daily quest rotations: {}\n\
          Daily quest records: {}\n\
-         Rivalry records: {}\n\n\
+         Rivalry records: {}\nExpedition participations: {}\nExpedition checkpoints: {}\n\n\
          {}\n\n\
          Use `{prefix}privacy_export` to receive a JSON copy, or `{prefix}privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
@@ -405,6 +405,8 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
         inventory.quest_rotation_records,
         inventory.daily_quest_records,
         inventory.rivalry_records,
+        inventory.expedition_run_records,
+        inventory.expedition_checkpoint_records,
         inventory.session_retention
     );
     send_private(ctx, message).await
@@ -479,7 +481,7 @@ pub async fn privacy_delete(
          Wayfarer activity days removed: {}\n\
          Daily quest rotations removed: {}\n\
          Daily quest records removed: {}\n\
-         Rivalry records removed: {}\n\
+         Rivalry records removed: {}\nExpedition participations removed: {}\nExpedition runs cancelled: {}\nEmpty Expedition runs removed: {}\n\
          Policy acceptance record removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
@@ -510,6 +512,9 @@ pub async fn privacy_delete(
         deletion.quest_rotations_removed,
         deletion.daily_quest_records_removed,
         deletion.rivalry_records_removed,
+        deletion.expedition_participations_removed,
+        deletion.expedition_runs_cancelled,
+        deletion.expedition_runs_removed,
         if deletion.consent_record_removed {
             "yes"
         } else {
@@ -1482,7 +1487,7 @@ const PRIVACY_OVERVIEW: &str = "\
 **Moonbyte privacy — current build**\n\n\
 Moonbyte processes Discord interactions to run commands and games. PostgreSQL stores \
 player profiles, session snapshots, completed-game result metadata, per-game aggregate \
-statistics, earned-only wallet/ledger records, unlocked achievements and personal Atlas location/discovery records. Sessions include game state and participant IDs, are scoped to their originating \
+statistics, earned-only wallet/ledger records, unlocked achievements and personal Atlas location/discovery records, Lantern Road Expedition participation and checkpoint history. Sessions include game state and participant IDs, are scoped to their originating \
 server, and expire after 24 hours without activity. Completed result rows expire with their \
 parent session; aggregate statistics and earned wallet/ledger records remain until the player \
 requests deletion. The first completion of each game type earns 10 Moonbits once per player. \
@@ -1494,7 +1499,7 @@ visibility and two preference flags. Use `.privacy_data` to inspect your current
 `.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
 deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
 Deletion removes the profile, per-game statistics, achievements, Moonbits wallet/ledger records, \
-Atlas location/discovery records and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
+Atlas location/discovery records, your Expedition participation, and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
 Discord's own messages, Discord account data, other participants' copies, or backups outside \
 the current database.\n\n\
 Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of the \
