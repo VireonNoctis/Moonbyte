@@ -14,7 +14,7 @@
 | Storage | PostgreSQL through SQLx |
 | Deployment contract | One supported bot process with PostgreSQL |
 | Schema | Ordered migrations through `0011_expeditions.sql` |
-| Player interface | Discord-native commands and messages; game controls are currently command-driven |
+| Player interface | Discord-native commands/messages; numbered buttons for Tic-tac-toe, Connect Four and Memory Match |
 | Toolchain | Pinned in `rust-toolchain.toml` |
 
 ## Live systems
@@ -100,8 +100,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 
 ## Known gaps
 
-- Discord-native buttons/select menus for turn-based boards and a consistent component lifecycle.
-- Durable idempotency for duplicate Discord component deliveries.
+- Durable interaction receipt records beyond the current action-version guard.
 - Development-guild interaction smoke tests and accessibility review of each interactive board.
 - Production database backup/restore automation, monitoring and a rehearsed recovery procedure.
 - More game content, validated word/puzzle packs, further Expedition routes, inventory, crafting and a fixed-price, non-wagering Bazaar.

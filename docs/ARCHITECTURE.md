@@ -76,6 +76,10 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - No client-supplied score, winner, reward, currency balance or checkpoint is trusted.
 - Discord delivery failure never rolls back a committed game or Expedition state change; retry behavior must avoid duplicate effects.
 
+## Discord components
+
+Tic-tac-toe, Connect Four and Memory Match boards expose numbered native Discord buttons. Each custom ID binds the session ID, expected action count and a bounded game-specific input. The global interaction handler rechecks current consent, server command-channel policy, participant identity, guild scope and session state before forwarding the input to the same GameRuntime used by text commands. If the action count has advanced, the old board is refreshed from PostgreSQL without applying the move. Terminal controls are disabled. Word Scramble remains text-answer driven. The existing text command route remains available as an accessible fallback.
+
 ## Logging, shutdown and operations
 
 The runtime uses `tracing` with an environment filter and a compact formatter. The default filter enables Moonbyte application events at info level and keeps Serenity/SQLx comparatively quiet. Events cover process startup/stopping, configuration progress, database readiness, gateway startup/stopping, shutdown signals, expired-session cleanup and guild cleanup.

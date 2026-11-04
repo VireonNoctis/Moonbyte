@@ -3,10 +3,13 @@
 
 use crate::{
     Data, Error,
-    game::{GameKind, GamePhase},
+    game::{GameKind, GamePhase, SessionSnapshot},
     profile::PlayerProfile,
 };
-use poise::serenity_prelude::{ChannelId, CreateAttachment, CreateMessage};
+use poise::serenity_prelude::{
+    ButtonStyle, ChannelId, ComponentInteraction, CreateActionRow, CreateAttachment, CreateButton,
+    CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage,
+};
 
 use crate::guild_settings::{GuildCommandSettings, validate_prefix};
 
@@ -14,6 +17,225 @@ const TERMS_DOCUMENT: &str = include_str!("../docs/TERMS_OF_SERVICE.md");
 const PRIVACY_DOCUMENT: &str = include_str!("../docs/PRIVACY.md");
 
 type Context<'a> = poise::Context<'a, Data, Error>;
+
+const GAME_COMPONENT_PREFIX: &str = "mbg";
+
+fn parse_game_component_id(custom_id: &str) -> Option<(String, u32, u8)> {
+    let mut parts = custom_id.split(':');
+    if parts.next()? != GAME_COMPONENT_PREFIX {
+        return None;
+    }
+
+    let session_id = parts.next()?.to_owned();
+    if session_id.is_empty() {
+        return None;
+    }
+    let action_version = parts.next()?.parse::<u32>().ok()?;
+    let value = parts.next()?.parse::<u8>().ok()?;
+    if parts.next().is_some() {
+        return None;
+    }
+
+    Some((session_id, action_version, value))
+}
+
+fn game_action_input(game: GameKind, value: u8) -> Option<String> {
+    match game {
+        GameKind::TicTacToe if value < 9 => {
+            Some(format!("{},{}", value / 3 + 1, value % 3 + 1))
+        }
+        GameKind::ConnectFour if (1..=7).contains(&value) => Some(value.to_string()),
+        GameKind::MemoryMatch if (1..=8).contains(&value) => Some(value.to_string()),
+        GameKind::WordScramble => None,
+        _ => None,
+    }
+}
+
+fn game_components(snapshot: &SessionSnapshot) -> Vec<CreateActionRow> {
+    let (start, count, per_row) = match snapshot.game {
+        GameKind::TicTacToe => (0_u8, 9_u8, 3_usize),
+        GameKind::ConnectFour => (1_u8, 7_u8, 5_usize),
+        GameKind::MemoryMatch => (1_u8, 8_u8, 4_usize),
+        GameKind::WordScramble => return Vec::new(),
+    };
+
+    // Waiting lobbies have no legal moves yet. Terminal boards retain disabled
+    // controls so the final message clearly shows that play has ended.
+    if snapshot.phase == GamePhase::WaitingForPlayers {
+        return Vec::new();
+    }
+    let disabled = snapshot.phase != GamePhase::Active;
+    let values = (start..start + count).collect::<Vec<_>>();
+
+    values
+        .chunks(per_row)
+        .map(|group| {
+            CreateActionRow::Buttons(
+                group
+                    .iter()
+                    .map(|value| {
+                        let label = if snapshot.game == GameKind::TicTacToe {
+                            (value + 1).to_string()
+                        } else {
+                            value.to_string()
+                        };
+                        CreateButton::new(format!(
+                            "{GAME_COMPONENT_PREFIX}:{}:{}:{}",
+                            snapshot.id, snapshot.action_count, value
+                        ))
+                        .label(label)
+                        .style(ButtonStyle::Primary)
+                        .disabled(disabled)
+                    })
+                    .collect(),
+            )
+        })
+        .collect()
+}
+
+fn game_reply(content: String, snapshot: &SessionSnapshot) -> poise::CreateReply {
+    let components = game_components(snapshot);
+    let content = if components.is_empty() {
+        content
+    } else {
+        format!(
+            "{content}\n\nChoose a numbered button below, or use the command format above."
+        )
+    };
+
+    let reply = poise::CreateReply::new().content(content);
+    if components.is_empty() {
+        reply
+    } else {
+        reply.components(components)
+    }
+}
+
+async fn component_notice(
+    discord: &poise::serenity_prelude::Context,
+    interaction: &ComponentInteraction,
+    content: impl Into<String>,
+) -> Result<(), Error> {
+    interaction
+        .create_response(
+            discord,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new()
+                    .content(content)
+                    .ephemeral(true),
+            ),
+        )
+        .await?;
+    Ok(())
+}
+
+/// Handles versioned game-board buttons from Discord's native component event.
+pub async fn handle_game_component(
+    discord: &poise::serenity_prelude::Context,
+    data: &Data,
+    interaction: &ComponentInteraction,
+) -> Result<(), Error> {
+    let Some((session_id, expected_action_version, value)) =
+        parse_game_component_id(&interaction.data.custom_id)
+    else {
+        return Ok(());
+    };
+
+    let player_id = interaction.user.id.to_string();
+    let guild_id = interaction.guild_id;
+    let guild_key = guild_id.map(|id| id.to_string());
+
+    if !data.consents().is_current(&player_id).await? {
+        let prefix = escape_user_text(&data.command_prefix(guild_id));
+        return component_notice(
+            discord,
+            interaction,
+            format!(
+                "Before using game controls, review `{prefix}terms` and `{prefix}privacy`, then run `{prefix}consent accept`."
+            ),
+        )
+        .await;
+    }
+
+    if let Some(guild_id) = guild_key.as_deref() {
+        if let Some(settings) = data.guild_settings().get(guild_id) {
+            if let Some(allowed_channel) = settings.command_channel_id {
+                if allowed_channel != interaction.channel_id.to_string() {
+                    return component_notice(
+                        discord,
+                        interaction,
+                        format!(
+                            "Game controls for this server are restricted to <#{allowed_channel}>."
+                        ),
+                    )
+                    .await;
+                }
+            }
+        }
+    }
+
+    let current = match data
+        .games()
+        .get(&session_id, &player_id, guild_key.as_deref())
+        .await
+    {
+        Ok(snapshot) => snapshot,
+        Err(error) => {
+            return component_notice(discord, interaction, error.to_string()).await;
+        }
+    };
+
+    // Every board's controls are bound to the action count they displayed.
+    // A retry or a click from an older board refreshes the view without applying
+    // another move.
+    if current.action_count != expected_action_version || current.phase != GamePhase::Active {
+        let refreshed = CreateInteractionResponseMessage::new()
+            .content(format!(
+                "{}\n\nThis board was refreshed because that control was out of date.",
+                current.render()
+            ))
+            .components(game_components(&current));
+        interaction
+            .create_response(
+                discord,
+                CreateInteractionResponse::UpdateMessage(refreshed),
+            )
+            .await?;
+        return Ok(());
+    }
+
+    let Some(input) = game_action_input(current.game, value) else {
+        return component_notice(discord, interaction, "That game control is not valid.")
+            .await;
+    };
+
+    match data
+        .games()
+        .act(&session_id, &player_id, guild_key.as_deref(), &input)
+        .await
+    {
+        Ok(snapshot) => {
+            let updated = CreateInteractionResponseMessage::new()
+                .content(snapshot.render())
+                .components(game_components(&snapshot));
+            interaction
+                .create_response(
+                    discord,
+                    CreateInteractionResponse::UpdateMessage(updated),
+                )
+                .await?;
+            tracing::debug!(
+                event = "game_component_action_applied",
+                game = snapshot.game.definition().id
+            );
+        }
+        Err(error) => {
+            component_notice(discord, interaction, error.to_string()).await?;
+        }
+    }
+
+    Ok(())
+}
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
@@ -1187,7 +1409,11 @@ pub async fn play(
     } else {
         String::from("Your solo session is ready.")
     };
-    ctx.say(format!("{intro}\n\n{}", snapshot.render())).await?;
+    ctx.send(game_reply(
+        format!("{intro}\n\n{}", snapshot.render()),
+        &snapshot,
+    ))
+    .await?;
     Ok(())
 }
 
@@ -1203,8 +1429,11 @@ pub async fn join(
         .games()
         .join(&session_id, &player_id, guild_id.as_deref())
         .await?;
-    ctx.say(format!("You joined the game.\n\n{}", snapshot.render()))
-        .await?;
+    ctx.send(game_reply(
+        format!("You joined the game.\n\n{}", snapshot.render()),
+        &snapshot,
+    ))
+    .await?;
     Ok(())
 }
 
@@ -1222,7 +1451,7 @@ pub async fn action(
         .games()
         .act(&session_id, &player_id, guild_id.as_deref(), &input)
         .await?;
-    ctx.say(snapshot.render()).await?;
+    ctx.send(game_reply(snapshot.render(), &snapshot)).await?;
     Ok(())
 }
 
@@ -1238,7 +1467,7 @@ pub async fn session(
         .games()
         .get(&session_id, &player_id, guild_id.as_deref())
         .await?;
-    ctx.say(snapshot.render()).await?;
+    ctx.send(game_reply(snapshot.render(), &snapshot)).await?;
     Ok(())
 }
 
@@ -1296,8 +1525,11 @@ pub async fn leave(
         .games()
         .leave(&session_id, &player_id, guild_id.as_deref())
         .await?;
-    ctx.say(format!("Session ended.\n\n{}", snapshot.render()))
-        .await?;
+    ctx.send(game_reply(
+        format!("Session ended.\n\n{}", snapshot.render()),
+        &snapshot,
+    ))
+    .await?;
     Ok(())
 }
 
@@ -1515,6 +1747,41 @@ mod tests {
         PrefixUpdate, escape_user_text, help_message, parse_discord_user_id, parse_prefix_update,
         render_privacy_overview,
     };
+    use crate::game::GameKind;
+
+    #[test]
+    fn game_component_ids_are_versioned_and_strictly_parsed() {
+        assert_eq!(
+            super::parse_game_component_id("mbg:MB-123:7:4"),
+            Some(("MB-123".to_owned(), 7, 4))
+        );
+        assert_eq!(super::parse_game_component_id("other:MB-123:7:4"), None);
+        assert_eq!(super::parse_game_component_id("mbg:MB-123:7:4:extra"), None);
+        assert_eq!(super::parse_game_component_id("mbg::7:4"), None);
+        assert_eq!(super::parse_game_component_id("mbg:MB-123:bad:4"), None);
+    }
+
+    #[test]
+    fn game_button_values_map_to_the_existing_text_action_contract() {
+        assert_eq!(
+            super::game_action_input(GameKind::TicTacToe, 0),
+            Some("1,1".to_owned())
+        );
+        assert_eq!(
+            super::game_action_input(GameKind::TicTacToe, 8),
+            Some("3,3".to_owned())
+        );
+        assert_eq!(
+            super::game_action_input(GameKind::ConnectFour, 7),
+            Some("7".to_owned())
+        );
+        assert_eq!(
+            super::game_action_input(GameKind::MemoryMatch, 8),
+            Some("8".to_owned())
+        );
+        assert_eq!(super::game_action_input(GameKind::WordScramble, 1), None);
+        assert_eq!(super::game_action_input(GameKind::TicTacToe, 9), None);
+    }
 
     #[test]
     fn help_lists_commands_registered_in_this_build() {
