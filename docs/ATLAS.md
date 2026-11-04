@@ -68,14 +68,14 @@ The Atlas tests cover:
 - Discovery timestamps and visit counts in PostgreSQL.
 - Inclusion of world state and discoveries in privacy inventory/export/deletion, alongside the versioned Terms and Privacy acceptance record.
 
-The Atlas is not the full World Loom map. Multi-region world generation, route hazards, Expeditions, shared party discovery, guild maps, authored story, quests, NPCs, landmarks beyond these five locations and visual map rendering are not implemented by this slice. They must each be added as separately tested vertical slices with their own ownership and privacy contracts.
+The Atlas is not the full World Loom map. Multi-region world generation, route hazards, additional Expedition routes, shared party discovery beyond Lantern Road, guild maps, authored story networks, quests, NPCs, landmarks beyond these five locations and visual map rendering are not implemented by this slice. They must each be added as separately tested vertical slices with their own ownership and privacy contracts.
 
 ## Future connection points
 
 The stable location IDs are intended to become the shared spatial references used by:
-- [Expedition Foundation v1](EXPEDITION_FOUNDATION.md), which is the next planned consumer of stable Atlas route IDs and checkpoint discoveries; its runtime is not yet implemented.
+- [Expedition Foundation v1](EXPEDITION_FOUNDATION.md), which consumes stable Atlas route IDs for the implemented Lantern Road run and commits each active participant's checkpoint movement through the Atlas service.
 - Quests, which will anchor authored objectives to locations.
 - The Archive, which will preserve confirmed discoveries and lore.
 - Guild projects, which may add optional shared map contributions after guild isolation is implemented.
 
-These connections remain product design contracts until the corresponding services, persistence, permissions, export/deletion coverage and acceptance tests exist. The first bounded Expedition proposal is specified in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md); it must pass those gates before being described as live.
+The wider Quest, Guild and community-map connections remain product design contracts until their services, persistence, permissions, export/deletion coverage and acceptance tests exist. Lantern Road v1 is live on this branch; additional routes must pass the same gates before release.

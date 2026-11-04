@@ -1,6 +1,6 @@
 # Player Profiles and Privacy Controls
 
-- Status: Player profiles/preferences, versioned Terms/Privacy acceptance, game results/statistics, five persistent achievements, earned-only Moonbits, the five-location Atlas, Wayfarer activity, daily quests, cosmetic companion milestones, opt-in rivalries, private Chronicle pages, version 8 private export and confirmed deletion are implemented.
+- Status: Player profiles/preferences, versioned Terms/Privacy acceptance, game results/statistics, five persistent achievements, earned-only Moonbits, the five-location Atlas, Wayfarer activity, daily quests, cosmetic companion milestones, opt-in rivalries, private Chronicle pages, version 9 private export and confirmed deletion are implemented.
 - Storage: PostgreSQL through SQLx.
 - Owner identity: Discord user ID. Moonbyte does not collect email addresses, real names, phone numbers or precise location for these features.
 
@@ -34,7 +34,7 @@ The independent user_consents table stores one current record per Discord user I
 | accepted_at | Timestamp of the explicit acceptance. |
 | accepted_in_guild_id | Optional server where the user accepted; the agreement remains global to their Discord account. |
 
-A material change to either document requires a version bump in the Rust consent module. The next ordinary command then prompts the user to review and accept the current versions. The consent record is included in the data inventory and version 7 export, and is deleted in the same account-deletion transaction as the player's other records.
+A material change to either document requires a version bump in the Rust consent module. The next ordinary command then prompts the user to review and accept the current versions. The consent record is included in the data inventory and version 9 export, and is deleted in the same account-deletion transaction as the player's other records.
 
 ## Completed-game records
 
@@ -98,9 +98,13 @@ The first Atlas slice is a five-location authored map. It stores a player's curr
 - Travel, current-location updates and visit counters are persisted in PostgreSQL.
 - Reopening the Atlas is read-only after initialisation. Travelling to the current location is a no-op.
 - Visiting a location does not grant Moonbits, achievements, items or repeatable rewards.
-- The expanded Atlas design, Expeditions, narrative and community mapping remain proposals.
+- The wider Atlas design, additional Expedition routes, narrative and community mapping remain proposals.
 
-The database stores `player_world_state`, `player_atlas_discoveries` and `player_archive_fragments`, owned through the player profile's foreign-key chain. Atlas locations, visit history and Chronicle page IDs/timestamps are included in the private data inventory, version 8 export and account deletion transaction. Wayfarer progress is described below.
+The database stores `player_world_state`, `player_atlas_discoveries` and `player_archive_fragments`, owned through the player profile's foreign-key chain. Atlas locations, visit history and Chronicle page IDs/timestamps are included in the private data inventory, version 9 export and account deletion transaction. Wayfarer progress is described below.
+
+## Lantern Road Expedition records
+
+The Expedition stores route runs, participant membership and checkpoint history separately from Atlas and Chronicle data. A shared run changes only the personal Atlas/Chronicle state of participants who explicitly joined and remain active. The version 9 export contains the requester's membership details, shared checkpoint history and completed_by_you attribution; it does not include other participants' IDs or profile records. Account deletion locks affected Expedition runs before Atlas state, transfers the host to the earliest remaining active participant when possible, cancels a run when no active member remains, and removes it when no participant history remains.
 
 ## Wayfarer activity, daily quests and companion milestones
 
@@ -143,7 +147,7 @@ The same commands are registered as slash commands. When invoked in a guild, per
 
 ## Export format
 
-The version 7 JSON export contains:
+The version 9 JSON export contains:
 
 - Export format version and generation timestamp.
 - Player profile and saved preferences, when a profile exists.
@@ -155,8 +159,9 @@ The version 7 JSON export contains:
 - Wallet ledger entries, including amount, fixed reason, source session, idempotency key and timestamp.
 - Five achievement milestone records when earned, including their source session and unlock timestamp.
 - The player's current Atlas location and the locations they have discovered, with timestamps and visit counts.
+- The requester's own Expedition memberships, route/version/state and shared checkpoint history, including a completed_by_you boolean.
 
-The export deliberately excludes other participants' Discord IDs and raw message content. It describes the current Moonbyte PostgreSQL schema only. Discord independently retains interactions under its own policies.
+The export deliberately excludes other participants' Discord IDs and raw message content. Version 9 also includes the requester's Expedition participation, shared checkpoint choices/timestamps and a completed_by_you flag without revealing who else completed a checkpoint. It describes the current Moonbyte PostgreSQL schema only. Discord independently retains interactions under its own policies.
 
 ## Deletion behavior
 

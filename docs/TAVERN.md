@@ -11,7 +11,7 @@ The Tavern is the home and discovery entry point in the Moonbyte World Loom. The
 
 ## Live Wayfinder destinations
 
-The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the eleven destinations that are backed by registered commands:
+The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains twelve destinations that are backed by registered commands:
 
 | Stable destination ID | Tavern label | Live command | Current capability |
 | --- | --- | --- | --- |
@@ -26,6 +26,7 @@ The single `AVAILABLE_DESTINATIONS` registry in `src/tavern.rs` contains the ele
 | `wayfarer-thread` | The Wayfarer Thread | `.wayfarer` / `/wayfarer` | View cumulative activity days and the non-resetting journey stage. |
 | `companion-journal` | The Companion Journal | `.companion` / `/companion` | View Mallow's cosmetic companion milestone. |
 | `rivalry-hall` | The Rivalry Hall | `.rivals` / `/rivals` | View private mutual invitations and post-acceptance two-player match records. |
+| `expedition-board` | The Expedition Board | `.expedition` / `/expedition` | Browse and start the Lantern Road solo or with up to three consenting participants. |
 
 The Wayfinder is generated from this registry rather than maintaining a second handwritten list. Every destination has a stable internal ID, a title, a description and a registered command route. Tests verify the current command targets and visible destinations. The Ledger points only to the read-only wallet summary; it does not enable spending or trading.
 
@@ -54,7 +55,7 @@ The first Atlas destination is implemented as a bounded world-map slice, not the
 - No travel currency, achievement or repeatable reward is issued.
 - The `.atlas` response is private; browsing does not expose one player's location to a public channel.
 
-The Atlas and Chronicle data are owned by the authenticated player's profile. Export, inventory and confirmed deletion cover `player_world_state`, `player_atlas_discoveries` and `player_archive_fragments`. Expeditions, multi-region content, narrative routes, guild maps and player-created map content remain planned.
+The Atlas and Chronicle data are owned by the authenticated player's profile. Export, inventory and confirmed deletion cover `player_world_state`, `player_atlas_discoveries` and `player_archive_fragments`. Additional Expedition routes, multi-region content, authored narrative networks, guild maps and player-created map content remain planned.
 ## Emoji registry
 
 The bot's five upload names are declared in `src/emoji.rs`:

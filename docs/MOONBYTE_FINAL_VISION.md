@@ -186,13 +186,13 @@ The ten World Loom volumes remain the detailed source catalogue for forty domain
 
 ## 11. Scope and truth of implementation
 
-The current repository contains working Rust/PostgreSQL vertical slices for the runtime, four games, sessions, profiles, game results/statistics, achievements, first-completion Moonbits, guild command configuration, versioned policy consent, data inventory/export/deletion, Tavern/Wayfinder, the five-location Atlas, private Chronicle pages, optional daily quests, cumulative journey days, companion milestones and mutual private rivalries.
+The current repository contains working Rust/PostgreSQL vertical slices for the runtime, four games, sessions, profiles, game results/statistics, achievements, first-completion Moonbits, guild command configuration, versioned policy consent, data inventory/export/deletion, Tavern/Wayfinder, the five-location Atlas, private Chronicle pages, optional daily quests, cumulative journey days, companion milestones and mutual private rivalries and Lantern Road Expedition v1.
 
-The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are merged. In particular: larger Atlas regions, multi-stage Expeditions, authored story networks, Vaults, inventory, crafting, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card are not made live by this document.
+The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are merged. In particular: larger Atlas regions, additional Expedition routes, authored story networks, Vaults, inventory, crafting, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card are not made live by this document.
 
 ## 12. Release order and acceptance gates
 
-1. **[Expedition foundation](EXPEDITION_FOUNDATION.md):** one authored, bounded route; durable checkpoint state; pause/resume/leave; Atlas and Chronicle handoff; optional Wayfarer activity projection; export/deletion coverage.
+1. **[Expedition foundation](EXPEDITION_FOUNDATION.md) — implemented on this branch:** Lantern Road v1 has durable solo/group runs, opt-in membership, transactional Atlas/Chronicle hand-offs, pause/resume/leave, checkpoint concurrency protection and export/deletion coverage. Additional routes and authored story networks remain future work.
 2. **Inventory and provenance:** stable item IDs, earned source and account ownership before crafting or trade.
 3. **Known-input crafting:** fixed recipes, validated ingredients, transactional output, no random yield.
 4. **Puzzle Vault:** clear rules, published rewards, save checkpoints and verifiable completion.
@@ -208,4 +208,4 @@ A slice is complete only when its owning Rust module controls every state transi
 
 ## Current next-slice reference
 
-The first delivery boundary for the Expedition foundation is defined in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md). It narrows the much larger Atlas/Expedition/Quest proposals to one authored route and explicit release gates; no Expedition behavior should be considered live until its Rust service, migration, commands, privacy coverage and tests are merged.
+The first delivery boundary for the Expedition foundation is defined in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md). It narrows the much larger Atlas/Expedition/Quest proposals to one authored route and explicit release gates; The Lantern Road runtime, migration, commands, privacy coverage and PostgreSQL integration tests are implemented on this PR; additional routes and story-quest systems remain future work.

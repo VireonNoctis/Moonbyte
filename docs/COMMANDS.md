@@ -1,6 +1,6 @@
 # Moonbyte Command Reference
 
-- Status: Four playable games, PostgreSQL sessions, player profiles, game results/statistics, achievements, earned-only Moonbits, the five-location Atlas, private Chronicle pages and the Wayfarer progression slice are implemented.
+- Status: Four playable games, PostgreSQL sessions, player profiles, game results/statistics, achievements, earned-only Moonbits, the five-location Atlas, private Chronicle pages and the Wayfarer progression slice and Lantern Road Expedition v1 are implemented.
 - Framework: Poise on Serenity.
 - Default prefix: period; override with DEFAULT_PREFIX. Servers can set a guild-specific prefix with the Manage Server-only prefix command. First-time users must review and accept both current policy versions before ordinary commands are enabled.
 
@@ -35,6 +35,7 @@
 | .atlas | /atlas | Privately displays the player's current place, discoveries and connected routes. |
 | .travel <location> | /travel | Travels to a directly connected location and records the visit. |
 | .chronicle | /chronicle | Privately reads lore pages unlocked by first-time Atlas discoveries. |
+| .expedition | /expedition | Lists the Lantern Road, starts solo/group runs, joins, begins, advances, pauses, resumes, leaves or cancels a run. |
 | .games | /games | Lists four playable games, player counts and controls. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server. |
@@ -51,6 +52,14 @@ Poise prefix aliases are available only for the listed short forms: .t for .tave
 
 All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise proposed RPG, inventory or market features as working.
 
+## Lantern Road Expedition v1
+
+The first route is Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Use .expedition or .expedition list to inspect it. Start a solo run with .expedition start lantern-road solo, or create a group run with .expedition start lantern-road group inside a Discord server. A group start announces the run ID, not anyone's private Atlas progress. Every additional player must explicitly join with .expedition join RUN_ID; shared runs support up to four players from the same server. All participants must be at Lantern Square before the host can begin with .expedition begin RUN_ID.
+
+Use .expedition status RUN_ID to inspect a run you joined. Advance with .expedition advance RUN_ID CHECKPOINT_ID CHOICE. The route choices are listen or inspect at Mosslight Grove, star at the Ember Archive, and chart at Starfall Observatory. The incorrect lantern clue does not move the run. The expected next checkpoint is required, so stale or duplicate advances are rejected.
+
+Any active participant can pause or resume the run. A participant can leave independently; if the host leaves, ownership transfers to the earliest remaining active participant. A run with no active participants is cancelled. The host can cancel a non-terminal run. Runs do not expire, have no attendance deadline and do not remove progress for a break. Each successful checkpoint updates only the personal Atlas and Chronicle records of the active participants in the same PostgreSQL transaction as run history. Completion records a Wayfarer activity day; it grants no random reward or additional Moonbits.
+
 ## Profile commands
 
 - `.profile_edit Display Name | Short bio` sets the display name and bio. The name is limited to 32 characters and the bio to 160 characters. Use `-` after the separator to clear the bio.
@@ -60,14 +69,14 @@ All commands use shared Rust handlers for prefix and slash invocation. The help 
 
 ## Privacy controls and scope
 
-1. Run `.privacy_data` to inspect profile, session, result, statistic, achievement, wallet/ledger, Atlas, Wayfarer activity, quest and rivalry records associated with the requester.
-2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. Version 7 contains the player's profile and consent, session/result metadata, aggregate statistics, achievements, wallet/ledger, Atlas state, Wayfarer activity days, daily quest progress, SHA-512 rotation fingerprints and private rivalry records. It excludes the private quest seed and unrelated message content.
+1. Run `.privacy_data` to inspect profile, session, result, statistic, achievement, wallet/ledger, Atlas, Chronicle, Wayfarer, rivalry and Expedition records associated with the requester.
+2. Run `.privacy_export` to receive `moonbyte-data-export.json` by DM. Version 9 includes the requester's own Expedition membership details and shared checkpoint history, plus a `completed_by_you` flag. It does not expose other participants' Discord IDs or private quest seeds.
 3. Run `.privacy_delete` to read the exact deletion scope. Nothing is deleted at this step.
-4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile, statistics, achievements, Moonbits wallet/ledger, Atlas records, Wayfarer activity, quest rotations/progress and rivalry records, plus every stored game-session snapshot and linked result containing that Discord ID.
+4. Run `.privacy_delete DELETE` to confirm. This transaction removes the player's profile, game/player records and Expedition participation. It transfers host ownership to the earliest remaining active participant where possible, cancels a run when no active participants remain, and removes a run when no participant history remains. It also removes every stored game-session snapshot and linked result containing that Discord ID.
 
-Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The private deletion receipt reports the counts of session, result, statistic, achievement, wallet/ledger, Atlas, Wayfarer, quest and rivalry records removed.
+Game-session state is stored as one shared snapshot. Deleting a session row can therefore end a session for co-participants. The command explains this before confirmation. The private deletion receipt reports the counts of session, result, statistic, achievement, wallet/ledger, Atlas, Wayfarer, quest and rivalry records removed, plus Expedition participations removed, hosts transferred, runs cancelled and empty runs removed.
 
-This covers the current Moonbyte PostgreSQL player-owned schema only: `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state`, `player_atlas_discoveries`, `player_wayfarer_days`, `player_quest_rotations`, `player_daily_quests` and `player_rivalries`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
+This covers the current Moonbyte PostgreSQL player-owned schema only: `player_profiles`, `user_consents`, `game_sessions`, `game_results`, `player_game_stats`, `player_achievements`, `player_wallets`, `wallet_ledger_entries`, `player_world_state`, `player_atlas_discoveries`, `player_wayfarer_days`, `player_quest_rotations`, `player_daily_quests`, `player_rivalries`, `expedition_runs`, `expedition_participants` and `expedition_checkpoint_history`. It cannot delete Discord messages, Discord account data, copies held by other participants, or backups managed outside this database. The command never claims otherwise.
 
 ## The Wayfarer
 
@@ -112,4 +121,4 @@ See [Player Profiles](PLAYER_PROFILES.md) and [Privacy Policy](PRIVACY.md) for e
 
 ## Still planned
 
-Inventory, bounded Expeditions, authored story routes, parties, public leaderboards, personal Vaults, crafting, Bazaar trading and server administration remain planned. The optional daily Wayfarer quest board is implemented; it is distinct from authored story quests. The proposed Expedition command family is documented in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md) and is not registered in this build. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
+Additional Expedition routes, authored story routes, parties, public leaderboards, inventory, personal Vaults, crafting, Bazaar trading and server administration remain planned. The optional daily Wayfarer quest board is implemented separately from authored story quests. Lantern Road v1 is registered and playable; see [Expedition Foundation v1](EXPEDITION_FOUNDATION.md).

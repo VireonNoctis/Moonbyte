@@ -86,8 +86,9 @@ The process default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to ch
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
 | `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
+| `.expedition` / `/expedition` | Implemented | Browse and play the Lantern Road alone or with up to three consenting companions. |
 
-The Wayfinder currently exposes eleven live destinations: Common Tables, Your Place, Your Record, the Ledger, the Gallery, the Atlas, the private Chronicle, the Quest Board, the Wayfarer Thread, the Companion Journal and the private Rivalry Hall. The initial Atlas has five connected locations. Expeditions, story routes, inventory, crafting, Vaults and Bazaar trading remain planned.
+The Wayfinder currently exposes twelve live destinations, including the Expedition Board. The Lantern Road is the first bounded route through Lantern Square, Mosslight Grove, the Ember Archive and Starfall Observatory. Additional Expedition routes, authored story quests, inventory, crafting, Vaults and Bazaar trading remain planned.
 
 ### Planned commands
 
@@ -99,7 +100,6 @@ The Wayfinder currently exposes eleven live destinations: Common Tables, Your Pl
 | `.party` / `/party` | Planned | Create, invite or manage a party. |
 | `.leaderboard` / `/leaderboard` | Planned | View supported rankings. |
 | `.stop` / `/stop` | Planned | Leave or end an eligible active session. |
-| `.expedition` / `/expedition` | Planned | Browse and join bounded, checkpointed Atlas expeditions; see [Expedition Foundation](docs/EXPEDITION_FOUNDATION.md). |
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
@@ -116,7 +116,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - In-bot export and deletion controls cover the current persisted data; every new player-owned system must extend them before release.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles/preferences, session snapshots, completed results, per-game statistics, achievements, earned-only Moonbits wallet/ledger rows, personal Atlas state and discovery history in PostgreSQL. Session-level results expire with their parent session; aggregate statistics, achievements, wallet milestones and Atlas discoveries remain until account deletion. Inventory, authored story quests, Expeditions, Vaults and Bazaar trades are not yet implemented; the optional daily Wayfarer quests are persisted. Version 8 export includes the current profile, Terms/Privacy acceptance record, session metadata, results, statistics, achievements, wallet/ledger, Atlas state, private Chronicle fragment IDs and unlock timestamps, Wayfarer activity days, daily quest history and rotation fingerprints, and private rivalry records; private quest seeds are excluded. Confirmed deletion covers current player-owned records and every shared session snapshot containing the requester. Removing such a snapshot also ends that session for its co-participants, while their separately stored aggregates and unrelated records remain. It cannot delete Discord’s own records or independent infrastructure backups.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists profiles/preferences, session snapshots, completed results, per-game statistics, achievements, earned-only Moonbits wallet/ledger rows, personal Atlas state and discovery history in PostgreSQL. Session-level results expire with their parent session; aggregate statistics, achievements, wallet milestones and Atlas discoveries remain until account deletion. Additional Expedition routes, authored story quests, inventory, Vaults and Bazaar trades are not yet implemented; the optional daily Wayfarer quests are persisted. Version 9 export includes the current profile, Terms/Privacy acceptance record, session metadata, results, statistics, achievements, wallet/ledger, Atlas state, private Chronicle fragment IDs and unlock timestamps, Wayfarer activity days, daily quest history and rotation fingerprints, and private rivalry records, the requester's own Expedition participation and shared checkpoint history, and whether the requester completed each checkpoint; other participants' IDs and private quest seeds are excluded. Confirmed deletion covers current player-owned records and every shared session snapshot containing the requester. Removing such a snapshot also ends that session for its co-participants, while their separately stored aggregates and unrelated records remain. It cannot delete Discord’s own records or independent infrastructure backups.
 
 ## Technology decisions
 
@@ -150,7 +150,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Guild command configuration](docs/GUILD_CONFIGURATION.md) — per-server prefixes, moderator permissions and command-channel routing.
 - [Terms of Service](docs/TERMS_OF_SERVICE.md) — rules for using Moonbyte and the current agreement version.
 - [Atlas starter map](docs/ATLAS.md) — the five authored locations, direct-route travel and personal discovery contract.
-- [Expedition Foundation](docs/EXPEDITION_FOUNDATION.md) — the next planned bounded route, persistence, checkpoint, privacy and release gates.
+- [Expedition Foundation](docs/EXPEDITION_FOUNDATION.md) — the implemented Lantern Road v1 route, Discord commands, transactional checkpoint rules and privacy lifecycle.
 - [The Chronicle](docs/CHRONICLE.md) — the first private Archive slice, connected to Atlas discoveries.
 - [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — the implemented first-completion ledger and planned Vault/trading boundaries.
 - [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits and security stance.
@@ -163,7 +163,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime with guild-specific prefix and command-channel configuration. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, the first-completion Moonbits ledger, the eleven-destination Tavern Wayfinder, the five-location Atlas, private data inventory/export/deletion and the custom-emoji registry are implemented with unit and PostgreSQL integration coverage. The Atlas only allows direct-route travel and issues no travel rewards. Inventory, authored story quests and Expeditions, spending, full Hearth behavior, Vaults and Bazaar remain future work; the optional Wayfarer daily quest board is implemented.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime with guild-specific prefix and command-channel configuration. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules, PostgreSQL-backed session lifecycle, player profiles/preferences, atomic completed-game results, per-game statistics, five achievement milestones, the first-completion Moonbits ledger, the twelve-destination Tavern Wayfinder, the five-location Atlas, private data inventory/export/deletion and the custom-emoji registry are implemented with unit and PostgreSQL integration coverage. The Atlas only allows direct-route travel and issues no travel rewards. Additional Expedition routes, authored story quests, inventory, crafting, spending, full Hearth behavior, Vaults and Bazaar remain future work; the optional Wayfarer daily quest board is implemented.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
