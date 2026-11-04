@@ -2,7 +2,7 @@
 
 > Moonbyte World Loom · Expansion II · 40 additional proposals · Design proposal only.
 
-<!-- WORLD_LOOM_GRAPH_DATA {"domains":[{"id":"insights","title":"Privacy-Preserving Product Insights","summary":"Operational insights use aggregates and opt-in preferences, not raw message logging or individual behavioural profiles.","links":[["trust","constrained_by","inherits minimisation and retention"],["server","summarises","shows scoped aggregates"],["fairness","measures","checks score consistency"],["platform","rendered_in","shows authorised reports"]],"items":[["insights_event_taxonomy","Minimal Event Taxonomy","A registry lists only event names required for reliability and feature-quality metrics.","Propose an event, state purpose, review privacy and approve schema.","A reviewed event schema."],["insights_aggregation","Aggregate Metrics Pipeline","Allowed events become bounded counts and latency histograms before reporting.","Aggregate, apply cohort thresholds and display summary.","A privacy-safe metric."],["insights_opt_in","Player Insight Preferences","Players opt in to optional product feedback metrics and revoke at any time.","Read purpose, enable category and revoke later.","A consent preference."],["insights_retention","Metrics Retention Controller","Metric classes have explicit retention and automatic cleanup rules.","Inspect rule, run cleanup and report counts only.","A retention policy."],["insights_guild_summary","Guild Activity Summary","Admins see aggregate session counts and reliability signals for their own guild.","Check scope and cohort note, then adjust settings.","A guild aggregate."],["insights_quality_feedback","Feature Quality Feedback","A form asks whether a feature was clear, accessible or reliable without collecting conversations.","Rate a feature, preview privacy notice and submit.","A minimal feedback record."],["insights_fairness_checks","Fairness Distribution Review","Eligible score-only game distributions are checked against published expectations.","Run batch, compare model and review anomalies.","A fairness report."],["insights_latency","Interaction Latency Observatory","Aggregate handler and database timings identify slow commands without per-frame measurement.","Measure, aggregate duration buckets and inspect slow paths.","A latency histogram."],["insights_error_catalogue","Safe Error Catalogue","Internal errors map to stable public reason codes without exposing SQL or secrets.","Classify error, retain correlation ID and render safe message.","A reason-code registry."],["insights_privacy_report","Data Practice Audit Report","Reviews compare stored schema and metrics against the privacy inventory.","Inspect fields, compare purposes and block releases for unresolved risks.","A privacy audit report."]]},{"id":"localisation","title":"Localization, Language and Culturalisation","summary":"The language layer preserves puzzle meaning, rules and age-appropriate wording across locales.","links":[["trust","uses_accessibility_policy_from","shares language-aware labels"],["creator","localises","reviews community content"],["quest","translates_story_for","adapts narrative faithfully"],["arcade","localises_rules_for","keeps instructions unambiguous"]],"items":[["locale_registry","Locale Registry","A registry defines locales, fallback chains, text direction and review coverage.","Choose locale, inspect coverage, select fallback and save.","A locale configuration."],["locale_string_catalogue","String Catalogue","Interface strings use stable keys, descriptions, placeholders and context notes.","Add source, document context, translate, validate placeholders and release.","A versioned string catalogue."],["locale_plural_rules","Plural and Number Rules","Formatting handles plural categories, numbers, dates and quantities by locale.","Render a value, validate it and reuse formatter on all surfaces.","A locale-aware result."],["locale_puzzle_semantics","Puzzle Translation Review","Puzzle notes ensure translated clues preserve logic or use an approved equivalent.","Translate, test solution independently and approve locale version.","A reviewed puzzle translation."],["locale_story_adaptation","Story Culturalisation Notes","Editors adapt idioms and context without changing canonical choices.","Propose adaptation, compare branch semantics and approve notes.","A story adaptation record."],["locale_glossary","Translator Glossary","A shared glossary fixes world terms, items, factions and puzzle vocabulary.","Search a term, inspect variants and link reviewed translation to keys.","A term dictionary."],["locale_rtl_layout","Right-to-Left Layout Support","Cards, boards and menus support RTL locales with correct punctuation and order.","Select locale, inspect screens, validate and approve layout.","A directional layout profile."],["locale_voice_tone","Character Voice Guides","Dialogue packs define tone and register per locale.","Review guide, validate scene samples and approve strings.","A localisation guide."],["locale_moderation","Language-Aware Content Review","Moderation reviews localised content with locale context.","Submit, tag locale, route to reviewer and record result.","A locale moderation result."],["locale_coverage","Translation Coverage Dashboard","Reports show missing, draft, reviewed and outdated strings per surface.","Inspect release coverage and block missing critical text.","A coverage report."]]},{"id":"onboarding","title":"New Player Onboarding and Return Journeys","summary":"Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup. Players can explore and return after absence.","links":[["hearth","starts_at","uses Tavern arrival and Wayfinder"],["arcade","demonstrates","offers a first game"],["mastery","continues_into","shows learnable milestones"],["trust","explains","surfaces privacy and accessibility"]],"items":[["onboarding_arrival","First Arrival Scene","A card explains Moonbyte, how to open games and how to leave, with an optional guided route.","Read the overview, choose a tour or skip to Tavern.","A local onboarding preference."],["onboarding_quick_play","One-Tap Sample Game","A short disposable game teaches interactions without economy rewards or rankings.","Preview rules, play one round and return.","A sample completion event."],["onboarding_world_map","World Map Introduction","A guided map highlights Tavern, Arcade, Atlas, Vault and Bazaar connections.","Inspect nodes, follow a connection and finish or leave.","A viewed-tour flag."],["onboarding_privacy_choice","Privacy Setup Checkpoint","Profile setup explains required identifiers, optional visibility and deletion controls.","Review data, choose defaults and skip optional sharing.","A privacy preference."],["onboarding_controls","Control Familiarisation","A panel demonstrates buttons, menus, modals, slash commands and text fallbacks.","Test a control, read equivalent command and close.","A help preference."],["onboarding_first_quest","First Story Invitation","An optional mini-story introduces one NPC, destination and puzzle.","Meet guide, follow clue, solve and save story record.","A first quest completion."],["onboarding_interest_shelf","Interest-Based Discovery Shelf","Players select broad game categories to receive catalogue links without tracking.","Choose interests, inspect shelf and clear selections later.","An explicit preference set."],["onboarding_return_recap","Welcome-Back Recap","A recap from story flags and checkpoints helps players return without guilt language.","Inspect milestones, choose a destination or dismiss.","A deterministic recap."],["onboarding_command_guide","Command Discovery Guide","A guide lists only commands available in the installed build, separate from planned ideas.","Search, inspect usage and read implementation status.","A live command help view."],["onboarding_progress_check","Getting Started Checklist","An optional checklist covers profile basics, first game and privacy controls without streaks.","Complete chosen items, dismiss others or clear it.","Optional onboarding flags."]]},{"id":"accessibility_plus","title":"Advanced Accessibility and Interaction Design","summary":"Accessibility applies to every surface with explicit navigation, timing and comprehension patterns beyond theme toggles.","links":[["trust","extends","uses shared accessibility foundations"],["arcade","applies_to","defines accessible game modes"],["platform","implemented_on","unifies client controls"],["creator","validated_by","checks community content readability"]],"items":[["a11y_keyboard_map","Keyboard and Focus Map","The visual library defines predictable focus order, visible focus and shortcuts for board actions.","Navigate a view by keyboard and submit a standard action.","A tested focus map."],["a11y_screen_reader","Screen Reader Board Contract","Boards expose semantic cell labels, phase, legal actions and result changes.","Read board summary, navigate controls and hear state updates.","A semantic view model."],["a11y_text_density","Readable Density Controls","Players choose compact, standard or spacious text layouts.","Preview densities, choose one and retain globally.","A text-density preference."],["a11y_timing_profiles","Extended Thinking Profiles","Turn-based games offer equivalent extended or untimed modes where rules permit.","Inspect compatibility, choose profile and review score comparison rules.","A timing mode attached to results."],["a11y_input_alternatives","Alternative Input Patterns","Actions may use buttons, numbered choices or command syntax where supported.","Choose an input style and submit a standard validated action.","An input adapter preference."],["a11y_cognitive_scaffolds","Optional Cognitive Scaffolds","Optional step summaries, clearer instructions and glossary hints aid comprehension.","Choose support level, use it and disable when desired.","A support profile."],["a11y_colour_patterns","Colour and Pattern Redundancy","Critical states use labels, shapes and patterns as well as colour.","Switch palette and confirm meaning remains clear.","A visual state specification."],["a11y_motion_budget","Motion and Animation Budget","Animated components have documented reduced-motion alternatives and informative static states.","Preview animation, enable reduced motion and verify equivalent information.","A motion profile."],["a11y_error_language","Actionable Error Language","Errors say what happened, next steps and whether an action committed.","Trigger a safe invalid example and follow recovery guidance.","A public-safe error contract."],["a11y_content_readability","Content Readability Review","Checks review headings, sentence complexity, contrast, alt text and spoiler warnings.","Run review, revise flags and record approval.","A readability report."]]}]} -->
+<!-- WORLD_LOOM_GRAPH_DATA {"domains":[{"id":"insights","title":"Privacy-Preserving Product Insights","summary":"Operational insights use aggregates and opt-in preferences, not raw message logging or individual behavioural profiles.","links":[["trust","constrained_by","inherits minimisation and retention"],["server","summarises","shows scoped aggregates"],["fairness","measures","checks score consistency"],["platform","rendered_in","shows authorised reports"]],"items":[["insights_event_taxonomy","Minimal Event Taxonomy","A registry lists only event names required for reliability and feature-quality metrics.","Propose an event, state purpose, review privacy and approve schema.","A reviewed event schema."],["insights_aggregation","Aggregate Metrics Pipeline","Allowed events become bounded counts and latency histograms before reporting.","Aggregate, apply cohort thresholds and display summary.","A privacy-safe metric."],["insights_opt_in","Player Insight Preferences","Players opt in to optional product feedback metrics and revoke at any time.","Read purpose, enable category and revoke later.","A consent preference."],["insights_retention","Metrics Retention Controller","Metric classes have explicit retention and automatic cleanup rules.","Inspect rule, run cleanup and report counts only.","A retention policy."],["insights_guild_summary","Guild Activity Summary","Admins see aggregate session counts and reliability signals for their own guild.","Check scope and cohort note, then adjust settings.","A guild aggregate."],["insights_quality_feedback","Feature Quality Feedback","A form asks whether a feature was clear, accessible or reliable without collecting conversations.","Rate a feature, preview privacy notice and submit.","A minimal feedback record."],["insights_fairness_checks","Fairness Distribution Review","Eligible score-only game distributions are checked against published expectations.","Run batch, compare model and review anomalies.","A fairness report."],["insights_latency","Interaction Latency Observatory","Aggregate handler and database timings identify slow commands without per-frame measurement.","Measure, aggregate duration buckets and inspect slow paths.","A latency histogram."],["insights_error_catalogue","Safe Error Catalogue","Internal errors map to stable public reason codes without exposing SQL or secrets.","Classify error, retain correlation ID and render safe message.","A reason-code registry."],["insights_privacy_report","Data Practice Audit Report","Reviews compare stored schema and metrics against the privacy inventory.","Inspect fields, compare purposes and block releases for unresolved risks.","A privacy audit report."]]},{"id":"localisation","title":"Localization, Language and Culturalisation","summary":"The language layer preserves puzzle meaning, rules and age-appropriate wording across locales.","links":[["trust","uses_accessibility_policy_from","shares language-aware labels"],["creator","localises","reviews community content"],["quest","translates_story_for","adapts narrative faithfully"],["arcade","localises_rules_for","keeps instructions unambiguous"]],"items":[["locale_registry","Locale Registry","A registry defines locales, fallback chains, text direction and review coverage.","Choose locale, inspect coverage, select fallback and save.","A locale configuration."],["locale_string_catalogue","String Catalogue","Interface strings use stable keys, descriptions, placeholders and context notes.","Add source, document context, translate, validate placeholders and release.","A versioned string catalogue."],["locale_plural_rules","Plural and Number Rules","Formatting handles plural categories, numbers, dates and quantities by locale.","Render a value, validate it and reuse formatter on all surfaces.","A locale-aware result."],["locale_puzzle_semantics","Puzzle Translation Review","Puzzle notes ensure translated clues preserve logic or use an approved equivalent.","Translate, test solution independently and approve locale version.","A reviewed puzzle translation."],["locale_story_adaptation","Story Culturalisation Notes","Editors adapt idioms and context without changing canonical choices.","Propose adaptation, compare branch semantics and approve notes.","A story adaptation record."],["locale_glossary","Translator Glossary","A shared glossary fixes world terms, items, factions and puzzle vocabulary.","Search a term, inspect variants and link reviewed translation to keys.","A term dictionary."],["locale_rtl_layout","Right-to-Left Layout Support","Cards, boards and menus support RTL locales with correct punctuation and order.","Select locale, inspect screens, validate and approve layout.","A directional layout profile."],["locale_voice_tone","Character Voice Guides","Dialogue packs define tone and register per locale.","Review guide, validate scene samples and approve strings.","A localisation guide."],["locale_moderation","Language-Aware Content Review","Moderation reviews localised content with locale context.","Submit, tag locale, route to reviewer and record result.","A locale moderation result."],["locale_coverage","Translation Coverage Dashboard","Reports show missing, draft, reviewed and outdated strings per surface.","Inspect release coverage and block missing critical text.","A coverage report."]]},{"id":"onboarding","title":"New Player Onboarding and Return Journeys","summary":"Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup. Players can explore and return after absence.","links":[["hearth","starts_at","uses Tavern arrival and Wayfinder"],["arcade","demonstrates","offers a first game"],["mastery","continues_into","shows learnable milestones"],["trust","explains","surfaces privacy and accessibility"]],"items":[["onboarding_arrival","First Arrival Scene","A card explains Moonbyte, how to open games and how to leave, with an optional guided route.","Read the overview, choose a tour or skip to Tavern.","A local onboarding preference."],["onboarding_quick_play","One-Tap Sample Game","A short disposable game teaches interactions without economy rewards or rankings.","Preview rules, play one round and return.","A sample completion event."],["onboarding_world_map","World Map Introduction","A guided map highlights Tavern, Arcade, Atlas, Vault and Bazaar connections.","Inspect nodes, follow a connection and finish or leave.","A viewed-tour flag."],["onboarding_privacy_choice","Privacy Setup Checkpoint","Profile setup explains required identifiers, optional visibility and deletion controls.","Review data, choose defaults and skip optional sharing.","A privacy preference."],["onboarding_controls","Control Familiarisation","A panel demonstrates buttons, menus, modals, slash commands and text fallbacks.","Test a control, read equivalent command and close.","A help preference."],["onboarding_first_quest","First Story Invitation","An optional mini-story introduces one NPC, destination and puzzle.","Meet guide, follow clue, solve and save story record.","A first quest completion."],["onboarding_interest_shelf","Interest-Based Discovery Shelf","Players select broad game categories to receive catalogue links without tracking.","Choose interests, inspect shelf and clear selections later.","An explicit preference set."],["onboarding_return_recap","Welcome-Back Recap","A recap from story flags and checkpoints helps players return without guilt language.","Inspect milestones, choose a destination or dismiss.","A deterministic recap."],["onboarding_command_guide","Command Discovery Guide","A guide lists only commands available in the installed build, separate from planned ideas.","Search, inspect usage and read implementation status.","A live command help view."],["onboarding_progress_check","Getting Started Checklist","An optional checklist covers profile basics, first game and privacy controls without streaks.","Complete chosen items, dismiss others or clear it.","Optional onboarding flags."]]},{"id":"accessibility_plus","title":"Advanced Accessibility and Interaction Design","summary":"Accessibility applies to every surface with explicit navigation, timing and comprehension patterns beyond theme toggles.","links":[["trust","extends","uses shared accessibility foundations"],["arcade","applies_to","defines accessible game modes"],["platform","implemented_on","unifies client controls"],["creator","validated_by","checks community content readability"]],"items":[["a11y_keyboard_map","Keyboard and Focus Map","Discord board components use clear labels, predictable control order and command fallbacks for board actions.","Navigate a view by keyboard and submit a standard action.","A tested focus map."],["a11y_screen_reader","Screen Reader Board Contract","Boards expose semantic cell labels, phase, legal actions and result changes.","Read board summary, navigate controls and hear state updates.","A semantic view model."],["a11y_text_density","Readable Density Controls","Players choose compact, standard or spacious text layouts.","Preview densities, choose one and retain globally.","A text-density preference."],["a11y_timing_profiles","Extended Thinking Profiles","Turn-based games offer equivalent extended or untimed modes where rules permit.","Inspect compatibility, choose profile and review score comparison rules.","A timing mode attached to results."],["a11y_input_alternatives","Alternative Input Patterns","Actions may use buttons, numbered choices or command syntax where supported.","Choose an input style and submit a standard validated action.","An input adapter preference."],["a11y_cognitive_scaffolds","Optional Cognitive Scaffolds","Optional step summaries, clearer instructions and glossary hints aid comprehension.","Choose support level, use it and disable when desired.","A support profile."],["a11y_colour_patterns","Colour and Pattern Redundancy","Critical states use labels, shapes and patterns as well as colour.","Switch palette and confirm meaning remains clear.","A visual state specification."],["a11y_motion_budget","Motion and Animation Budget","Animated components have documented reduced-motion alternatives and informative static states.","Preview animation, enable reduced motion and verify equivalent information.","A motion profile."],["a11y_error_language","Actionable Error Language","Errors say what happened, next steps and whether an action committed.","Trigger a safe invalid example and follow recovery guidance.","A public-safe error contract."],["a11y_content_readability","Content Readability Review","Checks review headings, sentence complexity, contrast, alt text and spoiler warnings.","Run review, revise flags and record approval.","A readability report."]]}]} -->
 
 Each proposal defines its mechanic, player loop, cross-domain connections, Rust ownership, persistence, privacy, Discord and Activity behaviour, accessibility, testing and release gates.
 
@@ -133,14 +133,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -258,14 +258,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -383,14 +383,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -508,14 +508,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -633,14 +633,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -758,14 +758,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -883,14 +883,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1008,14 +1008,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1133,14 +1133,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1258,14 +1258,14 @@ Operational insights use aggregates and opt-in preferences, not raw message logg
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1388,14 +1388,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1513,14 +1513,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1638,14 +1638,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1763,14 +1763,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1888,14 +1888,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2013,14 +2013,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2138,14 +2138,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2263,14 +2263,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2388,14 +2388,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2513,14 +2513,14 @@ The language layer preserves puzzle meaning, rules and age-appropriate wording a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2643,14 +2643,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2768,14 +2768,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2893,14 +2893,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3018,14 +3018,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3143,14 +3143,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3268,14 +3268,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3393,14 +3393,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3518,14 +3518,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3643,14 +3643,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3768,14 +3768,14 @@ Onboarding makes Moonbyte approachable without forced tutorials or lengthy setup
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3812,7 +3812,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 # a11y_keyboard_map — Keyboard and Focus Map
 > Expansion II · Advanced Accessibility and Interaction Design · Proposal 1 of 10 · Status: design proposal, not implemented.
 ### 01 · Player promise
-- The visual library defines predictable focus order, visible focus and shortcuts for board actions.
+- Discord board components use clear labels, predictable control order and command fallbacks for board actions.
 - Player need: Navigate a view by keyboard and submit a standard action.
 - Why distinct: Keyboard and Focus Map owns a specific new mechanic and does not replace an existing domain.
 - Successful output: A tested focus map.
@@ -3832,7 +3832,7 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - Rust validates the request and emits one canonical domain event.
 - The result is summarised and followed by a visible return, pause or leave action.
 ### 05 · Mechanics
-- The visual library defines predictable focus order, visible focus and shortcuts for board actions.
+- Discord board components use clear labels, predictable control order and command fallbacks for board actions.
 - Inputs are typed and validated; free text is used only for intentional authored material.
 - Outcomes use published rules and deterministic transformations wherever possible.
 - Variants are versioned and cannot silently invalidate completed records.
@@ -3898,14 +3898,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4023,14 +4023,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4148,14 +4148,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4273,14 +4273,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4398,14 +4398,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4523,14 +4523,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4648,14 +4648,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4773,14 +4773,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4898,14 +4898,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -5023,14 +5023,14 @@ Accessibility applies to every surface with explicit navigation, timing and comp
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve the complete core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.

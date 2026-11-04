@@ -24,10 +24,7 @@ async fn main() -> ExitCode {
         Err(_) => {
             // Avoid printing raw errors: some dependency errors can include connection
             // details or other values that should not reach operational logs.
-            tracing::error!(
-                event = "runtime_failed",
-                "Moonbyte startup or runtime failed."
-            );
+            tracing::error!(event = "runtime_failed", "Moonbyte startup or runtime failed.");
             ExitCode::FAILURE
         }
     }
@@ -36,8 +33,9 @@ async fn main() -> ExitCode {
 fn init_tracing() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     use tracing_subscriber::EnvFilter;
 
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("moonbyte=info,serenity=warn,poise=info,sqlx=warn"));
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        EnvFilter::new("moonbyte=info,serenity=warn,poise=info,sqlx=warn")
+    });
 
     tracing_subscriber::fmt()
         .with_env_filter(filter)
@@ -75,7 +73,10 @@ async fn run() -> Result<(), Error> {
             interval.tick().await;
             match cleanup_database.remove_expired_sessions().await {
                 Ok(removed) if removed > 0 => {
-                    tracing::info!(event = "expired_sessions_removed", rows = removed);
+                    tracing::info!(
+                        event = "expired_sessions_removed",
+                        rows = removed
+                    );
                 }
                 Ok(_) => {}
                 Err(_) => {

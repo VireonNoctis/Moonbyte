@@ -4,7 +4,7 @@
 
 - Added numbered buttons to Tic-tac-toe, Connect Four and Memory Match boards.
 - Routed button input through the authoritative game runtime, with consent, guild/channel, participant, turn and phase validation.
-- Bound buttons to the displayed action count and checked that version inside the row-locked PostgreSQL mutation, so concurrent/replayed controls cannot both apply; terminal controls are disabled.
+- Bound buttons to the displayed action count so old/replayed controls refresh instead of applying another move; terminal controls are disabled.
 - Kept text commands as a fallback and Word Scramble as a text-answer game.
 
 ## 2026-11-04 — Structured operational tracing

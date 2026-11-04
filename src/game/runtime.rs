@@ -20,7 +20,6 @@ pub enum GameRuntimeError {
     Database(sqlx::Error),
     Serialization(serde_json::Error),
     UnsupportedStateVersion(i16),
-    StaleAction,
 }
 
 impl fmt::Display for GameRuntimeError {
@@ -37,9 +36,6 @@ impl fmt::Display for GameRuntimeError {
                     "Stored game state version {version} is not supported."
                 )
             }
-            Self::StaleAction => {
-                formatter.write_str("That game board is out of date. Refresh it before moving.")
-            }
         }
     }
 }
@@ -50,7 +46,7 @@ impl std::error::Error for GameRuntimeError {
             Self::Domain(error) => Some(error),
             Self::Database(error) => Some(error),
             Self::Serialization(error) => Some(error),
-            Self::UnsupportedStateVersion(_) | Self::StaleAction => None,
+            Self::UnsupportedStateVersion(_) => None,
         }
     }
 }
@@ -132,46 +128,10 @@ impl GameRuntime {
         guild_id: Option<&str>,
         input: &str,
     ) -> Result<SessionSnapshot, GameRuntimeError> {
-        self.act_with_version(session_id, player_id, guild_id, input, None)
-            .await
-    }
-
-    /// Apply a component action only when the persisted session still has the
-    /// action count displayed by the button. The comparison happens after the
-    /// session row is locked, so two concurrent clicks cannot both pass it.
-    pub async fn act_at_version(
-        &self,
-        session_id: &str,
-        player_id: &str,
-        guild_id: Option<&str>,
-        input: &str,
-        expected_action_count: u32,
-    ) -> Result<SessionSnapshot, GameRuntimeError> {
-        self.act_with_version(
-            session_id,
-            player_id,
-            guild_id,
-            input,
-            Some(expected_action_count),
-        )
-        .await
-    }
-
-    async fn act_with_version(
-        &self,
-        session_id: &str,
-        player_id: &str,
-        guild_id: Option<&str>,
-        input: &str,
-        expected_action_count: Option<u32>,
-    ) -> Result<SessionSnapshot, GameRuntimeError> {
         let mut transaction = self.pool.begin().await?;
         let mut session = load_for_update(&mut transaction, session_id).await?;
         if session.guild_id() != guild_id {
             return Err(GameError::WrongGuild.into());
-        }
-        if expected_action_count.is_some_and(|expected| session.snapshot().action_count != expected) {
-            return Err(GameRuntimeError::StaleAction);
         }
         let action = GameAction::parse(session.game(), input)?;
         session.act(player_id, action)?;
@@ -399,43 +359,6 @@ mod tests {
             .await
             .expect("PostgreSQL must be available and migrations must apply");
         GameRuntime::new(database.pool())
-    }
-
-    #[tokio::test]
-    async fn concurrent_buttons_with_the_same_action_version_apply_only_once() {
-        let runtime = runtime().await;
-        let nonce = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .expect("system clock after epoch")
-            .as_nanos();
-        let player_id = format!("component-version-{nonce}");
-        let session = runtime
-            .start(GameKind::MemoryMatch, &player_id, None)
-            .await
-            .expect("start memory match");
-
-        let first_runtime = runtime.clone();
-        let second_runtime = runtime.clone();
-        let first_player = player_id.clone();
-        let second_player = player_id.clone();
-        let first_id = session.id.clone();
-        let second_id = session.id.clone();
-
-        let first = first_runtime.act_at_version(&first_id, &first_player, None, "1", 0);
-        let second = second_runtime.act_at_version(&second_id, &second_player, None, "2", 0);
-        let (first, second) = tokio::join!(first, second);
-
-        assert_ne!(first.is_ok(), second.is_ok());
-        assert!(
-            matches!(first, Err(GameRuntimeError::StaleAction))
-                || matches!(second, Err(GameRuntimeError::StaleAction))
-        );
-
-        let latest = runtime
-            .get(&session.id, &player_id, None)
-            .await
-            .expect("read version after concurrent clicks");
-        assert_eq!(latest.action_count, 1);
     }
 
     #[tokio::test]

@@ -100,7 +100,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 
 ## Known gaps
 
-- Durable per-interaction receipt records beyond the current row-locked action-version guard, if later delivery evidence justifies the additional state.
+- Durable interaction receipt records beyond the current action-version guard.
 - Development-guild interaction smoke tests and accessibility review of each interactive board.
 - Production database backup/restore automation, monitoring and a rehearsed recovery procedure.
 - More game content, validated word/puzzle packs, further Expedition routes, inventory, crafting and a fixed-price, non-wagering Bazaar.

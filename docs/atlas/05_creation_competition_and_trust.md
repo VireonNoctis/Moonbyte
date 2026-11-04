@@ -2,7 +2,7 @@
 
 > Moonbyte World Loom · 40 connected system proposals · This is a design specification, not a claim of implementation.
 
-Each card is a distinct proposal with a stable graph identity, a player loop, state and ownership boundaries, Discord and Activity surfaces, privacy rules, acceptance tests and explicit cross-system links.
+Each card is a distinct proposal with a stable graph identity, a player loop, state and ownership boundaries, Discord-native interaction surfaces, privacy rules, acceptance tests and explicit cross-system links.
 
 
 ## Wayfarer Thread integration contract — v4.0
@@ -113,11 +113,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive puzzle studio view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive puzzle studio view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_puzzle_studio rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -228,11 +228,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive quest workshop view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive quest workshop view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_quest_editor rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -343,11 +343,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive vault layout workshop view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive vault layout workshop view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_vault_builder rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -458,11 +458,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive game rule templates view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive game rule templates view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_rule_templates rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -573,11 +573,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive original card set builder view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive original card set builder view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_deck_builder rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -688,11 +688,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive pixel sticker workshop view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive pixel sticker workshop view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_pixel_editor rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -803,11 +803,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive community playtest queue view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive community playtest queue view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_playtest rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -918,11 +918,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive content review pipeline view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive content review pipeline view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_review rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1033,11 +1033,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive creator credit ledger view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive creator credit ledger view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_attribution rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1148,11 +1148,11 @@ Creation tools use constrained templates, provenance, moderation and reproducibl
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive community pack publishing view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive community pack publishing view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the creator_publishing rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1269,11 +1269,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive published rulebooks view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive published rulebooks view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_rulebooks rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1384,11 +1384,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive commit and reveal service view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive commit and reveal service view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_commit_reveal rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1499,11 +1499,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive scoring contract registry view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive scoring contract registry view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_scoring rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1614,11 +1614,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive optional skill rating view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive optional skill rating view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_ratings rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1729,11 +1729,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive match review transcript view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive match review transcript view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_match_review rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1844,11 +1844,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive integrity guardrails view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive integrity guardrails view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_anti_abuse rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -1959,11 +1959,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive tournament rules desk view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive tournament rules desk view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_tournament rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2074,11 +2074,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive leaderboard integrity view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive leaderboard integrity view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_leaderboard rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2189,11 +2189,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive equal conditions profiles view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive equal conditions profiles view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_access rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2304,11 +2304,11 @@ Fairness provides deterministic rules, auditable outcomes and honest scoreboards
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive result appeal desk view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive result appeal desk view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fairness_appeals rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2425,11 +2425,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive friend circle view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive friend circle view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_friends rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2540,11 +2540,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive cooperative role planner view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive cooperative role planner view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_roles rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2655,11 +2655,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive opt-in mentor sessions view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive opt-in mentor sessions view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_mentor rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2770,11 +2770,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive interest clubs view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive interest clubs view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_clubs rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -2885,11 +2885,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive thoughtful gift exchange view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive thoughtful gift exchange view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_gifting rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3000,11 +3000,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive community message board view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive community message board view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_mailbox rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3115,11 +3115,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive positive contribution notes view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive positive contribution notes view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_commendations rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3230,11 +3230,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive shared session memories view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive shared session memories view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_memories rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3345,11 +3345,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive friend discovery routes view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive friend discovery routes view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_discovery rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3460,11 +3460,11 @@ Social systems help people cooperate, create and remember shared moments. They r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive social boundaries panel view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive social boundaries panel view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the fellowship_safety rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3581,11 +3581,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive universal control profiles view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive universal control profiles view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_control_profiles rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3630,7 +3630,7 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Player-facing promise: Players can select high contrast, reduced motion, simpler animation and readable text density for supported views.
 - Why this belongs in Moonbyte: It makes the full-colour pixel-art world usable across different devices and sensitivities.
 - Distinctive interaction: Open display settings, preview each option, apply a combination and retain the preference across surfaces.
-- Successful completion produces: A display preference set shared by Discord renderers and the React Activity.
+- Successful completion produces: A display preference set shared by Discord renderers and the Discord interaction.
 ### 02 · Purpose and boundaries
 - Product role: Trust systems are cross-cutting foundations: accessible controls, safe content, privacy boundaries, reliable delivery and transparent operations apply to every game.
 - This system is the canonical owner of visual comfort settings behaviour; other systems call its public contract rather than copying its rules.
@@ -3673,7 +3673,7 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - A content editor may propose changes, but publication cannot bypass validation, moderation or the Rust engine's allowed schema.
 ### 10 · Inputs, outputs and ownership
 - Expected inputs: player actions, session context, published content definitions and only the minimum player or guild settings needed.
-- Primary output: A display preference set shared by Discord renderers and the React Activity.
+- Primary output: A display preference set shared by Discord renderers and the Discord interaction.
 - Every output has a stable source event and owner; inventory, profile, world and guild modules consume it through explicit services.
 - The system may not directly change another module's private tables or trust client-supplied ownership and balances.
 ### 11 · Mind-map connections
@@ -3687,7 +3687,7 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - The Archive can preserve this node's completed outputs as evidence-backed entries.
 - Mastery can recognise the node's valid completion events under published criteria.
 ### 13 · Reward and economy contract
-- Reward policy: A display preference set shared by Discord renderers and the React Activity.; exact eligible rewards and costs are disclosed before confirmation.
+- Reward policy: A display preference set shared by Discord renderers and the Discord interaction.; exact eligible rewards and costs are disclosed before confirmation.
 - Moonbits are earned-only, non-redeemable and never staked; this node cannot introduce money purchases, cash-out or external exchange.
 - Randomness, when a game genuinely needs it, is for score-only outcomes and follows FAIRNESS.md; it never allocates tradable assets.
 - No reward is tied to punitive streaks, artificial scarcity, attendance pressure or an unreasonably long online session.
@@ -3696,11 +3696,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive visual comfort settings view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive visual comfort settings view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_contrast_motion rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3811,11 +3811,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive language and locale registry view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive language and locale registry view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_localisation rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -3926,11 +3926,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive text-first play mode view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive text-first play mode view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_text_fallback rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -4041,11 +4041,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive moderator console view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive moderator console view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_moderator_console rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -4156,11 +4156,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive report and review pipeline view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive report and review pipeline view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_reports rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -4271,11 +4271,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive privacy and data center view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive privacy and data center view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_privacy_center rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -4386,11 +4386,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive quiet notification rules view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive quiet notification rules view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_notification_rules rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -4501,11 +4501,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive session reliability desk view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive session reliability desk view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_reliability rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
@@ -4616,11 +4616,11 @@ Trust systems are cross-cutting foundations: accessible controls, safe content, 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive world content policy view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive world content policy view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the trust_content_policy rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.

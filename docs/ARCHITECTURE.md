@@ -78,7 +78,7 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 
 ## Discord components
 
-Tic-tac-toe, Connect Four and Memory Match boards expose numbered native Discord buttons. Each custom ID binds the session ID, expected action count and a bounded game-specific input. The global interaction handler rechecks current consent, server command-channel policy, participant identity, guild scope and session state before forwarding the input to the same GameRuntime used by text commands. If the action count has advanced, the old board is refreshed from PostgreSQL without applying the move. The expected count is checked again inside the same row-locked mutation transaction, closing the race between the initial read and concurrent clicks. Terminal controls are disabled. Word Scramble remains text-answer driven. The existing text command route remains available as an accessible fallback.
+Tic-tac-toe, Connect Four and Memory Match boards expose numbered native Discord buttons. Each custom ID binds the session ID, expected action count and a bounded game-specific input. The global interaction handler rechecks current consent, server command-channel policy, participant identity, guild scope and session state before forwarding the input to the same GameRuntime used by text commands. If the action count has advanced, the old board is refreshed from PostgreSQL without applying the move. Terminal controls are disabled. Word Scramble remains text-answer driven. The existing text command route remains available as an accessible fallback.
 
 ## Logging, shutdown and operations
 

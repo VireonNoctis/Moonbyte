@@ -74,7 +74,7 @@ Puzzle or story creator → validation → moderation → private playtest → a
 ## World Loom invariants
 
 1. **One source of truth:** Rust owns game state, rules, permissions, reward eligibility, trades, fairness transcripts and persistence.
-2. **One presentation family:** Discord-native commands remain first-class; Next.js + React + TypeScript add rich views through the official Embedded App SDK where appropriate.
+2. **One Discord-native surface:** Commands, messages, embeds, buttons, select menus and modals provide every player interaction. No separate client is required.
 3. **One initial database target:** PostgreSQL through SQLx with versioned migrations, JSONB snapshots, short transactions and tested recovery. SQLite and ScyllaDB are excluded.
 4. **One honest economy:** Moonbits are earned-only and non-redeemable. No betting, staking, cash-out, paid random rewards or chance-based tradable assets.
 5. **One coherent identity:** original full-colour pixel art, common content IDs, shared world locations and consistent state labels.

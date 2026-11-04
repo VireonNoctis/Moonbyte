@@ -26,7 +26,7 @@
   },
   "shared_invariants": [
     "Rust owns authoritative game rules, state transitions, permissions, economy and persistence.",
-    "Next.js, React and TypeScript provide presentation only; Discord Activities use the official Embedded App SDK.",
+    "Discord-native commands, messages and components provide presentation; the Rust application retains authoritative state.",
     "PostgreSQL through SQLx is the only accepted persistence target; SQLite and ScyllaDB are excluded. Do not add distributed infrastructure without measured need and an accepted decision.",
     "Moonbits are earned-only, non-redeemable and never staked; all trade prices and rewards are disclosed.",
     "No gambling, wagering, paid random rolls, paid loot boxes, cash-out or chance-based tradable rewards.",
@@ -912,7 +912,7 @@
         {
           "target": "platform",
           "relation": "runs_on",
-          "rationale": "uses the Rust application and Discord Activity"
+          "rationale": "uses the Rust application and Discord-native interactions"
         },
         {
           "target": "creator",
@@ -933,8 +933,8 @@
     },
     {
       "id": "platform",
-      "title": "Discord Activity and Client Continuity",
-      "summary": "Discord remains primary. Rich Activity views improve boards and tools while native commands remain usable if the web surface fails.",
+      "title": "Discord Interaction and Session Continuity",
+      "summary": "Discord is the only player client. Native commands, embeds and components present boards and tools with text-first fallbacks.",
       "connections": [
         {
           "target": "trust",
@@ -3166,7 +3166,7 @@
       "summary": "Players can select high contrast, reduced motion, simpler animation and readable text density for supported views.",
       "purpose": "It makes the full-colour pixel-art world usable across different devices and sensitivities.",
       "player_loop": "Open display settings, preview each option, apply a combination and retain the preference across surfaces.",
-      "output": "A display preference set shared by Discord renderers and the React Activity."
+      "output": "A display preference set shared by Discord message renderers and interaction controls."
     },
     {
       "id": "trust_localisation",
@@ -3329,8 +3329,8 @@
     {
       "id": "platform",
       "type": "domain",
-      "title": "Discord Activity and Client Continuity",
-      "summary": "Discord remains primary. Rich Activity views improve boards and tools while native commands remain usable if the web surface fails."
+      "title": "Discord Interaction and Session Continuity",
+      "summary": "Discord is the only player client. Native commands, embeds and components present boards and tools with text-first fallbacks."
     },
     {
       "id": "economy_governance",
@@ -4671,17 +4671,17 @@
     {
       "id": "platform_activity_bootstrap",
       "type": "idea",
-      "title": "Activity Bootstrap Contract",
+      "title": "Discord Interaction Context",
       "domain_id": "platform",
       "summary": "Startup validates Discord launch context, obtains authorised data and handles outside-Discord launch.",
       "purpose": "Startup validates Discord launch context, obtains authorised data and handles outside-Discord launch.",
       "player_loop": "Validate server-side context and show fallback if invalid.",
-      "output": "An authorised Activity context."
+      "output": "An authorised Discord interaction context."
     },
     {
       "id": "platform_deep_links",
       "type": "idea",
-      "title": "World Deep-Link Registry",
+      "title": "Discord Command Destination Registry",
       "domain_id": "platform",
       "summary": "Stable links route users to games, lobbies, quests, items or map nodes with permission checks.",
       "purpose": "Stable links route users to games, lobbies, quests, items or map nodes with permission checks.",
@@ -4691,30 +4691,30 @@
     {
       "id": "platform_session_handoff",
       "type": "idea",
-      "title": "Session Handoff",
+      "title": "Discord Message Session Continuity",
       "domain_id": "platform",
-      "summary": "A user moves from a Discord interaction into the same Activity session without duplication.",
-      "purpose": "A user moves from a Discord interaction into the same Activity session without duplication.",
+      "summary": "A user moves between commands and message components without creating duplicate session state.",
+      "purpose": "A user moves between commands and message components without creating duplicate session state.",
       "player_loop": "Open handoff, authenticate the same participant and continue the current phase.",
       "output": "A short-lived session view token."
     },
     {
       "id": "platform_reduced_surface",
       "type": "idea",
-      "title": "Discord-Only Fallback",
+      "title": "Text Command Fallback",
       "domain_id": "platform",
-      "summary": "Every Activity feature defines native Discord controls for core actions and status.",
-      "purpose": "Every Activity feature defines native Discord controls for core actions and status.",
+      "summary": "Every feature exposes Discord-native controls for core actions and current status.",
+      "purpose": "Every feature exposes Discord-native controls for core actions and current status.",
       "player_loop": "Use native board after Activity failure and continue at the same state.",
       "output": "A fallback view model."
     },
     {
       "id": "platform_mobile_layout",
       "type": "idea",
-      "title": "Mobile-First Board Layout",
+      "title": "Mobile Discord Board Layout",
       "domain_id": "platform",
-      "summary": "Activity boards adapt to narrow screens with grouped actions and clear labels.",
-      "purpose": "Activity boards adapt to narrow screens with grouped actions and clear labels.",
+      "summary": "Discord board layouts remain readable on narrow screens with grouped actions and clear labels.",
+      "purpose": "Discord board layouts remain readable on narrow screens with grouped actions and clear labels.",
       "player_loop": "Open a narrow layout, act, inspect state and use the exit control.",
       "output": "Responsive layout rules."
     },
@@ -4741,17 +4741,17 @@
     {
       "id": "platform_asset_delivery",
       "type": "idea",
-      "title": "Pixel Asset Delivery",
+      "title": "Discord Asset Delivery",
       "domain_id": "platform",
-      "summary": "The frontend loads optimised rights-cleared assets by immutable ID with alt text.",
-      "purpose": "The frontend loads optimised rights-cleared assets by immutable ID with alt text.",
+      "summary": "Discord messages use rights-cleared assets by immutable ID with descriptive text alternatives.",
+      "purpose": "Discord messages use rights-cleared assets by immutable ID with descriptive text alternatives.",
       "player_loop": "Validate access, load rendition and render text fallback on failure.",
       "output": "An asset reference."
     },
     {
       "id": "platform_theme_profiles",
       "type": "idea",
-      "title": "World Presentation Profiles",
+      "title": "Discord Presentation Preferences",
       "domain_id": "platform",
       "summary": "Players choose pixel-art variants, density and motion settings across surfaces.",
       "purpose": "Players choose pixel-art variants, density and motion settings across surfaces.",
@@ -4761,10 +4761,10 @@
     {
       "id": "platform_cross_device_resume",
       "type": "idea",
-      "title": "Cross-Client Resume",
+      "title": "Cross-Device Discord Session Resume",
       "domain_id": "platform",
-      "summary": "The same saved session can reopen from another authorised client using persisted state.",
-      "purpose": "The same saved session can reopen from another authorised client using persisted state.",
+      "summary": "The same saved session can reopen from another authorised Discord client using persisted state.",
+      "purpose": "The same saved session can reopen from another authorised Discord client using persisted state.",
       "player_loop": "Authenticate, inspect current phase and resume with fresh controls.",
       "output": "A recovered session view."
     },
@@ -4903,8 +4903,8 @@
       "type": "idea",
       "title": "Discord Session Binding",
       "domain_id": "security",
-      "summary": "Actions bind to authenticated Discord user and guild, not browser IDs.",
-      "purpose": "Actions bind to authenticated Discord user and guild, not browser IDs.",
+      "summary": "Actions bind to the authenticated Discord user and guild, not client-supplied identifiers.",
+      "purpose": "Actions bind to the authenticated Discord user and guild, not client-supplied identifiers.",
       "player_loop": "Validate interaction context and reject mismatched scope.",
       "output": "An authenticated actor context."
     },
@@ -5273,8 +5273,8 @@
       "type": "idea",
       "title": "Keyboard and Focus Map",
       "domain_id": "accessibility_plus",
-      "summary": "The visual library defines predictable focus order, visible focus and shortcuts for board actions.",
-      "purpose": "The visual library defines predictable focus order, visible focus and shortcuts for board actions.",
+      "summary": "Discord board components use clear labels, predictable control order and command fallbacks for board actions.",
+      "purpose": "Discord board components use clear labels, predictable control order and command fallbacks for board actions.",
       "player_loop": "Navigate a view by keyboard and submit a standard action.",
       "output": "A tested focus map."
     },
@@ -18112,7 +18112,7 @@
       "from": "extension_manifest",
       "to": "platform_activity_bootstrap",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_manifest",
@@ -18148,7 +18148,7 @@
       "from": "extension_capabilities",
       "to": "platform_deep_links",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_capabilities",
@@ -18184,7 +18184,7 @@
       "from": "extension_events",
       "to": "platform_session_handoff",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_events",
@@ -18220,7 +18220,7 @@
       "from": "extension_content_packs",
       "to": "platform_reduced_surface",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_content_packs",
@@ -18256,7 +18256,7 @@
       "from": "extension_compatibility",
       "to": "platform_mobile_layout",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_compatibility",
@@ -18292,7 +18292,7 @@
       "from": "extension_sandbox",
       "to": "platform_view_models",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_sandbox",
@@ -18328,7 +18328,7 @@
       "from": "extension_review",
       "to": "platform_interaction_expiry",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_review",
@@ -18364,7 +18364,7 @@
       "from": "extension_revocation",
       "to": "platform_asset_delivery",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_revocation",
@@ -18400,7 +18400,7 @@
       "from": "extension_market_index",
       "to": "platform_theme_profiles",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_market_index",
@@ -18436,7 +18436,7 @@
       "from": "extension_api_contracts",
       "to": "platform_cross_device_resume",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extension_api_contracts",
@@ -18460,7 +18460,7 @@
       "from": "extensions",
       "to": "platform",
       "relation": "runs_on",
-      "rationale": "uses the Rust application and Discord Activity."
+      "rationale": "uses the Rust application and Discord-native interactions."
     },
     {
       "from": "extensions",
@@ -18484,7 +18484,7 @@
       "from": "moonbyte_world_loom",
       "to": "platform",
       "relation": "contains_domain",
-      "rationale": "Discord Activity and Client Continuity is an additional domain in the connected world."
+      "rationale": "Discord Interaction and Session Continuity is an additional domain in the connected world."
     },
     {
       "from": "platform",
@@ -18502,7 +18502,7 @@
       "from": "platform_activity_bootstrap",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Activity Bootstrap Contract is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Discord Interaction Context is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_activity_bootstrap",
@@ -18538,7 +18538,7 @@
       "from": "platform_deep_links",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "World Deep-Link Registry is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Discord Command Destination Registry is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_deep_links",
@@ -18574,7 +18574,7 @@
       "from": "platform_session_handoff",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Session Handoff is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Discord Message Session Continuity is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_session_handoff",
@@ -18610,7 +18610,7 @@
       "from": "platform_reduced_surface",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Discord-Only Fallback is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Text Command Fallback is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_reduced_surface",
@@ -18646,7 +18646,7 @@
       "from": "platform_mobile_layout",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Mobile-First Board Layout is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Mobile Discord Board Layout is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_mobile_layout",
@@ -18682,7 +18682,7 @@
       "from": "platform_view_models",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Authorised View Model Registry is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Authorised View Model Registry is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_view_models",
@@ -18718,7 +18718,7 @@
       "from": "platform_interaction_expiry",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Interaction Expiry Recovery is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Interaction Expiry Recovery is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_interaction_expiry",
@@ -18754,7 +18754,7 @@
       "from": "platform_asset_delivery",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Pixel Asset Delivery is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Discord Asset Delivery is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_asset_delivery",
@@ -18790,7 +18790,7 @@
       "from": "platform_theme_profiles",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "World Presentation Profiles is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Discord Presentation Preferences is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_theme_profiles",
@@ -18826,7 +18826,7 @@
       "from": "platform_cross_device_resume",
       "to": "platform",
       "relation": "belongs_to",
-      "rationale": "Cross-Client Resume is navigated and released within Discord Activity and Client Continuity."
+      "rationale": "Cross-Device Discord Session Resume is navigated and released within Discord Interaction and Session Continuity."
     },
     {
       "from": "platform_cross_device_resume",
