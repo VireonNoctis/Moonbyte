@@ -211,7 +211,13 @@ pub async fn handle_game_component(
 
     match data
         .games()
-        .act(&session_id, &player_id, guild_key.as_deref(), &input)
+        .act_at_version(
+            &session_id,
+            &player_id,
+            guild_key.as_deref(),
+            &input,
+            expected_action_version,
+        )
         .await
     {
         Ok(snapshot) => {
@@ -228,6 +234,24 @@ pub async fn handle_game_component(
                 event = "game_component_action_applied",
                 game = snapshot.game.definition().id
             );
+        }
+        Err(crate::game::GameRuntimeError::StaleAction) => {
+            let latest = data
+                .games()
+                .get(&session_id, &player_id, guild_key.as_deref())
+                .await?;
+            let refreshed = CreateInteractionResponseMessage::new()
+                .content(format!(
+                    "{}\\n\\nThis board was refreshed because another move was accepted first.",
+                    latest.render()
+                ))
+                .components(game_components(&latest));
+            interaction
+                .create_response(
+                    discord,
+                    CreateInteractionResponse::UpdateMessage(refreshed),
+                )
+                .await?;
         }
         Err(error) => {
             component_notice(discord, interaction, error.to_string()).await?;
