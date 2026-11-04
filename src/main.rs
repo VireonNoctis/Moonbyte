@@ -187,6 +187,17 @@ async fn run() -> Result<(), Error> {
         .framework(framework)
         .await?;
 
-    client.start().await?;
+    let shard_manager = client.shard_manager.clone();
+    tokio::select! {
+        result = client.start() => {
+            result?;
+        }
+        signal = tokio::signal::ctrl_c() => {
+            signal?;
+            eprintln!("Moonbyte: shutdown signal received; closing Discord gateway shards.");
+            shard_manager.shutdown_all().await;
+        }
+    }
+
     Ok(())
 }
