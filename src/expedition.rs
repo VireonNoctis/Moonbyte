@@ -162,7 +162,7 @@ impl ExpeditionStore {
         }
         let mut tx = self.pool.begin().await?;
         lock_player(&mut tx, player).await?;
-        ensure_at_start(&mut tx, player).await?
+        ensure_at_start(&mut tx, player).await?;
         let state = if shared { "recruiting" } else { "active" };
         let id: i64 = sqlx::query_scalar(
             "INSERT INTO expedition_runs (route_id, content_version, guild_id, host_discord_user_id, shared, state, current_checkpoint_index, started_at)
