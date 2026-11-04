@@ -118,6 +118,7 @@ pub struct PlayerDeletion {
     pub daily_quest_records_removed: u64,
     pub rivalry_records_removed: u64,
     pub expedition_participations_removed: u64,
+    pub expedition_runs_host_transferred: u64,
     pub expedition_runs_cancelled: u64,
     pub expedition_runs_removed: u64,
     pub consent_record_removed: bool,
@@ -246,6 +247,7 @@ struct ExportedExpeditionCheckpoint {
     checkpoint_id: String,
     checkpoint_index: i16,
     choice_id: String,
+    completed_by_you: bool,
     completed_at: String,
 }
 
@@ -908,30 +910,38 @@ impl ProfileStore {
             },
         )
         .collect();
-        let expedition_checkpoints = sqlx::query_as::<_, (i64, String, i16, String, String)>(
-            "SELECT h.expedition_run_id, h.checkpoint_id, h.checkpoint_index,
-             h.choice_id, h.completed_at::text
-             FROM expedition_checkpoint_history h
-             JOIN expedition_participants p USING (expedition_run_id)
-             WHERE p.discord_user_id = $1
-             ORDER BY h.expedition_run_id ASC, h.checkpoint_index ASC",
-        )
-        .bind(player_id)
-        .fetch_all(&self.pool)
-        .await?
-        .into_iter()
-        .map(
-            |(expedition_run_id, checkpoint_id, checkpoint_index, choice_id, completed_at)| {
-                ExportedExpeditionCheckpoint {
+        let expedition_checkpoints =
+            sqlx::query_as::<_, (i64, String, i16, String, bool, String)>(
+                "SELECT h.expedition_run_id, h.checkpoint_id, h.checkpoint_index,
+                 h.choice_id, COALESCE(h.completed_by = $2, FALSE), h.completed_at::text
+                 FROM expedition_checkpoint_history h
+                 JOIN expedition_participants p USING (expedition_run_id)
+                 WHERE p.discord_user_id = $1
+                 ORDER BY h.expedition_run_id ASC, h.checkpoint_index ASC",
+            )
+            .bind(player_id)
+            .bind(player_id)
+            .fetch_all(&self.pool)
+            .await?
+            .into_iter()
+            .map(
+                |(
                     expedition_run_id,
                     checkpoint_id,
                     checkpoint_index,
                     choice_id,
+                    completed_by_you,
                     completed_at,
-                }
-            },
-        )
-        .collect();
+                )| ExportedExpeditionCheckpoint {
+                    expedition_run_id,
+                    checkpoint_id,
+                    checkpoint_index,
+                    choice_id,
+                    completed_by_you,
+                    completed_at,
+                },
+            )
+            .collect();
 
         let export = PlayerExport {
             format_version: 9,
@@ -1038,6 +1048,21 @@ impl ProfileStore {
             .await?
             .rows_affected()
             > 0;
+        let affected_expedition_runs: Vec<i64> = sqlx::query_scalar(
+            "SELECT expedition_run_id FROM expedition_participants
+             WHERE discord_user_id = $1 ORDER BY expedition_run_id",
+        )
+        .bind(player_id)
+        .fetch_all(&mut *transaction)
+        .await?;
+        let _locked_expedition_runs = sqlx::query_scalar::<_, i64>(
+            "SELECT expedition_run_id FROM expedition_runs
+             WHERE expedition_run_id = ANY($1::bigint[])
+             ORDER BY expedition_run_id FOR UPDATE",
+        )
+        .bind(&affected_expedition_runs)
+        .fetch_all(&mut *transaction)
+        .await?;
         // Atlas travel locks the player's world-state row. Lock it before
         // deletion so an in-flight move cannot recreate state after this commit.
         let _world_state_lock: Option<String> = sqlx::query_scalar(
@@ -1092,22 +1117,37 @@ impl ProfileStore {
                 .await?
                 .rows_affected();
 
-        let affected_expedition_runs: Vec<i64> = sqlx::query_scalar(
-            "SELECT expedition_run_id FROM expedition_participants
-             WHERE discord_user_id = $1 ORDER BY expedition_run_id",
+        let expedition_runs_cancelled: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM expedition_runs r
+             WHERE r.expedition_run_id = ANY($2::bigint[])
+               AND r.state IN ('recruiting', 'active', 'paused')
+               AND NOT EXISTS (
+                 SELECT 1 FROM expedition_participants p
+                 WHERE p.expedition_run_id = r.expedition_run_id
+                   AND p.discord_user_id <> $1 AND p.is_active
+               )",
         )
         .bind(player_id)
-        .fetch_all(&mut *transaction)
-        .await?;
-        let _locked_expedition_runs = sqlx::query_scalar::<_, i64>(
-            "SELECT expedition_run_id FROM expedition_runs
-             WHERE expedition_run_id = ANY($1::bigint[])
-             ORDER BY expedition_run_id FOR UPDATE",
-        )
         .bind(&affected_expedition_runs)
-        .fetch_all(&mut *transaction)
+        .fetch_one(&mut *transaction)
         .await?;
-        let expedition_runs_cancelled = sqlx::query(
+        let expedition_runs_host_transferred: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM expedition_runs r
+             WHERE r.expedition_run_id = ANY($2::bigint[])
+               AND r.state IN ('recruiting', 'active', 'paused')
+               AND r.host_discord_user_id = $1
+               AND EXISTS (
+                 SELECT 1 FROM expedition_participants p
+                 WHERE p.expedition_run_id = r.expedition_run_id
+                   AND p.discord_user_id <> $1 AND p.is_active
+               )",
+        )
+        .bind(player_id)
+        .bind(&affected_expedition_runs)
+        .fetch_one(&mut *transaction)
+        .await?;
+
+        sqlx::query(
             "UPDATE expedition_runs r SET
              host_discord_user_id = CASE WHEN r.host_discord_user_id = $1 THEN (
                  SELECT p.discord_user_id FROM expedition_participants p
@@ -1134,8 +1174,7 @@ impl ProfileStore {
         .bind(player_id)
         .bind(&affected_expedition_runs)
         .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+        .await?;
         let expedition_participations_removed =
             sqlx::query("DELETE FROM expedition_participants WHERE discord_user_id = $1")
                 .bind(player_id)
@@ -1184,7 +1223,8 @@ impl ProfileStore {
             daily_quest_records_removed,
             rivalry_records_removed,
             expedition_participations_removed,
-            expedition_runs_cancelled,
+            expedition_runs_host_transferred: u64::try_from(expedition_runs_host_transferred).unwrap_or_default(),
+            expedition_runs_cancelled: u64::try_from(expedition_runs_cancelled).unwrap_or_default(),
             expedition_runs_removed,
             consent_record_removed,
             profile_removed,

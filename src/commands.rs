@@ -513,6 +513,7 @@ pub async fn privacy_delete(
         deletion.daily_quest_records_removed,
         deletion.rivalry_records_removed,
         deletion.expedition_participations_removed,
+        deletion.expedition_runs_host_transferred,
         deletion.expedition_runs_cancelled,
         deletion.expedition_runs_removed,
         if deletion.consent_record_removed {

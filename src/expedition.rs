@@ -161,7 +161,8 @@ impl ExpeditionStore {
             return Err(ExpeditionError::SharedRequiresGuild);
         }
         let mut tx = self.pool.begin().await?;
-        ensure_at_start(&mut tx, player).await?;
+        lock_player(&mut tx, player).await?;
+        ensure_at_start(&mut tx, player).await?
         let state = if shared { "recruiting" } else { "active" };
         let id: i64 = sqlx::query_scalar(
             "INSERT INTO expedition_runs (route_id, content_version, guild_id, host_discord_user_id, shared, state, current_checkpoint_index, started_at)
@@ -189,6 +190,7 @@ impl ExpeditionStore {
         id: i64,
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
+        lock_player(&mut tx, player).await?;
         let (route_id, content_version, saved_guild, state, shared) =
             sqlx::query_as::<_, (String, i16, Option<String>, String, bool)>(
                 "SELECT route_id, content_version, guild_id, state, shared
@@ -216,6 +218,13 @@ impl ExpeditionStore {
         }
         sqlx::query("INSERT INTO expedition_participants (expedition_run_id, discord_user_id) VALUES ($1, $2)")
             .bind(id).bind(player).execute(&mut *tx).await?;
+        sqlx::query(
+            "UPDATE expedition_runs SET row_version = row_version + 1, updated_at = now()
+             WHERE expedition_run_id = $1",
+        )
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
         tx.commit().await?;
         self.snapshot(player, Some(guild), id).await
     }
@@ -555,6 +564,17 @@ async fn is_active_member(
     Ok(sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM expedition_participants WHERE expedition_run_id = $1 AND discord_user_id = $2 AND is_active)")
         .bind(id).bind(player).fetch_one(&mut **tx).await?)
 }
+async fn lock_player(
+    tx: &mut Transaction<'_, Postgres>,
+    player: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
+        .bind(player)
+        .execute(&mut **tx)
+        .await?;
+    Ok(())
+}
+
 async fn ensure_at_start(
     tx: &mut Transaction<'_, Postgres>,
     player: &str,
@@ -865,15 +885,31 @@ mod tests {
             Err(super::ExpeditionError::StaleCheckpoint)
         ));
 
-        let after_host_leave = store
-            .leave(&host_id, Some(&guild_id), recruiting.run_id)
+        let host_atlas_before_deletion = atlas
+            .snapshot(&host_id)
             .await
-            .expect("host leaves without deleting shared history");
-        assert_eq!(
-            after_host_leave.host.as_deref(),
-            Some(member_id.as_str()),
-            "host ownership transfers to the earliest remaining participant"
-        );
+            .expect("host's Atlas before deletion");
+        let member_atlas_before_deletion = atlas
+            .snapshot(&member_id)
+            .await
+            .expect("member's Atlas before deletion");
+        assert_eq!(host_atlas_before_deletion.current_location.id, "mosslight-grove");
+        assert_eq!(member_atlas_before_deletion.current_location.id, "mosslight-grove");
+
+        let host_deletion = profiles
+            .delete_account(&host_id)
+            .await
+            .expect("delete the host without deleting the remaining participant's run");
+        assert_eq!(host_deletion.expedition_participations_removed, 1);
+        assert_eq!(host_deletion.expedition_runs_host_transferred, 1);
+        assert_eq!(host_deletion.expedition_runs_cancelled, 0);
+        assert_eq!(host_deletion.expedition_runs_removed, 0);
+        let member_run = store
+            .snapshot(&member_id, Some(&guild_id), recruiting.run_id)
+            .await
+            .expect("remaining participant retains the active run");
+        assert_eq!(member_run.state, "active");
+        assert_eq!(member_run.host.as_deref(), Some(member_id.as_str()));
 
         store
             .advance(
@@ -898,12 +934,10 @@ mod tests {
         assert_eq!(completed.state, "completed");
         assert_eq!(completed.checkpoint_index, 3);
 
-        let host_atlas = atlas.snapshot(&host_id).await.expect("host's saved Atlas");
         let member_atlas = atlas
             .snapshot(&member_id)
             .await
             .expect("member's saved Atlas");
-        assert_eq!(host_atlas.current_location.id, "mosslight-grove");
         assert_eq!(member_atlas.current_location.id, "starfall-observatory");
         assert!(
             wayfarer
@@ -927,18 +961,7 @@ mod tests {
         assert!(export.contains("lantern-road"));
         assert!(export.contains("ember-archive"));
         assert!(export.contains(&recruiting.run_id.to_string()));
-
-        let host_deletion = profiles
-            .delete_account(&host_id)
-            .await
-            .expect("remove host account without removing the other participant's history");
-        assert_eq!(host_deletion.expedition_participations_removed, 1);
-        assert_eq!(host_deletion.expedition_runs_removed, 0);
-        let member_run = store
-            .snapshot(&member_id, Some(&guild_id), recruiting.run_id)
-            .await
-            .expect("remaining participant retains the completed run");
-        assert_eq!(member_run.state, "completed");
+        assert!(export.contains("\"completed_by_you\": true"));
 
         let member_deletion = profiles
             .delete_account(&member_id)
