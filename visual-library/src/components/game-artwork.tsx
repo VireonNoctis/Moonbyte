@@ -1,5 +1,3 @@
-"use client";
-
 import type { GameDefinition } from "@/lib/catalog";
 
 type GameArtworkProps = {

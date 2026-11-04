@@ -127,7 +127,7 @@ export default async function GamePage({ params }: GamePageProps) {
               <span className="game-guide__step">02</span>
               <div>
                 <h3>{game.sessionType === "Solo session" ? "Start your solo session" : "Open a two-player lobby"}</h3>
-                <p>{game.sessionType === "Solo session" ? "Run the command below to begin your own session." : "Run the command below to create a lobby, then invite or wait for another player to join."}</p>
+                <p>{game.sessionType === "Solo session" ? "Run the command below to begin your own session." : "Run the command below to create a lobby, then have the other player join that session."}</p>
               </div>
             </article>
             <article>
@@ -157,7 +157,7 @@ export default async function GamePage({ params }: GamePageProps) {
             ) : (
               <p>This guide reflects the live Rust game and session catalogue. Game rules, player actions and results are handled by the bot, not by this website.</p>
             )}
-            <span className="game-guide__truth-label"><i /> VERIFIED AGAINST THE CURRENT CATALOGUE</span>
+            <span className="game-guide__truth-label"><i /> MATCHED TO THE CURRENT CATALOGUE</span>
           </div>
         </section>
 
