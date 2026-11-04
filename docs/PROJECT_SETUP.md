@@ -1,67 +1,63 @@
-# Moonbyte Project Setup
+# Project Setup
 
-## Repository foundation
+## Requirements
 
-- [x] Repository named Moonbyte.
-- [x] Product identity and independence from Lunar documented.
-- [x] Rust, Tokio, Serenity, Poise, and PostgreSQL through SQLx selected.
-- [x] Default prefix set to a period (.).
-- [x] Full-colour pixel-art direction documented.
-- [x] Product vision, architecture, catalogue, migration plan, and roadmap written.
-- [x] Privacy stance, privacy command, data inventory, and retention targets documented.
-- [x] Rust application workspace and committed dependency lockfile.
-- [x] Rust formatting, PostgreSQL-backed tests, and Clippy checks in CI.
-- [ ] Choose and add a project licence before external distribution.
+- The pinned Rust toolchain in `rust-toolchain.toml` with rustfmt and Clippy.
+- PostgreSQL. The included Compose file provides a local development service.
+- A Discord application with a bot token.
+- Docker Compose for the local database workflow (or an existing PostgreSQL instance).
 
-## Discord application
+## Start PostgreSQL
 
-Before running the bot:
-- [ ] Create or configure the Moonbyte Discord application and bot user.
-- [ ] Store the bot token in a local environment file or deployment secret store.
-- [ ] Enable Message Content intent because the default prefix is a text prefix.
-- [ ] Request only Gateway intents required by implemented features.
-- [ ] Include the applications.commands OAuth scope when inviting the bot for slash commands.
-- [ ] Test prefix and slash command registration in a development guild.
+```bash
+docker compose up -d postgres
+```
 
-Never commit the token or share it in logs, screenshots, issues, or test fixtures.
+The sample development connection string in `.env.example` is:
 
-## PostgreSQL setup
+```text
+DATABASE_URL=postgres://moonbyte:moonbyte@localhost:5432/moonbyte
+```
 
-Moonbyte requires PostgreSQL before the bot starts. The application uses SQLx with PostgreSQL support only; SQLite is not a supported fallback.
+Use different credentials and restricted network access outside local development. Never commit a real database URL.
 
-For local development, start the included database service:
+## Configure Discord
 
-    docker compose up -d postgres
-
-The development-only connection template in .env.example is:
-
-    DATABASE_URL=postgres://moonbyte:moonbyte@localhost:5432/moonbyte
-
-Replace the sample credentials for any shared or production environment. Configure the actual DATABASE_URL through a secret manager or process environment. Never commit a production connection URL or print it in logs.
-
-## Local configuration
+Set the following environment variables in the process environment:
 
 | Variable | Purpose |
-| --- | --- |
-| DISCORD_TOKEN | Bot token. Secret; never commit its real value. |
-| DEFAULT_PREFIX | Default command prefix; a period. |
-| DATABASE_URL | PostgreSQL connection URL. Secret; never log or commit production values. |
-| RUST_LOG | Structured log filter. |
+|---|---|
+| `DISCORD_TOKEN` | Bot token. Secret. |
+| `DATABASE_URL` | PostgreSQL connection URL. Secret. |
+| `DEFAULT_PREFIX` | Optional command prefix; defaults to a period. |
+| `RUST_LOG` | Optional structured log filter. Avoid verbose SQLx logging in production. |
 
-Moonbyte does not load .env files automatically. At startup it validates the required settings, opens a bounded SQLx connection pool, applies ordered schema migrations under a PostgreSQL advisory transaction lock, then starts the Discord client.
+Moonbyte does not load `.env` automatically. Enable the Message Content privileged intent if prefix commands are required. Invite the bot with the `bot` and `applications.commands` scopes.
 
-## Run the Discord bot
+## Run
 
-With PostgreSQL running and DISCORD_TOKEN set in the process environment:
+```bash
+cargo run --locked
+```
 
-    cargo run --locked
+Startup validates configuration, connects to PostgreSQL, applies ordered migrations and starts the Discord gateway. Ctrl-C and Unix SIGTERM request a graceful shard shutdown.
 
-The runtime requests GUILDS, GUILD_MESSAGES, and MESSAGE_CONTENT. Enable Message Content in the Discord developer settings for prefix commands, and invite the application with the applications.commands OAuth scope for slash commands. Global slash-command registration can take up to an hour to propagate. See Command reference.
+## Validate
 
-## Implemented checks
+```bash
+python3 scripts/validate.py
+cargo fmt --all -- --check
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
+```
 
-The workspace supports python3 scripts/validate.py, cargo fmt --all -- --check, cargo test --workspace --locked, and cargo clippy --workspace --all-targets --locked -- -D warnings. CI provisions an isolated PostgreSQL 17 service and runs the database integration tests against it.
+CI provisions an isolated PostgreSQL service and runs repository validation, formatting, tests and Clippy. These automated checks do not replace a development-guild smoke test or production backup/restore rehearsal.
 
-## Remaining runtime checks
+## Operational checklist
 
-Production backup/restore, database monitoring, interaction idempotency, multi-instance load testing, structured logging, graceful shutdown, privacy export/deletion, and a development-guild Discord smoke test remain unimplemented or unverified.
+- Keep the Discord token and database URL in a secret manager or protected process environment.
+- Restrict PostgreSQL network access and database privileges.
+- Schedule encrypted database backups with documented retention and restore testing.
+- Verify host/backup encryption properties before making encryption-at-rest claims.
+- Monitor process restarts, database health, Discord rate limits and backup completion.
+- Review [Privacy Policy](PRIVACY.md) before public deployment.

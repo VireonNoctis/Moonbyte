@@ -1,6 +1,6 @@
 # Moonbyte — Final Product Vision and World Loom Constitution
 
-> **Version 4.0 · Authoritative product blueprint · 3 November 2026**
+> **Version 4.1 · Authoritative product blueprint · 4 November 2026**
 >
 > This document consolidates the uploaded Final Vision v3.1, the ten World Loom design volumes, the live Rust/PostgreSQL foundation and the cross-system contracts needed to make Moonbyte one coherent product. It supersedes earlier vision drafts where they conflict. The ten volumes remain the detailed proposal catalogue; code, tests and the roadmap remain the source of truth for what is actually live.
 
@@ -24,7 +24,7 @@ The design is expansive, but release is incremental. Four hundred proposals acro
 - **Authority boundary:** Rust owns state transitions, rules, randomness, permissions, progression, inventory, ledgers, trades, fairness transcripts and persistence. Discord presentation is generated from authorised Rust view models and submitted actions are validated server-side.
 - **No web-client requirement:** A website, Next.js/React frontend, browser game client or Discord Activity is not part of the current product requirement. Introduce one only after a concrete need and a new accepted architecture decision.
 - **Stable Rust:** CI follows the latest stable toolchain and records the compiler version used for each run. The current verified CI toolchain is Rust 1.99.1.
-- **No Lunar runtime dependency:** Moonbyte owns its own source, game rules, storage, identity, commands, deployment and release lifecycle. Every reused concept or asset must pass source, dependency and licence review.
+- **Standalone product:** Moonbyte owns its source, game rules, storage, identity, commands, deployment and release lifecycle. Every reused concept or asset must pass source, dependency and licence review.
 
 ### Fairness and economy
 
@@ -188,11 +188,11 @@ The ten World Loom volumes remain the detailed source catalogue for forty domain
 
 The current repository contains working Rust/PostgreSQL vertical slices for the runtime, four games, sessions, profiles, game results/statistics, achievements, first-completion Moonbits, guild command configuration, versioned policy consent, data inventory/export/deletion, Tavern/Wayfinder, the five-location Atlas, private Chronicle pages, optional daily quests, cumulative journey days, companion milestones and mutual private rivalries and Lantern Road Expedition v1.
 
-The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are merged. In particular: larger Atlas regions, additional Expedition routes, authored story networks, Vaults, inventory, crafting, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card are not made live by this document.
+The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are complete. In particular: larger Atlas regions, additional Expedition routes, authored story networks, Vaults, inventory, crafting, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card are not made live by this document.
 
 ## 12. Release order and acceptance gates
 
-1. **[Expedition foundation](EXPEDITION_FOUNDATION.md) — implemented on this branch:** Lantern Road v1 has durable solo/group runs, opt-in membership, transactional Atlas/Chronicle hand-offs, pause/resume/leave, checkpoint concurrency protection and export/deletion coverage. Additional routes and authored story networks remain future work.
+1. **[Expedition foundation](IMPLEMENTATION.md) — implemented on this branch:** Lantern Road v1 has durable solo/group runs, opt-in membership, transactional Atlas/Chronicle hand-offs, pause/resume/leave, checkpoint concurrency protection and export/deletion coverage. Additional routes and authored story networks remain future work.
 2. **Inventory and provenance:** stable item IDs, earned source and account ownership before crafting or trade.
 3. **Known-input crafting:** fixed recipes, validated ingredients, transactional output, no random yield.
 4. **Puzzle Vault:** clear rules, published rewards, save checkpoints and verifiable completion.
@@ -202,10 +202,10 @@ The rest of the World Loom remains a design proposal until code, migrations, com
 8. **Seasonal Almanac and continuity polish:** published calendar, reprises, player-controlled handoffs and content archive.
 9. **Discord interaction and production readiness:** message-component lifecycle, accessibility, recovery, backup/restore, rate-limit and privacy drills.
 
-A slice is complete only when its owning Rust module controls every state transition; PostgreSQL constraints prevent duplicate or partial writes; Discord and Activity surfaces share the same application service; events have stable schemas and idempotency rules; player and guild data are scoped with complete privacy coverage; tests cover normal, invalid, duplicate, concurrent, rollback, pause/leave and recovery paths; and README, roadmap, volumes, graph and decision records agree with the code.
+A slice is complete only when its owning Rust module controls every state transition; PostgreSQL constraints prevent duplicate or partial writes; Discord command and component surfaces share the same application service; events have stable schemas and idempotency rules; player and guild data are scoped with complete privacy coverage; tests cover normal, invalid, duplicate, concurrent, rollback, pause/leave and recovery paths; and README, roadmap, volumes, graph and decision records agree with the code.
 
 **The central rule:** a new system is not finished when it has a command. It is finished when its state, consequences, privacy, presentation and relationships work together as one part of Moonbyte.
 
-## Current next-slice reference
+## Current implementation reference
 
-The first delivery boundary for the Expedition foundation is defined in [Expedition Foundation v1](EXPEDITION_FOUNDATION.md). It narrows the much larger Atlas/Expedition/Quest proposals to one authored route and explicit release gates; The Lantern Road runtime, migration, commands, privacy coverage and PostgreSQL integration tests are implemented on this PR; additional routes and story-quest systems remain future work.
+The exact live boundary, command entry points, persistence ownership, known gaps and next engineering work are maintained in the [Implementation Map](IMPLEMENTATION.md). This map is the implementation-status source of truth; this vision remains the product-design source of truth.
