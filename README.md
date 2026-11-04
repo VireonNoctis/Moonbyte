@@ -163,6 +163,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 - [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation and verification requirements.
 - [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — reuse boundaries and source/licence audit requirements.
 - [Roadmap](docs/ROADMAP.md) — implementation phases and acceptance criteria.
+- [Visual Library Design System](docs/VISUAL_LIBRARY.md) — React field-guide structure, design language, truthful data boundary and accessibility contract.
 
 ## Development status
 

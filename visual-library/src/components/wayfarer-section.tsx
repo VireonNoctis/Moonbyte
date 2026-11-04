@@ -1,24 +1,29 @@
+import { CopyCommandButton } from "@/components/copy-command";
+
 const objectives = [
   {
     id: "play_one_game",
     title: "Warm Up the Arcade",
-    description: "Complete one game today.",
+    description: "Complete one game.",
     reward: 5,
     mark: "01",
+    tone: "mint",
   },
   {
     id: "play_three_games",
     title: "A Few More Rounds",
-    description: "Complete three games today.",
+    description: "Complete three games.",
     reward: 8,
     mark: "02",
+    tone: "sun",
   },
   {
     id: "win_one_game",
     title: "Find Your Rhythm",
-    description: "Win one game today.",
+    description: "Win one game.",
     reward: 8,
     mark: "03",
+    tone: "coral",
   },
   {
     id: "play_two_game_types",
@@ -26,6 +31,7 @@ const objectives = [
     description: "Complete two different game types.",
     reward: 10,
     mark: "04",
+    tone: "lilac",
   },
   {
     id: "discover_one_place",
@@ -33,50 +39,48 @@ const objectives = [
     description: "Discover one new Atlas location.",
     reward: 7,
     mark: "05",
+    tone: "blue",
   },
 ] as const;
 
 export function WayfarerSection() {
   return (
-    <section className="wayfarer-section" id="wayfarer" aria-labelledby="wayfarer-title">
+    <section className="wayfarer-section content-section" id="wayfarer" aria-labelledby="wayfarer-title">
       <div className="wayfarer-intro">
-        <div className="eyebrow"><span>03</span> THE WAYFARER THREAD</div>
-        <h2 id="wayfarer-title">A journey that <em>keeps its meaning.</em></h2>
+        <div className="eyebrow"><span className="eyebrow__index">05</span><span>THE WAYFARER THREAD</span></div>
+        <h2 id="wayfarer-title">Progress that <em>stays yours.</em></h2>
         <p>
-          A few optional goals give each visit a direction. The progress you earn
-          stays yours; Moonbyte never takes it away for missing a day.
+          Optional goals connect the arcade to the wider world. Journey days
+          count up, companion stages stay earned, and missing a day never takes
+          anything away.
         </p>
+
         <div className="wayfarer-facts">
-          <div>
-            <span className="wayfarer-facts__number">03</span>
-            <span>objectives on each daily board</span>
-          </div>
-          <div>
-            <span className="wayfarer-facts__number">+</span>
-            <span>cumulative journey days</span>
-          </div>
-          <div>
-            <span className="wayfarer-facts__number">0</span>
-            <span>missed-day penalties</span>
-          </div>
+          <div><strong>03</strong><span>objectives assigned each day</span></div>
+          <div><strong>+</strong><span>cumulative journey days</span></div>
+          <div><strong>0</strong><span>missed-day penalties</span></div>
         </div>
+
         <div className="wayfarer-command">
           <span>OPEN THE BOARD IN DISCORD</span>
-          <code>.quests</code>
+          <CopyCommandButton value=".quests" className="copy-button copy-button--dark">
+            Copy .quests
+          </CopyCommandButton>
         </div>
       </div>
 
-      <div className="wayfarer-catalog">
-        <div className="wayfarer-catalog__heading">
+      <div className="wayfarer-board">
+        <div className="wayfarer-board__heading">
           <div>
-            <span className="wayfarer-catalog__kicker">THE OBJECTIVE CATALOGUE</span>
+            <span>THE OBJECTIVE CATALOGUE</span>
             <h3>Small steps, fixed rewards.</h3>
           </div>
-          <span className="wayfarer-catalog__count">05 / 05</span>
+          <span className="wayfarer-board__count">05 / 05</span>
         </div>
+
         <div className="wayfarer-grid">
           {objectives.map((objective) => (
-            <article className="wayfarer-card" key={objective.id}>
+            <article className={"wayfarer-card wayfarer-card--" + objective.tone} key={objective.id}>
               <div className="wayfarer-card__topline">
                 <span>{objective.mark}</span>
                 <span>OPTIONAL QUEST</span>
@@ -91,11 +95,17 @@ export function WayfarerSection() {
             </article>
           ))}
         </div>
-        <div className="wayfarer-catalog__foot">
-          <span>Three objectives are selected for each player each day.</span>
-          <span>Rewards are fixed · Progress is never reset</span>
+
+        <div className="wayfarer-board__foot">
+          <span>THREE ARE ASSIGNED PER PLAYER / DAY</span>
+          <span>FIXED REWARDS · NO ATTENDANCE PENALTY</span>
         </div>
       </div>
+
+      <p className="wayfarer-disclaimer">
+        This page shows the fixed objective catalogue only. Your daily selection, accepted quests
+        and personal progress remain private inside Discord.
+      </p>
     </section>
   );
 }

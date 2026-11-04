@@ -1,60 +1,117 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CopyCommandButton } from "@/components/copy-command";
 import { categories, games, type CategoryFilter, type GameDefinition } from "@/lib/catalog";
 
-function GameCard({ game }: { game: GameDefinition }) {
-  const [showControls, setShowControls] = useState(false);
-  const [copied, setCopied] = useState(false);
+function GameArtwork({ game }: { game: GameDefinition }) {
+  if (game.id === "tic-tac-toe") {
+    const marks = ["×", "", "○", "", "×", "", "○", "", "×"];
+    return (
+      <div className="game-art game-art--tic" aria-hidden="true">
+        <span className="game-art__orbit" />
+        <div className="tic-board">
+          {marks.map((mark, index) => (
+            <span className={mark === "×" ? "tic-board__cross" : mark === "○" ? "tic-board__circle" : ""} key={index}>
+              {mark}
+            </span>
+          ))}
+        </div>
+        <span className="game-art__art-label">THREE IN A ROW</span>
+      </div>
+    );
+  }
 
-  async function copyCommand() {
-    try {
-      await navigator.clipboard.writeText(game.command);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setCopied(false);
-      setShowControls(true);
-    }
+  if (game.id === "connect-four") {
+    const discs = new Map<number, string>([
+      [8, "disc--coral"], [9, "disc--sun"], [13, "disc--coral"],
+      [14, "disc--sun"], [15, "disc--coral"], [19, "disc--sun"],
+    ]);
+    return (
+      <div className="game-art game-art--connect" aria-hidden="true">
+        <div className="connect-board">
+          {Array.from({ length: 42 }, (_, index) => (
+            <span key={index}><i className={discs.has(index) ? discs.get(index) : ""} /></span>
+          ))}
+        </div>
+        <span className="game-art__art-label">DROP · CONNECT · WIN</span>
+      </div>
+    );
+  }
+
+  if (game.id === "memory-match") {
+    const symbols = ["✦", "◈", "✦", "⌂", "◌", "◈", "⌂", "◌"];
+    return (
+      <div className="game-art game-art--memory" aria-hidden="true">
+        <div className="memory-board">
+          {symbols.map((symbol, index) => (
+            <span className={index === 0 || index === 1 || index === 2 ? "memory-tile memory-tile--shown" : "memory-tile"} key={index}>
+              {index === 0 || index === 1 || index === 2 ? symbol : "?"}
+            </span>
+          ))}
+        </div>
+        <span className="game-art__art-label">REMEMBER THE PATTERN</span>
+      </div>
+    );
   }
 
   return (
-    <article className={`game-card game-card--${game.palette}`}>
-      <div className="game-card__topline">
-        <span className="game-card__category">{game.category}</span>
-        <span className="status-dot"><span aria-hidden="true" />Playable in Discord</span>
+    <div className="game-art game-art--word" aria-hidden="true">
+      <div className="word-art">
+        <span className="word-art__letter word-art__letter--large">A</span>
+        <span className="word-art__letter">b</span>
+        <span className="word-art__letter">C</span>
+        <span className="word-art__letter">?</span>
+        <span className="word-art__letter word-art__letter--accent">Aa</span>
       </div>
-      <div className="game-card__art" aria-hidden="true">
-        <span className="game-card__glyph">{game.glyph}</span>
-        <span className="game-card__art-grid" />
-        <span className="game-card__art-index">{game.id.slice(0, 2).toUpperCase()}</span>
-      </div>
-      <div className="game-card__body">
-        <h3>{game.name}</h3>
-        <p>{game.description}</p>
-        <div className="game-card__meta">
-          <span><span aria-hidden="true">♟</span>{game.players}</span>
-          <span><span aria-hidden="true">◷</span>{game.duration}</span>
+      <span className="game-art__art-label">FIND THE RIGHT ORDER</span>
+    </div>
+  );
+}
+
+function GameCard({ game, index }: { game: GameDefinition; index: number }) {
+  return (
+    <article className={"game-card game-card--" + game.palette}>
+      <div className="game-card__art-wrap">
+        <div className="game-card__topline">
+          <span className="game-card__category">{game.category}</span>
+          <span className="playable-label"><i aria-hidden="true" />PLAYABLE</span>
         </div>
-        {showControls && (
-          <div className="game-card__controls" id={`controls-${game.id}`}>
+        <GameArtwork game={game} />
+        <span className="game-card__index">MB / 0{index + 1}</span>
+      </div>
+
+      <div className="game-card__body">
+        <div className="game-card__heading">
+          <div>
+            <span className="game-card__edition">THE CURRENT LINE-UP</span>
+            <h3>{game.name}</h3>
+          </div>
+          <span className="game-card__serial" aria-hidden="true">0{index + 1}</span>
+        </div>
+        <p className="game-card__description">{game.description}</p>
+
+        <div className="game-card__facts">
+          <span><i aria-hidden="true">♟</i>{game.players}</span>
+          <span><i aria-hidden="true">◷</i>{game.duration}</span>
+        </div>
+
+        <details className="game-card__guide">
+          <summary>
+            <span>Controls & quick start</span>
+            <span className="game-card__guide-symbol" aria-hidden="true">＋</span>
+          </summary>
+          <div className="game-card__guide-content">
             <p>{game.controls}</p>
             <code>{game.command}</code>
           </div>
-        )}
+        </details>
+
         <div className="game-card__actions">
-          <button className="button button--primary" onClick={copyCommand} type="button">
-            {copied ? "Command copied ✓" : "Copy play command"}
-          </button>
-          <button
-            aria-controls={`controls-${game.id}`}
-            aria-expanded={showControls}
-            className="button button--quiet"
-            onClick={() => setShowControls((visible) => !visible)}
-            type="button"
-          >
-            {showControls ? "Hide rules" : "How to play"}
-          </button>
+          <CopyCommandButton value={game.command} className="copy-button copy-button--primary">
+            Copy play command
+          </CopyCommandButton>
+          <span className="game-card__action-note">RUN IN DISCORD</span>
         </div>
       </div>
     </article>
@@ -64,35 +121,48 @@ function GameCard({ game }: { game: GameDefinition }) {
 export function GameLibrary() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("All games");
+
   const filteredGames = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
+
     return games.filter((game) => {
       const matchesCategory = category === "All games" || game.category === category;
       const matchesQuery = !normalizedQuery || [
-        game.name, game.description, game.category, game.players,
+        game.name,
+        game.description,
+        game.category,
+        game.players,
       ].some((value) => value.toLocaleLowerCase().includes(normalizedQuery));
+
       return matchesCategory && matchesQuery;
     });
   }, [category, query]);
 
+  function resetFilters() {
+    setQuery("");
+    setCategory("All games");
+  }
+
   return (
     <>
-      <section className="library-tools" aria-label="Filter games">
+      <div className="library-toolbar">
         <label className="search-box">
-          <span aria-hidden="true" className="search-box__icon">⌕</span>
-          <span className="sr-only">Search games</span>
+          <span className="search-box__icon" aria-hidden="true">⌕</span>
+          <span className="sr-only">Search playable games</span>
           <input
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Find your next game…"
+            placeholder="Search the current line-up…"
             type="search"
             value={query}
           />
+          <kbd>/</kbd>
         </label>
-        <div className="filter-list" aria-label="Game category" role="group">
+
+        <div className="filter-list" aria-label="Filter by category" role="group">
           {categories.map((item) => (
             <button
               aria-pressed={category === item}
-              className={`filter-chip ${category === item ? "filter-chip--active" : ""}`}
+              className={"filter-chip" + (category === item ? " filter-chip--active" : "")}
               key={item}
               onClick={() => setCategory(item)}
               type="button"
@@ -101,25 +171,33 @@ export function GameLibrary() {
             </button>
           ))}
         </div>
-      </section>
-      <div className="library-results" aria-live="polite">
-        <span>{filteredGames.length} {filteredGames.length === 1 ? "game" : "games"}</span>
-        <span>Built for short sessions, shared servers, and easy exits.</span>
       </div>
+
+      <div className="library-results" aria-live="polite">
+        <span><strong>{filteredGames.length.toString().padStart(2, "0")}</strong> {filteredGames.length === 1 ? "game" : "games"} found</span>
+        <span>SHORT SESSIONS · EASY EXITS · REAL COMMANDS</span>
+      </div>
+
       {filteredGames.length > 0 ? (
         <div className="game-grid">
-          {filteredGames.map((game) => <GameCard game={game} key={game.id} />)}
+          {filteredGames.map((game) => (
+            <GameCard game={game} index={games.findIndex((item) => item.id === game.id)} key={game.id} />
+          ))}
         </div>
       ) : (
         <div className="empty-state">
-          <span aria-hidden="true">⌁</span>
-          <h3>No games found</h3>
-          <p>Try another title or switch the category filter.</p>
-          <button className="button button--quiet" onClick={() => { setQuery(""); setCategory("All games"); }} type="button">
-            Reset filters
+          <span className="empty-state__symbol" aria-hidden="true">⌁</span>
+          <h3>Nothing on this shelf.</h3>
+          <p>Try another title or clear the current filters.</p>
+          <button className="button button--secondary" onClick={resetFilters} type="button">
+            Reset filters <span aria-hidden="true">↺</span>
           </button>
         </div>
       )}
+
+      <p className="library-footnote">
+        Commands use the default period prefix. A server may have its own prefix configured by a moderator.
+      </p>
     </>
   );
 }
