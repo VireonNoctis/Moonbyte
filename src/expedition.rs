@@ -685,10 +685,7 @@ mod tests {
         use std::time::{SystemTime, UNIX_EPOCH};
 
         use crate::{
-            atlas::AtlasStore,
-            database::Database,
-            profile::ProfileStore,
-            wayfarer::WayfarerStore,
+            atlas::AtlasStore, database::Database, profile::ProfileStore, wayfarer::WayfarerStore,
         };
 
         let database_url = std::env::var("DATABASE_URL")
@@ -724,8 +721,14 @@ mod tests {
             .await
             .expect("create outsider profile");
         atlas.snapshot(&host_id).await.expect("host starting place");
-        atlas.snapshot(&member_id).await.expect("member starting place");
-        atlas.snapshot(&outsider_id).await.expect("outsider starting place");
+        atlas
+            .snapshot(&member_id)
+            .await
+            .expect("member starting place");
+        atlas
+            .snapshot(&outsider_id)
+            .await
+            .expect("outsider starting place");
 
         let recruiting = store
             .start(&host_id, Some(&guild_id), true)
@@ -856,7 +859,10 @@ mod tests {
         assert_eq!(completed.checkpoint_index, 3);
 
         let host_atlas = atlas.snapshot(&host_id).await.expect("host's saved Atlas");
-        let member_atlas = atlas.snapshot(&member_id).await.expect("member's saved Atlas");
+        let member_atlas = atlas
+            .snapshot(&member_id)
+            .await
+            .expect("member's saved Atlas");
         assert_eq!(host_atlas.current_location.id, "mosslight-grove");
         assert_eq!(member_atlas.current_location.id, "starfall-observatory");
         assert!(
@@ -905,5 +911,4 @@ mod tests {
             .await
             .expect("remove test observer account");
     }
-
 }
