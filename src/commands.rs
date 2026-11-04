@@ -481,7 +481,7 @@ pub async fn privacy_delete(
          Wayfarer activity days removed: {}\n\
          Daily quest rotations removed: {}\n\
          Daily quest records removed: {}\n\
-         Rivalry records removed: {}\nExpedition participations removed: {}\nExpedition runs cancelled: {}\nEmpty Expedition runs removed: {}\n\
+         Rivalry records removed: {}\nExpedition participations removed: {}\nExpedition runs transferred to a new host: {}\nExpedition runs cancelled: {}\nEmpty Expedition runs removed: {}\n\
          Policy acceptance record removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
