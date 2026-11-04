@@ -17,8 +17,7 @@ These instructions apply across this repository. More specific instructions in a
 - Async runtime: Tokio.
 - Discord API: Serenity.
 - Command framework: Poise.
-- Visual library: Next.js + React + TypeScript.
-- Discord Activity integration: official Discord Embedded App SDK.
+- Player interface: Discord-native commands, messages, embeds, buttons, select menus and modals. No web frontend or Discord Activity is required.
 - Persistent database: PostgreSQL, accessed through SQLx with the PostgreSQL driver only.
 - SQLite and ScyllaDB are explicitly excluded.
 - Do not introduce Redis, message brokers, separate services, or distributed storage without measured requirements and a new accepted decision.
@@ -49,9 +48,9 @@ These instructions apply across this repository. More specific instructions in a
 - Do not add fake data, placeholder implementations, silent fallbacks, or success messages for unfinished behavior.
 - Do not build betting, wagering, staking, paid random rolls, loot-box monetisation, cash-out, or pay-to-win progression.
 - Use the SHA-512 commit–reveal protocol in docs/FAIRNESS.md for outcomes that require public verification. SHA-512 is a hash, not an entropy source; use OS-backed cryptographic randomness and unbiased result mapping.
-- Keep the Next.js/React frontend presentation-only. Rust owns authoritative game rules, session state, economy ledger, trade execution, fairness transcripts, permissions, and persistence.
-- Never expose bot tokens, database credentials, private seeds before reveal, or privileged backend secrets in frontend bundles.
-- Use Discord's Embedded App SDK only for Activity integration; ordinary Discord embeds do not host React components.
+- Rust owns game rules, session state, economy ledger, trade execution, fairness transcripts, permissions, and persistence.
+- Do not add a website, React/Next.js frontend, browser game client, or Discord Activity unless a concrete product requirement is approved first.
+- Ordinary Discord embeds do not host React components; use Discord-native components for bot interactions.
 
 ## Healthy engagement requirements
 
