@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 11] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 12] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -105,6 +105,14 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 11] = [
         emoji: EmojiKey::Chat,
         fallback: "⚔️",
     },
+    TavernDestination {
+        id: "expedition-board",
+        title: "The Expedition Board",
+        description: "Begin the Lantern Road alone or with up to three consenting companions.",
+        command: "expedition",
+        emoji: EmojiKey::Rocket,
+        fallback: "🗺️",
+    },
 ];
 
 /// Render the initial Tavern Wayfinder using only live commands.
@@ -146,7 +154,7 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 11);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 12);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
             [
@@ -160,7 +168,8 @@ mod tests {
                 "quests",
                 "wayfarer",
                 "companion",
-                "rivals"
+                "rivals",
+                "expedition"
             ]
         );
 
@@ -180,6 +189,7 @@ mod tests {
         assert!(home.contains(".wayfarer"));
         assert!(home.contains(".companion"));
         assert!(home.contains(".rivals"));
+        assert!(home.contains(".expedition"));
         assert!(home.contains("Rivalry Hall"));
         assert!(home.contains("The Common Tables"));
         assert!(home.contains("The Chronicle"));

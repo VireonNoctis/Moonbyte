@@ -1034,6 +1034,101 @@ pub async fn travel(
     .await
 }
 
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn expedition(
+    ctx: Context<'_>,
+    #[description = "list, start, join, begin, status, advance, pause, resume, leave, or cancel"]
+    action: String,
+    #[description = "Route ID or run ID"] target: Option<String>,
+    #[description = "Run mode for start, or checkpoint ID and choice for advance"]
+    #[rest]
+    details: Option<String>,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let guild_id = ctx.guild_id().map(|id| id.to_string());
+    let prefix = ctx.data().command_prefix(ctx.guild_id());
+    let action = action.trim().to_ascii_lowercase();
+
+    match action.as_str() {
+        "list" => send_private(ctx, crate::expedition::render_catalogue(&prefix)).await,
+        "start" => {
+            let route = target.as_deref().unwrap_or(crate::expedition::ROUTE_ID);
+            if route != crate::expedition::ROUTE_ID {
+                return send_private(ctx, "The current route is lantern-road. Other routes will appear when authored and released.").await;
+            }
+            let mode = details.as_deref().unwrap_or("solo").trim().to_ascii_lowercase();
+            if mode != "solo" && mode != "group" {
+                return send_private(ctx, "Choose solo or group for the Lantern Road.").await;
+            }
+            ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+            ctx.data().atlas().snapshot(&player_id).await?;
+            let shared = mode == "group";
+            let run = ctx.data().expeditions().start(&player_id, guild_id.as_deref(), shared).await?;
+            if shared {
+                let safe_prefix = escape_user_text(&prefix);
+                ctx.say(format!(
+                    "**Lantern Road group run #{} is recruiting.** Share the run ID with up to three friends. Each person must join explicitly with {}expedition join {}. The host can begin when everyone is ready. Personal Atlas progress is not shown here.",
+                    run.run_id, safe_prefix, run.run_id
+                )).await?;
+                Ok(())
+            } else {
+                send_private(ctx, crate::expedition::render(&run, &prefix)).await
+            }
+        }
+        "join" => {
+            let Some(guild) = guild_id.as_deref() else {
+                return send_private(ctx, "Shared Expeditions can only be joined inside their Discord server.").await;
+            };
+            let id = parse_expedition_id(target.as_deref())?;
+            ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+            ctx.data().atlas().snapshot(&player_id).await?;
+            let run = ctx.data().expeditions().join(&player_id, guild, id).await?;
+            send_private(ctx, crate::expedition::render(&run, &prefix)).await
+        }
+        "begin" | "status" | "pause" | "resume" | "leave" | "cancel" => {
+            let id = parse_expedition_id(target.as_deref())?;
+            let run = match action.as_str() {
+                "begin" => ctx.data().expeditions().begin(&player_id, guild_id.as_deref(), id).await?,
+                "status" => ctx.data().expeditions().snapshot(&player_id, guild_id.as_deref(), id).await?,
+                "pause" => ctx.data().expeditions().pause(&player_id, guild_id.as_deref(), id).await?,
+                "resume" => ctx.data().expeditions().resume(&player_id, guild_id.as_deref(), id).await?,
+                "leave" => ctx.data().expeditions().leave(&player_id, guild_id.as_deref(), id).await?,
+                "cancel" => ctx.data().expeditions().cancel(&player_id, guild_id.as_deref(), id).await?,
+                _ => unreachable!(),
+            };
+            send_private(ctx, crate::expedition::render(&run, &prefix)).await
+        }
+        "advance" => {
+            let id = parse_expedition_id(target.as_deref())?;
+            let Some(details) = details else {
+                return send_private(ctx, "Use expedition advance RUN_ID CHECKPOINT_ID CHOICE.").await;
+            };
+            let mut parts = details.split_whitespace();
+            let checkpoint = parts.next().ok_or("Enter the next checkpoint ID.")?;
+            let choice = parts.next().ok_or("Enter one of the checkpoint choices.")?;
+            if parts.next().is_some() {
+                return send_private(ctx, "Enter one checkpoint ID and one choice only.").await;
+            }
+            let run = ctx.data().expeditions().advance(
+                &player_id, guild_id.as_deref(), id, checkpoint, choice
+            ).await?;
+            send_private(ctx, crate::expedition::render(&run, &prefix)).await
+        }
+        _ => send_private(
+            ctx,
+            format!("Use {0}expedition list, start lantern-road solo|group, join RUN_ID, begin RUN_ID, status RUN_ID, advance RUN_ID CHECKPOINT_ID CHOICE, pause RUN_ID, resume RUN_ID, leave RUN_ID, or cancel RUN_ID.", escape_user_text(&prefix)),
+        ).await,
+    }
+}
+
+fn parse_expedition_id(value: Option<&str>) -> Result<i64, Error> {
+    value
+        .and_then(|text| text.trim().parse::<i64>().ok())
+        .filter(|id| *id > 0)
+        .ok_or_else(|| "Enter a valid numeric Expedition run ID.".into())
+}
+
 #[poise::command(prefix_command, slash_command)]
 pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
@@ -1257,6 +1352,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         atlas_command,
         chronicle(),
         travel_command,
+        expedition(),
         games_command,
         play_command,
         join_command,
