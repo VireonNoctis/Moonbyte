@@ -308,7 +308,6 @@ async fn ensure_starting_point(
     Ok(())
 }
 
-
 /// Apply a route checkpoint inside the caller's Expedition transaction.
 /// Atlas, Chronicle and Expedition history therefore commit or roll back together.
 pub(crate) async fn apply_expedition_travel(

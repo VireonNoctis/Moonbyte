@@ -847,7 +847,23 @@ impl ProfileStore {
             )
             .collect();
 
-        let expedition_runs = sqlx::query_as::<_, (i64, String, i16, Option<String>, String, i16, bool, String, Option<String>, String, Option<String>, Option<String>)>(
+        let expedition_runs = sqlx::query_as::<
+            _,
+            (
+                i64,
+                String,
+                i16,
+                Option<String>,
+                String,
+                i16,
+                bool,
+                String,
+                Option<String>,
+                String,
+                Option<String>,
+                Option<String>,
+            ),
+        >(
             "SELECT r.expedition_run_id, r.route_id, r.content_version, r.guild_id,
              r.state, r.current_checkpoint_index,
              r.host_discord_user_id = p.discord_user_id,
@@ -862,13 +878,35 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|(expedition_run_id, route_id, content_version, guild_id, state,
-              checkpoint_index, was_host, joined_at, left_at, created_at,
-              started_at, completed_at)| ExportedExpeditionRun {
-            expedition_run_id, route_id, content_version, guild_id, state,
-            checkpoint_index, was_host, joined_at, left_at, created_at,
-            started_at, completed_at,
-        })
+        .map(
+            |(
+                expedition_run_id,
+                route_id,
+                content_version,
+                guild_id,
+                state,
+                checkpoint_index,
+                was_host,
+                joined_at,
+                left_at,
+                created_at,
+                started_at,
+                completed_at,
+            )| ExportedExpeditionRun {
+                expedition_run_id,
+                route_id,
+                content_version,
+                guild_id,
+                state,
+                checkpoint_index,
+                was_host,
+                joined_at,
+                left_at,
+                created_at,
+                started_at,
+                completed_at,
+            },
+        )
         .collect();
         let expedition_checkpoints = sqlx::query_as::<_, (i64, String, i16, String, String)>(
             "SELECT h.expedition_run_id, h.checkpoint_id, h.checkpoint_index,
@@ -882,11 +920,17 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|(expedition_run_id, checkpoint_id, checkpoint_index, choice_id, completed_at)| {
-            ExportedExpeditionCheckpoint {
-                expedition_run_id, checkpoint_id, checkpoint_index, choice_id, completed_at,
-            }
-        })
+        .map(
+            |(expedition_run_id, checkpoint_id, checkpoint_index, choice_id, completed_at)| {
+                ExportedExpeditionCheckpoint {
+                    expedition_run_id,
+                    checkpoint_id,
+                    checkpoint_index,
+                    choice_id,
+                    completed_at,
+                }
+            },
+        )
         .collect();
 
         let export = PlayerExport {
@@ -1092,13 +1136,12 @@ impl ProfileStore {
         .execute(&mut *transaction)
         .await?
         .rows_affected();
-        let expedition_participations_removed = sqlx::query(
-            "DELETE FROM expedition_participants WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+        let expedition_participations_removed =
+            sqlx::query("DELETE FROM expedition_participants WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
         let expedition_runs_removed = sqlx::query(
             "DELETE FROM expedition_runs r
              WHERE r.expedition_run_id = ANY($1::bigint[])

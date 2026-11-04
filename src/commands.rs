@@ -1039,7 +1039,6 @@ pub async fn travel(
     .await
 }
 
-
 #[poise::command(prefix_command, slash_command)]
 pub async fn expedition(
     ctx: Context<'_>,
