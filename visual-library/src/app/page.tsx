@@ -1,5 +1,3 @@
-"use client";
-
 import { AtlasSection } from "@/components/atlas-section";
 import { GameLibrary } from "@/components/game-library";
 import { TavernSection } from "@/components/tavern-section";

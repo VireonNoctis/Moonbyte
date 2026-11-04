@@ -57,7 +57,7 @@ export function CopyCommandButton({
       type="button"
       aria-label={status === "idle" ? String(value) + " — copy command" : undefined}
     >
-      <span>{status === "copied" ? copiedLabel : status === "unavailable" ? "Copy unavailable" : children}</span>
+      <span aria-live="polite">{status === "copied" ? copiedLabel : status === "unavailable" ? "Copy unavailable" : children}</span>
       <span className="copy-button__symbol" aria-hidden="true">
         {status === "copied" ? "✓" : "↗"}
       </span>
