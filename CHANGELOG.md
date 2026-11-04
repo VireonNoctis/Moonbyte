@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-04 — Structured operational tracing
+
+- Added compact `tracing` output with an environment filter and a conservative default filter.
+- Added minimised lifecycle and cleanup events without player/guild IDs, message contents, credentials, private payloads or seed material.
+- Replaced raw runtime error output with a generic failure event to avoid leaking dependency connection details.
+- Corrected the Tavern footer so its live Atlas and Expedition destinations are not described as planned.
+
 ## 2026-11-04 — Discord-first cleanup and implementation alignment
 
 - Confirmed Discord-native commands/messages as the required player experience; removed the unused visual-library workspace from the branch.

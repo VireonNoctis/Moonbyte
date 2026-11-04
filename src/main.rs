@@ -10,18 +10,47 @@ use poise::serenity_prelude as serenity;
 
 #[tokio::main]
 async fn main() -> ExitCode {
+    if init_tracing().is_err() {
+        eprintln!("Moonbyte: structured logging could not be initialized.");
+        return ExitCode::FAILURE;
+    }
+
+    tracing::info!(event = "process_starting");
     match run().await {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(error) => {
-            eprintln!("Moonbyte startup/runtime error: {error}");
+        Ok(()) => {
+            tracing::info!(event = "process_stopped");
+            ExitCode::SUCCESS
+        }
+        Err(_) => {
+            // Avoid printing raw errors: some dependency errors can include connection
+            // details or other values that should not reach operational logs.
+            tracing::error!(event = "runtime_failed", "Moonbyte startup or runtime failed.");
             ExitCode::FAILURE
         }
     }
 }
 
+fn init_tracing() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    use tracing_subscriber::EnvFilter;
+
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        EnvFilter::new("moonbyte=info,serenity=warn,poise=info,sqlx=warn")
+    });
+
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_target(false)
+        .compact()
+        .try_init()?;
+
+    Ok(())
+}
+
 async fn run() -> Result<(), Error> {
+    tracing::info!(event = "configuration_loading");
     let config = Config::from_environment()?;
     let database = Database::connect(config.database_url()).await?;
+    tracing::info!(event = "database_ready");
     let games = GameRuntime::new(database.pool());
     let profiles = ProfileStore::new(database.pool());
     let wallets = WalletStore::new(database.pool());
@@ -42,8 +71,17 @@ async fn run() -> Result<(), Error> {
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
             interval.tick().await;
-            if cleanup_database.remove_expired_sessions().await.is_err() {
-                eprintln!("Moonbyte: PostgreSQL expired-session cleanup failed.");
+            match cleanup_database.remove_expired_sessions().await {
+                Ok(removed) if removed > 0 => {
+                    tracing::info!(
+                        event = "expired_sessions_removed",
+                        rows = removed
+                    );
+                }
+                Ok(_) => {}
+                Err(_) => {
+                    tracing::warn!(event = "expired_session_cleanup_failed");
+                }
             }
         }
     });
@@ -118,10 +156,10 @@ async fn run() -> Result<(), Error> {
                                 .guild_settings()
                                 .remove_guild_data(&incomplete.id.to_string())
                                 .await?;
-                            eprintln!(
-                                "Moonbyte: removed {} command settings and {} active sessions from a departed guild.",
-                                cleanup.command_settings_removed,
-                                cleanup.sessions_removed
+                            tracing::info!(
+                                event = "guild_data_cleaned",
+                                command_settings_removed = cleanup.command_settings_removed,
+                                active_sessions_removed = cleanup.sessions_removed
                             );
                         }
                     }
@@ -187,15 +225,18 @@ async fn run() -> Result<(), Error> {
         .framework(framework)
         .await?;
 
+    tracing::info!(event = "discord_gateway_starting");
     let shard_manager = client.shard_manager.clone();
     tokio::select! {
         result = client.start() => {
             result?;
+            tracing::info!(event = "discord_gateway_stopped");
         }
         signal = shutdown_signal() => {
             signal?;
-            eprintln!("Moonbyte: shutdown signal received; closing Discord gateway shards.");
+            tracing::info!(event = "shutdown_signal_received");
             shard_manager.shutdown_all().await;
+            tracing::info!(event = "discord_shards_closed");
         }
     }
 

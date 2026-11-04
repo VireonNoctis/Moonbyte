@@ -17,15 +17,9 @@
 - [x] Lantern Road Expedition v1 with solo/group state, opt-in participation, persistent checkpoints, pause/resume/leave, recovery and privacy coverage.
 - [x] PostgreSQL integration tests, formatting and Clippy in CI.
 
-## Next slice: operational visibility and reliable Discord play
+## Next slice: reliable Discord play
 
-1. **Structured logging**
-   - Add `tracing` and a minimal `tracing-subscriber` setup.
-   - Emit stable event names for startup, database readiness, gateway lifecycle, cleanup outcomes and guild cleanup.
-   - Never include tokens, database URLs, raw messages, player IDs, private payloads or secret seeds.
-   - Add tests for safe field choices where practical.
-
-2. **Discord-native game controls**
+1. **Discord-native game controls**
    - Add button controls for Tic-tac-toe and Connect Four, then Memory Match.
    - Route component input through the same GameRuntime and validation as command actions.
    - Bind each control to the session/message, enforce guild and participant checks, reject stale/duplicate controls, and disable controls after terminal states.

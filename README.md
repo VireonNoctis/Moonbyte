@@ -21,7 +21,7 @@ This branch contains a working Rust/Tokio/Serenity/Poise runtime and PostgreSQL 
 - Versioned Terms/Privacy consent, private data inventory, version 9 export and confirmed account deletion.
 - Per-server command prefixes and optional command-channel routing.
 
-The four starter games currently use command-based actions. Richer Discord button/select-menu game controls, duplicate interaction idempotency, structured operational telemetry and production backup/restore drills are tracked in the roadmap. A green CI run is not a substitute for live Discord deployment testing.
+The four starter games currently use command-based actions. Structured tracing now records minimised lifecycle and cleanup events without player IDs, messages, secrets or database connection details. Richer Discord button/select-menu game controls, duplicate interaction idempotency and production backup/restore drills remain in the roadmap. A green CI run is not a substitute for live Discord deployment testing.
 
 ## Technology
 

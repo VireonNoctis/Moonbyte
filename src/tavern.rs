@@ -136,8 +136,8 @@ pub fn render(prefix: &str) -> String {
          A quiet place to choose your next stop. The Wayfinder shows destinations that are \
          available in this build; browsing never joins a game or changes your progress.\n\n\
          {destinations}\n\n\
-         Use `{prefix}help` for every available command. The wider Atlas, Expeditions, Vaults, \
-         Guilds and Bazaar will appear here only as their systems become playable."
+         Use `{prefix}help` for every available command. More Atlas routes, Guild spaces, \
+         Vaults and Bazaar features will appear here as their systems become playable."
     )
 }
 
@@ -193,7 +193,7 @@ mod tests {
         assert!(home.contains("Rivalry Hall"));
         assert!(home.contains("The Common Tables"));
         assert!(home.contains("The Chronicle"));
-        assert!(home.contains("only as their systems become playable"));
+        assert!(home.contains("More Atlas routes, Guild spaces"));
     }
 
     #[test]

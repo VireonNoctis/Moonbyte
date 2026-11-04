@@ -100,7 +100,6 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 
 ## Known gaps
 
-- Structured tracing and redacted operational diagnostics.
 - Discord-native buttons/select menus for turn-based boards and a consistent component lifecycle.
 - Durable idempotency for duplicate Discord component deliveries.
 - Development-guild interaction smoke tests and accessibility review of each interactive board.

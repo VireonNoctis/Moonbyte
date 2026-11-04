@@ -76,7 +76,11 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - No client-supplied score, winner, reward, currency balance or checkpoint is trusted.
 - Discord delivery failure never rolls back a committed game or Expedition state change; retry behavior must avoid duplicate effects.
 
-## Shutdown and operations
+## Logging, shutdown and operations
+
+The runtime uses `tracing` with an environment filter and a compact formatter. The default filter enables Moonbyte application events at info level and keeps Serenity/SQLx comparatively quiet. Events cover process startup/stopping, configuration progress, database readiness, gateway startup/stopping, shutdown signals, expired-session cleanup and guild cleanup.
+
+Log fields are deliberately minimised: no Discord user or guild identifiers, raw messages, private payloads, token, database URL or secret quest/fairness seeds are emitted. Production operators should avoid enabling verbose SQLx query logging because database diagnostics may expose sensitive values.
 
 The runtime handles Ctrl-C on all supported platforms and SIGTERM on Unix, then requests all Discord shards to shut down. Process exit drops background tasks and the SQLx pool cleanly.
 
