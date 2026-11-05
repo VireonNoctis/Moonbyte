@@ -19,6 +19,11 @@
 
 ## Live systems
 
+### Command presentation
+
+The command adapter now has a reusable Discord embed title-panel helper for substantial slash results. The Workshop craft response uses the **Wayfarer Workshop · Crafting** title and an ephemeral slash response. Unknown recipe input is checked against the known recipe catalogue; a close typo receives a “Did you mean …?” suggestion, while unrelated input receives ordinary usage guidance. Suggestions never auto-correct or execute. The same helper is intended for browse-style Games, Atlas, Expedition, Quest and collection views as those response paths are consolidated; private player data must retain private delivery.
+
+
 ### Games and sessions
 
 Four games currently run through the same transport-independent game engine:
