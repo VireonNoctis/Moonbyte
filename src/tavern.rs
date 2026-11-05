@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 15] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 16] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -130,6 +130,14 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 15] = [
         fallback: "🖼️",
     },
     TavernDestination {
+        id: "mosslight-resonance",
+        title: "The Puzzle Vault",
+        description: "Discover Mosslight Grove to unlock a private three-chamber challenge and its one-time keepsake.",
+        command: "vault list",
+        emoji: EmojiKey::Crystal,
+        fallback: "🔮",
+    },
+    TavernDestination {
         id: "wayfarer-workshop",
         title: "The Wayfarer Workshop",
         description: "Craft one fixed keepsake from materials earned through first discoveries.",
@@ -178,7 +186,7 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 15);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 16);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
             [
@@ -196,6 +204,7 @@ mod tests {
                 "expedition",
                 "inventory",
                 "collection",
+                "vault list",
                 "craft wayfarer-lantern"
             ]
         );
@@ -220,6 +229,8 @@ mod tests {
         assert!(home.contains(".inventory"));
         assert!(home.contains(".collection"));
         assert!(home.contains(".craft wayfarer-lantern"));
+        assert!(home.contains(".vault list"));
+        assert!(home.contains("The Puzzle Vault"));
         assert!(home.contains("Wayfarer Workshop"));
         assert!(home.contains("Your Satchel"));
         assert!(home.contains("The Postcard Wall"));

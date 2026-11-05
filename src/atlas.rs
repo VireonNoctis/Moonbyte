@@ -432,6 +432,19 @@ pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n");
+    let vault_guide = if snapshot
+        .discoveries
+        .iter()
+        .any(|discovery| discovery.location.id == "mosslight-grove")
+    {
+        format!(
+            "**Puzzle Vault unlocked:** Mosslight Resonance is ready. Review its rules and fixed keepsake with {safe_prefix}vault list."
+        )
+    } else {
+        format!(
+            "**A hidden place awaits:** discover Mosslight Grove to unlock Mosslight Resonance. Use {safe_prefix}vault list to review the prerequisite."
+        )
+    };
 
     format!(
         "**The Atlas — World Index**\n\n\
@@ -440,7 +453,8 @@ pub fn render(snapshot: &AtlasSnapshot, prefix: &str) -> String {
          **Routes from here**\n{}\n\n\
          Travel follows connected roads only. Revisiting a place is always allowed, \
          but it does not grant currency or repeatable rewards. Use {safe_prefix}atlas \
-         at any time to reopen your map.",
+         at any time to reopen your map.\n\n\
+         {vault_guide}",
         snapshot.current_location.name,
         snapshot.current_location.region,
         snapshot.current_location.description,

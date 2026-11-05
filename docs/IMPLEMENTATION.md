@@ -13,7 +13,7 @@
 | Prefix | `.` by default; per-guild override supported |
 | Storage | PostgreSQL through SQLx |
 | Deployment contract | One supported bot process with PostgreSQL |
-| Schema | Ordered migrations through `0013_atlas_crafting_materials.sql` |
+| Schema | Ordered migrations through `0015_mosslight_resonance_chronicle.sql` |
 | Player interface | Discord-native commands and messages; numbered board buttons for Tic-tac-toe, Connect Four and Memory Match |
 | Toolchain | Pinned in `rust-toolchain.toml` |
 
@@ -21,11 +21,11 @@
 
 ### Command presentation
 
-The command adapter uses a shared Discord embed title-panel builder for Craft, Tavern, Games, Expedition catalogue/status views and player-facing overview/browse screens. Relevant slash commands expose an optional `title` field, and matching prefix commands accept trailing title text after required arguments. Titles are trimmed, whitespace-normalised, mention-safe and bounded to Discord's 256-character embed-title limit. Player-owned views and active-session lists retain private DM delivery; public catalogue panels preserve their configured visibility. Game boards retain canonical titles and native controls.
+The command adapter uses a shared Discord embed title-panel builder for Craft, Tavern, Games, Expedition catalogue/status views and player-facing overview/browse screens. Relevant slash commands expose an optional `title` field, and matching prefix commands accept trailing title text after required arguments. Titles are trimmed, whitespace-normalised, mention-safe and bounded to Discord's 256-character embed-title limit. Player-owned slash views and active-session lists use ephemeral embeds; matching prefix invocations in a server are delivered by DM. Public catalogue panels preserve their configured visibility. Game boards retain canonical titles and native controls.
 
-Slash autocomplete is generated from the authoritative local catalogues, not a second hard-coded UI list. Craft options show the output keepsake and ingredient requirements while their selected values remain canonical recipe IDs. Game, Atlas destination, Quest action, Rivalry action, Expedition action and profile-visibility fields use the same shared matcher and Discord response builder. Autocomplete returns at most 25 choices, with labels/values bounded to Discord's 100-character choice limit. Prefix syntax and the existing typo suggestion path remain available.
+Slash autocomplete is generated from the authoritative local catalogues, not a second hard-coded UI list. Craft options show the output keepsake and ingredient requirements while their selected values remain canonical recipe IDs. Game, Atlas destination, Quest action, Rivalry action, Expedition action, Vault action/room and profile-visibility fields use the same shared matcher and Discord response builder. Autocomplete returns at most 25 choices, with labels/values bounded to Discord's 100-character choice limit. Prefix syntax and the existing typo suggestion path remain available.
 
-Unknown recipes, game IDs, Atlas destinations and finite Quest/Rival/Expedition action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute.
+Unknown recipes, game IDs, Atlas destinations, Vault blueprint/chamber IDs and finite Quest/Rival/Expedition/Vault action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute.
 
 ### Games and sessions
 
@@ -42,12 +42,17 @@ Tic-tac-toe, Connect Four and Memory Match expose numbered Discord buttons route
 
 ### Tavern and world
 
-The Tavern Wayfinder exposes fifteen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel, Postcard Wall and Wayfarer Workshop.
+The Tavern Wayfinder exposes sixteen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel, Postcard Wall, Wayfarer Workshop and the Puzzle Vault.
 
 The Atlas contains five authored locations and reciprocal route edges. A player begins at Lantern Square and can travel only to a directly connected location. First discovery unlocks one private Chronicle fragment and one account-bound postcard in the same PostgreSQL transaction. Revisits do not duplicate pages, keepsakes or rewards.
 
 The Lantern Road is one bounded authored route: Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Solo runs and same-guild groups of up to four are supported. Every participant opts in. The state machine supports recruiting, active, paused, completed and cancelled states; checkpoints are versioned and persisted, participant-specific Atlas/Chronicle/inventory effects use their owning services, and export/deletion includes each participant's own history. Runs can remain paused; there is no attendance deadline.
 
+### Puzzle Vault
+
+Mosslight Resonance is the first fixed-rule, solo Puzzle Vault. It is unlocked by discovering Mosslight Grove in the Atlas and can be opened from the Tavern Wayfinder or Atlas panel. The three authored chambers are Waystone Order, Tideglass Code and Keeper's Seal; the final chamber verifies the first two answers together. Rules, clues and accepted answers are fixed source data, not generated content.
+
+`.vault list` reviews access and the fixed reward; `.vault enter mosslight-resonance confirm` requires explicit confirmation. `.vault solve <room-id> <answer>` records only a correct chamber's canonical ID and timestamp as a PostgreSQL save stone. Wrong guesses are checked in memory and are not persisted; the command returns the authored hint. Runs can be paused, left and resumed without a deadline. Completion grants one account-bound Mosslight Seal, with provenance tied to the completing run and blueprint version; the one-time guard prevents replay farming. Completion also unlocks a private Chronicle page and records a Wayfarer activity event. There are no Moonbits, repeatable rewards, leaderboards or group mode.
 ### Inventory and collection
 
 - `.inventory` shows account-bound items with quantity, source and acquisition timestamp.
@@ -71,8 +76,8 @@ The Lantern Road is one bounded authored route: Lantern Square → Mosslight Gro
 
 - Profiles store a player-selected display name, optional short bio, visibility and preference flags.
 - The global command gate requires acceptance of current Terms and Privacy versions before ordinary commands. Legal/privacy commands remain available.
-- Private data inventory and JSON export are implemented. Export schema is version 10 and includes item IDs, quantity, source type, source reference and acquisition timestamp.
-- Confirmed deletion removes player-owned records across profiles, consent, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, inventory, Wayfarer/rivalries and Expedition participation/history.
+- Private data inventory and JSON export are implemented. Export schema is version 11 and includes item IDs, quantity, source type, source reference and acquisition timestamp, plus Vault runs and solved chamber checkpoints.
+- Confirmed deletion removes player-owned records across profiles, consent, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, inventory, Wayfarer/rivalries, Expedition participation/history and Puzzle Vault runs/checkpoints.
 - A shared game-session snapshot is removed when it contains the deleting player; the receipt explains that co-participant session access is consequently ended. Independent player aggregates remain.
 
 ### Guild settings
@@ -104,6 +109,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 | Wayfarer, quests and rivalries | `src/wayfarer.rs` |
 | Expedition route and run state | `src/expedition.rs` |
 | Tavern destinations | `src/tavern.rs` |
+| Puzzle Vault rules and persistent runs | `src/vault.rs` |
 | Guild configuration | `src/guild_settings.rs` |
 
 ## Known gaps
@@ -112,7 +118,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 - Backup/restore scripts and a PostgreSQL readiness probe exist, but no scheduled backup service, production monitoring or rehearsed live restore has been configured.
 - Discord application creation, bot invite configuration, secrets provisioning and live guild verification have not been performed.
 - More original games, reviewed word/puzzle packs and additional authored Expedition routes.
-- Known-input crafting, fixed-rule Puzzle Vaults, opt-in guild projects and a fixed-price Bazaar after ownership, moderation, idempotency and settlement contracts are proven.
+- Additional reviewed Vault blueprints/chambers, opt-in guild projects and a fixed-price Bazaar after ownership, moderation, idempotency and settlement contracts are proven.
 - Public player directory/leaderboards, mastery, Almanac/seasonal content and homesteads remain proposals until their privacy and ownership contracts are implemented.
 
 ## Canonical documents

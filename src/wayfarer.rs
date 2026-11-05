@@ -756,6 +756,17 @@ pub(crate) async fn record_expedition_completion(
     record_activity_day(transaction, player_id).await
 }
 
+/// Record completion of a verified Puzzle Vault as meaningful activity. No current
+/// daily quest consumes this event, so completion does not change quest progress.
+pub(crate) async fn record_vault_completion(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), sqlx::Error> {
+    ensure_player(transaction, player_id).await?;
+    ensure_daily_quests(transaction, player_id).await?;
+    record_activity_day(transaction, player_id).await
+}
+
 /// Record post-acceptance head-to-head results only for a two-player active rivalry.
 pub(crate) async fn record_rivalry_match(
     transaction: &mut Transaction<'_, Postgres>,

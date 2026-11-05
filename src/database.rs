@@ -15,6 +15,8 @@ const CHRONICLE_MIGRATION: &str = include_str!("../migrations/0010_player_chroni
 const EXPEDITION_MIGRATION: &str = include_str!("../migrations/0011_expeditions.sql");
 const INVENTORY_MIGRATION: &str = include_str!("../migrations/0012_player_inventory.sql");
 const CRAFTING_MIGRATION: &str = include_str!("../migrations/0013_atlas_crafting_materials.sql");
+const VAULT_MIGRATION: &str = include_str!("../migrations/0014_mosslight_resonance_vault.sql");
+const VAULT_CHRONICLE_MIGRATION: &str = include_str!("../migrations/0015_mosslight_resonance_chronicle.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -85,6 +87,8 @@ impl Database {
             (11_i64, EXPEDITION_MIGRATION),
             (12_i64, INVENTORY_MIGRATION),
             (13_i64, CRAFTING_MIGRATION),
+            (14_i64, VAULT_MIGRATION),
+            (15_i64, VAULT_CHRONICLE_MIGRATION),
         ] {
             let already_applied: bool = sqlx::query_scalar(
                 "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",

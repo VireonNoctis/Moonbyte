@@ -623,7 +623,7 @@ pub async fn privacy_data(
          Wayfarer active days: {}\n\
          Daily quest rotations: {}\n\
          Daily quest records: {}\n\
-         Rivalry records: {}\nExpedition participations: {}\nExpedition checkpoints: {}\n\n\
+         Rivalry records: {}\nExpedition participations: {}\nExpedition checkpoints: {}\nPuzzle Vault runs: {}\nPuzzle Vault save stones: {}\n\n\
          {}\n\n\
          Use `{prefix}privacy_export` to receive a JSON copy, or `{prefix}privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
@@ -661,6 +661,8 @@ pub async fn privacy_data(
         inventory.rivalry_records,
         inventory.expedition_run_records,
         inventory.expedition_checkpoint_records,
+        inventory.vault_run_records,
+        inventory.vault_checkpoint_records,
         inventory.session_retention
     );
     send_private_title_panel(
@@ -695,7 +697,7 @@ pub async fn privacy_export(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn privacy_delete(
     ctx: Context<'_>,
-    #[description = "Type DELETE to confirm removal of your profile, sessions, wallet, keepsakes, Chronicle pages, quests, Wayfarer history and rivalries"]
+    #[description = "Type DELETE to confirm removal of your profile, sessions, wallet, keepsakes, Chronicle pages, Vault progress, quests, Wayfarer history and rivalries"]
     confirmation: Option<String>,
 ) -> Result<(), Error> {
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
@@ -708,7 +710,7 @@ pub async fn privacy_delete(
             format!(
                 "**Delete your Moonbyte profile?**\n\n\
              This removes your profile, policy-acceptance record, unlocked achievements, Moonbits wallet and ledger \
-             entries, Atlas location/discovery records, Chronicle archive pages, account-bound keepsakes and their provenance, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
+             entries, Atlas location/discovery records, Chronicle archive pages, account-bound keepsakes and their provenance, Puzzle Vault runs and solved chamber checkpoints, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
              containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
              To confirm, run `{prefix}privacy_delete DELETE`. No deletion has happened yet.",
@@ -742,7 +744,7 @@ pub async fn privacy_delete(
          Wayfarer activity days removed: {}\n\
          Daily quest rotations removed: {}\n\
          Daily quest records removed: {}\n\
-         Rivalry records removed: {}\nExpedition participations removed: {}\nExpedition runs transferred to a new host: {}\nExpedition runs cancelled: {}\nEmpty Expedition runs removed: {}\n\
+         Rivalry records removed: {}\nExpedition participations removed: {}\nExpedition runs transferred to a new host: {}\nExpedition runs cancelled: {}\nEmpty Expedition runs removed: {}\nPuzzle Vault runs removed: {}\nPuzzle Vault save stones removed: {}\n\
          Policy acceptance record removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
@@ -778,6 +780,8 @@ pub async fn privacy_delete(
         deletion.expedition_runs_host_transferred,
         deletion.expedition_runs_cancelled,
         deletion.expedition_runs_removed,
+        deletion.vault_runs_removed,
+        deletion.vault_checkpoints_removed,
         if deletion.consent_record_removed {
             "yes"
         } else {
@@ -1025,6 +1029,227 @@ pub async fn craft(
         true,
     )
     .await
+}
+
+#[poise::command(prefix_command, slash_command, ephemeral)]
+pub async fn vault(
+    ctx: Context<'_>,
+    #[description = "Choose an action. The default opens the available Vault list."]
+    #[max_length = 32]
+    #[autocomplete = "autocomplete_vault_action"]
+    action: Option<String>,
+    #[description = "Blueprint for enter, or current chamber ID for solve."]
+    #[max_length = 80]
+    #[autocomplete = "autocomplete_vault_target"]
+    target: Option<String>,
+    #[description = "Type confirm to enter, or provide your answer when solving."]
+    #[max_length = 120]
+    #[rest]
+    details: Option<String>,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
+    let action = action.as_deref().map(str::trim).filter(|value| !value.is_empty())
+        .unwrap_or("list").to_ascii_lowercase();
+    let store = ctx.data().vault();
+
+    match action.as_str() {
+        "list" => {
+            let access = if store.is_unlocked(&player_id).await? {
+                "Available · Mosslight Grove discovered"
+            } else {
+                "Locked · Discover Mosslight Grove through the Atlas first"
+            };
+            send_private_title_panel(
+                ctx,
+                "Mosslight Resonance · Puzzle Vault",
+                None,
+                format!(
+                    "**Mosslight Resonance** · {access}\n\n\
+                     A private, solo Puzzle Vault with three authored chambers. Most runs take \
+                     a short, self-paced session. Correct solutions create PostgreSQL save stones; pause, \
+                     leave and resume without losing completed rooms. Incorrect answers are not \
+                     stored.\n\n\
+                     **Keepsake:** Mosslight Seal · fixed, account-bound and awarded once, including \
+                     across practice replays.\n\n\
+                     {prefix}vault enter mosslight-resonance confirm — review and confirm entry.\n\
+                     {prefix}vault status — inspect your latest run.\n\
+                     {prefix}vault solve <room-id> <answer> — submit the current answer.\n\
+                     {prefix}vault pause | resume | leave — manage your saved run."
+                ),
+            ).await
+        }
+        "enter" => {
+            let selected = target.as_deref().unwrap_or_default().trim();
+            if crate::vault::resolve_blueprint_id(selected).is_none() {
+                let message = match suggest_known_value(selected, &[crate::vault::BLUEPRINT_ID]) {
+                    Some(value) => format!("Unknown blueprint. Did you mean {prefix}vault enter {value} confirm?"),
+                    None => "Use .vault enter mosslight-resonance confirm for the available blueprint.".to_owned(),
+                };
+                return send_private_title_panel(ctx, "Mosslight Resonance · Entry", None, message).await;
+            }
+            if !details.as_deref().map(str::trim)
+                .is_some_and(|value| value.eq_ignore_ascii_case("confirm"))
+            {
+                return send_private_title_panel(
+                    ctx,
+                    "Mosslight Resonance · Entry",
+                    None,
+                    format!(
+                        "**Before entering**\n\n\
+                         This solo run has three chambers. Only solved room IDs are saved; \
+                         incorrect guesses are never stored. You can pause or leave whenever \
+                         you like. Completion grants one fixed Mosslight Seal, with no Moonbits \
+                         and no repeatable reward.\n\n\
+                         Confirm with {prefix}vault enter mosslight-resonance confirm."
+                    ),
+                ).await;
+            }
+            match store.enter(&player_id).await {
+                Ok(entry) => {
+                    let heading = if entry.created { "A new save stone is ready." }
+                        else { "Your existing run is ready." };
+                    send_private_title_panel(
+                        ctx,
+                        "Mosslight Resonance · Puzzle Vault",
+                        None,
+                        format!("**{heading}**\n\n{}", render_vault_snapshot(&entry.snapshot, &prefix)),
+                    ).await
+                }
+                Err(error) => send_private_title_panel(
+                    ctx, "Mosslight Resonance · Entry", None, error.to_string()
+                ).await,
+            }
+        }
+        "status" => {
+            let message = match store.latest_snapshot(&player_id).await? {
+                Some(snapshot) => render_vault_snapshot(&snapshot, &prefix),
+                None => format!("No run yet. Use {prefix}vault list to review Mosslight Resonance."),
+            };
+            send_private_title_panel(ctx, "Mosslight Resonance · Saved Progress", None, message).await
+        }
+        "solve" => {
+            let room_id = target.as_deref().unwrap_or_default().trim();
+            let answer = details.as_deref().unwrap_or_default().trim();
+            if room_id.is_empty() || answer.is_empty() {
+                return send_private_title_panel(
+                    ctx, "Mosslight Resonance · Chamber", None,
+                    "Use .vault solve <room-id> <answer>. The current room ID appears in .vault status."
+                ).await;
+            }
+            match store.solve(&player_id, room_id, answer).await {
+                Ok(snapshot) => {
+                    let solved = crate::vault::ROOMS.iter().find(|room| room.id == room_id);
+                    let message = if snapshot.state == "completed" {
+                        format!(
+                            "**All three save stones are lit.**\n{}\n\n\
+                             The Mosslight Seal is in your Satchel, a private Chronicle page has been unlocked, and \
+                             the completion counts toward your Wayfarer Thread. Practice replays \
+                             do not grant another keepsake.",
+                            render_vault_snapshot(&snapshot, &prefix)
+                        )
+                    } else {
+                        format!(
+                            "**Chamber solved.** {}\n\n{}",
+                            solved.map(|room| room.explanation).unwrap_or("Your save stone is set."),
+                            render_vault_snapshot(&snapshot, &prefix)
+                        )
+                    };
+                    send_private_title_panel(ctx, "Mosslight Resonance · Save Stone", None, message).await
+                }
+                Err(crate::vault::VaultError::WrongRoom) => {
+                    let current = store.active_snapshot(&player_id).await?;
+                    let expected = current.and_then(|snapshot| snapshot.current_room)
+                        .map(|room| room.id).unwrap_or("the current chamber");
+                    let message = match suggest_known_value(room_id, &[expected]) {
+                        Some(value) => format!("That is not the current chamber. Did you mean {value}? Progress is unchanged."),
+                        None => "That is not the current chamber. Check .vault status; progress is unchanged.".to_owned(),
+                    };
+                    send_private_title_panel(ctx, "Mosslight Resonance · Chamber", None, message).await
+                }
+                Err(crate::vault::VaultError::IncorrectAnswer) => {
+                    let hint = store.active_snapshot(&player_id).await?
+                        .and_then(|snapshot| snapshot.current_room)
+                        .map(|room| room.hint)
+                        .unwrap_or("Revisit the published clue and compare each condition.");
+                    send_private_title_panel(
+                        ctx,
+                        "Mosslight Resonance · Chamber",
+                        None,
+                        format!("Not quite. Your save stone is unchanged. Hint: {hint}"),
+                    ).await
+                }
+                Err(error) => send_private_title_panel(
+                    ctx, "Mosslight Resonance · Chamber", None, error.to_string()
+                ).await,
+            }
+        }
+        "pause" | "resume" | "leave" => {
+            let result = match action.as_str() {
+                "pause" => store.pause(&player_id).await,
+                "resume" => store.resume(&player_id).await,
+                _ => store.leave(&player_id).await,
+            };
+            match result {
+                Ok(snapshot) => {
+                    let message = if action == "leave" {
+                        format!(
+                            "You left without deleting your save stones. Use .vault resume to \
+                             continue this same run later; your history remains in your private export.\n\n{}",
+                            render_vault_snapshot(&snapshot, &prefix)
+                        )
+                    } else {
+                        render_vault_snapshot(&snapshot, &prefix)
+                    };
+                    send_private_title_panel(
+                        ctx, "Mosslight Resonance · Run Status", None, message
+                    ).await
+                }
+                Err(error) => send_private_title_panel(
+                    ctx, "Mosslight Resonance", None, error.to_string()
+                ).await,
+            }
+        }
+        _ => {
+            let message = match suggest_known_value(
+                &action, &["list", "enter", "status", "solve", "pause", "resume", "leave"]
+            ) {
+                Some(value) => format!("Unknown action. Did you mean {prefix}vault {value}?"),
+                None => "Unknown Vault action. Use .vault list to see available actions.".to_owned(),
+            };
+            send_private_title_panel(ctx, "Mosslight Resonance · Help", None, message).await
+        }
+    }
+}
+
+fn render_vault_snapshot(snapshot: &crate::vault::VaultSnapshot, prefix: &str) -> String {
+    let saved = crate::vault::ROOMS.iter()
+        .filter(|room| snapshot.completed_room_ids.iter().any(|id| id == room.id))
+        .map(|room| format!("✓ {}", room.title))
+        .collect::<Vec<_>>();
+    let saved = if saved.is_empty() { "No save stones set yet.".to_owned() }
+        else { saved.join("\n") };
+    let current = match snapshot.current_room {
+        Some(room) => format!(
+            "**{}** · {}\n{}\n\nSubmit with {prefix}vault solve {} <answer>.",
+            room.title, room.id, room.clue, room.id
+        ),
+        None if snapshot.state == "completed" =>
+            "All chambers are complete. You can replay for practice without another keepsake.".to_owned(),
+        None => "No chamber is currently open.".to_owned(),
+    };
+    let next = match snapshot.state.as_str() {
+        "active" => format!("Pause with {prefix}vault pause."),
+        "paused" | "left" => format!("Resume with {prefix}vault resume."),
+        "completed" => format!("Replay with {prefix}vault enter mosslight-resonance confirm."),
+        _ => format!("Start fresh with {prefix}vault enter mosslight-resonance confirm."),
+    };
+    format!(
+        "**Mosslight Resonance** · Run #{}\nStatus: **{}** · {}/3 chambers saved\n\n\
+         **Saved chambers**\n{saved}\n\n{current}\n\n{next}",
+        snapshot.run_id, snapshot.state, snapshot.completed_room_ids.len()
+    )
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -2008,6 +2233,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         chronicle(),
         travel_command,
         expedition(),
+        vault(),
         games_command,
         play_command,
         join_command,
@@ -2093,7 +2319,12 @@ async fn send_private_title_panel(
     description: impl Into<String>,
 ) -> Result<(), Error> {
     let embed = build_title_panel(fallback, override_title, &description.into());
-    if ctx.guild_id().is_some() {
+    if ctx.prefix() == "/" {
+        // Slash interactions support private, dismissible results without requiring
+        // the player to have direct messages enabled.
+        ctx.send(poise::CreateReply::new().embed(embed).ephemeral(true))
+            .await?;
+    } else if ctx.guild_id().is_some() {
         let dm = ctx.author().create_dm_channel(ctx.http()).await?;
         dm.send_message(ctx.http(), CreateMessage::new().embed(embed))
             .await?;
@@ -2202,6 +2433,39 @@ async fn autocomplete_expedition_action(
     .into_iter()
     .map(|(label, value)| (label.to_owned(), value.to_owned()))
     .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_vault_action(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("List · Browse available Puzzle Vaults", "list"),
+        ("Enter · Confirm a solo Vault run", "enter"),
+        ("Status · Inspect your saved progress", "status"),
+        ("Solve · Submit the current chamber answer", "solve"),
+        ("Pause · Preserve save stones and pause", "pause"),
+        ("Resume · Continue a paused run", "resume"),
+        ("Leave · Close the run without deleting progress", "leave"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_vault_target(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let mut options = vec![(
+        "Mosslight Resonance · 3 solo chambers".to_owned(),
+        crate::vault::BLUEPRINT_ID.to_owned(),
+    )];
+    options.extend(crate::vault::ROOMS.iter().map(|room| {
+        (format!("{} · Chamber ID", room.title), room.id.to_owned())
+    }));
     build_autocomplete_response(partial, options)
 }
 
@@ -2376,6 +2640,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}atlas / /atlas — inspect your world map and known routes\n\
          {safe_prefix}travel <location> / /travel — follow a connected Atlas route\n\
          {safe_prefix}expedition list|start|join|begin|status|advance|pause|resume|leave|cancel / /expedition — play the Lantern Road\n\
+         {safe_prefix}vault list|enter|status|solve|pause|resume|leave / /vault — play Mosslight Resonance\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
@@ -2402,13 +2667,13 @@ parent session; aggregate statistics and earned wallet/ledger records remain unt
 requests deletion. The first completion of each game type earns 10 Moonbits once per player. \
 Achievements such as first completion, first victory, completing all four games, ten total \
 games and five wins unlock once and remain until account deletion; they do not grant currency. \
-Atlas discoveries grant account-bound keepsakes and fixed materials with recorded provenance. Use `.inventory` and `.collection` to inspect them; `.craft wayfarer-lantern` consumes one of each material to make one lantern. Trading is not enabled.\n\n\
+Atlas discoveries grant account-bound keepsakes and fixed materials with recorded provenance. Use `.inventory` and `.collection` to inspect them; `.craft wayfarer-lantern` consumes one of each material to make one lantern. Mosslight Resonance is a private, solo three-chamber Vault unlocked by discovering Mosslight Grove; solved chamber IDs are saved, incorrect answers are not stored, and completion awards one fixed Mosslight Seal. Trading is not enabled.\n\n\
 Player profiles store a Discord user ID, display name, optional bio, private-by-default \
 visibility and two preference flags. Use `.privacy_data` to inspect your current records, \
 `.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
 deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
 Deletion removes the profile, per-game statistics, achievements, Moonbits wallet/ledger records, \
-Atlas location/discovery records, private Chronicle fragments, postcards, fixed materials, crafted keepsakes and their provenance, your Expedition participation, and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
+Atlas location/discovery records, private Chronicle fragments, postcards, fixed materials, crafted keepsakes and their provenance, Puzzle Vault runs and solved chamber checkpoints, your Expedition participation, and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
 Discord's own messages, Discord account data, other participants' copies, or backups outside \
 the current database.\n\n\
 Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of the \

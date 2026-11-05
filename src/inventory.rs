@@ -70,13 +70,22 @@ pub const MATERIAL_CATALOGUE: [ItemDefinition; 2] = [
     },
 ];
 
-pub const CRAFTED_CATALOGUE: [ItemDefinition; 1] = [ItemDefinition {
-    item_id: "keepsake.wayfarer-lantern",
-    location_id: "wayfarer-workshop",
-    location_name: "Wayfarer Workshop",
-    title: "Wayfarer's Lantern",
-    description: "A small, account-bound keepsake that holds a warm light for the road.",
-}];
+pub const CRAFTED_CATALOGUE: [ItemDefinition; 2] = [
+    ItemDefinition {
+        item_id: "keepsake.wayfarer-lantern",
+        location_id: "wayfarer-workshop",
+        location_name: "Wayfarer Workshop",
+        title: "Wayfarer's Lantern",
+        description: "A small, account-bound keepsake that holds a warm light for the road.",
+    },
+    ItemDefinition {
+        item_id: "keepsake.mosslight-seal",
+        location_id: "mosslight-grove",
+        location_name: "Mosslight Grove",
+        title: "Mosslight Seal",
+        description: "A fixed, account-bound keepsake awarded for completing Mosslight Resonance.",
+    },
+];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RecipeIngredient {
@@ -359,6 +368,36 @@ pub(crate) async fn record_atlas_material(
     .await?
     .rows_affected();
 
+    Ok(inserted > 0)
+}
+
+/// Grant the fixed Vault keepsake once per player. The source identifies the
+/// completing run and blueprint version; the per-player advisory lock is held
+/// by the Vault service before this helper is called.
+pub(crate) async fn record_vault_keepsake(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+    run_id: i64,
+    blueprint_version: i16,
+) -> Result<bool, sqlx::Error> {
+    let source_reference = format!(
+        "vault-run:{run_id}:mosslight-resonance:v{blueprint_version}"
+    );
+    let inserted = sqlx::query(
+        "INSERT INTO player_inventory_items
+         (discord_user_id, item_id, quantity, source_type, source_reference)
+         SELECT $1, 'keepsake.mosslight-seal', 1, 'vault_completion', $2
+         WHERE NOT EXISTS (
+             SELECT 1 FROM player_inventory_items
+             WHERE discord_user_id = $1 AND item_id = 'keepsake.mosslight-seal'
+         )
+         ON CONFLICT (discord_user_id, item_id, source_type, source_reference) DO NOTHING",
+    )
+    .bind(player_id)
+    .bind(source_reference)
+    .execute(&mut **transaction)
+    .await?
+    .rows_affected();
     Ok(inserted > 0)
 }
 

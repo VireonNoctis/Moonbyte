@@ -13,9 +13,9 @@
 - [x] Graceful Ctrl-C and Unix SIGTERM shutdown with minimised structured tracing.
 - [x] Four playable games and guild-scoped multiplayer lobbies.
 - [x] Numbered Discord board controls for Tic-tac-toe, Connect Four and Memory Match, routed through the authoritative GameRuntime.
-- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 10 export and confirmed deletion.
+- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 11 export and confirmed deletion.
 - [x] Completed results, aggregate statistics, five achievements and the earned-only Moonbits ledger.
-- [x] Fifteen Tavern destinations, including the Satchel, Postcard Wall and Workshop.
+- [x] Sixteen Tavern destinations, including the Satchel, Postcard Wall and Workshop.
 - [x] Five-location Atlas, direct-neighbour travel, private Chronicle pages and five account-bound postcards.
 - [x] Two fixed materials earned through authored Atlas discoveries, with migration backfill.
 - [x] One deterministic crafting recipe with atomic input consumption, account-bound output provenance and repeat-craft protection.
@@ -23,6 +23,7 @@
 - [x] Lantern Road Expedition v1 with solo/group state, explicit opt-in, persistent checkpoints, pause/resume/leave and privacy coverage.
 - [x] Manual PostgreSQL backup and guarded empty-database restore scripts, plus a database readiness check in the ping command.
 - [x] Version 1.0.0 initial privacy policy and product blueprint labels.
+- [ ] Mosslight Resonance solo Puzzle Vault: source implementation is in PR #3; PostgreSQL integration tests and Discord interaction verification must pass before this is marked complete.
 
 ## Remaining before a first Discord bot deployment
 
@@ -44,7 +45,7 @@
 
 4. **Expand the connected game world**
    - Add more authored materials and deterministic recipes only after the first Workshop recipe is fully verified.
-   - Implement the solo Mosslight Resonance Puzzle Vault: three verified authored chambers, PostgreSQL save stones, resumable runs, private progress and one fixed account-bound keepsake. The accepted design contract is [ADR 0013](DECISIONS/0013-first-puzzle-vault-vertical-slice.md); it is not implemented yet.
+   - Add further authored Puzzle Vault blueprints only after Mosslight Resonance has passed its privacy, concurrency, replay and recovery gates. The first implementation is tracked against [ADR 0013](DECISIONS/0013-first-puzzle-vault-vertical-slice.md).
    - Add more Expedition routes, story quests and reviewed original word/puzzle packs.
    - Add opt-in guild projects and shared collections only after membership, visibility, moderation and deletion boundaries are tested.
 

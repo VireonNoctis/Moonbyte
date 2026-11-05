@@ -14,14 +14,15 @@ This repository contains Rust/Tokio/Serenity/Poise source and PostgreSQL persist
 - Durable sessions, transactional moves, restart recovery and 24-hour inactive-session retention.
 - Player profiles, preferences, completed results, statistics and five achievements.
 - An earned-only Moonbits ledger: a fixed first-completion milestone per game type, with no purchase, transfer or wagering features.
-- A 15-destination Tavern Wayfinder, including the Satchel, Postcard Wall and Wayfarer Workshop.
+- A 16-destination Tavern Wayfinder, including the Satchel, Postcard Wall and Wayfarer Workshop.
 - A five-location Atlas with direct-route travel, private Chronicle pages, five account-bound postcards and two fixed discovery materials.
 - Optional daily quests, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries.
 - The Lantern Road Expedition, playable solo or with up to three consenting companions, with persistent checkpoints and Atlas/Chronicle hand-offs.
-- Versioned Terms/Privacy consent, private data inventory, version 10 export including keepsake provenance and confirmed account deletion.
+- Mosslight Resonance, a private three-chamber solo Puzzle Vault unlocked through the Atlas, with resumable save stones and one fixed Mosslight Seal.
+- Versioned Terms/Privacy consent, private data inventory, version 11 export including keepsake and Vault progress provenance and confirmed account deletion.
 - Per-server command prefixes and optional command-channel routing.
 
-Three starter games have Discord-native numbered board controls, with text commands retained as a fallback. `.inventory` and `.collection` show account-bound discoveries; `.craft wayfarer-lantern` consumes the two verified Atlas materials to make one fixed keepsake. The code remains pre-launch source, not a deployed bot. Button payloads carry the displayed action version; stale controls refresh from PostgreSQL instead of replaying a move. Structured tracing records minimised lifecycle and cleanup events. Durable duplicate-interaction receipts, production monitoring, scheduled backups and a rehearsed live restore remain deployment work. A green CI run is not a substitute for live Discord deployment testing.
+Three starter games have Discord-native numbered board controls, with text commands retained as a fallback. `.inventory` and `.collection` show account-bound discoveries; `.craft wayfarer-lantern` consumes the two verified Atlas materials to make one fixed keepsake. Discover Mosslight Grove to unlock `.vault list`; `/vault` offers action and chamber autocomplete, private clues and resumable progress. The code remains pre-launch source, not a deployed bot. Button payloads carry the displayed action version; stale controls refresh from PostgreSQL instead of replaying a move. Structured tracing records minimised lifecycle and cleanup events. Durable duplicate-interaction receipts, production monitoring, scheduled backups and a rehearsed live restore remain deployment work. A green CI run is not a substitute for live Discord deployment testing.
 
 ## Technology
 

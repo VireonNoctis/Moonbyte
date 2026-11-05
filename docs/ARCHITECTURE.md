@@ -40,7 +40,7 @@ The checked-in toolchain file is authoritative. CI records the version used by t
 ## Code layers and ownership
 
 - **Domain:** pure game rules, player progression rules, Atlas graph, route definitions and state transitions. No Serenity, Poise or SQLx types.
-- **Application/persistence:** player, game, wallet, inventory, quest, Atlas, Chronicle, guild and Expedition stores. PostgreSQL is authoritative.
+- **Application/persistence:** player, game, wallet, inventory, quest, Atlas, Chronicle, Vault, guild and Expedition stores. PostgreSQL is authoritative.
 - **Discord adapter:** command parsing, identity/guild extraction, response formatting and component routing. All user input is untrusted.
 - **Composition root:** `src/main.rs` creates stores, registers commands, starts background retention work and owns graceful shutdown.
 - **Configuration:** environment variables are validated before database/gateway startup. Secret values are never printed.
@@ -64,15 +64,16 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - Atlas travel, first discovery, the matching Chronicle fragment, account-bound postcard and any authored material grant commit together; inventory writes are idempotent and retain the Atlas source ID.
 - A fixed recipe consumes source-backed inventory rows and inserts its account-bound output in one transaction. A per-player advisory lock serialises recipe attempts.
 - Expedition checkpoint history and each active participant's Atlas/Chronicle effects are written in the same transaction through owning service boundaries.
+- Puzzle Vault mutations use the same per-player advisory lock as privacy deletion, row-lock the open run and commit each correct save stone atomically. Completion, Chronicle unlock, Wayfarer activity and the one-time keepsake share the final checkpoint transaction.
 - Quest reward claims use a unique player/date/objective key and an immutable ledger entry.
 - Guild settings use PostgreSQL notifications to invalidate per-process cache entries.
 - State/content versions are explicit; unsupported persisted versions fail clearly instead of silently resetting.
 
 ## Privacy and security boundaries
 
-- Every player-owned table has a clear owner and export/deletion path. Inventory records retain stable item IDs, quantity, source type, source reference and acquisition timestamp; export covers postcard, material and crafted-item provenance, and account deletion removes all inventory rows.
+- Every player-owned table has a clear owner and export/deletion path. Inventory records retain stable item IDs, quantity, source type, source reference and acquisition timestamp; export covers postcard, material, crafted-item and Vault-keepsake provenance, and account deletion removes all inventory rows. Vault run/checkpoint tables are included in private inventory, JSON export and deletion; incorrect guesses are never persisted.
 - Guild settings are not player profile data. Guild permissions do not grant access to private player history.
-- Private profiles, statistics, quest state, inventory, Chronicle pages, rivalries and Expedition details are returned privately where required.
+- Private profiles, statistics, quest state, inventory, Chronicle pages, Vault progress, rivalries and Expedition details are returned privately where required.
 - Raw message text is not persisted as analytics. Tokens, authorization headers, private payloads, quest seeds and unnecessary player identifiers are not logged.
 - No client-supplied score, winner, reward, currency balance or checkpoint is trusted.
 - Discord delivery failure never rolls back a committed game or Expedition state change; retry behavior must avoid duplicate effects.
@@ -83,11 +84,11 @@ The Discord adapter owns response formatting without moving domain rules into Se
 
 ## Discord command presentation
 
-Slash-command fields with finite choices use Poise autocomplete callbacks. Suggestions are built from the owning catalogue (crafting recipes, game definitions, Atlas locations) or the relevant fixed action vocabulary, filtered against the partial text and capped at Discord's 25-choice/100-character limits. Craft labels include the output and ingredients, but values are canonical recipe IDs; the handler also accepts the exact display title for prefix convenience. Autocomplete is discovery only and never performs a craft, travel, quest or social action.
+Slash-command fields with finite choices use Poise autocomplete callbacks. Suggestions are built from the owning catalogue (crafting recipes, game definitions, Atlas locations) or the relevant fixed action vocabulary (including Vault actions and chamber IDs), filtered against the partial text and capped at Discord's 25-choice/100-character limits. Craft labels include the output and ingredients, but values are canonical recipe IDs; the handler also accepts the exact display title for prefix convenience. Autocomplete is discovery only and never performs a craft, travel, Vault entry/solve, quest or social action.
 
-Substantial browse and overview responses use a shared embed title-panel builder. Relevant slash commands expose an optional `title` string; matching prefix commands accept trailing title text after required arguments. The adapter removes duplicate leading Markdown headings, escapes user-supplied titles to prevent mentions/Markdown injection, normalises whitespace and respects Discord's title/description limits. Player-owned views and active-session lists retain private DM delivery; public catalogues keep their intended visibility. The title changes presentation only and cannot alter a recipe, destination, player record or game outcome. Expedition catalogue/status panels reuse the same standard visual treatment without changing their multi-part argument grammar.
+Substantial browse and overview responses use a shared embed title-panel builder. Relevant slash commands expose an optional `title` string; matching prefix commands accept trailing title text after required arguments. The adapter removes duplicate leading Markdown headings, escapes user-supplied titles to prevent mentions/Markdown injection, normalises whitespace and respects Discord's title/description limits. Player-owned slash views and active-session lists use ephemeral embeds; prefix invocations in a server are sent by DM. Public catalogues keep their intended visibility. The title changes presentation only and cannot alter a recipe, destination, player record or game outcome. Expedition catalogue/status panels reuse the same standard visual treatment without changing their multi-part argument grammar.
 
-Finite closed-vocabulary inputs use conservative suggestion text. A close match is shown as a hint; Moonbyte does not silently replace a recipe, game, Atlas destination or action.
+Finite closed-vocabulary inputs use conservative suggestion text. A close match is shown as a hint; Moonbyte does not silently replace a recipe, game, Atlas destination, Vault action or chamber ID. Incorrect Vault answers return authored hints without storing the submitted answer.
 
 ## Discord components
 

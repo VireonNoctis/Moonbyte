@@ -14,6 +14,7 @@ pub mod guild_settings;
 pub mod inventory;
 pub mod profile;
 pub mod tavern;
+pub mod vault;
 pub mod wallet;
 pub mod wayfarer;
 
@@ -36,6 +37,7 @@ pub struct DataServices {
     pub wayfarer: wayfarer::WayfarerStore,
     pub expeditions: expedition::ExpeditionStore,
     pub inventory: inventory::InventoryStore,
+    pub vault: vault::VaultStore,
 }
 
 /// Data shared with every Poise command invocation.
@@ -54,6 +56,7 @@ pub struct Data {
     wayfarer: wayfarer::WayfarerStore,
     expeditions: expedition::ExpeditionStore,
     inventory: inventory::InventoryStore,
+    vault: vault::VaultStore,
 }
 
 impl Data {
@@ -71,6 +74,7 @@ impl Data {
             wayfarer,
             expeditions,
             inventory,
+            vault,
         } = services;
         Self {
             prefix,
@@ -87,6 +91,7 @@ impl Data {
             wayfarer,
             expeditions,
             inventory,
+            vault,
         }
     }
 
@@ -152,5 +157,9 @@ impl Data {
 
     pub fn inventory(&self) -> &inventory::InventoryStore {
         &self.inventory
+    }
+
+    pub fn vault(&self) -> &vault::VaultStore {
+        &self.vault
     }
 }

@@ -91,6 +91,8 @@ pub struct ProfileInventory {
     pub inventory_item_records: i64,
     pub expedition_run_records: i64,
     pub expedition_checkpoint_records: i64,
+    pub vault_run_records: i64,
+    pub vault_checkpoint_records: i64,
     pub session_retention: &'static str,
 }
 
@@ -123,6 +125,8 @@ pub struct PlayerDeletion {
     pub expedition_runs_host_transferred: u64,
     pub expedition_runs_cancelled: u64,
     pub expedition_runs_removed: u64,
+    pub vault_runs_removed: u64,
+    pub vault_checkpoints_removed: u64,
     pub consent_record_removed: bool,
     pub profile_removed: bool,
 }
@@ -262,11 +266,32 @@ struct ExportedExpeditionCheckpoint {
     completed_at: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedVaultRun {
+    vault_run_id: i64,
+    blueprint_id: String,
+    content_version: i16,
+    state: String,
+    current_room_index: i16,
+    row_version: i64,
+    created_at: String,
+    updated_at: String,
+    completed_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ExportedVaultCheckpoint {
+    vault_run_id: i64,
+    room_id: String,
+    room_index: i16,
+    solved_at: String,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 18],
+    data_categories: [&'static str; 20],
     profile: Option<PlayerProfile>,
     consent_record: Option<ExportedConsent>,
     game_sessions: Vec<ExportedSession>,
@@ -285,6 +310,8 @@ struct PlayerExport {
     rivalries: Vec<ExportedRivalry>,
     expedition_runs: Vec<ExportedExpeditionRun>,
     expedition_checkpoints: Vec<ExportedExpeditionCheckpoint>,
+    vault_runs: Vec<ExportedVaultRun>,
+    vault_checkpoints: Vec<ExportedVaultCheckpoint>,
     limitations: [&'static str; 3],
 }
 
@@ -528,6 +555,20 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
+        let vault_run_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_vault_runs WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+        let vault_checkpoint_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_vault_checkpoints c
+             JOIN player_vault_runs r USING (vault_run_id)
+             WHERE r.discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
 
         Ok(ProfileInventory {
             profile_record,
@@ -548,6 +589,8 @@ impl ProfileStore {
             inventory_item_records,
             expedition_run_records,
             expedition_checkpoint_records,
+            vault_run_records,
+            vault_checkpoint_records,
             session_retention: "Game sessions and their result records expire after 24 hours of inactivity. Expedition participation and route history remain until account deletion; active runs are safely cancelled when no active participants remain.",
         })
     }
@@ -984,8 +1027,67 @@ impl ProfileStore {
         )
         .collect();
 
+        let vault_runs = sqlx::query_as::<
+            _,
+            (i64, String, i16, String, i16, i64, String, String, Option<String>),
+        >(
+            "SELECT vault_run_id, blueprint_id, content_version, state,
+                    current_room_index, row_version, created_at::text,
+                    updated_at::text, completed_at::text
+             FROM player_vault_runs
+             WHERE discord_user_id = $1
+             ORDER BY created_at ASC, vault_run_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(
+            |(
+                vault_run_id,
+                blueprint_id,
+                content_version,
+                state,
+                current_room_index,
+                row_version,
+                created_at,
+                updated_at,
+                completed_at,
+            )| ExportedVaultRun {
+                vault_run_id,
+                blueprint_id,
+                content_version,
+                state,
+                current_room_index,
+                row_version,
+                created_at,
+                updated_at,
+                completed_at,
+            },
+        )
+        .collect();
+
+        let vault_checkpoints = sqlx::query_as::<_, (i64, String, i16, String)>(
+            "SELECT c.vault_run_id, c.room_id, c.room_index, c.solved_at::text
+             FROM player_vault_checkpoints c
+             JOIN player_vault_runs r USING (vault_run_id)
+             WHERE r.discord_user_id = $1
+             ORDER BY c.vault_run_id ASC, c.room_index ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|(vault_run_id, room_id, room_index, solved_at)| ExportedVaultCheckpoint {
+            vault_run_id,
+            room_id,
+            room_index,
+            solved_at,
+        })
+        .collect();
+
         let export = PlayerExport {
-            format_version: 10,
+            format_version: 11,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -1006,6 +1108,8 @@ impl ProfileStore {
                 "mutual rivalry invitations and match records",
                 "your Expedition participation and run history",
                 "shared Expedition checkpoint history",
+                "your Puzzle Vault runs and saved state",
+                "your solved Puzzle Vault chamber checkpoints",
             ],
             profile,
             consent_record,
@@ -1025,6 +1129,8 @@ impl ProfileStore {
             rivalries,
             expedition_runs,
             expedition_checkpoints,
+            vault_runs,
+            vault_checkpoints,
             limitations: [
                 "Discord independently retains interactions under its own policies.",
                 "This export includes records in the current Moonbyte PostgreSQL schema only.",
@@ -1243,6 +1349,30 @@ impl ProfileStore {
         .await?
         .rows_affected();
 
+        // Vault mutations use the same per-player advisory lock as deletion. Lock
+        // and count their rows here so exports, save stones and deletion stay atomic.
+        let vault_run_ids: Vec<i64> = sqlx::query_scalar(
+            "SELECT vault_run_id FROM player_vault_runs
+             WHERE discord_user_id = $1 ORDER BY vault_run_id FOR UPDATE",
+        )
+        .bind(player_id)
+        .fetch_all(&mut *transaction)
+        .await?;
+        let vault_checkpoints_removed = sqlx::query(
+            "DELETE FROM player_vault_checkpoints
+             WHERE vault_run_id = ANY($1::bigint[])",
+        )
+        .bind(&vault_run_ids)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        let vault_runs_removed =
+            sqlx::query("DELETE FROM player_vault_runs WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
+
         let consent_record_removed =
             sqlx::query("DELETE FROM user_consents WHERE discord_user_id = $1")
                 .bind(player_id)
@@ -1277,6 +1407,8 @@ impl ProfileStore {
                 .unwrap_or_default(),
             expedition_runs_cancelled: u64::try_from(expedition_runs_cancelled).unwrap_or_default(),
             expedition_runs_removed,
+            vault_runs_removed,
+            vault_checkpoints_removed,
             consent_record_removed,
             profile_removed,
         })
@@ -1471,6 +1603,8 @@ mod postgres_tests {
         assert_eq!(inventory.quest_rotation_records, 1);
         assert_eq!(inventory.daily_quest_records, 3);
         assert_eq!(inventory.rivalry_records, 0);
+        assert_eq!(inventory.vault_run_records, 0);
+        assert_eq!(inventory.vault_checkpoint_records, 0);
 
         let export = store.export_json(&player_id).await.expect("export data");
         assert!(export.contains("Moonbyte Pilot"));
@@ -1511,7 +1645,7 @@ mod postgres_tests {
             !export.contains("rotation_seed"),
             "private quest seed must not be exported"
         );
-        assert!(export.contains("\"format_version\": 10"));
+        assert!(export.contains("\"format_version\": 11"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
@@ -1557,6 +1691,8 @@ mod postgres_tests {
         assert_eq!(deleted_inventory.quest_rotation_records, 0);
         assert_eq!(deleted_inventory.daily_quest_records, 0);
         assert_eq!(deleted_inventory.rivalry_records, 0);
+        assert_eq!(deleted_inventory.vault_run_records, 0);
+        assert_eq!(deleted_inventory.vault_checkpoint_records, 0);
         assert!(!deleted_inventory.consent_record);
         assert!(
             !consents

@@ -12,7 +12,7 @@ pub struct ChronicleFragmentDefinition {
     pub lore: &'static str,
 }
 
-pub const CHRONICLE_FRAGMENTS: [ChronicleFragmentDefinition; 5] = [
+pub const CHRONICLE_FRAGMENTS: [ChronicleFragmentDefinition; 6] = [
     ChronicleFragmentDefinition {
         id: "lantern_first_light",
         location_id: "lantern-square",
@@ -44,6 +44,14 @@ pub const CHRONICLE_FRAGMENTS: [ChronicleFragmentDefinition; 5] = [
         region: "Cinder Vale",
         title: "A Page Kept Warm",
         lore: "The Archive's first keeper believed a story should be carried, not sealed away. Even its oldest pages were left close to the hearth.",
+    },
+    ChronicleFragmentDefinition {
+        id: "mosslight_resonance_vault",
+        location_id: "mosslight-grove",
+        location_name: "Mosslight Grove",
+        region: "Verdant Reach",
+        title: "The Resonance Beneath the Roots",
+        lore: "Beneath the oldest stones, the grove keeps a quiet chamber for those who listen, observe, and carry each answer forward. Its seal remembers the work, not the guesses that came before it.",
     },
     ChronicleFragmentDefinition {
         id: "starfall_night_chart",
@@ -125,6 +133,22 @@ pub(crate) async fn record_discovery(
     Ok(())
 }
 
+/// Record the private Vault page inside the final checkpoint transaction.
+pub(crate) async fn record_vault_completion(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "INSERT INTO player_archive_fragments (discord_user_id, fragment_id, location_id)
+         VALUES ($1, 'mosslight_resonance_vault', 'mosslight-grove')
+         ON CONFLICT DO NOTHING",
+    )
+    .bind(player_id)
+    .execute(&mut **transaction)
+    .await?;
+    Ok(())
+}
+
 pub fn render(snapshot: &ChronicleSnapshot, prefix: &str) -> String {
     let safe_prefix = prefix
         .replace('@', "@\u{200B}")
@@ -173,7 +197,7 @@ mod tests {
     use crate::atlas::LOCATION_CATALOGUE;
 
     #[test]
-    fn every_authored_atlas_location_has_one_unique_chronicle_page() {
+    fn every_authored_atlas_location_has_a_unique_page_set() {
         let ids = CHRONICLE_FRAGMENTS
             .iter()
             .map(|fragment| fragment.id)
@@ -184,18 +208,18 @@ mod tests {
             .collect::<HashSet<_>>();
 
         assert_eq!(ids.len(), CHRONICLE_FRAGMENTS.len());
-        assert_eq!(locations.len(), CHRONICLE_FRAGMENTS.len());
-        assert_eq!(CHRONICLE_FRAGMENTS.len(), LOCATION_CATALOGUE.len());
+        assert_eq!(locations.len(), LOCATION_CATALOGUE.len());
+        assert_eq!(CHRONICLE_FRAGMENTS.len(), LOCATION_CATALOGUE.len() + 1);
 
         for location in LOCATION_CATALOGUE {
             let matches = CHRONICLE_FRAGMENTS
                 .iter()
                 .filter(|fragment| fragment.location_id == location.id)
                 .count();
-            assert_eq!(matches, 1, "missing or duplicated page for {}", location.id);
+            let expected = if location.id == "mosslight-grove" { 2 } else { 1 };
+            assert_eq!(matches, expected, "unexpected page count for {}", location.id);
         }
     }
-
     #[test]
     fn authored_pages_have_complete_player_facing_content() {
         for fragment in CHRONICLE_FRAGMENTS {
