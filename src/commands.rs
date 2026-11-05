@@ -944,7 +944,7 @@ pub async fn craft(
         }
     };
 
-    send_title_panel(ctx, "Wayfarer Workshop · Crafting", &message).await
+    send_title_panel(ctx, "Wayfarer Workshop · Crafting", &message, true).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1266,7 +1266,7 @@ pub async fn settings(
 pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
     let prefix = ctx.data().command_prefix(ctx.guild_id());
     let message = crate::tavern::render(&prefix);
-    send_title_panel(ctx, "Tavern Wayfinder", &message).await
+    send_title_panel(ctx, "Tavern Wayfinder", &message, false).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1488,7 +1488,7 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
         "First completion of each game type grants {} Moonbits once per player. Repeat completions do not grant more. Use {prefix}wallet to view your balance.\n\n{entries}",
         crate::wallet::FIRST_COMPLETION_REWARD
     );
-    send_title_panel(ctx, "Moonbyte Game Library", &message).await
+    send_title_panel(ctx, "Moonbyte Game Library", &message, false).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1734,12 +1734,13 @@ async fn send_title_panel(
     ctx: Context<'_>,
     title: &str,
     description: &str,
+    ephemeral: bool,
 ) -> Result<(), Error> {
     let embed = CreateEmbed::new().title(title).description(description);
     ctx.send(
         poise::CreateReply::new()
             .embed(embed)
-            .ephemeral(true),
+            .ephemeral(ephemeral),
     )
     .await?;
     Ok(())
