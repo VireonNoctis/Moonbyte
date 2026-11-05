@@ -42,7 +42,7 @@
 
 4. **Expand the connected game world**
    - Add more authored materials and deterministic recipes only after the first Workshop recipe is fully verified.
-   - Deliver one authored Puzzle Vault with clear rules, saved checkpoints and disclosed fixed rewards.
+   - Implement the solo Mosslight Resonance Puzzle Vault: three verified authored chambers, PostgreSQL save stones, resumable runs, private progress and one fixed account-bound keepsake. The accepted design contract is [ADR 0013](DECISIONS/0013-first-puzzle-vault-vertical-slice.md); it is not implemented yet.
    - Add more Expedition routes, story quests and reviewed original word/puzzle packs.
    - Add opt-in guild projects and shared collections only after membership, visibility, moderation and deletion boundaries are tested.
 
