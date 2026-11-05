@@ -7,6 +7,7 @@
 - [x] Rust/Tokio/Serenity/Poise application, validated environment configuration and PostgreSQL/SQLx persistence.
 - [x] Ordered migrations, durable JSONB game sessions, row-locked mutations, restart recovery and 24-hour inactive-session retention.
 - [x] Shared prefix/slash command handlers, configurable guild prefixes and optional command-channel restriction.
+- [x] Reusable Discord title-panel presentation and conservative typo suggestions for Workshop recipe input; broader browse-style rollout remains incremental.
 - [x] Graceful Ctrl-C and Unix SIGTERM shutdown with minimised structured tracing.
 - [x] Four playable games and guild-scoped multiplayer lobbies.
 - [x] Numbered Discord board controls for Tic-tac-toe, Connect Four and Memory Match, routed through the authoritative GameRuntime.
