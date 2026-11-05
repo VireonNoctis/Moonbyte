@@ -1385,14 +1385,25 @@ pub async fn expedition(
             if route != crate::expedition::ROUTE_ID {
                 return send_private(ctx, "The current route is lantern-road. Other routes will appear when authored and released.").await;
             }
-            let mode = details.as_deref().unwrap_or("solo").trim().to_ascii_lowercase();
+            let mode = details
+                .as_deref()
+                .unwrap_or("solo")
+                .trim()
+                .to_ascii_lowercase();
             if mode != "solo" && mode != "group" {
                 return send_private(ctx, "Choose solo or group for the Lantern Road.").await;
             }
-            ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+            ctx.data()
+                .profiles()
+                .get_or_create(&player_id, &ctx.author().name)
+                .await?;
             ctx.data().atlas().snapshot(&player_id).await?;
             let shared = mode == "group";
-            let run = ctx.data().expeditions().start(&player_id, guild_id.as_deref(), shared).await?;
+            let run = ctx
+                .data()
+                .expeditions()
+                .start(&player_id, guild_id.as_deref(), shared)
+                .await?;
             if shared {
                 let safe_prefix = escape_user_text(&prefix);
                 ctx.say(format!(
@@ -1406,7 +1417,11 @@ pub async fn expedition(
         }
         "join" => {
             let Some(guild) = guild_id.as_deref() else {
-                return send_private(ctx, "Shared Expeditions can only be joined inside their Discord server.").await;
+                return send_private(
+                    ctx,
+                    "Shared Expeditions can only be joined inside their Discord server.",
+                )
+                .await;
             };
             let id = parse_expedition_id(target.as_deref())?;
             ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
@@ -1417,12 +1432,42 @@ pub async fn expedition(
         "begin" | "status" | "pause" | "resume" | "leave" | "cancel" => {
             let id = parse_expedition_id(target.as_deref())?;
             let run = match action.as_str() {
-                "begin" => ctx.data().expeditions().begin(&player_id, guild_id.as_deref(), id).await?,
-                "status" => ctx.data().expeditions().snapshot(&player_id, guild_id.as_deref(), id).await?,
-                "pause" => ctx.data().expeditions().pause(&player_id, guild_id.as_deref(), id).await?,
-                "resume" => ctx.data().expeditions().resume(&player_id, guild_id.as_deref(), id).await?,
-                "leave" => ctx.data().expeditions().leave(&player_id, guild_id.as_deref(), id).await?,
-                "cancel" => ctx.data().expeditions().cancel(&player_id, guild_id.as_deref(), id).await?,
+                "begin" => {
+                    ctx.data()
+                        .expeditions()
+                        .begin(&player_id, guild_id.as_deref(), id)
+                        .await?
+                }
+                "status" => {
+                    ctx.data()
+                        .expeditions()
+                        .snapshot(&player_id, guild_id.as_deref(), id)
+                        .await?
+                }
+                "pause" => {
+                    ctx.data()
+                        .expeditions()
+                        .pause(&player_id, guild_id.as_deref(), id)
+                        .await?
+                }
+                "resume" => {
+                    ctx.data()
+                        .expeditions()
+                        .resume(&player_id, guild_id.as_deref(), id)
+                        .await?
+                }
+                "leave" => {
+                    ctx.data()
+                        .expeditions()
+                        .leave(&player_id, guild_id.as_deref(), id)
+                        .await?
+                }
+                "cancel" => {
+                    ctx.data()
+                        .expeditions()
+                        .cancel(&player_id, guild_id.as_deref(), id)
+                        .await?
+                }
                 _ => unreachable!(),
             };
             send_private(ctx, crate::expedition::render(&run, &prefix)).await
@@ -1430,7 +1475,8 @@ pub async fn expedition(
         "advance" => {
             let id = parse_expedition_id(target.as_deref())?;
             let Some(details) = details else {
-                return send_private(ctx, "Use expedition advance RUN_ID CHECKPOINT_ID CHOICE.").await;
+                return send_private(ctx, "Use expedition advance RUN_ID CHECKPOINT_ID CHOICE.")
+                    .await;
             };
             let mut parts = details.split_whitespace();
             let checkpoint = parts.next().ok_or("Enter the next checkpoint ID.")?;
@@ -1438,15 +1484,20 @@ pub async fn expedition(
             if parts.next().is_some() {
                 return send_private(ctx, "Enter one checkpoint ID and one choice only.").await;
             }
-            let run = ctx.data().expeditions().advance(
-                &player_id, guild_id.as_deref(), id, checkpoint, choice
-            ).await?;
+            let run = ctx
+                .data()
+                .expeditions()
+                .advance(&player_id, guild_id.as_deref(), id, checkpoint, choice)
+                .await?;
             send_private(ctx, crate::expedition::render(&run, &prefix)).await
         }
         _ => {
             let suggestion = suggest_known_value(
                 action.as_str(),
-                &["list", "start", "join", "begin", "status", "advance", "pause", "resume", "leave", "cancel"],
+                &[
+                    "list", "start", "join", "begin", "status", "advance", "pause", "resume",
+                    "leave", "cancel",
+                ],
             );
             let guidance = suggestion
                 .map(|value| format!("Did you mean {value}? "))
@@ -1738,12 +1789,8 @@ async fn send_title_panel(
 ) -> Result<(), Error> {
     let embed = CreateEmbed::new().title(title).description(description);
     if ctx.prefix() == "/" {
-        ctx.send(
-            poise::CreateReply::new()
-                .embed(embed)
-                .ephemeral(ephemeral),
-        )
-        .await?;
+        ctx.send(poise::CreateReply::new().embed(embed).ephemeral(ephemeral))
+            .await?;
     } else if ephemeral && ctx.guild_id().is_some() {
         let dm = ctx.author().create_dm_channel(ctx.http()).await?;
         dm.send_message(ctx.http(), CreateMessage::new().embed(embed))
@@ -2135,7 +2182,15 @@ mod tests {
             Some("wayfarer-lantern")
         );
         assert_eq!(
-            super::suggest_known_value("conect-four", &["tic-tac-toe", "connect-four", "memory-match", "word-scramble"]),
+            super::suggest_known_value(
+                "conect-four",
+                &[
+                    "tic-tac-toe",
+                    "connect-four",
+                    "memory-match",
+                    "word-scramble",
+                ],
+            ),
             Some("connect-four")
         );
         assert_eq!(
@@ -2146,7 +2201,10 @@ mod tests {
             super::suggest_known_value("wayfarer-lantern", &["wayfarer-lantern"]),
             Some("wayfarer-lantern")
         );
-        assert_eq!(super::suggest_known_value("unrelated", &["wayfarer-lantern"]), None);
+        assert_eq!(
+            super::suggest_known_value("unrelated", &["wayfarer-lantern"]),
+            None
+        );
         assert_eq!(super::edit_distance("craft", "crfat"), 2);
     }
 
