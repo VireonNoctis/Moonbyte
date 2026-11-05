@@ -1466,7 +1466,7 @@ mod postgres_tests {
         assert_eq!(inventory.wallet_ledger_records, 1);
         assert!(inventory.world_state_record);
         assert_eq!(inventory.atlas_discovery_records, 2);
-        assert_eq!(inventory.inventory_item_records, 2);
+        assert_eq!(inventory.inventory_item_records, 3);
         assert_eq!(inventory.wayfarer_active_days, 1);
         assert_eq!(inventory.quest_rotation_records, 1);
         assert_eq!(inventory.daily_quest_records, 3);
@@ -1497,6 +1497,7 @@ mod postgres_tests {
         assert!(export.contains("account-bound Atlas keepsakes and acquisition provenance"));
         assert!(export.contains("inventory_items"));
         assert!(export.contains("atlas.postcard.lantern-square"));
+        assert!(export.contains("material.mosslight-silk"));
         assert!(export.contains("lantern_first_light"));
         assert!(export.contains("mosslight-grove"));
         assert!(export.contains("Wayfarer activity days"));
@@ -1526,7 +1527,7 @@ mod postgres_tests {
         assert!(deletion.world_state_removed);
         assert_eq!(deletion.atlas_discoveries_removed, 2);
         assert_eq!(deletion.archive_fragments_removed, 2);
-        assert_eq!(deletion.inventory_items_removed, 2);
+        assert_eq!(deletion.inventory_items_removed, 3);
         assert_eq!(deletion.wayfarer_days_removed, 1);
         assert_eq!(deletion.quest_rotations_removed, 1);
         assert_eq!(deletion.daily_quest_records_removed, 3);
