@@ -75,6 +75,7 @@ Mosslight Resonance is the first fixed-rule, solo Puzzle Vault. It is unlocked b
 ### Profiles, consent and privacy
 
 - Profiles store a player-selected display name, optional short bio, visibility and preference flags.
+- `.profile` is a private, read-only Player Card composed from owning services: game totals, achievements, Wayfarer journey days, Companion stage, Rivalry counts, Chronicle pages, postcards, Satchel items and latest Puzzle Vault progress. It also provides command shortcuts. It does not initialise Atlas state, alter progress, or expose public/guild profile projections.
 - The global command gate requires acceptance of current Terms and Privacy versions before ordinary commands. Legal/privacy commands remain available.
 - Private data inventory and JSON export are implemented. Export schema is version 11 and includes item IDs, quantity, source type, source reference and acquisition timestamp, plus Vault runs and solved chamber checkpoints.
 - Confirmed deletion removes player-owned records across profiles, consent, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, inventory, Wayfarer/rivalries, Expedition participation/history and Puzzle Vault runs/checkpoints.

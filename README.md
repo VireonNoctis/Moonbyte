@@ -12,7 +12,7 @@ This repository contains Rust/Tokio/Serenity/Poise source and PostgreSQL persist
 
 - Four playable games: Tic-tac-toe, Connect Four, Memory Match and Word Scramble.
 - Durable sessions, transactional moves, restart recovery and 24-hour inactive-session retention.
-- Player profiles, preferences, completed results, statistics and five achievements.
+- A private Player Card that brings together live game results, achievements, Wayfarer/Companion progress, Rivalry counts, Chronicle/collection and Vault status.
 - An earned-only Moonbits ledger: a fixed first-completion milestone per game type, with no purchase, transfer or wagering features.
 - A 16-destination Tavern Wayfinder, including the Satchel, Postcard Wall and Wayfarer Workshop.
 - A five-location Atlas with direct-route travel, private Chronicle pages, five account-bound postcards and two fixed discovery materials.

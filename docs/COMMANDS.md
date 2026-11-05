@@ -4,7 +4,7 @@ The default prefix is `.`. Guild moderators with Manage Server can set a per-ser
 
 ## Command response UX
 
-Substantial browse and overview results use a Discord embed title panel. Slash commands expose an optional `title` field on Craft, Tavern, Games, profile/data views, inventory/collection, Quests, Wayfarer, Rivalry, Atlas, Chronicle, travel and active-session views. Prefix commands accept title text after their required arguments (for example, `.craft wayfarer-lantern My Workshop`). Leave it blank to use Moonbyte's standard heading. Titles are whitespace-normalised, mention-safe and capped at Discord's 256-character title limit.
+Substantial browse and overview results use a Discord embed title panel. Slash commands expose an optional `title` field on Craft, Tavern, Games, profile/data views, inventory/collection, Quests, Wayfarer, Rivalry, Atlas, Chronicle, travel and active-session views. The private Player Card is a read-only summary of currently live systems; unavailable future sections are not fabricated. Prefix commands accept title text after their required arguments (for example, `.craft wayfarer-lantern My Workshop`). Leave it blank to use Moonbyte's standard heading. Titles are whitespace-normalised, mention-safe and capped at Discord's 256-character title limit.
 
 Craft keeps its current visibility: slash results are ephemeral and prefix results in a server are delivered by DM. Tavern and Games remain public browse panels. Player-owned slash views and active-session lists are ephemeral; prefix invocations in a server are delivered by DM. Expedition catalogue/status screens use the same standard title panel while preserving the existing multi-part command grammar. Game boards retain their canonical title and native buttons. Tiny confirmations and action receipts remain ordinary messages.
 
@@ -31,7 +31,7 @@ New users must review both current policies and run `.consent accept` before ord
 | Prefix | Slash | Purpose |
 |---|---|---|
 | `.tavern [title]` | `/tavern title:` | Open the 16-destination Tavern Wayfinder. |
-| `.profile [title]` | `/profile title:` | View a private player profile. |
+| `.profile [title]` | `/profile title:` | Open your private Player Card: game totals, achievements, Wayfarer/Companion, Rivalry counts, Chronicle/collection progress and Vault status, with shortcuts to live systems. |
 | `.profile_edit` | `/profile_edit` | Set a display name and short bio. |
 | `.settings` | `/settings` | Save profile visibility and preference flags. |
 | `.stats [title]` | `/stats title:` | View completed-game totals and per-game wins/draws. |

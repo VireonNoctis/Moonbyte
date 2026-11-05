@@ -24,6 +24,7 @@
 - [x] Manual PostgreSQL backup and guarded empty-database restore scripts, plus a database readiness check in the ping command.
 - [x] Version 1.0.0 initial privacy policy and product blueprint labels.
 - [ ] Mosslight Resonance solo Puzzle Vault: source implementation is in PR #3; PostgreSQL integration tests and Discord interaction verification must pass before this is marked complete.
+- [ ] Private Player Card v1: source implementation is in PR #3; verify the read-only cross-system projection and Discord presentation in CI before marking complete.
 
 ## Remaining before a first Discord bot deployment
 
@@ -52,7 +53,7 @@
 ## Later proposals
 
 - Fixed-price Bazaar listings and work orders after ownership, moderation, duplicate protection and atomic settlement are complete.
-- Mastery, unified Player Card, seasonal Almanac, festivals, companion cosmetics and homesteads after their owning systems exist.
+- Mastery, expanded Player Card sections, seasonal Almanac, festivals, additional companion cosmetics and homesteads after their owning systems exist. The private Player Card v1 is a read-only projection; public and guild-facing cards remain deferred.
 - Public player directory and leaderboards only with explicit visibility controls and privacy-complete projections.
 - Broader social surfaces only after guild isolation, consent and deletion boundaries are complete.
 

@@ -812,16 +812,100 @@ pub async fn profile(
         .profiles()
         .get_or_create(&player_id, &ctx.author().name)
         .await?;
-    let stats = ctx.data().profiles().game_stats(&player_id).await?;
+
+    // The card reads each owning service without duplicating its state. Opening
+    // it never creates an Atlas discovery, changes a quest, or mutates a reward.
+    let (stats, journey, rivalries, chronicle, inventory, achievements, vault_run) =
+        tokio::join!(
+            ctx.data().profiles().game_stats(&player_id),
+            ctx.data().wayfarer().snapshot(&player_id),
+            ctx.data().wayfarer().rivalries(&player_id),
+            ctx.data().chronicle().snapshot(&player_id),
+            ctx.data().inventory().snapshot(&player_id),
+            ctx.data().achievements().list_for_player(&player_id),
+            ctx.data().vault().latest_snapshot(&player_id),
+        );
+    let stats = stats?;
+    let journey = journey?;
+    let rivalries = rivalries?;
+    let chronicle = chronicle?;
+    let inventory = inventory?;
+    let achievements = achievements?;
+    let vault_run = vault_run?;
+
+    let games_played = stats.iter().map(|entry| entry.games_played).sum();
+    let games_won = stats.iter().map(|entry| entry.games_won).sum();
+    let draws = stats.iter().map(|entry| entry.draws).sum();
+    let active_rivalries = rivalries
+        .iter()
+        .filter(|record| record.status == "active")
+        .count();
+    let pending_rivalries = rivalries
+        .iter()
+        .filter(|record| record.status == "pending")
+        .count();
+    let chronicle_unlocked = chronicle
+        .entries
+        .iter()
+        .filter(|entry| entry.unlocked_at.is_some())
+        .count();
+    let postcards_unlocked = inventory
+        .entries
+        .iter()
+        .filter(|entry| entry.item_id.starts_with("atlas.postcard."))
+        .count();
+    let satchel_items = inventory
+        .entries
+        .iter()
+        .map(|entry| entry.quantity.max(0) as usize)
+        .sum();
+    let vault_status = match vault_run {
+        Some(snapshot) => {
+            let state = match snapshot.state.as_str() {
+                "active" => "In progress",
+                "paused" => "Paused",
+                "left" => "Saved · resumable",
+                "completed" => "Completed",
+                _ => "Status unavailable",
+            };
+            format!(
+                "{state} · {}/{} chambers saved",
+                snapshot.completed_room_ids.len(),
+                crate::vault::ROOMS.len()
+            )
+        }
+        None => "Not started · review the Atlas prerequisite".to_owned(),
+    };
+    let progress = PlayerCardProgress {
+        games_played,
+        games_won,
+        draws,
+        achievements_unlocked: achievements.len(),
+        achievements_total: crate::achievement::ACHIEVEMENT_CATALOGUE.len(),
+        journey_days: journey.active_days,
+        companion_name: journey.companion_name,
+        companion_stage: journey.companion_stage,
+        next_companion_milestone: journey
+            .next_milestone
+            .map(|threshold| threshold - journey.active_days),
+        active_rivalries,
+        pending_rivalries,
+        chronicle_unlocked,
+        chronicle_total: crate::chronicle::CHRONICLE_FRAGMENTS.len(),
+        postcards_unlocked,
+        postcards_total: crate::inventory::POSTCARD_CATALOGUE.len(),
+        satchel_items,
+        vault_status: &vault_status,
+    };
+    let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     send_private_title_panel(
         ctx,
         "Your Moonbyte Profile",
         title.as_deref(),
-        render_profile(&profile, &stats),
+        render_player_card(&profile, &progress, &prefix),
     )
     .await
 }
-
 #[poise::command(prefix_command, slash_command)]
 pub async fn profile_edit(
     ctx: Context<'_>,
@@ -2549,23 +2633,97 @@ async fn send_private(ctx: Context<'_>, content: impl Into<String>) -> Result<()
     Ok(())
 }
 
-fn render_profile(profile: &PlayerProfile, stats: &[crate::profile::PlayerGameStat]) -> String {
+struct PlayerCardProgress<'a> {
+    games_played: i64,
+    games_won: i64,
+    draws: i64,
+    achievements_unlocked: usize,
+    achievements_total: usize,
+    journey_days: i64,
+    companion_name: &'a str,
+    companion_stage: &'a str,
+    next_companion_milestone: Option<i64>,
+    active_rivalries: usize,
+    pending_rivalries: usize,
+    chronicle_unlocked: usize,
+    chronicle_total: usize,
+    postcards_unlocked: usize,
+    postcards_total: usize,
+    satchel_items: usize,
+    vault_status: &'a str,
+}
+
+fn render_player_card(
+    profile: &PlayerProfile,
+    progress: &PlayerCardProgress<'_>,
+    prefix: &str,
+) -> String {
     let bio = profile
         .bio
         .as_deref()
         .map(escape_user_text)
         .unwrap_or_else(|| "No bio yet.".to_owned());
+    let statistics_sharing = if profile.show_statistics {
+        "Enabled for future public cards; none are live yet"
+    } else {
+        "Hidden from others"
+    };
+    let quiet_mode = if profile.quiet_mode { "On" } else { "Off" };
+    let next_milestone = progress
+        .next_companion_milestone
+        .map(|days| format!("{days} more active day(s) to the next companion milestone"))
+        .unwrap_or_else(|| "All currently defined companion milestones reached".to_owned());
+    let game_word = if progress.games_played == 1 { "game" } else { "games" };
+    let win_word = if progress.games_won == 1 { "win" } else { "wins" };
+    let draw_word = if progress.draws == 1 { "draw" } else { "draws" };
+    let satchel_word = if progress.satchel_items == 1 { "item" } else { "items" };
+    let invitation_word = if progress.pending_rivalries == 1 {
+        "invitation"
+    } else {
+        "invitations"
+    };
+
     format!(
-        "**Your Moonbyte profile**\n\nDisplay name: {}\nBio: {}\nVisibility: {}\nShow statistics: {}\nQuiet mode: {}\n\n{}",
+        "**{}**\n{}\n\n\
+         **Profile settings**\nVisibility: {} · Statistics sharing: {} · Quiet mode: {}\n\n\
+         **Arcade record**\n{} {} · {} {} · {} {}\nAchievements: {}/{}\n\n\
+         **World & collection**\nChronicle: {}/{} pages · Postcards: {}/{}\nSatchel: {} {}\nPuzzle Vault: {}\n\n\
+         **Wayfarer Thread**\nJourney days: {} · Companion: {} ({})\n{}\n\n\
+         **Rivalry Hall**\n{} active · {} {}\n\n\
+         **Quick routes**\n\
+         \`{prefix}games\` · \`{prefix}stats\` · \`{prefix}atlas\` · \`{prefix}chronicle\`\n\
+         \`{prefix}quests\` · \`{prefix}expedition\` · \`{prefix}vault list\`\n\
+         \`{prefix}inventory\` · \`{prefix}collection\` · \`{prefix}companion\` · \`{prefix}rivals\` · \`{prefix}settings\`\n\n\
+         This personal card is visible only to you. Public and guild-facing profile cards are not enabled yet.",
         escape_user_text(&profile.display_name),
         bio,
-        profile.visibility,
-        profile.show_statistics,
-        profile.quiet_mode,
-        render_statistics(stats)
+        escape_user_text(&profile.visibility),
+        statistics_sharing,
+        quiet_mode,
+        progress.games_played,
+        game_word,
+        progress.games_won,
+        win_word,
+        progress.draws,
+        draw_word,
+        progress.achievements_unlocked,
+        progress.achievements_total,
+        progress.chronicle_unlocked,
+        progress.chronicle_total,
+        progress.postcards_unlocked,
+        progress.postcards_total,
+        progress.satchel_items,
+        satchel_word,
+        progress.vault_status,
+        progress.journey_days,
+        escape_user_text(progress.companion_name),
+        escape_user_text(progress.companion_stage),
+        next_milestone,
+        progress.active_rivalries,
+        progress.pending_rivalries,
+        invitation_word
     )
 }
-
 fn render_privacy_overview(prefix: &str) -> String {
     let prefix = escape_user_text(prefix);
     PRIVACY_OVERVIEW.replace("`.privacy", &format!("`{prefix}privacy"))
@@ -2954,7 +3112,52 @@ mod title_panel_tests {
 
 #[cfg(test)]
 mod autocomplete_tests {
-    use super::autocomplete_value_matches;
+    use super::{PlayerCardProgress, autocomplete_value_matches, render_player_card};
+    use crate::profile::PlayerProfile;
+
+    #[test]
+    fn private_player_card_unifies_live_progress_and_respects_saved_preferences() {
+        let profile = PlayerProfile {
+            discord_user_id: "player-1".to_owned(),
+            display_name: "Wayfinder".to_owned(),
+            bio: Some("Finding quiet corners".to_owned()),
+            visibility: "private".to_owned(),
+            show_statistics: false,
+            quiet_mode: true,
+            created_at: "2026-11-05".to_owned(),
+            updated_at: "2026-11-05".to_owned(),
+        };
+        let progress = PlayerCardProgress {
+            games_played: 8,
+            games_won: 5,
+            draws: 1,
+            achievements_unlocked: 3,
+            achievements_total: 5,
+            journey_days: 7,
+            companion_name: "Mallow",
+            companion_stage: "Trail Scout",
+            next_companion_milestone: Some(7),
+            active_rivalries: 2,
+            pending_rivalries: 1,
+            chronicle_unlocked: 2,
+            chronicle_total: 6,
+            postcards_unlocked: 2,
+            postcards_total: 5,
+            satchel_items: 4,
+            vault_status: "Paused · 1/3 chambers saved",
+        };
+
+        let card = render_player_card(&profile, &progress, "!");
+
+        assert!(card.contains("Statistics sharing: Hidden from others"));
+        assert!(card.contains("Quiet mode: On"));
+        assert!(card.contains("8 games · 5 wins · 1 draw"));
+        assert!(card.contains("Chronicle: 2/6 pages · Postcards: 2/5"));
+        assert!(card.contains("Mallow (Trail Scout)"));
+        assert!(card.contains("2 active · 1 invitation"));
+        assert!(card.contains("!vault list"));
+        assert!(card.contains("visible only to you"));
+    }
 
     #[test]
     fn autocomplete_matches_labels_and_values_without_case_or_separator_sensitivity() {
