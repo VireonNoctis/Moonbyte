@@ -8,7 +8,7 @@ use crate::{
 };
 use poise::serenity_prelude::{
     ButtonStyle, ChannelId, ComponentInteraction, CreateActionRow, CreateAttachment, CreateButton,
-    CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage,
+    CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage,
 };
 
 use crate::guild_settings::{GuildCommandSettings, validate_prefix};
@@ -927,11 +927,20 @@ pub async fn craft(
                 .to_owned()
         }
         crate::inventory::CraftOutcome::UnknownRecipe => {
-            "Unknown recipe. The available recipe is wayfarer-lantern.".to_owned()
+            match suggest_known_value(recipe.trim(), &["wayfarer-lantern"]) {
+                Some(value) => format!(
+                    "Unknown recipe '{}'. Did you mean {}?\n\nThe Workshop currently offers one fixed recipe.",
+                    escape_user_text(recipe.trim()), value
+                ),
+                None => format!(
+                    "Unknown recipe '{}'. The available recipe is wayfarer-lantern.",
+                    escape_user_text(recipe.trim())
+                ),
+            }
         }
     };
 
-    send_private(ctx, message).await
+    send_title_panel(ctx, "Wayfarer Workshop · Crafting", &message).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1675,6 +1684,61 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
     ]
 }
 
+/// Sends a compact Discord embed panel for substantial command results.
+/// Slash invocations are ephemeral; prefix invocations retain Discord's normal message visibility.
+async fn send_title_panel(
+    ctx: Context<'_>,
+    title: &str,
+    description: &str,
+) -> Result<(), Error> {
+    let embed = CreateEmbed::new().title(title).description(description);
+    ctx.send(
+        poise::CreateReply::new()
+            .embed(embed)
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Returns a conservative suggestion for a misspelled command argument.
+/// Suggestions are advisory only: the user must submit the corrected value themselves.
+fn suggest_known_value(input: &str, choices: &[&'static str]) -> Option<&'static str> {
+    let input = input.trim().to_ascii_lowercase();
+    if input.is_empty() {
+        return None;
+    }
+
+    choices
+        .iter()
+        .copied()
+        .map(|choice| (edit_distance(&input, choice), choice))
+        .filter(|(distance, choice)| {
+            let longest = input.len().max(choice.len());
+            *distance <= 3 && distance.saturating_mul(100) <= longest.saturating_mul(30)
+        })
+        .min_by_key(|(distance, _)| *distance)
+        .map(|(_, choice)| choice)
+}
+
+fn edit_distance(left: &str, right: &str) -> usize {
+    let mut previous = (0..=right.len()).collect::<Vec<_>>();
+    let mut current = vec![0; right.len() + 1];
+
+    for (left_index, left_byte) in left.bytes().enumerate() {
+        current[0] = left_index + 1;
+        for (right_index, right_byte) in right.bytes().enumerate() {
+            let substitution = previous[right_index] + usize::from(left_byte != right_byte);
+            current[right_index + 1] = (previous[right_index + 1] + 1)
+                .min(current[right_index] + 1)
+                .min(substitution);
+        }
+        std::mem::swap(&mut previous, &mut current);
+    }
+
+    previous[right.len()]
+}
+
 async fn send_private(ctx: Context<'_>, content: impl Into<String>) -> Result<(), Error> {
     let content = content.into();
     if ctx.guild_id().is_some() {
@@ -2008,6 +2072,20 @@ mod tests {
         assert!(message.contains("`mb!privacy_export`"));
         assert!(message.contains("`mb!privacy_delete`"));
         assert!(!message.contains("`.privacy_data`"));
+    }
+
+    #[test]
+    fn command_argument_suggestions_are_conservative_and_never_auto_correct() {
+        assert_eq!(
+            super::suggest_known_value("wayfarer-lantarn", &["wayfarer-lantern"]),
+            Some("wayfarer-lantern")
+        );
+        assert_eq!(
+            super::suggest_known_value("wayfarer-lantern", &["wayfarer-lantern"]),
+            Some("wayfarer-lantern")
+        );
+        assert_eq!(super::suggest_known_value("unrelated", &["wayfarer-lantern"]), None);
+        assert_eq!(super::edit_distance("craft", "crfat"), 2);
     }
 
     #[test]
