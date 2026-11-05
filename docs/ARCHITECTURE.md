@@ -79,7 +79,7 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 
 ## Command presentation and input guidance
 
-The Discord adapter owns response formatting without moving domain rules into Serenity/Poise. Substantial slash results can use the shared `send_title_panel` helper to render a compact embed title and description; slash panels are ephemeral by default. Prefix output remains a normal Discord message. Use title panels for meaningful browse/workbench/board views, not every acknowledgement, and preserve private delivery for profile, inventory and other personal data. Finite command arguments may use the adapter's conservative edit-distance suggestion helper. A suggestion is never an automatic correction and must not execute a command on the player's behalf.
+The Discord adapter owns response formatting without moving domain rules into Serenity/Poise. Substantial slash results use the shared `send_title_panel` helper to render a compact embed title and description; it is used by Craft, Tavern and Games. Active game boards use the game title in their embed while retaining native controls. Slash panels are ephemeral by default. Prefix output remains a normal Discord message. Use title panels for meaningful browse/workbench/board views, not every acknowledgement, and preserve private delivery for profile, inventory and other personal data. Finite command arguments use a conservative edit-distance suggestion helper for recipes, game IDs, Atlas destinations and finite action verbs. A suggestion is never an automatic correction and must not execute a command on the player's behalf.
 
 ## Discord components
 
