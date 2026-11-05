@@ -148,15 +148,16 @@ async fn run() -> Result<(), Error> {
             }),
             event_handler: |framework, event| {
                 Box::pin(async move {
-                    if let serenity::FullEvent::InteractionCreate { interaction } = event {
-                        if let serenity::Interaction::Component(component) = interaction {
-                            commands::handle_game_component(
-                                framework.serenity_context,
-                                framework.user_data,
-                                component,
-                            )
-                            .await?;
-                        }
+                    if let serenity::FullEvent::InteractionCreate {
+                        interaction: serenity::Interaction::Component(component),
+                    } = event
+                    {
+                        commands::handle_game_component(
+                            framework.serenity_context,
+                            framework.user_data,
+                            component,
+                        )
+                        .await?;
                     }
 
                     if let serenity::FullEvent::GuildDelete { incomplete, .. } = event {
