@@ -280,7 +280,7 @@ mod postgres_tests {
             .expect("system clock after epoch")
             .as_nanos()
             % 1_000_000_000_000_000_000;
-        let player_id = format!("inventory-test-{nonce}");
+        let player_id = format!("inv-{nonce}");
         let profiles = crate::profile::ProfileStore::new(pool.clone());
         profiles
             .get_or_create(&player_id, "Inventory Test")
