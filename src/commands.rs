@@ -662,7 +662,13 @@ pub async fn privacy_data(
         inventory.expedition_checkpoint_records,
         inventory.session_retention
     );
-    send_private_title_panel(ctx, "Your Moonbyte Data Inventory", title.as_deref(), message).await
+    send_private_title_panel(
+        ctx,
+        "Your Moonbyte Data Inventory",
+        title.as_deref(),
+        message,
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -802,7 +808,13 @@ pub async fn profile(
         .get_or_create(&player_id, &ctx.author().name)
         .await?;
     let stats = ctx.data().profiles().game_stats(&player_id).await?;
-    send_private_title_panel(ctx, "Your Moonbyte Profile", title.as_deref(), render_profile(&profile, &stats)).await
+    send_private_title_panel(
+        ctx,
+        "Your Moonbyte Profile",
+        title.as_deref(),
+        render_profile(&profile, &stats),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -930,7 +942,13 @@ pub async fn inventory(
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let snapshot = ctx.data().inventory().snapshot(&player_id).await?;
-    send_private_title_panel(ctx, "Your Satchel", title.as_deref(), crate::inventory::render_inventory(&snapshot)).await
+    send_private_title_panel(
+        ctx,
+        "Your Satchel",
+        title.as_deref(),
+        crate::inventory::render_inventory(&snapshot),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -943,7 +961,13 @@ pub async fn collection(
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let snapshot = ctx.data().inventory().snapshot(&player_id).await?;
-    send_private_title_panel(ctx, "Postcard Wall", title.as_deref(), crate::inventory::render_collection(&snapshot)).await
+    send_private_title_panel(
+        ctx,
+        "Postcard Wall",
+        title.as_deref(),
+        crate::inventory::render_collection(&snapshot),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -988,7 +1012,14 @@ pub async fn craft(
         }
     };
 
-    send_title_panel(ctx, "Wayfarer Workshop · Crafting", title.as_deref(), &message, true).await
+    send_title_panel(
+        ctx,
+        "Wayfarer Workshop · Crafting",
+        title.as_deref(),
+        &message,
+        true,
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1318,7 +1349,13 @@ pub async fn stats(
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let stats = ctx.data().profiles().game_stats(&player_id).await?;
-    send_private_title_panel(ctx, "Game Statistics", title.as_deref(), render_statistics(&stats)).await
+    send_private_title_panel(
+        ctx,
+        "Game Statistics",
+        title.as_deref(),
+        render_statistics(&stats),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1374,7 +1411,13 @@ pub async fn atlas(
         .await?;
     let snapshot = ctx.data().atlas().snapshot(&player_id).await?;
     let prefix = ctx.data().command_prefix(ctx.guild_id());
-    send_private_title_panel(ctx, "Atlas", title.as_deref(), crate::atlas::render(&snapshot, &prefix)).await
+    send_private_title_panel(
+        ctx,
+        "Atlas",
+        title.as_deref(),
+        crate::atlas::render(&snapshot, &prefix),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1393,7 +1436,13 @@ pub async fn chronicle(
     ctx.data().atlas().snapshot(&player_id).await?;
     let snapshot = ctx.data().chronicle().snapshot(&player_id).await?;
     let prefix = ctx.data().command_prefix(ctx.guild_id());
-    send_private_title_panel(ctx, "Chronicle Archive", title.as_deref(), crate::chronicle::render(&snapshot, &prefix)).await
+    send_private_title_panel(
+        ctx,
+        "Chronicle Archive",
+        title.as_deref(),
+        crate::chronicle::render(&snapshot, &prefix),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1491,7 +1540,15 @@ pub async fn expedition(
         .to_ascii_lowercase();
 
     match action.as_str() {
-        "list" => send_private_title_panel(ctx, "Expedition Routes", None, crate::expedition::render_catalogue(&prefix)).await,
+        "list" => {
+            send_private_title_panel(
+                ctx,
+                "Expedition Routes",
+                None,
+                crate::expedition::render_catalogue(&prefix),
+            )
+            .await
+        },
         "start" => {
             let route = target.as_deref().unwrap_or(crate::expedition::ROUTE_ID);
             if route != crate::expedition::ROUTE_ID {
@@ -1524,7 +1581,13 @@ pub async fn expedition(
                 )).await?;
                 Ok(())
             } else {
-                send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
+send_private_title_panel(
+                    ctx,
+                    "Lantern Road Expedition",
+                    None,
+                    crate::expedition::render(&run, &prefix),
+                )
+                .await
             }
         }
         "join" => {
@@ -1542,7 +1605,13 @@ pub async fn expedition(
                 .await?;
             ctx.data().atlas().snapshot(&player_id).await?;
             let run = ctx.data().expeditions().join(&player_id, guild, id).await?;
-            send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
+send_private_title_panel(
+                ctx,
+                "Lantern Road Expedition",
+                None,
+                crate::expedition::render(&run, &prefix),
+            )
+            .await
         }
         "begin" | "status" | "pause" | "resume" | "leave" | "cancel" => {
             let id = parse_expedition_id(target.as_deref())?;
@@ -1585,7 +1654,13 @@ pub async fn expedition(
                 }
                 _ => unreachable!(),
             };
-            send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
+send_private_title_panel(
+                ctx,
+                "Lantern Road Expedition",
+                None,
+                crate::expedition::render(&run, &prefix),
+            )
+            .await
         }
         "advance" => {
             let id = parse_expedition_id(target.as_deref())?;
@@ -1604,7 +1679,13 @@ pub async fn expedition(
                 .expeditions()
                 .advance(&player_id, guild_id.as_deref(), id, checkpoint, choice)
                 .await?;
-            send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
+send_private_title_panel(
+                ctx,
+                "Lantern Road Expedition",
+                None,
+                crate::expedition::render(&run, &prefix),
+            )
+            .await
         }
         _ => {
             let suggestion = suggest_known_value(
@@ -1660,7 +1741,14 @@ pub async fn games(
         "First completion of each game type grants {} Moonbits once per player. Repeat completions do not grant more. Use {prefix}wallet to view your balance.\n\n{entries}",
         crate::wallet::FIRST_COMPLETION_REWARD
     );
-    send_title_panel(ctx, "Moonbyte Game Library", title.as_deref(), &message, false).await
+    send_title_panel(
+        ctx,
+        "Moonbyte Game Library",
+        title.as_deref(),
+        &message,
+        false,
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1792,7 +1880,8 @@ pub async fn sessions(
             "Active Game Sessions",
             title.as_deref(),
             format!("You don't have any active sessions in {scope}."),
-        ).await;
+        )
+        .await;
     }
 
     let entries = sessions
@@ -1947,11 +2036,7 @@ fn panel_description(content: &str) -> String {
     }
 }
 
-fn build_title_panel(
-    fallback: &str,
-    override_title: Option<&str>,
-    content: &str,
-) -> CreateEmbed {
+fn build_title_panel(fallback: &str, override_title: Option<&str>, content: &str) -> CreateEmbed {
     let description = panel_description(content);
     let description = if description.is_empty() {
         "No additional details.".to_owned()
@@ -2427,7 +2512,6 @@ mod tests {
     }
 }
 
-
 #[cfg(test)]
 mod title_panel_tests {
     use super::{panel_description, panel_title};
@@ -2440,7 +2524,9 @@ mod title_panel_tests {
         );
         assert_eq!(panel_title(Some("   "), "Default"), "Default");
         assert_eq!(
-            panel_title(Some(&"x".repeat(300)), "Default").chars().count(),
+            panel_title(Some(&"x".repeat(300)), "Default")
+                .chars()
+                .count(),
             256
         );
     }
