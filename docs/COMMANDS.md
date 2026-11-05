@@ -2,6 +2,12 @@
 
 The default prefix is `.`. Guild moderators with Manage Server can set a per-server prefix and optionally restrict commands to one channel. The same registered commands are available through slash commands.
 
+## Command response UX
+
+Substantial slash-command results use a compact Discord embed title panel so the command context remains visible above the result. The shared Rust `send_title_panel` adapter is the reusable presentation path; Craft currently uses the **Wayfarer Workshop · Crafting** title. Apply it to browse-style outputs such as Games, Atlas, Expeditions, Quests and collection views when their response is a substantial panel, but do not add decorative embeds to tiny confirmations or weaken private-response handling. Slash panels are ephemeral by default; prefix commands retain normal message visibility.
+
+Finite command arguments should provide conservative typo suggestions when one known value is clearly close (for example, a misspelled recipe ID). Suggestions are advisory only: Moonbyte never silently rewrites or executes a corrected command. Ambiguous or unrelated input receives the normal usage guidance instead.
+
 ## General and consent
 
 | Prefix | Slash | Purpose |
