@@ -1424,7 +1424,10 @@ pub async fn expedition(
                 .await;
             };
             let id = parse_expedition_id(target.as_deref())?;
-            ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+            ctx.data()
+                .profiles()
+                .get_or_create(&player_id, &ctx.author().name)
+                .await?;
             ctx.data().atlas().snapshot(&player_id).await?;
             let run = ctx.data().expeditions().join(&player_id, guild, id).await?;
             send_private(ctx, crate::expedition::render(&run, &prefix)).await
