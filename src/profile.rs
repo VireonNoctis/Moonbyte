@@ -1127,13 +1127,12 @@ impl ProfileStore {
                 .execute(&mut *transaction)
                 .await?
                 .rows_affected();
-        let inventory_items_removed = sqlx::query(
-            "DELETE FROM player_inventory_items WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+        let inventory_items_removed =
+            sqlx::query("DELETE FROM player_inventory_items WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
 
         let atlas_discoveries_removed =
             sqlx::query("DELETE FROM player_atlas_discoveries WHERE discord_user_id = $1")

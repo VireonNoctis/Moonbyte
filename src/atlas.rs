@@ -216,7 +216,8 @@ impl AtlasStore {
         .await?;
 
         crate::chronicle::record_discovery(&mut transaction, player_id, destination.id).await?;
-        crate::inventory::record_atlas_keepsake(&mut transaction, player_id, destination.id).await?;
+        crate::inventory::record_atlas_keepsake(&mut transaction, player_id, destination.id)
+            .await?;
 
         sqlx::query(
             "UPDATE player_world_state SET current_location_id = $2, updated_at = now() \

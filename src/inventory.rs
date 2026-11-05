@@ -92,28 +92,30 @@ impl InventoryStore {
 
         let entries = rows
             .into_iter()
-            .map(|(item_id, quantity, source_type, source_reference, acquired_at)| {
-                let definition = definition_by_id(&item_id);
-                InventoryEntry {
-                    title: definition
-                        .map(|item| item.title)
-                        .unwrap_or("Uncatalogued item")
-                        .to_owned(),
-                    description: definition
-                        .map(|item| item.description)
-                        .unwrap_or("This item is retained with its original source record.")
-                        .to_owned(),
-                    source_name: definition
-                        .map(|item| item.location_name)
-                        .unwrap_or(source_reference.as_str())
-                        .to_owned(),
-                    item_id,
-                    quantity,
-                    source_type,
-                    source_reference,
-                    acquired_at,
-                }
-            })
+            .map(
+                |(item_id, quantity, source_type, source_reference, acquired_at)| {
+                    let definition = definition_by_id(&item_id);
+                    InventoryEntry {
+                        title: definition
+                            .map(|item| item.title)
+                            .unwrap_or("Uncatalogued item")
+                            .to_owned(),
+                        description: definition
+                            .map(|item| item.description)
+                            .unwrap_or("This item is retained with its original source record.")
+                            .to_owned(),
+                        source_name: definition
+                            .map(|item| item.location_name)
+                            .unwrap_or(source_reference.as_str())
+                            .to_owned(),
+                        item_id,
+                        quantity,
+                        source_type,
+                        source_reference,
+                        acquired_at,
+                    }
+                },
+            )
             .collect();
 
         Ok(InventorySnapshot { entries })
@@ -173,7 +175,11 @@ pub fn render_inventory(snapshot: &InventorySnapshot) -> String {
         .map(|entry| {
             format!(
                 "🖼️ **{}** · ×{}\n{}\nFound at: {}\nAcquired: {}",
-                entry.title, entry.quantity, entry.description, entry.source_name, entry.acquired_at
+                entry.title,
+                entry.quantity,
+                entry.description,
+                entry.source_name,
+                entry.acquired_at
             )
         })
         .collect::<Vec<_>>()
@@ -209,7 +215,11 @@ pub fn render_collection(snapshot: &InventorySnapshot) -> String {
                 "{} **{}**\n{}",
                 if found { "✅" } else { "▫️" },
                 definition.title,
-                if found { "Collected" } else { "Not discovered yet" }
+                if found {
+                    "Collected"
+                } else {
+                    "Not discovered yet"
+                }
             )
         })
         .collect::<Vec<_>>()
@@ -291,7 +301,10 @@ mod postgres_tests {
         transaction.commit().await.expect("commit discovery");
 
         let inventory = InventoryStore::new(pool);
-        let snapshot = inventory.snapshot(&player_id).await.expect("read inventory");
+        let snapshot = inventory
+            .snapshot(&player_id)
+            .await
+            .expect("read inventory");
         assert_eq!(snapshot.entries.len(), 1);
         assert_eq!(snapshot.entries[0].item_id, "atlas.postcard.lantern-square");
         assert_eq!(snapshot.entries[0].source_reference, "lantern-square");
