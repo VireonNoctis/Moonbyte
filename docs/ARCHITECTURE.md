@@ -40,7 +40,7 @@ The checked-in toolchain file is authoritative. CI records the version used by t
 ## Code layers and ownership
 
 - **Domain:** pure game rules, player progression rules, Atlas graph, route definitions and state transitions. No Serenity, Poise or SQLx types.
-- **Application/persistence:** player, game, wallet, quest, Atlas, Chronicle, guild and Expedition stores. PostgreSQL is authoritative.
+- **Application/persistence:** player, game, wallet, inventory, quest, Atlas, Chronicle, guild and Expedition stores. PostgreSQL is authoritative.
 - **Discord adapter:** command parsing, identity/guild extraction, response formatting and component routing. All user input is untrusted.
 - **Composition root:** `src/main.rs` creates stores, registers commands, starts background retention work and owns graceful shutdown.
 - **Configuration:** environment variables are validated before database/gateway startup. Secret values are never printed.
@@ -61,7 +61,7 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - Ordered SQL migrations are recorded in `moonbyte_schema_migrations` and guarded by an advisory transaction lock at startup.
 - Session mutations use row-level locks and short transactions. Do not hold a transaction over Discord HTTP calls.
 - Game result, statistics, first-completion ledger credit and achievement changes commit with the completed session.
-- Atlas travel, first discovery and the matching Chronicle fragment commit together.
+- Atlas travel, first discovery, the matching Chronicle fragment and its account-bound postcard commit together; the inventory write is idempotent and retains the Atlas source ID.
 - Expedition checkpoint history and each active participant's Atlas/Chronicle effects are written in the same transaction through owning service boundaries.
 - Quest reward claims use a unique player/date/objective key and an immutable ledger entry.
 - Guild settings use PostgreSQL notifications to invalidate per-process cache entries.
@@ -69,9 +69,9 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 
 ## Privacy and security boundaries
 
-- Every player-owned table has a clear owner and export/deletion path.
+- Every player-owned table has a clear owner and export/deletion path. Inventory records retain stable item IDs, quantity, source type, source reference and acquisition timestamp; the player export includes this provenance and account deletion removes the rows.
 - Guild settings are not player profile data. Guild permissions do not grant access to private player history.
-- Private profiles, statistics, quest state, Chronicle pages, rivalries and Expedition details are returned privately where required.
+- Private profiles, statistics, quest state, inventory, Chronicle pages, rivalries and Expedition details are returned privately where required.
 - Raw message text is not persisted as analytics. Tokens, authorization headers, private payloads, quest seeds and unnecessary player identifiers are not logged.
 - No client-supplied score, winner, reward, currency balance or checkpoint is trusted.
 - Discord delivery failure never rolls back a committed game or Expedition state change; retry behavior must avoid duplicate effects.

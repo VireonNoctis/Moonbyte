@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 12] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 14] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -113,6 +113,22 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 12] = [
         emoji: EmojiKey::Rocket,
         fallback: "🗺️",
     },
+    TavernDestination {
+        id: "player-satchel",
+        title: "Your Satchel",
+        description: "Inspect personal keepsakes and the locations they came from.",
+        command: "inventory",
+        emoji: EmojiKey::Treasure,
+        fallback: "🎒",
+    },
+    TavernDestination {
+        id: "postcard-wall",
+        title: "The Postcard Wall",
+        description: "Track the five account-bound postcards earned through Atlas discovery.",
+        command: "collection",
+        emoji: EmojiKey::Crystal,
+        fallback: "🖼️",
+    },
 ];
 
 /// Render the initial Tavern Wayfinder using only live commands.
@@ -154,7 +170,7 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 12);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 14);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
             [
@@ -169,7 +185,9 @@ mod tests {
                 "wayfarer",
                 "companion",
                 "rivals",
-                "expedition"
+                "expedition",
+                "inventory",
+                "collection"
             ]
         );
 
@@ -190,6 +208,10 @@ mod tests {
         assert!(home.contains(".companion"));
         assert!(home.contains(".rivals"));
         assert!(home.contains(".expedition"));
+        assert!(home.contains(".inventory"));
+        assert!(home.contains(".collection"));
+        assert!(home.contains("Your Satchel"));
+        assert!(home.contains("The Postcard Wall"));
         assert!(home.contains("Rivalry Hall"));
         assert!(home.contains("The Common Tables"));
         assert!(home.contains("The Chronicle"));

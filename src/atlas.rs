@@ -216,6 +216,7 @@ impl AtlasStore {
         .await?;
 
         crate::chronicle::record_discovery(&mut transaction, player_id, destination.id).await?;
+        crate::inventory::record_atlas_keepsake(&mut transaction, player_id, destination.id).await?;
 
         sqlx::query(
             "UPDATE player_world_state SET current_location_id = $2, updated_at = now() \
@@ -305,6 +306,7 @@ async fn ensure_starting_point(
     .await?;
 
     crate::chronicle::record_discovery(transaction, player_id, STARTING_LOCATION).await?;
+    crate::inventory::record_atlas_keepsake(transaction, player_id, STARTING_LOCATION).await?;
     Ok(())
 }
 
@@ -355,6 +357,7 @@ pub(crate) async fn apply_expedition_travel(
     .await?;
 
     crate::chronicle::record_discovery(transaction, player_id, destination.id).await?;
+    crate::inventory::record_atlas_keepsake(transaction, player_id, destination.id).await?;
 
     sqlx::query(
         "UPDATE player_world_state SET current_location_id = $2, updated_at = now()

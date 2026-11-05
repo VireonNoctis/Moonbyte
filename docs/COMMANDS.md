@@ -20,13 +20,15 @@ New users must review both current policies and run `.consent accept` before ord
 
 | Prefix | Slash | Purpose |
 |---|---|---|
-| `.tavern` | `/tavern` | Open the 12-destination Tavern Wayfinder. |
+| `.tavern` | `/tavern` | Open the 14-destination Tavern Wayfinder. |
 | `.profile` | `/profile` | View a private player profile. |
 | `.profile_edit` | `/profile_edit` | Set a display name and short bio. |
 | `.settings` | `/settings` | Save profile visibility and preference flags. |
 | `.stats` | `/stats` | View completed-game totals and per-game wins/draws. |
 | `.wallet` | `/wallet` | View earned-only Moonbits and ledger-entry count. |
 | `.achievements` | `/achievements` | View five fixed achievement milestones. |
+| `.inventory` | `/inventory` | Inspect personal keepsakes with quantity and source provenance. |
+| `.collection` | `/collection` | View the five Atlas postcards and collection progress. |
 | `.quests` | `/quests` | Open the optional daily objective board. |
 | `.quest accept <id>` / `.quest claim <id>` | `/quest` | Opt into an objective or claim its fixed completed reward. |
 | `.wayfarer` | `/wayfarer` | View cumulative journey days. |
@@ -57,7 +59,7 @@ Lantern Road is the one implemented route: Lantern Square → Mosslight Grove �
 | `.sessions` | `/sessions` | List up to ten recent active sessions in the current server or DM scope. |
 | `.leave <session>` | `/leave` | End a session you participate in. |
 
-Current action formats: Tic-tac-toe uses 1-based `row,column`; Connect Four uses a 1-based column from 1–7; Memory Match uses a 1-based position from 1–8; Word Scramble accepts an answer. Game state remains server-authoritative and stored in PostgreSQL.
+Current action formats: Tic-tac-toe uses 1-based `row,column`; Connect Four uses a 1-based column from 1–7; Memory Match uses a 1-based position from 1–8; Word Scramble accepts an answer. The first three games also expose numbered Discord buttons, with text commands retained as a fallback. Game state remains server-authoritative and stored in PostgreSQL.
 
 ## Prefix configuration
 
@@ -71,9 +73,9 @@ The configuration command remains available from any channel so a server can rec
 
 ## Privacy controls
 
-1. `.privacy_data` privately lists the requester's current stored data categories.
-2. `.privacy_export` sends a private JSON export. Version 9 includes the requester's own Expedition participation/checkpoint history and omits other participants' IDs and private quest seeds.
+1. `.privacy_data` privately lists the requester's current stored data categories, including inventory provenance.
+2. `.privacy_export` sends a private JSON export. Version 10 includes the requester's own Expedition participation/checkpoint history and account-bound Atlas keepsake provenance and omits other participants' IDs and private quest seeds.
 3. `.privacy_delete` explains the exact deletion scope; it does not delete yet.
 4. `.privacy_delete DELETE` confirms deletion.
 
-Deleting a player removes that player's owned records and shared game-session snapshots containing their Discord ID. The command warns that deleting a shared snapshot also ends that session for its co-participants. It cannot delete Discord's own records, copies held by other participants or external infrastructure backups. See [Privacy Policy](PRIVACY.md) and [Implementation Map](IMPLEMENTATION.md).
+Deleting a player removes that player's owned records, including inventory provenance, and shared game-session snapshots containing their Discord ID. The command warns that deleting a shared snapshot also ends that session for its co-participants. It cannot delete Discord's own records, copies held by other participants or external infrastructure backups. See [Privacy Policy](PRIVACY.md) and [Implementation Map](IMPLEMENTATION.md).

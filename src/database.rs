@@ -13,6 +13,7 @@ const USER_CONSENT_MIGRATION: &str = include_str!("../migrations/0008_user_conse
 const WAYFARER_MIGRATION: &str = include_str!("../migrations/0009_wayfarer_rivalry.sql");
 const CHRONICLE_MIGRATION: &str = include_str!("../migrations/0010_player_chronicle.sql");
 const EXPEDITION_MIGRATION: &str = include_str!("../migrations/0011_expeditions.sql");
+const INVENTORY_MIGRATION: &str = include_str!("../migrations/0012_player_inventory.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -75,6 +76,7 @@ impl Database {
             (9_i64, WAYFARER_MIGRATION),
             (10_i64, CHRONICLE_MIGRATION),
             (11_i64, EXPEDITION_MIGRATION),
+            (12_i64, INVENTORY_MIGRATION),
         ] {
             let already_applied: bool = sqlx::query_scalar(
                 "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",

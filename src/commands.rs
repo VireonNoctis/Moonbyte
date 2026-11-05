@@ -599,6 +599,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
          Atlas world-state record: {}\n\
          Atlas discovery records: {}\n\
          Chronicle archive pages: {}\n\
+         Account-bound Atlas keepsakes: {}\n\
          Wayfarer active days: {}\n\
          Daily quest rotations: {}\n\
          Daily quest records: {}\n\
@@ -633,6 +634,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
         },
         inventory.atlas_discovery_records,
         inventory.archive_fragment_records,
+        inventory.inventory_item_records,
         inventory.wayfarer_active_days,
         inventory.quest_rotation_records,
         inventory.daily_quest_records,
@@ -667,7 +669,7 @@ pub async fn privacy_export(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command)]
 pub async fn privacy_delete(
     ctx: Context<'_>,
-    #[description = "Type DELETE to confirm removal of your profile, sessions, wallet, Chronicle pages, quests, Wayfarer history and rivalries"]
+    #[description = "Type DELETE to confirm removal of your profile, sessions, wallet, keepsakes, Chronicle pages, quests, Wayfarer history and rivalries"]
     confirmation: Option<String>,
 ) -> Result<(), Error> {
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
@@ -680,7 +682,7 @@ pub async fn privacy_delete(
             format!(
                 "**Delete your Moonbyte profile?**\n\n\
              This removes your profile, policy-acceptance record, unlocked achievements, Moonbits wallet and ledger \
-             entries, Atlas location/discovery records, Chronicle archive pages, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
+             entries, Atlas location/discovery records, Chronicle archive pages, account-bound keepsakes and their provenance, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
              containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
              To confirm, run `{prefix}privacy_delete DELETE`. No deletion has happened yet.",
@@ -710,6 +712,7 @@ pub async fn privacy_delete(
          Atlas world-state record removed: {}\n\
          Atlas discovery records removed: {}\n\
          Chronicle archive pages removed: {}\n\
+         Inventory items removed: {}\n\
          Wayfarer activity days removed: {}\n\
          Daily quest rotations removed: {}\n\
          Daily quest records removed: {}\n\
@@ -740,6 +743,7 @@ pub async fn privacy_delete(
         },
         deletion.atlas_discoveries_removed,
         deletion.archive_fragments_removed,
+        deletion.inventory_items_removed,
         deletion.wayfarer_days_removed,
         deletion.quest_rotations_removed,
         deletion.daily_quest_records_removed,
@@ -873,6 +877,20 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
         ),
     )
     .await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn inventory(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let snapshot = ctx.data().inventory().snapshot(&player_id).await?;
+    send_private(ctx, crate::inventory::render_inventory(&snapshot)).await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn collection(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let snapshot = ctx.data().inventory().snapshot(&player_id).await?;
+    send_private(ctx, crate::inventory::render_collection(&snapshot)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1591,6 +1609,8 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         settings(),
         wallet_command,
         achievements_command,
+        inventory(),
+        collection(),
         quests_command,
         quest(),
         wayfarer_command,
@@ -1702,6 +1722,8 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}settings <visibility> <show_stats> <quiet_mode> / /settings — update preferences\n\
          {safe_prefix}wallet / /wallet — view your earned-only Moonbits balance\n\
          {safe_prefix}achievements / /achievements — view your unlocked achievements\n\
+         {safe_prefix}inventory / /inventory — inspect your account-bound keepsakes\n\
+         {safe_prefix}collection / /collection — view your Atlas postcard collection\n\
          {safe_prefix}stats / /stats — view completed game statistics\n\
          {safe_prefix}quests / /quests — open today's optional quest board\n\
          {safe_prefix}quest accept|claim <id> / /quest — accept or claim a daily quest\n\
@@ -1733,19 +1755,19 @@ const PRIVACY_OVERVIEW: &str = "\
 **Moonbyte privacy — current build**\n\n\
 Moonbyte processes Discord interactions to run commands and games. PostgreSQL stores \
 player profiles, session snapshots, completed-game result metadata, per-game aggregate \
-statistics, earned-only wallet/ledger records, unlocked achievements and personal Atlas location/discovery records, Lantern Road Expedition participation and checkpoint history. Sessions include game state and participant IDs, are scoped to their originating \
+statistics, earned-only wallet/ledger records, unlocked achievements, personal Atlas location/discovery records, private Chronicle fragments, account-bound postcards and their acquisition provenance, and Lantern Road Expedition participation and checkpoint history. Sessions include game state and participant IDs, are scoped to their originating \
 server, and expire after 24 hours without activity. Completed result rows expire with their \
 parent session; aggregate statistics and earned wallet/ledger records remain until the player \
 requests deletion. The first completion of each game type earns 10 Moonbits once per player. \
 Achievements such as first completion, first victory, completing all four games, ten total \
 games and five wins unlock once and remain until account deletion; they do not grant currency. \
-Spending and trading are not enabled.\n\n\
+Atlas discoveries grant one account-bound postcard per location. Use `.inventory` and `.collection` to inspect keepsakes and provenance. Trading and crafting are not enabled.\n\n\
 Player profiles store a Discord user ID, display name, optional bio, private-by-default \
 visibility and two preference flags. Use `.privacy_data` to inspect your current records, \
 `.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
 deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
 Deletion removes the profile, per-game statistics, achievements, Moonbits wallet/ledger records, \
-Atlas location/discovery records, your Expedition participation, and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
+Atlas location/discovery records, private Chronicle fragments, account-bound keepsakes and their provenance, your Expedition participation, and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
 Discord's own messages, Discord account data, other participants' copies, or backups outside \
 the current database.\n\n\
 Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of the \
@@ -1812,6 +1834,8 @@ mod tests {
             ".settings <visibility> <show_stats> <quiet_mode> / /settings",
             ".wallet / /wallet",
             ".achievements / /achievements",
+            ".inventory / /inventory",
+            ".collection / /collection",
             ".stats / /stats",
             ".quests / /quests",
             ".quest accept|claim <id> / /quest",
@@ -1867,6 +1891,8 @@ mod tests {
         assert_eq!(aliases("wallet"), vec!["w"]);
         assert_eq!(aliases("stats"), vec!["st"]);
         assert_eq!(aliases("achievements"), vec!["ach"]);
+        assert!(aliases("inventory").is_empty());
+        assert!(aliases("collection").is_empty());
         assert_eq!(aliases("quests"), vec!["q"]);
         assert_eq!(aliases("wayfarer"), vec!["wf"]);
 

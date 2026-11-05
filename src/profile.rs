@@ -88,6 +88,7 @@ pub struct ProfileInventory {
     pub daily_quest_records: i64,
     pub rivalry_records: i64,
     pub archive_fragment_records: i64,
+    pub inventory_item_records: i64,
     pub expedition_run_records: i64,
     pub expedition_checkpoint_records: i64,
     pub session_retention: &'static str,
@@ -113,6 +114,7 @@ pub struct PlayerDeletion {
     pub world_state_removed: bool,
     pub atlas_discoveries_removed: u64,
     pub archive_fragments_removed: u64,
+    pub inventory_items_removed: u64,
     pub wayfarer_days_removed: u64,
     pub quest_rotations_removed: u64,
     pub daily_quest_records_removed: u64,
@@ -186,6 +188,15 @@ struct ExportedArchiveFragment {
 }
 
 #[derive(Debug, Clone, Serialize)]
+struct ExportedInventoryItem {
+    item_id: String,
+    quantity: i32,
+    source_type: String,
+    source_reference: String,
+    acquired_at: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 struct ExportedConsent {
     terms_version: String,
     privacy_version: String,
@@ -255,7 +266,7 @@ struct ExportedExpeditionCheckpoint {
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 17],
+    data_categories: [&'static str; 18],
     profile: Option<PlayerProfile>,
     consent_record: Option<ExportedConsent>,
     game_sessions: Vec<ExportedSession>,
@@ -267,6 +278,7 @@ struct PlayerExport {
     world_state: Option<ExportedWorldState>,
     atlas_discoveries: Vec<ExportedAtlasDiscovery>,
     archive_fragments: Vec<ExportedArchiveFragment>,
+    inventory_items: Vec<ExportedInventoryItem>,
     wayfarer_activity_days: Vec<String>,
     daily_quests: Vec<ExportedDailyQuest>,
     quest_rotation_fingerprints: Vec<ExportedQuestRotation>,
@@ -471,6 +483,12 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
+        let inventory_item_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_inventory_items WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
 
         let wayfarer_active_days: i64 = sqlx::query_scalar(
             "SELECT count(*) FROM player_wayfarer_days WHERE discord_user_id = $1",
@@ -527,6 +545,7 @@ impl ProfileStore {
             daily_quest_records,
             rivalry_records,
             archive_fragment_records,
+            inventory_item_records,
             expedition_run_records,
             expedition_checkpoint_records,
             session_retention: "Game sessions and their result records expire after 24 hours of inactivity. Expedition participation and route history remain until account deletion; active runs are safely cancelled when no active participants remain.",
@@ -942,8 +961,31 @@ impl ProfileStore {
         )
         .collect();
 
+        let inventory_items = sqlx::query_as::<_, (String, i32, String, String, String)>(
+            r#"SELECT item_id, quantity, source_type, source_reference, acquired_at::text
+               FROM player_inventory_items
+               WHERE discord_user_id = $1
+               ORDER BY acquired_at ASC, item_id ASC, source_reference ASC"#,
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(
+            |(item_id, quantity, source_type, source_reference, acquired_at)| {
+                ExportedInventoryItem {
+                    item_id,
+                    quantity,
+                    source_type,
+                    source_reference,
+                    acquired_at,
+                }
+            },
+        )
+        .collect();
+
         let export = PlayerExport {
-            format_version: 9,
+            format_version: 10,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -957,6 +999,7 @@ impl ProfileStore {
                 "current Atlas location",
                 "Atlas discoveries and visit history",
                 "Chronicle archive fragments and first-discovery timestamps",
+                "account-bound Atlas keepsakes and acquisition provenance",
                 "Wayfarer activity days",
                 "daily quest selections and progress",
                 "SHA-512 daily quest rotation fingerprints",
@@ -975,6 +1018,7 @@ impl ProfileStore {
             world_state,
             atlas_discoveries,
             archive_fragments,
+            inventory_items,
             wayfarer_activity_days,
             daily_quests,
             quest_rotation_fingerprints,
@@ -1083,6 +1127,13 @@ impl ProfileStore {
                 .execute(&mut *transaction)
                 .await?
                 .rows_affected();
+        let inventory_items_removed = sqlx::query(
+            "DELETE FROM player_inventory_items WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
 
         let atlas_discoveries_removed =
             sqlx::query("DELETE FROM player_atlas_discoveries WHERE discord_user_id = $1")
@@ -1217,6 +1268,7 @@ impl ProfileStore {
             world_state_removed,
             atlas_discoveries_removed,
             archive_fragments_removed,
+            inventory_items_removed,
             wayfarer_days_removed,
             quest_rotations_removed,
             daily_quest_records_removed,
@@ -1415,6 +1467,7 @@ mod postgres_tests {
         assert_eq!(inventory.wallet_ledger_records, 1);
         assert!(inventory.world_state_record);
         assert_eq!(inventory.atlas_discovery_records, 2);
+        assert_eq!(inventory.inventory_item_records, 2);
         assert_eq!(inventory.wayfarer_active_days, 1);
         assert_eq!(inventory.quest_rotation_records, 1);
         assert_eq!(inventory.daily_quest_records, 3);
@@ -1442,6 +1495,9 @@ mod postgres_tests {
         assert!(export.contains("atlas_discoveries"));
         assert!(export.contains("Chronicle archive fragments and first-discovery timestamps"));
         assert!(export.contains("archive_fragments"));
+        assert!(export.contains("account-bound Atlas keepsakes and acquisition provenance"));
+        assert!(export.contains("inventory_items"));
+        assert!(export.contains("atlas.postcard.lantern-square"));
         assert!(export.contains("lantern_first_light"));
         assert!(export.contains("mosslight-grove"));
         assert!(export.contains("Wayfarer activity days"));
@@ -1455,7 +1511,7 @@ mod postgres_tests {
             !export.contains("rotation_seed"),
             "private quest seed must not be exported"
         );
-        assert!(export.contains("\"format_version\": 9"));
+        assert!(export.contains("\"format_version\": 10"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
@@ -1471,6 +1527,7 @@ mod postgres_tests {
         assert!(deletion.world_state_removed);
         assert_eq!(deletion.atlas_discoveries_removed, 2);
         assert_eq!(deletion.archive_fragments_removed, 2);
+        assert_eq!(deletion.inventory_items_removed, 2);
         assert_eq!(deletion.wayfarer_days_removed, 1);
         assert_eq!(deletion.quest_rotations_removed, 1);
         assert_eq!(deletion.daily_quest_records_removed, 3);
@@ -1495,6 +1552,7 @@ mod postgres_tests {
         assert!(!deleted_inventory.world_state_record);
         assert_eq!(deleted_inventory.atlas_discovery_records, 0);
         assert_eq!(deleted_inventory.archive_fragment_records, 0);
+        assert_eq!(deleted_inventory.inventory_item_records, 0);
         assert_eq!(deleted_inventory.wayfarer_active_days, 0);
         assert_eq!(deleted_inventory.quest_rotation_records, 0);
         assert_eq!(deleted_inventory.daily_quest_records, 0);

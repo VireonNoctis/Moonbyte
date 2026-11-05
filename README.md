@@ -14,14 +14,14 @@ This branch contains a working Rust/Tokio/Serenity/Poise runtime and PostgreSQL 
 - Durable sessions, transactional moves, restart recovery and 24-hour inactive-session retention.
 - Player profiles, preferences, completed results, statistics and five achievements.
 - An earned-only Moonbits ledger: a fixed first-completion milestone per game type, with no purchase, transfer or wagering features.
-- A 12-destination Tavern Wayfinder.
-- A five-location Atlas with direct-route travel and private Chronicle pages.
+- A 14-destination Tavern Wayfinder, including the Satchel and Postcard Wall.
+- A five-location Atlas with direct-route travel, private Chronicle pages and five provenance-backed, account-bound postcards.
 - Optional daily quests, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries.
 - The Lantern Road Expedition, playable solo or with up to three consenting companions, with persistent checkpoints and Atlas/Chronicle hand-offs.
-- Versioned Terms/Privacy consent, private data inventory, version 9 export and confirmed account deletion.
+- Versioned Terms/Privacy consent, private data inventory, version 10 export including keepsake provenance and confirmed account deletion.
 - Per-server command prefixes and optional command-channel routing.
 
-Three starter games now have Discord-native numbered board controls, with text commands retained as a fallback. Button payloads carry the displayed action version; stale controls refresh from PostgreSQL instead of replaying a move. Structured tracing records minimised lifecycle and cleanup events. Durable duplicate-interaction records and production backup/restore drills remain in the roadmap. A green CI run is not a substitute for live Discord deployment testing.
+Three starter games now have Discord-native numbered board controls, with text commands retained as a fallback. `.inventory` and `.collection` show account-bound Atlas postcards with source provenance. Button payloads carry the displayed action version; stale controls refresh from PostgreSQL instead of replaying a move. Structured tracing records minimised lifecycle and cleanup events. Durable duplicate-interaction records and production backup/restore drills remain in the roadmap. A green CI run is not a substitute for live Discord deployment testing.
 
 ## Technology
 

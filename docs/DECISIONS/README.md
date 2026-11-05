@@ -14,5 +14,6 @@ ADRs record decisions that affect multiple modules or are expensive to reverse. 
 - [0008 — Guild command routing and prefixes](0008-guild-command-routing.md).
 - [0009 — Versioned Terms and user consent](0009-versioned-terms-and-consent.md).
 - [0010 — Private Chronicle pages from first Atlas discoveries](0010-private-chronicle-fragments.md).
+- [0011 — Provenance-backed account-owned inventory](0011-provenance-backed-inventory.md).
 
 When a decision is replaced, retain the historical record and clearly identify the newer source. Do not create an ADR for a local implementation detail.

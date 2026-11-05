@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-05 — Atlas keepsake inventory and collection
+
+- Added five account-bound postcards, one for each Atlas location, with stable item IDs and source provenance.
+- Grants are deterministic and idempotent, written in the same PostgreSQL transaction as Atlas discovery and Chronicle updates.
+- Backfilled existing Atlas discoveries so current players receive the matching keepsakes.
+- Added private `.inventory` and `.collection` commands and two live Tavern destinations.
+- Extended privacy inventory, version 10 export, account deletion, integration tests and architecture documentation.
+- Corrected the implementation map and roadmap to mark existing numbered game-board controls as complete.
+
 ## 2026-11-04 — Discord-native board controls
 
 - Added numbered buttons to Tic-tac-toe, Connect Four and Memory Match boards.

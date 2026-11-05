@@ -1,6 +1,6 @@
 # Moonbyte Implementation Map
 
-> **Status source of truth · 4 November 2026**
+> **Status source of truth · 5 November 2026**
 >
 > The Final Vision describes the intended product. This document describes what this branch actually implements. The Roadmap records what comes next.
 
@@ -13,8 +13,8 @@
 | Prefix | `.` by default; per-guild override supported |
 | Storage | PostgreSQL through SQLx |
 | Deployment contract | One supported bot process with PostgreSQL |
-| Schema | Ordered migrations through `0011_expeditions.sql` |
-| Player interface | Discord-native commands/messages; numbered buttons for Tic-tac-toe, Connect Four and Memory Match |
+| Schema | Ordered migrations through `0012_player_inventory.sql` |
+| Player interface | Discord-native commands and messages; numbered board buttons for Tic-tac-toe, Connect Four and Memory Match |
 | Toolchain | Pinned in `rust-toolchain.toml` |
 
 ## Live systems
@@ -28,28 +28,26 @@ Four games currently run through the same transport-independent game engine:
 - Memory Match — solo, eight fixed positions and four pairs.
 - Word Scramble — solo, one curated starter puzzle and bounded attempts.
 
-Sessions are stored as versioned PostgreSQL JSONB snapshots. Mutations lock one session row, validate state and membership, then commit before Discord delivery. Sessions survive runtime reconstruction. Waiting/active sessions expire after 24 hours without a successful mutation and are cleaned by one periodic task. Reads do not extend the inactivity window. Discord button/select controls and duplicate-interaction idempotency are not yet implemented; commands remain the reliable action path.
+Sessions are stored as versioned PostgreSQL JSONB snapshots. Mutations lock one session row, validate state and membership, then commit before Discord delivery. Sessions survive runtime reconstruction. Waiting/active sessions expire after 24 hours without a successful mutation and are cleaned by one periodic task. Reads do not extend the inactivity window.
+
+Tic-tac-toe, Connect Four and Memory Match expose numbered Discord buttons routed through the same authoritative GameRuntime as text commands. Each button carries the displayed action count; the expected count is checked again inside the PostgreSQL session-row lock, so concurrent stale clicks cannot both apply. Stale boards refresh from persisted state and terminal boards disable controls. Word Scramble remains answer-driven. Text commands remain an accessible fallback. Durable interaction receipt records beyond the action-version guard are not implemented.
 
 ### Tavern and world
 
-The typed Tavern registry contains twelve live destinations:
+The Tavern Wayfinder exposes fourteen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel and Postcard Wall.
 
-1. Common Tables — `.games`
-2. Your Place — `.profile`
-3. Your Record — `.stats`
-4. The Ledger — `.wallet`
-5. The Gallery — `.achievements`
-6. The Atlas — `.atlas`
-7. The Chronicle — `.chronicle`
-8. The Quest Board — `.quests`
-9. The Wayfarer Thread — `.wayfarer`
-10. The Companion Journal — `.companion`
-11. The Rivalry Hall — `.rivals`
-12. The Expedition Board — `.expedition`
+The Atlas contains five authored locations and reciprocal route edges. A player begins at Lantern Square and can travel only to a directly connected location. First discovery unlocks one private Chronicle fragment and one account-bound postcard in the same PostgreSQL transaction. Revisits do not duplicate pages, keepsakes or rewards.
 
-The Atlas contains five authored locations and six reciprocal route edges. A player begins at Lantern Square and can travel only to a directly connected location. First discovery unlocks one private Chronicle fragment in the same transaction; revisits do not duplicate pages or grant repeatable rewards.
+The Lantern Road is one bounded authored route: Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Solo runs and same-guild groups of up to four are supported. Every participant opts in. The state machine supports recruiting, active, paused, completed and cancelled states; checkpoints are versioned and persisted, participant-specific Atlas/Chronicle/inventory effects use their owning services, and export/deletion includes each participant's own history. Runs can remain paused; there is no attendance deadline.
 
-The Lantern Road is implemented as one bounded, authored route: Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Solo runs and same-guild groups of up to four are supported. Every participant opts in. The state machine supports recruiting, active, paused, completed and cancelled states; checkpoints are versioned and persisted, participant-specific Atlas/Chronicle writes use their owning services, and export/deletion includes the participant's own history. Runs can remain paused; there is no attendance deadline.
+### Inventory and collection
+
+- `.inventory` shows account-bound items with quantity, source and acquisition timestamp.
+- `.collection` shows progress across five Atlas postcards.
+- A postcard is granted once per location from a verified Atlas discovery. The record is written in the same transaction as Atlas/Chronicle progression.
+- Migration 0012 backfills existing Atlas discoveries so existing players receive the matching keepsakes.
+- Inventory items retain stable IDs and source provenance. These starter keepsakes cannot be bought, sold, transferred or spent.
+- Crafting, consumable resources, player trading and Bazaar listings are not live.
 
 ### Wayfarer and social progress
 
@@ -64,8 +62,8 @@ The Lantern Road is implemented as one bounded, authored route: Lantern Square �
 
 - Profiles store a player-selected display name, optional short bio, visibility and preference flags.
 - The global command gate requires acceptance of current Terms and Privacy versions before ordinary commands. Legal/privacy commands remain available.
-- Private data inventory and JSON export are implemented. Export schema version is 9.
-- Confirmed deletion removes player-owned records across profiles, consents, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, Wayfarer/rivalries and Expedition participation/history.
+- Private data inventory and JSON export are implemented. Export schema is version 10 and includes item IDs, quantity, source type, source reference and acquisition timestamp.
+- Confirmed deletion removes player-owned records across profiles, consent, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, inventory, Wayfarer/rivalries and Expedition participation/history.
 - A shared game-session snapshot is removed when it contains the deleting player; the receipt explains that co-participant session access is consequently ended. Independent player aggregates remain.
 
 ### Guild settings
@@ -74,7 +72,7 @@ Manage Server permissions protect guild prefix and optional command-channel conf
 
 ### Moonbits
 
-The first completion of each game type awards a fixed 10 Moonbits once per player/game type. Quest rewards are fixed and disclosed. Wallet updates and immutable ledger rows share the source transaction and idempotency keys. Currency cannot be purchased, cashed out, staked, wagered or transferred outside Moonbyte. Spending, player trading, Vaults and Bazaar are not live.
+The first completion of each game type awards a fixed 10 Moonbits once per player/game type. Quest rewards are fixed and disclosed. Wallet updates and immutable ledger rows share the source transaction and idempotency keys. Currency cannot be purchased, cashed out, staked, wagered or transferred outside Moonbyte. Spending and trading are not live.
 
 ## Code ownership
 
@@ -87,7 +85,8 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 | Pure game rules | `src/game/engine.rs`, `src/game/model.rs` |
 | Durable game sessions | `src/game/runtime.rs` |
 | Discord commands/adapters | `src/commands.rs` |
-| Profiles, inventory, export and deletion | `src/profile.rs` |
+| Profiles, inventory, export and deletion inventory accounting | `src/profile.rs` |
+| Inventory catalog and provenance records | `src/inventory.rs` |
 | Consent | `src/consent.rs` |
 | Economy ledger | `src/wallet.rs` |
 | Achievements | `src/achievement.rs` |
@@ -100,11 +99,11 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 
 ## Known gaps
 
-- Durable interaction receipt records beyond the current action-version guard.
-- Development-guild interaction smoke tests and accessibility review of each interactive board.
+- Durable interaction receipt records beyond the current action-version guard; development-guild interaction smoke tests and accessibility review of each board.
 - Production database backup/restore automation, monitoring and a rehearsed recovery procedure.
-- More game content, validated word/puzzle packs, further Expedition routes, inventory, crafting and a fixed-price, non-wagering Bazaar.
-- A public player directory, public leaderboards and shared guild projects only after consent and guild-isolation contracts are implemented.
+- More original games, reviewed word/puzzle packs and additional authored Expedition routes.
+- Known-input crafting, fixed-rule Puzzle Vaults, opt-in guild projects and a fixed-price Bazaar after ownership, moderation, idempotency and settlement contracts are proven.
+- Public player directory/leaderboards, mastery, Almanac/seasonal content and homesteads remain proposals until their privacy and ownership contracts are implemented.
 
 ## Canonical documents
 

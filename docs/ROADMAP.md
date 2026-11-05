@@ -2,51 +2,55 @@
 
 > The [Final Vision](MOONBYTE_FINAL_VISION.md) governs product direction. The [Implementation Map](IMPLEMENTATION.md) is the source of truth for what is live. This document tracks delivery work, not speculative release dates.
 
-## Complete: foundation and first world slice
+## Complete: Discord game foundation and first connected world slice
 
-- [x] Rust/Tokio/Serenity/Poise runtime, validated environment configuration and PostgreSQL/SQLx.
-- [x] Ordered schema migrations, durable JSONB game sessions, row-locked mutations and restart recovery.
-- [x] Shared prefix/slash commands, configurable guild prefix and optional command-channel restriction.
-- [x] Graceful Ctrl-C and Unix SIGTERM shutdown.
+- [x] Rust/Tokio/Serenity/Poise runtime, validated configuration and PostgreSQL/SQLx persistence.
+- [x] Ordered migrations, durable JSONB game sessions, row-locked mutations and restart recovery.
+- [x] Shared prefix/slash commands, configurable guild prefixes and optional command-channel restriction.
+- [x] Graceful Ctrl-C and Unix SIGTERM shutdown with minimised structured tracing.
 - [x] Four playable games and guild-scoped multiplayer lobbies.
-- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 9 export and confirmed deletion.
+- [x] Numbered Discord board controls for Tic-tac-toe, Connect Four and Memory Match, routed through the authoritative GameRuntime.
+- [x] Button action-version guard checked inside the session row lock, stale-board refresh, terminal control disabling and text fallback.
+- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 10 export and confirmed deletion.
 - [x] Completed results, aggregate statistics, five achievements and the earned-only Moonbits ledger.
-- [x] Twelve live Tavern destinations.
+- [x] Fourteen live Tavern destinations.
 - [x] Five-location Atlas, reciprocal routes, direct-neighbour travel and private Chronicle discovery pages.
 - [x] Optional Wayfarer objectives, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries.
 - [x] Lantern Road Expedition v1 with solo/group state, opt-in participation, persistent checkpoints, pause/resume/leave, recovery and privacy coverage.
-- [x] PostgreSQL integration tests, formatting and Clippy in CI.
+- [x] Provenance-backed account-bound Atlas postcard inventory, existing-player backfill, Satchel and Postcard Wall commands, export/deletion coverage.
 
-## Next slice: reliable Discord play
+## Next engineering slices
 
-1. **Discord-native game controls**
-   - Add button controls for Tic-tac-toe and Connect Four, then Memory Match.
-   - Route component input through the same GameRuntime and validation as command actions.
-   - Bind each control to the session/message, enforce guild and participant checks, reject stale/duplicate controls, and disable controls after terminal states.
-   - Keep command actions as an accessible fallback.
+1. **Interaction and operational reliability**
+   - Add durable interaction receipts only if test/deployment evidence shows the action-version guard is insufficient.
+   - Add development-guild smoke tests for stale controls, simultaneous clicks, deleted messages and terminal boards.
+   - Automate PostgreSQL backup/restore, define retention and recovery objectives, and rehearse restore in isolation.
+   - Add operational health/latency diagnostics and alerting; retain the single-process support contract until concurrency/failover tests justify otherwise.
 
-3. **Interaction reliability**
-   - Acknowledge component interactions within Discord's response window.
-   - Persist/derive idempotency keys so duplicate delivery cannot apply a move twice.
-   - Handle deleted messages, expired interactions, restart recovery and response-edit failure without rolling back committed state.
-   - Test concurrent moves and out-of-order controls against PostgreSQL.
+2. **Known-input crafting**
+   - Introduce a small authored material catalogue and a fixed recipe book.
+   - Gather only from verified world/game outcomes; never grant materials from random drops.
+   - Consume owned inputs and create outputs with immutable provenance in one transaction.
+   - Add inventory reservations only when a real multi-step operation needs them.
+   - Keep player trading and Bazaar disabled until ownership, moderation, duplicate protection and atomic settlement are complete.
 
-4. **Production recovery**
-   - Document backup retention and restore objectives.
-   - Automate backups and verify restore in an isolated environment.
-   - Add database health/latency diagnostics and operational runbooks.
-   - Do not claim multi-instance support before load, failover and duplicate-delivery tests pass.
+3. **The first Puzzle Vault**
+   - Deliver one authored, deterministic challenge with saved checkpoints, clear rules and disclosed fixed rewards.
+   - Connect Vault completion to Atlas/Chronicle, Wayfarer and achievement layers through idempotent source events.
+   - No paid entry, wagers, random loot or punitive expiry.
 
-## Following slices
+4. **World expansion**
+   - Add authored Expedition routes and story quests in small complete vertical slices.
+   - Add opt-in guild projects and shared collections only after member roles, visibility, moderation and deletion boundaries are tested.
+   - Expand the original game library with reviewed word/puzzle packs and polished small games.
 
-- Expand the original game catalogue in small, polished groups; add reviewed puzzle and word packs.
-- Add inventory and provenance before implementing crafting.
-- Add one fixed-rule Puzzle Vault with disclosed deterministic rewards; no paid/random loot.
-- Add further authored Expedition routes and story quests after the current route's operational acceptance review.
-- Add guild projects and collaborative collections with explicit roles, opt-in sharing and deletion boundaries.
-- Consider fixed-price Bazaar listings only after inventory ownership, escrow, atomic settlement, duplicate protection and moderation are proven. No betting, wagering or gambling mechanics.
-- Add mastery, seasonal Almanac and richer companion cosmetics after their owning systems are implemented.
+## Later proposals
+
+- Fixed-price Bazaar listings and work orders after inventory ownership and atomic settlement are established.
+- Mastery, seasonal Almanac, festivals, companion cosmetics and homesteads after their owning systems exist.
+- Public player directory and leaderboards only with explicit visibility controls and privacy-complete projections.
+- Broader social surfaces only after guild isolation, consent and moderation are complete.
 
 ## Release gates
 
-A feature is complete only when its owning Rust module controls state transitions; migrations are reversible/ordered; actions are validated and idempotent; concurrency and recovery are tested; Discord UX has text fallback and accessible labels; privacy inventory/export/deletion is complete; and docs agree with code.
+A feature is complete only when its owning Rust module controls state transitions; migrations are ordered; actions are validated and idempotent; concurrency and recovery are tested; Discord UX has accessible labels and text fallback; privacy inventory/export/deletion is complete; and all canonical docs agree with code.
