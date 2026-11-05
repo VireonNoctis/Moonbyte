@@ -1548,7 +1548,7 @@ pub async fn expedition(
                 crate::expedition::render_catalogue(&prefix),
             )
             .await
-        },
+        }
         "start" => {
             let route = target.as_deref().unwrap_or(crate::expedition::ROUTE_ID);
             if route != crate::expedition::ROUTE_ID {
@@ -1581,7 +1581,7 @@ pub async fn expedition(
                 )).await?;
                 Ok(())
             } else {
-send_private_title_panel(
+                send_private_title_panel(
                     ctx,
                     "Lantern Road Expedition",
                     None,
@@ -1605,7 +1605,7 @@ send_private_title_panel(
                 .await?;
             ctx.data().atlas().snapshot(&player_id).await?;
             let run = ctx.data().expeditions().join(&player_id, guild, id).await?;
-send_private_title_panel(
+            send_private_title_panel(
                 ctx,
                 "Lantern Road Expedition",
                 None,
@@ -1654,7 +1654,7 @@ send_private_title_panel(
                 }
                 _ => unreachable!(),
             };
-send_private_title_panel(
+            send_private_title_panel(
                 ctx,
                 "Lantern Road Expedition",
                 None,
@@ -1679,7 +1679,7 @@ send_private_title_panel(
                 .expeditions()
                 .advance(&player_id, guild_id.as_deref(), id, checkpoint, choice)
                 .await?;
-send_private_title_panel(
+            send_private_title_panel(
                 ctx,
                 "Lantern Road Expedition",
                 None,
