@@ -10,7 +10,7 @@ Craft keeps its current visibility: slash results are ephemeral and prefix resul
 
 Slash-command inputs with a finite catalogue use Discord autocomplete dropdowns. Craft suggestions display the output item and required materials, while sending the canonical recipe ID to the handler. The same pattern is used for game selection, Atlas destinations, quest/rivalry/Expedition/Vault actions and profile visibility; `/vault` also suggests the authored chamber IDs. The parameter description explains the field; each suggestion is selectable from the dropdown. Prefix commands keep their text syntax.
 
-Finite command arguments also receive conservative typo hints when a typed value is close. Suggestions are advisory only: Moonbyte never silently rewrites or executes a corrected recipe, game, destination or action. Ambiguous/unrelated input receives normal usage guidance instead.
+Vault uses the same optional title-panel treatment: slash invocations have a `title` field, while trailing prefix text after list/status/pause/resume/leave becomes the panel title. Enter confirmations and solve answers remain untouched. Finite command arguments also receive conservative typo hints when a typed value is close. Suggestions are advisory only: Moonbyte never silently rewrites or executes a corrected recipe, game, destination or action. Ambiguous/unrelated input receives normal usage guidance instead.
 
 ## General and consent
 
@@ -54,7 +54,7 @@ New users must review both current policies and run `.consent accept` before ord
 | `.atlas [title]` | `/atlas title:` | View personal location, discoveries and direct routes. |
 | `.travel <location> [title]` | `/travel location: title:` | Location autocomplete shows each place and region; route reachability is checked before travel. |
 | `.chronicle [title]` | `/chronicle title:` | Privately read lore pages unlocked through first discoveries. |
-| `.vault [action] [target] [details]` | `/vault action: target: details:` | Open Mosslight Resonance, enter after confirmation, inspect progress, solve a chamber, pause, resume or leave. Action and chamber fields use Discord autocomplete. |
+| `.vault [action] [target] [details] [title]` | `/vault action: target: details: title:` | Open Mosslight Resonance, enter after confirmation, inspect progress, solve a chamber, pause, resume or leave. Action and chamber fields use Discord autocomplete; browse/status actions accept a custom panel title. Solve answers remain one canonical token, with optional title text after the answer. |
 | `.expedition` | `/expedition` | List routes, start/join/begin, inspect status, advance, pause, resume, leave or cancel. |
 
 Mosslight Resonance is a solo three-chamber Puzzle Vault unlocked by discovering Mosslight Grove. Open it with `.vault list`; use `.vault enter mosslight-resonance confirm` to explicitly begin or resume a saved run. The chambers are Waystone Order, Tideglass Code and Keeper's Seal. Submit the current chamber with `.vault solve <room-id> <answer>`. A correct answer stores a private save stone; incorrect guesses are checked in memory, never saved, and return a short authored hint. `.vault pause`, `.vault leave` and `.vault resume` preserve progress; runs do not expire. Completion grants one fixed account-bound Mosslight Seal, a private Chronicle page and a Wayfarer activity event. Practice replays do not grant a second keepsake.

@@ -1122,20 +1122,29 @@ pub async fn vault(
     #[max_length = 32]
     #[autocomplete = "autocomplete_vault_action"]
     action: Option<String>,
-    #[description = "Blueprint for enter, or current chamber ID for solve."]
+    #[description = "Blueprint for enter, or chamber ID for solve. For other actions, trailing text can be a panel title."]
     #[max_length = 80]
     #[autocomplete = "autocomplete_vault_target"]
     target: Option<String>,
-    #[description = "Type confirm to enter, or provide your answer when solving."]
+    #[description = "Type confirm to enter, or use the canonical one-token answer when solving."]
     #[max_length = 120]
-    #[rest]
     details: Option<String>,
+    #[description = "Optional title for the Vault panel."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     let action = action.as_deref().map(str::trim).filter(|value| !value.is_empty())
         .unwrap_or("list").to_ascii_lowercase();
+    let panel_title = resolve_vault_panel_title(
+        &action,
+        target.as_deref(),
+        details.as_deref(),
+        title.as_deref(),
+    );
     let store = ctx.data().vault();
 
     match action.as_str() {
@@ -1148,7 +1157,7 @@ pub async fn vault(
             send_private_title_panel(
                 ctx,
                 "Mosslight Resonance · Puzzle Vault",
-                None,
+                panel_title.as_deref(),
                 format!(
                     "**Mosslight Resonance** · {access}\n\n\
                      A private, solo Puzzle Vault with three authored chambers. Most runs take \
@@ -1171,7 +1180,7 @@ pub async fn vault(
                     Some(value) => format!("Unknown blueprint. Did you mean {prefix}vault enter {value} confirm?"),
                     None => "Use .vault enter mosslight-resonance confirm for the available blueprint.".to_owned(),
                 };
-                return send_private_title_panel(ctx, "Mosslight Resonance · Entry", None, message).await;
+                return send_private_title_panel(ctx, "Mosslight Resonance · Entry", panel_title.as_deref(), message).await;
             }
             if !details.as_deref().map(str::trim)
                 .is_some_and(|value| value.eq_ignore_ascii_case("confirm"))
@@ -1179,7 +1188,7 @@ pub async fn vault(
                 return send_private_title_panel(
                     ctx,
                     "Mosslight Resonance · Entry",
-                    None,
+                    panel_title.as_deref(),
                     format!(
                         "**Before entering**\n\n\
                          This solo run has three chambers. Only solved room IDs are saved; \
@@ -1197,12 +1206,12 @@ pub async fn vault(
                     send_private_title_panel(
                         ctx,
                         "Mosslight Resonance · Puzzle Vault",
-                        None,
+                        panel_title.as_deref(),
                         format!("**{heading}**\n\n{}", render_vault_snapshot(&entry.snapshot, &prefix)),
                     ).await
                 }
                 Err(error) => send_private_title_panel(
-                    ctx, "Mosslight Resonance · Entry", None, error.to_string()
+                    ctx, "Mosslight Resonance · Entry", panel_title.as_deref(), error.to_string()
                 ).await,
             }
         }
@@ -1211,14 +1220,14 @@ pub async fn vault(
                 Some(snapshot) => render_vault_snapshot(&snapshot, &prefix),
                 None => format!("No run yet. Use {prefix}vault list to review Mosslight Resonance."),
             };
-            send_private_title_panel(ctx, "Mosslight Resonance · Saved Progress", None, message).await
+            send_private_title_panel(ctx, "Mosslight Resonance · Saved Progress", panel_title.as_deref(), message).await
         }
         "solve" => {
             let room_id = target.as_deref().unwrap_or_default().trim();
             let answer = details.as_deref().unwrap_or_default().trim();
             if room_id.is_empty() || answer.is_empty() {
                 return send_private_title_panel(
-                    ctx, "Mosslight Resonance · Chamber", None,
+                    ctx, "Mosslight Resonance · Chamber", panel_title.as_deref(),
                     "Use .vault solve <room-id> <answer>. The current room ID appears in .vault status."
                 ).await;
             }
@@ -1240,7 +1249,7 @@ pub async fn vault(
                             render_vault_snapshot(&snapshot, &prefix)
                         )
                     };
-                    send_private_title_panel(ctx, "Mosslight Resonance · Save Stone", None, message).await
+                    send_private_title_panel(ctx, "Mosslight Resonance · Save Stone", panel_title.as_deref(), message).await
                 }
                 Err(crate::vault::VaultError::WrongRoom) => {
                     let current = store.active_snapshot(&player_id).await?;
@@ -1250,7 +1259,7 @@ pub async fn vault(
                         Some(value) => format!("That is not the current chamber. Did you mean {value}? Progress is unchanged."),
                         None => "That is not the current chamber. Check .vault status; progress is unchanged.".to_owned(),
                     };
-                    send_private_title_panel(ctx, "Mosslight Resonance · Chamber", None, message).await
+                    send_private_title_panel(ctx, "Mosslight Resonance · Chamber", panel_title.as_deref(), message).await
                 }
                 Err(crate::vault::VaultError::IncorrectAnswer) => {
                     let hint = store.active_snapshot(&player_id).await?
@@ -1260,12 +1269,12 @@ pub async fn vault(
                     send_private_title_panel(
                         ctx,
                         "Mosslight Resonance · Chamber",
-                        None,
+                        panel_title.as_deref(),
                         format!("Not quite. Your save stone is unchanged. Hint: {hint}"),
                     ).await
                 }
                 Err(error) => send_private_title_panel(
-                    ctx, "Mosslight Resonance · Chamber", None, error.to_string()
+                    ctx, "Mosslight Resonance · Chamber", panel_title.as_deref(), error.to_string()
                 ).await,
             }
         }
@@ -1287,11 +1296,11 @@ pub async fn vault(
                         render_vault_snapshot(&snapshot, &prefix)
                     };
                     send_private_title_panel(
-                        ctx, "Mosslight Resonance · Run Status", None, message
+                        ctx, "Mosslight Resonance · Run Status", panel_title.as_deref(), message
                     ).await
                 }
                 Err(error) => send_private_title_panel(
-                    ctx, "Mosslight Resonance", None, error.to_string()
+                    ctx, "Mosslight Resonance", panel_title.as_deref(), error.to_string()
                 ).await,
             }
         }
@@ -1302,9 +1311,29 @@ pub async fn vault(
                 Some(value) => format!("Unknown action. Did you mean {prefix}vault {value}?"),
                 None => "Unknown Vault action. Use .vault list to see available actions.".to_owned(),
             };
-            send_private_title_panel(ctx, "Mosslight Resonance · Help", None, message).await
+            send_private_title_panel(ctx, "Mosslight Resonance · Help", panel_title.as_deref(), message).await
         }
     }
+}
+
+fn resolve_vault_panel_title(
+    action: &str,
+    target: Option<&str>,
+    details: Option<&str>,
+    title: Option<&str>,
+) -> Option<String> {
+    let segments = if matches!(action, "enter" | "solve") {
+        [title].into_iter().flatten().collect::<Vec<_>>()
+    } else {
+        [target, details, title]
+            .into_iter()
+            .flatten()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .collect::<Vec<_>>()
+    };
+    let combined = segments.join(" ");
+    (!combined.is_empty()).then_some(combined)
 }
 
 fn render_vault_snapshot(snapshot: &crate::vault::VaultSnapshot, prefix: &str) -> String {
@@ -3112,8 +3141,36 @@ mod title_panel_tests {
 
 #[cfg(test)]
 mod autocomplete_tests {
-    use super::{PlayerCardProgress, autocomplete_value_matches, render_player_card};
+    use super::{
+        PlayerCardProgress, autocomplete_value_matches, render_player_card,
+        resolve_vault_panel_title,
+    };
     use crate::profile::PlayerProfile;
+
+    #[test]
+    fn vault_title_parsing_preserves_answers_and_prefix_browse_titles() {
+        assert_eq!(
+            resolve_vault_panel_title("list", Some("My"), Some("Vault"), None),
+            Some("My Vault".to_owned())
+        );
+        assert_eq!(
+            resolve_vault_panel_title(
+                "solve",
+                Some("waystone-order"),
+                Some("fern-star-moon"),
+                Some("My Chamber")
+            ),
+            Some("My Chamber".to_owned())
+        );
+        assert_eq!(
+            resolve_vault_panel_title("enter", Some("mosslight-resonance"), Some("confirm"), None),
+            None
+        );
+        assert_eq!(
+            resolve_vault_panel_title("status", None, None, Some("Saved Journey")),
+            Some("Saved Journey".to_owned())
+        );
+    }
 
     #[test]
     fn private_player_card_unifies_live_progress_and_respects_saved_preferences() {
