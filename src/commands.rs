@@ -1759,7 +1759,7 @@ fn suggest_known_value<'a>(input: &str, choices: &'a [&'a str]) -> Option<&'a st
         .map(|choice| (edit_distance(&input, choice), choice))
         .filter(|(distance, choice)| {
             let longest = input.len().max(choice.len());
-            *distance <= 3 && distance.saturating_mul(100) <= longest.saturating_mul(30)
+            *distance <= 3 && distance.saturating_mul(100) <= longest.saturating_mul(40)
         })
         .min_by_key(|(distance, _)| *distance)
         .map(|(_, choice)| choice)
