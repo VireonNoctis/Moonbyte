@@ -1,6 +1,6 @@
 # Moonbyte — Final Product Vision and World Loom Constitution
 
-> **Version 4.1 · Authoritative product blueprint · 4 November 2026**
+> **Version 4.2 · Authoritative product blueprint · 5 November 2026**
 >
 > This document consolidates the uploaded Final Vision v3.1, the ten World Loom design volumes, the live Rust/PostgreSQL foundation and the cross-system contracts needed to make Moonbyte one coherent product. It supersedes earlier vision drafts where they conflict. The ten volumes remain the detailed proposal catalogue; code, tests and the roadmap remain the source of truth for what is actually live.
 
@@ -81,7 +81,7 @@ A continuity moment is a small, contextual handoff shown after a successful acti
 
 | Committed event | Visible continuity moment | Systems updated |
 |---|---|---|
-| First-time Atlas discovery | The private lore page appears in the Chronicle; a guild discovery note appears only when shared discovery is enabled. | Atlas, Chronicle, Wayfarer, optional Guild Chronicle. |
+| First-time Atlas discovery | The private lore page appears in the Chronicle and one account-bound postcard is added to the player's collection; a guild discovery note appears only when shared discovery is enabled. | Atlas, Chronicle, Inventory/Collection, Wayfarer, optional Guild Chronicle. |
 | Expedition checkpoint | The checkpoint and route note are saved; the player can pause, continue or return to the Tavern. | Expedition, Atlas, Chronicle, Wayfarer. |
 | Expedition completion | The run summary appears; an accepted daily Expedition objective progresses once. | Expedition, Wayfarer, Quests, Mastery and Archive. |
 | Mastery rank change | The player sees the exact optional tiers or Realm variants now available, with a route link. | Mastery, Arcade, Atlas and Profile. |
@@ -186,14 +186,14 @@ The ten World Loom volumes remain the detailed source catalogue for forty domain
 
 ## 11. Scope and truth of implementation
 
-The current repository contains working Rust/PostgreSQL vertical slices for the runtime, four games, sessions, profiles, game results/statistics, achievements, first-completion Moonbits, guild command configuration, versioned policy consent, data inventory/export/deletion, Tavern/Wayfinder, the five-location Atlas, private Chronicle pages, optional daily quests, cumulative journey days, companion milestones and mutual private rivalries and Lantern Road Expedition v1.
+The current repository contains working Rust/PostgreSQL vertical slices for the runtime, four games, sessions, profiles, game results/statistics, achievements, first-completion Moonbits, guild command configuration, versioned policy consent, data inventory/export/deletion, Tavern/Wayfinder, the five-location Atlas, private Chronicle pages, five provenance-backed account-bound Atlas postcards with private inventory/collection views, optional daily quests, cumulative journey days, companion milestones, mutual private rivalries and Lantern Road Expedition v1. The postcard collection is included in version 10 privacy export and confirmed deletion.
 
-The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are complete. In particular: larger Atlas regions, additional Expedition routes, authored story networks, Vaults, inventory, crafting, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card are not made live by this document.
+The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are complete. In particular: larger Atlas regions, additional Expedition routes, authored story networks, Vaults, material gathering and a full resource inventory beyond the starter postcards, crafting, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card are not made live by this document.
 
 ## 12. Release order and acceptance gates
 
 1. **[Expedition foundation](IMPLEMENTATION.md) — implemented on this branch:** Lantern Road v1 has durable solo/group runs, opt-in membership, transactional Atlas/Chronicle hand-offs, pause/resume/leave, checkpoint concurrency protection and export/deletion coverage. Additional routes and authored story networks remain future work.
-2. **Inventory and provenance:** stable item IDs, earned source and account ownership before crafting or trade.
+2. **Inventory and provenance — starter collection implemented on this branch:** five account-bound Atlas postcards have stable IDs, verified discovery sources, duplicate protection, migration backfill, private `.inventory`/`.collection` views and privacy export/deletion coverage. Next extend this foundation to earned materials and recipes without random drops or trading before atomic ownership rules are proven.
 3. **Known-input crafting:** fixed recipes, validated ingredients, transactional output, no random yield.
 4. **Puzzle Vault:** clear rules, published rewards, save checkpoints and verifiable completion.
 5. **Cooperative party and Guild projects:** explicit invitations, roles, contribution scope and guild isolation.

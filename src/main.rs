@@ -151,7 +151,7 @@ async fn run() -> Result<(), Error> {
                     if let serenity::FullEvent::InteractionCreate { interaction } = event {
                         if let serenity::Interaction::Component(component) = interaction {
                             commands::handle_game_component(
-                                framework.serenity_context(),
+                                framework.serenity_context,
                                 framework.user_data,
                                 component,
                             )
