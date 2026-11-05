@@ -984,8 +984,7 @@ pub async fn craft(
     title: Option<String>,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
-    let recipe_id =
-        crate::inventory::resolve_recipe_id(&recipe).unwrap_or_else(|| recipe.trim());
+    let recipe_id = crate::inventory::resolve_recipe_id(&recipe).unwrap_or_else(|| recipe.trim());
     let outcome = ctx
         .data()
         .inventory()
@@ -2139,10 +2138,7 @@ fn build_autocomplete_response(
     CreateAutocompleteResponse::new().set_choices(choices)
 }
 
-async fn autocomplete_craft_recipe(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_craft_recipe(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let options = crate::inventory::crafting_recipe_options()
         .into_iter()
         .map(|recipe| (recipe.label, recipe.recipe_id))
@@ -2150,10 +2146,7 @@ async fn autocomplete_craft_recipe(
     build_autocomplete_response(partial, options)
 }
 
-async fn autocomplete_game(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_game(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let options = GameKind::ALL
         .iter()
         .map(|game| {
@@ -2167,10 +2160,7 @@ async fn autocomplete_game(
     build_autocomplete_response(partial, options)
 }
 
-async fn autocomplete_quest_action(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_quest_action(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let options = [
         ("Accept · Start tracking a daily quest", "accept"),
         ("Claim · Collect a completed quest's fixed reward", "claim"),
@@ -2181,10 +2171,7 @@ async fn autocomplete_quest_action(
     build_autocomplete_response(partial, options)
 }
 
-async fn autocomplete_rival_action(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_rival_action(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let options = [
         ("Declare · Invite a player to a mutual rivalry", "declare"),
         ("Accept · Accept an invitation you received", "accept"),
@@ -2700,7 +2687,6 @@ mod title_panel_tests {
     }
 }
 
-
 #[cfg(test)]
 mod autocomplete_tests {
     use super::autocomplete_value_matches;
@@ -2717,17 +2703,33 @@ mod autocomplete_tests {
             "Wayfarer's Lantern · 1× Mosslight Silk + 1× Tideglass",
             "wayfarer-lantern"
         ));
-        assert!(autocomplete_value_matches("Lantern", "Wayfarer's Lantern", "wayfarer-lantern"));
+        assert!(autocomplete_value_matches(
+            "Lantern",
+            "Wayfarer's Lantern",
+            "wayfarer-lantern"
+        ));
     }
 
     #[test]
     fn empty_autocomplete_input_keeps_the_full_catalogue_available() {
-        assert!(autocomplete_value_matches("", "Wayfarer's Lantern", "wayfarer-lantern"));
-        assert!(autocomplete_value_matches("   ", "Wayfarer's Lantern", "wayfarer-lantern"));
+        assert!(autocomplete_value_matches(
+            "",
+            "Wayfarer's Lantern",
+            "wayfarer-lantern"
+        ));
+        assert!(autocomplete_value_matches(
+            "   ",
+            "Wayfarer's Lantern",
+            "wayfarer-lantern"
+        ));
     }
 
     #[test]
     fn unrelated_autocomplete_input_does_not_return_a_false_suggestion() {
-        assert!(!autocomplete_value_matches("moonbridge", "Wayfarer's Lantern", "wayfarer-lantern"));
+        assert!(!autocomplete_value_matches(
+            "moonbridge",
+            "Wayfarer's Lantern",
+            "wayfarer-lantern"
+        ));
     }
 }

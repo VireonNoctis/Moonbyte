@@ -144,9 +144,8 @@ pub fn resolve_recipe_id(input: &str) -> Option<&'static str> {
     let input = input.trim();
     CRAFTING_RECIPES.iter().find_map(|recipe| {
         let output = definition_by_id(recipe.output_item_id)?;
-        (recipe.recipe_id.eq_ignore_ascii_case(input)
-            || output.title.eq_ignore_ascii_case(input))
-        .then_some(recipe.recipe_id)
+        (recipe.recipe_id.eq_ignore_ascii_case(input) || output.title.eq_ignore_ascii_case(input))
+            .then_some(recipe.recipe_id)
     })
 }
 
@@ -554,8 +553,14 @@ mod tests {
 
         assert_eq!(recipe_by_id("wayfarer-lantern"), Some(CRAFTING_RECIPES[0]));
         assert_eq!(recipe_by_id("unknown"), None);
-        assert_eq!(resolve_recipe_id("wayfarer-lantern"), Some("wayfarer-lantern"));
-        assert_eq!(resolve_recipe_id("Wayfarer's Lantern"), Some("wayfarer-lantern"));
+        assert_eq!(
+            resolve_recipe_id("wayfarer-lantern"),
+            Some("wayfarer-lantern")
+        );
+        assert_eq!(
+            resolve_recipe_id("Wayfarer's Lantern"),
+            Some("wayfarer-lantern")
+        );
         assert_eq!(resolve_recipe_id("wayfarer-lanern"), None);
 
         let suggestions = crafting_recipe_options();
