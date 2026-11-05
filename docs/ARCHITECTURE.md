@@ -83,6 +83,8 @@ The Discord adapter owns response formatting without moving domain rules into Se
 
 ## Discord command presentation
 
+Slash-command fields with finite choices use Poise autocomplete callbacks. Suggestions are built from the owning catalogue (crafting recipes, game definitions, Atlas locations) or the relevant fixed action vocabulary, filtered against the partial text and capped at Discord's 25-choice/100-character limits. Craft labels include the output and ingredients, but values are canonical recipe IDs; the handler also accepts the exact display title for prefix convenience. Autocomplete is discovery only and never performs a craft, travel, quest or social action.
+
 Substantial browse and overview responses use a shared embed title-panel builder. Relevant slash commands expose an optional `title` string; matching prefix commands accept trailing title text after required arguments. The adapter removes duplicate leading Markdown headings, escapes user-supplied titles to prevent mentions/Markdown injection, normalises whitespace and respects Discord's title/description limits. Player-owned views and active-session lists retain private DM delivery; public catalogues keep their intended visibility. The title changes presentation only and cannot alter a recipe, destination, player record or game outcome. Expedition catalogue/status panels reuse the same standard visual treatment without changing their multi-part argument grammar.
 
 Finite closed-vocabulary inputs use conservative suggestion text. A close match is shown as a hint; Moonbyte does not silently replace a recipe, game, Atlas destination or action.

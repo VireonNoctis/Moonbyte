@@ -8,7 +8,9 @@ Substantial browse and overview results use a Discord embed title panel. Slash c
 
 Craft keeps its current visibility: slash results are ephemeral and prefix results in a server are delivered by DM. Tavern and Games remain public browse panels. Player-owned views and active-session lists remain private and are DM-delivered when invoked in a server. Expedition catalogue/status screens use the same standard title panel while preserving the existing multi-part command grammar. Game boards retain their canonical title and native buttons. Tiny confirmations and action receipts remain ordinary messages.
 
-Finite command arguments receive conservative typo hints when one known value is clearly close. The suggestion is advisory only: Moonbyte never silently rewrites or executes a corrected recipe, game, destination or action. Ambiguous/unrelated input receives normal usage guidance instead.
+Slash-command inputs with a finite catalogue use Discord autocomplete dropdowns. Craft suggestions display the output item and required materials, while sending the canonical recipe ID to the handler. The same pattern is used for game selection, Atlas destinations, quest/rivalry/Expedition actions and profile visibility. The parameter description explains the field; each suggestion is selectable from the dropdown. Prefix commands keep their text syntax.
+
+Finite command arguments also receive conservative typo hints when a typed value is close. Suggestions are advisory only: Moonbyte never silently rewrites or executes a corrected recipe, game, destination or action. Ambiguous/unrelated input receives normal usage guidance instead.
 
 ## General and consent
 
@@ -37,7 +39,7 @@ New users must review both current policies and run `.consent accept` before ord
 | `.achievements [title]` | `/achievements title:` | View five fixed achievement milestones. |
 | `.inventory [title]` | `/inventory title:` | Inspect personal keepsakes with quantity and source provenance. |
 | `.collection [title]` | `/collection title:` | View the five Atlas postcards and collection progress. |
-| `.craft wayfarer-lantern [title]` | `/craft recipe: title:` | Use one Mosslight Silk and one Tideglass to craft the account-bound Wayfarer's Lantern once. |
+| `.craft wayfarer-lantern [title]` | `/craft recipe: title:` | Recipe uses autocomplete; suggestions show the Wayfarer's Lantern and its two required materials. One account-bound craft per player. |
 | `.quests [title]` | `/quests title:` | Open the optional daily objective board. |
 | `.quest accept <id>` / `.quest claim <id>` | `/quest` | Opt into an objective or claim its fixed completed reward. |
 | `.wayfarer [title]` | `/wayfarer title:` | View cumulative journey days. |
@@ -50,7 +52,7 @@ New users must review both current policies and run `.consent accept` before ord
 | Prefix | Slash | Purpose |
 |---|---|---|
 | `.atlas [title]` | `/atlas title:` | View personal location, discoveries and direct routes. |
-| `.travel <location> [title]` | `/travel location: title:` | Move to an adjacent Atlas location. |
+| `.travel <location> [title]` | `/travel location: title:` | Location autocomplete shows each place and region; route reachability is checked before travel. |
 | `.chronicle [title]` | `/chronicle title:` | Privately read lore pages unlocked through first discoveries. |
 | `.expedition` | `/expedition` | List routes, start/join/begin, inspect status, advance, pause, resume, leave or cancel. |
 
@@ -61,7 +63,7 @@ Lantern Road is the one implemented route: Lantern Square â†’ Mosslight Grove â†
 | Prefix | Slash | Purpose |
 |---|---|---|
 | `.games [title]` | `/games title:` | Browse the four playable games and their controls. |
-| `.play <game>` | `/play` | Start a solo game or create a two-player lobby. |
+| `.play <game>` | `/play game:` | Game choice autocomplete shows the available games and player mode; starts a solo game or two-player lobby. |
 | `.join <session>` | `/join` | Join an open two-player lobby in the same server. |
 | `.action <session> <input>` | `/action` | Submit a validated move or answer. |
 | `.session <session>` | `/session` | Inspect a session you participate in. |

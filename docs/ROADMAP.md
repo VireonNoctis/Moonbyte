@@ -8,6 +8,7 @@
 - [x] Ordered migrations, durable JSONB game sessions, row-locked mutations, restart recovery and 24-hour inactive-session retention.
 - [x] Shared prefix/slash command handlers, configurable guild prefixes and optional command-channel restriction.
 - [x] Reusable Discord title-panel presentation with optional slash `title` fields and prefix title text across Craft, Tavern, Games, player overviews, inventory/collection, Atlas/Chronicle, Quests and active-session views; Expedition catalogue/status views reuse the standard panel and board embeds retain canonical game titles.
+- [x] Slash autocomplete dropdowns for recipes, games, Atlas locations, finite Quest/Rivalry/Expedition actions and profile visibility; recipe labels show their output and ingredients while values remain canonical IDs.
 - [x] Conservative typo suggestions for recipes, game IDs, Atlas destinations and finite action verbs; suggested values are never auto-executed.
 - [x] Graceful Ctrl-C and Unix SIGTERM shutdown with minimised structured tracing.
 - [x] Four playable games and guild-scoped multiplayer lobbies.

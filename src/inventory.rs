@@ -106,6 +106,50 @@ pub const CRAFTING_RECIPES: [CraftingRecipe; 1] = [CraftingRecipe {
     ],
 }];
 
+/// A presentation-ready slash autocomplete option backed by the real recipe catalogue.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecipeSuggestion {
+    pub label: String,
+    pub recipe_id: String,
+}
+
+/// Return all fixed recipes with their real output and ingredient names.
+/// Discord autocomplete filters this list; the stored choice value stays the canonical ID.
+pub fn crafting_recipe_options() -> Vec<RecipeSuggestion> {
+    CRAFTING_RECIPES
+        .iter()
+        .filter_map(|recipe| {
+            let output = definition_by_id(recipe.output_item_id)?;
+            let ingredients = recipe
+                .ingredients
+                .iter()
+                .map(|ingredient| {
+                    let definition = definition_by_id(ingredient.item_id)?;
+                    Some(format!("{}× {}", ingredient.quantity, definition.title))
+                })
+                .collect::<Option<Vec<_>>>()?
+                .join(" + ");
+
+            Some(RecipeSuggestion {
+                label: format!("{} · {}", output.title, ingredients),
+                recipe_id: recipe.recipe_id.to_owned(),
+            })
+        })
+        .collect()
+}
+
+/// Resolve either the canonical recipe ID or its exact display title.
+/// Fuzzy guesses are intentionally handled by the command's separate suggestion helper.
+pub fn resolve_recipe_id(input: &str) -> Option<&'static str> {
+    let input = input.trim();
+    CRAFTING_RECIPES.iter().find_map(|recipe| {
+        let output = definition_by_id(recipe.output_item_id)?;
+        (recipe.recipe_id.eq_ignore_ascii_case(input)
+            || output.title.eq_ignore_ascii_case(input))
+        .then_some(recipe.recipe_id)
+    })
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CraftOutcome {
     Crafted,
@@ -479,7 +523,8 @@ mod tests {
 
     use super::{
         CRAFTED_CATALOGUE, CRAFTING_RECIPES, MATERIAL_CATALOGUE, POSTCARD_CATALOGUE,
-        definition_by_id, definition_for_location, recipe_by_id,
+        crafting_recipe_options, definition_by_id, definition_for_location, recipe_by_id,
+        resolve_recipe_id,
     };
 
     #[test]
@@ -509,6 +554,16 @@ mod tests {
 
         assert_eq!(recipe_by_id("wayfarer-lantern"), Some(CRAFTING_RECIPES[0]));
         assert_eq!(recipe_by_id("unknown"), None);
+        assert_eq!(resolve_recipe_id("wayfarer-lantern"), Some("wayfarer-lantern"));
+        assert_eq!(resolve_recipe_id("Wayfarer's Lantern"), Some("wayfarer-lantern"));
+        assert_eq!(resolve_recipe_id("wayfarer-lanern"), None);
+
+        let suggestions = crafting_recipe_options();
+        assert_eq!(suggestions.len(), CRAFTING_RECIPES.len());
+        assert_eq!(suggestions[0].recipe_id, "wayfarer-lantern");
+        assert!(suggestions[0].label.contains("Wayfarer's Lantern"));
+        assert!(suggestions[0].label.contains("Mosslight Silk"));
+        assert!(suggestions[0].label.contains("Tideglass"));
     }
 }
 

@@ -23,6 +23,8 @@
 
 The command adapter uses a shared Discord embed title-panel builder for Craft, Tavern, Games, Expedition catalogue/status views and player-facing overview/browse screens. Relevant slash commands expose an optional `title` field, and matching prefix commands accept trailing title text after required arguments. Titles are trimmed, whitespace-normalised, mention-safe and bounded to Discord's 256-character embed-title limit. Player-owned views and active-session lists retain private DM delivery; public catalogue panels preserve their configured visibility. Game boards retain canonical titles and native controls.
 
+Slash autocomplete is generated from the authoritative local catalogues, not a second hard-coded UI list. Craft options show the output keepsake and ingredient requirements while their selected values remain canonical recipe IDs. Game, Atlas destination, Quest action, Rivalry action, Expedition action and profile-visibility fields use the same shared matcher and Discord response builder. Autocomplete returns at most 25 choices, with labels/values bounded to Discord's 100-character choice limit. Prefix syntax and the existing typo suggestion path remain available.
+
 Unknown recipes, game IDs, Atlas destinations and finite Quest/Rival/Expedition action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute.
 
 ### Games and sessions

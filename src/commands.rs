@@ -7,8 +7,9 @@ use crate::{
     profile::PlayerProfile,
 };
 use poise::serenity_prelude::{
-    ButtonStyle, ChannelId, ComponentInteraction, CreateActionRow, CreateAttachment, CreateButton,
-    CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage,
+    AutocompleteChoice, ButtonStyle, ChannelId, ComponentInteraction, CreateActionRow,
+    CreateAttachment, CreateAutocompleteResponse, CreateButton, CreateEmbed,
+    CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage,
 };
 
 use crate::guild_settings::{GuildCommandSettings, validate_prefix};
@@ -973,17 +974,22 @@ pub async fn collection(
 #[poise::command(prefix_command, slash_command)]
 pub async fn craft(
     ctx: Context<'_>,
-    #[description = "Fixed recipe ID: wayfarer-lantern"] recipe: String,
+    #[description = "Choose a recipe. Suggestions show the output and the materials required."]
+    #[max_length = 100]
+    #[autocomplete = "autocomplete_craft_recipe"]
+    recipe: String,
     #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
     #[max_length = 256]
     #[rest]
     title: Option<String>,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
+    let recipe_id =
+        crate::inventory::resolve_recipe_id(&recipe).unwrap_or_else(|| recipe.trim());
     let outcome = ctx
         .data()
         .inventory()
-        .craft_recipe(&player_id, recipe.trim())
+        .craft_recipe(&player_id, recipe_id)
         .await?;
 
     let message = match outcome {
@@ -1079,7 +1085,9 @@ pub async fn quests(
 #[poise::command(prefix_command, slash_command)]
 pub async fn quest(
     ctx: Context<'_>,
-    #[description = "accept or claim"] action: String,
+    #[description = "Choose whether to accept a quest or claim its reward."]
+    #[autocomplete = "autocomplete_quest_action"]
+    action: String,
     #[description = "The quest ID shown on the daily board"] quest_id: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
@@ -1246,7 +1254,9 @@ pub async fn rivals(
 #[poise::command(prefix_command, slash_command)]
 pub async fn rival(
     ctx: Context<'_>,
-    #[description = "declare, accept, or decline"] action: String,
+    #[description = "Choose a mutual-rivalry action."]
+    #[autocomplete = "autocomplete_rival_action"]
+    action: String,
     #[description = "A player mention for declare, or a rivalry ID for accept/decline"]
     target: String,
 ) -> Result<(), Error> {
@@ -1361,7 +1371,9 @@ pub async fn stats(
 #[poise::command(prefix_command, slash_command)]
 pub async fn settings(
     ctx: Context<'_>,
-    #[description = "Profile visibility: public or private"] visibility: String,
+    #[description = "Choose whether your profile is public or private."]
+    #[autocomplete = "autocomplete_profile_visibility"]
+    visibility: String,
     #[description = "Allow profile statistics to be shown: true or false"] show_statistics: bool,
     #[description = "Enable quiet mode for future optional notices: true or false"]
     quiet_mode: bool,
@@ -1448,7 +1460,8 @@ pub async fn chronicle(
 #[poise::command(prefix_command, slash_command)]
 pub async fn travel(
     ctx: Context<'_>,
-    #[description = "A directly connected location ID or name, such as mosslight-grove"]
+    #[description = "Choose an Atlas destination. Route reachability is checked after selection."]
+    #[autocomplete = "autocomplete_atlas_location"]
     location: String,
     #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
     #[max_length = 256]
@@ -1524,7 +1537,8 @@ pub async fn travel(
 #[poise::command(prefix_command, slash_command)]
 pub async fn expedition(
     ctx: Context<'_>,
-    #[description = "list, start, join, begin, status, advance, pause, resume, leave, or cancel"]
+    #[description = "Choose an Expedition action."]
+    #[autocomplete = "autocomplete_expedition_action"]
     action: Option<String>,
     #[description = "Route ID or run ID"] target: Option<String>,
     #[description = "Run mode for start, or checkpoint ID and choice for advance"]
@@ -1754,7 +1768,9 @@ pub async fn games(
 #[poise::command(prefix_command, slash_command)]
 pub async fn play(
     ctx: Context<'_>,
-    #[description = "tic-tac-toe, connect-four, memory-match, or word-scramble"] game: String,
+    #[description = "Choose a game from the playable library."]
+    #[autocomplete = "autocomplete_game"]
+    game: String,
 ) -> Result<(), Error> {
     let game = match GameKind::parse(&game) {
         Ok(game) => game,
@@ -2087,6 +2103,149 @@ async fn send_private_title_panel(
         ctx.send(poise::CreateReply::new().embed(embed)).await?;
     }
     Ok(())
+}
+
+fn normalise_autocomplete_text(value: &str) -> String {
+    value
+        .chars()
+        .filter(|character| character.is_ascii_alphanumeric())
+        .map(|character| character.to_ascii_lowercase())
+        .collect()
+}
+
+fn autocomplete_value_matches(partial: &str, label: &str, value: &str) -> bool {
+    let query = normalise_autocomplete_text(partial);
+    query.is_empty()
+        || normalise_autocomplete_text(label).contains(&query)
+        || normalise_autocomplete_text(value).contains(&query)
+}
+
+fn build_autocomplete_response(
+    partial: &str,
+    options: Vec<(String, String)>,
+) -> CreateAutocompleteResponse {
+    let choices = options
+        .into_iter()
+        .filter(|(label, value)| autocomplete_value_matches(partial, label, value))
+        .take(25)
+        .map(|(label, value)| {
+            AutocompleteChoice::new(
+                label.chars().take(100).collect::<String>(),
+                value.chars().take(100).collect::<String>(),
+            )
+        })
+        .collect();
+
+    CreateAutocompleteResponse::new().set_choices(choices)
+}
+
+async fn autocomplete_craft_recipe(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = crate::inventory::crafting_recipe_options()
+        .into_iter()
+        .map(|recipe| (recipe.label, recipe.recipe_id))
+        .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_game(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = GameKind::ALL
+        .iter()
+        .map(|game| {
+            let definition = game.definition();
+            (
+                format!("{} · {}", definition.name, definition.players),
+                definition.id.to_owned(),
+            )
+        })
+        .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_quest_action(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("Accept · Start tracking a daily quest", "accept"),
+        ("Claim · Collect a completed quest's fixed reward", "claim"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_rival_action(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("Declare · Invite a player to a mutual rivalry", "declare"),
+        ("Accept · Accept an invitation you received", "accept"),
+        ("Decline · Decline an invitation", "decline"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_expedition_action(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("List · Browse available routes", "list"),
+        ("Start · Create a solo or group run", "start"),
+        ("Join · Join a recruiting group", "join"),
+        ("Begin · Start a recruiting run", "begin"),
+        ("Status · Inspect a run", "status"),
+        ("Advance · Submit the next checkpoint choice", "advance"),
+        ("Pause · Pause a run", "pause"),
+        ("Resume · Resume a paused run", "resume"),
+        ("Leave · Leave a group run", "leave"),
+        ("Cancel · Cancel a run you host", "cancel"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_atlas_location(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = crate::atlas::LOCATION_CATALOGUE
+        .iter()
+        .map(|location| {
+            (
+                format!("{} · {}", location.name, location.region),
+                location.id.to_owned(),
+            )
+        })
+        .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_profile_visibility(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("Private · Only you can view your profile", "private"),
+        ("Public · Allow your profile to be viewed", "public"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
+    build_autocomplete_response(partial, options)
 }
 
 /// Returns a conservative suggestion for a misspelled command argument.
@@ -2538,5 +2697,37 @@ mod title_panel_tests {
             "· 2 item records\n\nMosslight Silk"
         );
         assert_eq!(panel_description("A simple result"), "A simple result");
+    }
+}
+
+
+#[cfg(test)]
+mod autocomplete_tests {
+    use super::autocomplete_value_matches;
+
+    #[test]
+    fn autocomplete_matches_labels_and_values_without_case_or_separator_sensitivity() {
+        assert!(autocomplete_value_matches(
+            "wayfarer lantern",
+            "Wayfarer's Lantern · 1× Mosslight Silk + 1× Tideglass",
+            "wayfarer-lantern"
+        ));
+        assert!(autocomplete_value_matches(
+            "TIDEGLASS",
+            "Wayfarer's Lantern · 1× Mosslight Silk + 1× Tideglass",
+            "wayfarer-lantern"
+        ));
+        assert!(autocomplete_value_matches("Lantern", "Wayfarer's Lantern", "wayfarer-lantern"));
+    }
+
+    #[test]
+    fn empty_autocomplete_input_keeps_the_full_catalogue_available() {
+        assert!(autocomplete_value_matches("", "Wayfarer's Lantern", "wayfarer-lantern"));
+        assert!(autocomplete_value_matches("   ", "Wayfarer's Lantern", "wayfarer-lantern"));
+    }
+
+    #[test]
+    fn unrelated_autocomplete_input_does_not_return_a_false_suggestion() {
+        assert!(!autocomplete_value_matches("moonbridge", "Wayfarer's Lantern", "wayfarer-lantern"));
     }
 }
