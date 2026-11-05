@@ -99,7 +99,11 @@ fn game_reply(content: String, snapshot: &SessionSnapshot) -> poise::CreateReply
         format!("{content}\n\nChoose a numbered button below, or use the command format above.")
     };
 
-    let reply = poise::CreateReply::new().content(content);
+    let reply = poise::CreateReply::new().embed(
+        CreateEmbed::new()
+            .title(snapshot.game.definition().name)
+            .description(content),
+    );
     if components.is_empty() {
         reply
     } else {
@@ -1031,9 +1035,13 @@ pub async fn quest(
         }
         _ => {
             let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
+            let suggestion = suggest_known_value(action.trim(), &["accept", "claim"]);
+            let guidance = suggestion
+                .map(|value| format!("Did you mean {value}? "))
+                .unwrap_or_default();
             send_private(
                 ctx,
-                format!("Use {prefix}quest accept <quest-id> or {prefix}quest claim <quest-id>."),
+                format!("{guidance}Use {prefix}quest accept <quest-id> or {prefix}quest claim <quest-id>."),
             )
             .await
         }
@@ -1193,10 +1201,14 @@ pub async fn rival(
         }
         _ => {
             let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
+            let suggestion = suggest_known_value(action.trim(), &["declare", "accept", "decline"]);
+            let guidance = suggestion
+                .map(|value| format!("Did you mean {value}? "))
+                .unwrap_or_default();
             send_private(
                 ctx,
                 format!(
-                    "Use {prefix}rival declare @player, {prefix}rival accept <id>, or {prefix}rival decline <id>. View the private list with {prefix}rivals."
+                    "{guidance}Use {prefix}rival declare @player, {prefix}rival accept <id>, or {prefix}rival decline <id>. View the private list with {prefix}rivals."
                 ),
             )
             .await
@@ -1254,8 +1266,7 @@ pub async fn settings(
 pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
     let prefix = ctx.data().command_prefix(ctx.guild_id());
     let message = crate::tavern::render(&prefix);
-    ctx.say(message).await?;
-    Ok(())
+    send_title_panel(ctx, "Tavern Wayfinder", &message).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1298,10 +1309,19 @@ pub async fn travel(
     let result = match ctx.data().atlas().travel(&player_id, &location).await {
         Ok(result) => result,
         Err(crate::atlas::AtlasError::UnknownLocation) => {
+            let known = crate::atlas::LOCATION_CATALOGUE
+                .iter()
+                .map(|place| place.id)
+                .collect::<Vec<_>>();
+            let suggestion = suggest_known_value(&location, &known);
+            let guidance = match suggestion {
+                Some(value) => format!("Did you mean {value}? "),
+                None => String::new(),
+            };
             return send_private(
                 ctx,
                 format!(
-                    "That place is not in the Atlas. Known locations: {}.",
+                    "{guidance}That place is not in the Atlas. Known locations: {}.",
                     crate::atlas::LOCATION_CATALOGUE
                         .iter()
                         .map(|place| format!("{} ({})", place.name, place.id))
@@ -1423,10 +1443,19 @@ pub async fn expedition(
             ).await?;
             send_private(ctx, crate::expedition::render(&run, &prefix)).await
         }
-        _ => send_private(
-            ctx,
-            format!("Use {0}expedition list, start lantern-road solo|group, join RUN_ID, begin RUN_ID, status RUN_ID, advance RUN_ID CHECKPOINT_ID CHOICE, pause RUN_ID, resume RUN_ID, leave RUN_ID, or cancel RUN_ID.", escape_user_text(&prefix)),
-        ).await,
+        _ => {
+            let suggestion = suggest_known_value(
+                action.as_str(),
+                &["list", "start", "join", "begin", "status", "advance", "pause", "resume", "leave", "cancel"],
+            );
+            let guidance = suggestion
+                .map(|value| format!("Did you mean {value}? "))
+                .unwrap_or_default();
+            send_private(
+                ctx,
+                format!("{guidance}Use {0}expedition list, start lantern-road solo|group, join RUN_ID, begin RUN_ID, status RUN_ID, advance RUN_ID CHECKPOINT_ID CHOICE, pause RUN_ID, resume RUN_ID, leave RUN_ID, or cancel RUN_ID.", escape_user_text(&prefix)),
+            ).await
+        }
     }
 }
 
@@ -1455,14 +1484,11 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
         })
         .collect::<Vec<_>>()
         .join("\n\n");
-    ctx.say(format!(
-        "**Moonbyte Game Library**\n\n{entries}\n\n\
-         First completion of each game type grants {} Moonbits once per player. \
-         Repeat completions do not grant more. Use `{prefix}wallet` to view your balance.",
+    let message = format!(
+        "First completion of each game type grants {} Moonbits once per player. Repeat completions do not grant more. Use {prefix}wallet to view your balance.\n\n{entries}",
         crate::wallet::FIRST_COMPLETION_REWARD
-    ))
-    .await?;
-    Ok(())
+    );
+    send_title_panel(ctx, "Moonbyte Game Library", &message).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1470,7 +1496,25 @@ pub async fn play(
     ctx: Context<'_>,
     #[description = "tic-tac-toe, connect-four, memory-match, or word-scramble"] game: String,
 ) -> Result<(), Error> {
-    let game = GameKind::parse(&game)?;
+    let game = match GameKind::parse(&game) {
+        Ok(game) => game,
+        Err(_) => {
+            let known = GameKind::ALL
+                .iter()
+                .map(|kind| kind.definition().id)
+                .collect::<Vec<_>>();
+            let suggestion = suggest_known_value(&game, &known);
+            let guidance = match suggestion {
+                Some(value) => format!("Did you mean {value}? "),
+                None => String::new(),
+            };
+            return send_private(
+                ctx,
+                format!("{guidance}That game is not available yet. Use .games to browse the playable library."),
+            )
+            .await;
+        }
+    };
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let snapshot = ctx
@@ -1703,7 +1747,7 @@ async fn send_title_panel(
 
 /// Returns a conservative suggestion for a misspelled command argument.
 /// Suggestions are advisory only: the user must submit the corrected value themselves.
-fn suggest_known_value(input: &str, choices: &[&'static str]) -> Option<&'static str> {
+fn suggest_known_value<'a>(input: &str, choices: &'a [&'a str]) -> Option<&'a str> {
     let input = input.trim().to_ascii_lowercase();
     if input.is_empty() {
         return None;
@@ -2079,6 +2123,14 @@ mod tests {
         assert_eq!(
             super::suggest_known_value("wayfarer-lantarn", &["wayfarer-lantern"]),
             Some("wayfarer-lantern")
+        );
+        assert_eq!(
+            super::suggest_known_value("conect-four", &["tic-tac-toe", "connect-four", "memory-match", "word-scramble"]),
+            Some("connect-four")
+        );
+        assert_eq!(
+            super::suggest_known_value("resmue", &["pause", "resume", "cancel"]),
+            Some("resume")
         );
         assert_eq!(
             super::suggest_known_value("wayfarer-lantern", &["wayfarer-lantern"]),
