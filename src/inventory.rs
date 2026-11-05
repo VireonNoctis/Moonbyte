@@ -115,7 +115,6 @@ pub enum CraftOutcome {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct InventoryEntry {#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InventoryEntry {
     pub item_id: String,
     pub title: String,
