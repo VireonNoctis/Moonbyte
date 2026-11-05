@@ -198,6 +198,7 @@ async fn run() -> Result<(), Error> {
         })
         .setup(move |ctx, _ready, framework| {
             let prefix = prefix.clone();
+            let database = database.clone();
             let games = games.clone();
             let profiles = profiles.clone();
             let wallets = wallets.clone();
@@ -213,6 +214,7 @@ async fn run() -> Result<(), Error> {
                 Ok(Data::new(
                     prefix,
                     DataServices {
+                        database,
                         games,
                         profiles,
                         wallets,

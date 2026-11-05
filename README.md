@@ -6,22 +6,22 @@ Moonbyte is a standalone, Discord-first gaming bot built in Rust. Its world comb
 
 **The bot is the product.** Discord is the player interface; Rust owns game rules and authoritative state; PostgreSQL stores durable progress. No separate client is required.
 
-## Current build
+## Pre-launch source implementation
 
-This branch contains a working Rust/Tokio/Serenity/Poise runtime and PostgreSQL persistence:
+This repository contains Rust/Tokio/Serenity/Poise source and PostgreSQL persistence work. It is not a registered or deployed Discord bot application.
 
 - Four playable games: Tic-tac-toe, Connect Four, Memory Match and Word Scramble.
 - Durable sessions, transactional moves, restart recovery and 24-hour inactive-session retention.
 - Player profiles, preferences, completed results, statistics and five achievements.
 - An earned-only Moonbits ledger: a fixed first-completion milestone per game type, with no purchase, transfer or wagering features.
-- A 14-destination Tavern Wayfinder, including the Satchel and Postcard Wall.
-- A five-location Atlas with direct-route travel, private Chronicle pages and five provenance-backed, account-bound postcards.
+- A 15-destination Tavern Wayfinder, including the Satchel, Postcard Wall and Wayfarer Workshop.
+- A five-location Atlas with direct-route travel, private Chronicle pages, five account-bound postcards and two fixed discovery materials.
 - Optional daily quests, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries.
 - The Lantern Road Expedition, playable solo or with up to three consenting companions, with persistent checkpoints and Atlas/Chronicle hand-offs.
 - Versioned Terms/Privacy consent, private data inventory, version 10 export including keepsake provenance and confirmed account deletion.
 - Per-server command prefixes and optional command-channel routing.
 
-Three starter games now have Discord-native numbered board controls, with text commands retained as a fallback. `.inventory` and `.collection` show account-bound Atlas postcards with source provenance. Button payloads carry the displayed action version; stale controls refresh from PostgreSQL instead of replaying a move. Structured tracing records minimised lifecycle and cleanup events. Durable duplicate-interaction records and production backup/restore drills remain in the roadmap. A green CI run is not a substitute for live Discord deployment testing.
+Three starter games have Discord-native numbered board controls, with text commands retained as a fallback. `.inventory` and `.collection` show account-bound discoveries; `.craft wayfarer-lantern` consumes the two verified Atlas materials to make one fixed keepsake. The code remains pre-launch source, not a deployed bot. Button payloads carry the displayed action version; stale controls refresh from PostgreSQL instead of replaying a move. Structured tracing records minimised lifecycle and cleanup events. Durable duplicate-interaction receipts, production monitoring, scheduled backups and a rehearsed live restore remain deployment work. A green CI run is not a substitute for live Discord deployment testing.
 
 ## Technology
 

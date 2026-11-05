@@ -1,8 +1,8 @@
 # Moonbyte Implementation Map
 
-> **Status source of truth · 5 November 2026**
+> **Document version 1.0.0 · Pre-launch source status · 5 November 2026**
 >
-> The Final Vision describes the intended product. This document describes what this branch actually implements. The Roadmap records what comes next.
+> This map describes the Rust/PostgreSQL source in this repository. No Discord bot application has been registered or deployed. The Final Vision describes intended product direction; the Roadmap records implementation and release work.
 
 ## Runtime at a glance
 
@@ -13,7 +13,7 @@
 | Prefix | `.` by default; per-guild override supported |
 | Storage | PostgreSQL through SQLx |
 | Deployment contract | One supported bot process with PostgreSQL |
-| Schema | Ordered migrations through `0012_player_inventory.sql` |
+| Schema | Ordered migrations through `0013_atlas_crafting_materials.sql` |
 | Player interface | Discord-native commands and messages; numbered board buttons for Tic-tac-toe, Connect Four and Memory Match |
 | Toolchain | Pinned in `rust-toolchain.toml` |
 
@@ -34,7 +34,7 @@ Tic-tac-toe, Connect Four and Memory Match expose numbered Discord buttons route
 
 ### Tavern and world
 
-The Tavern Wayfinder exposes fourteen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel and Postcard Wall.
+The Tavern Wayfinder exposes fifteen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel, Postcard Wall and Wayfarer Workshop.
 
 The Atlas contains five authored locations and reciprocal route edges. A player begins at Lantern Square and can travel only to a directly connected location. First discovery unlocks one private Chronicle fragment and one account-bound postcard in the same PostgreSQL transaction. Revisits do not duplicate pages, keepsakes or rewards.
 
@@ -47,7 +47,8 @@ The Lantern Road is one bounded authored route: Lantern Square → Mosslight Gro
 - A postcard is granted once per location from a verified Atlas discovery. The record is written in the same transaction as Atlas/Chronicle progression.
 - Migration 0012 backfills existing Atlas discoveries so existing players receive the matching keepsakes.
 - Inventory items retain stable IDs and source provenance. These starter keepsakes cannot be bought, sold, transferred or spent.
-- Crafting, consumable resources, player trading and Bazaar listings are not live.
+- The Wayfarer Workshop supports one deterministic recipe: one Mosslight Silk plus one Tideglass yields one account-bound Wayfarer's Lantern. Input consumption and output creation share a transaction; a per-player advisory lock and unique recipe provenance prevent duplicate crafting.
+- More recipes, gathering sources, trading and Bazaar listings are not live.
 
 ### Wayfarer and social progress
 
@@ -100,11 +101,12 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 ## Known gaps
 
 - Durable interaction receipt records beyond the current action-version guard; development-guild interaction smoke tests and accessibility review of each board.
-- Production database backup/restore automation, monitoring and a rehearsed recovery procedure.
+- Backup/restore scripts and a PostgreSQL readiness probe exist, but no scheduled backup service, production monitoring or rehearsed live restore has been configured.
+- Discord application creation, bot invite configuration, secrets provisioning and live guild verification have not been performed.
 - More original games, reviewed word/puzzle packs and additional authored Expedition routes.
 - Known-input crafting, fixed-rule Puzzle Vaults, opt-in guild projects and a fixed-price Bazaar after ownership, moderation, idempotency and settlement contracts are proven.
 - Public player directory/leaderboards, mastery, Almanac/seasonal content and homesteads remain proposals until their privacy and ownership contracts are implemented.
 
 ## Canonical documents
 
-[Final Vision](MOONBYTE_FINAL_VISION.md) · [Architecture](ARCHITECTURE.md) · [Commands](COMMANDS.md) · [Game Catalogue](GAME_CATALOGUE.md) · [Privacy](PRIVACY.md) · [Fairness](FAIRNESS.md) · [Roadmap](ROADMAP.md) · [World Loom](atlas/README.md)
+[Final Vision](MOONBYTE_FINAL_VISION.md) · [Architecture](ARCHITECTURE.md) · [Commands](COMMANDS.md) · [Game Catalogue](GAME_CATALOGUE.md) · [Privacy](PRIVACY.md) · [Fairness](FAIRNESS.md) · [Roadmap](ROADMAP.md) · [Operations](OPERATIONS.md) · [World Loom](atlas/README.md)

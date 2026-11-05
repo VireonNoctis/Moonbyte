@@ -53,7 +53,69 @@ pub const POSTCARD_CATALOGUE: [ItemDefinition; 5] = [
     },
 ];
 
+pub const MATERIAL_CATALOGUE: [ItemDefinition; 2] = [
+    ItemDefinition {
+        item_id: "material.mosslight-silk",
+        location_id: "mosslight-grove",
+        location_name: "Mosslight Grove",
+        title: "Mosslight Silk",
+        description: "A soft luminous thread gathered from the grove's old woven roots.",
+    },
+    ItemDefinition {
+        item_id: "material.tideglass",
+        location_id: "glasswater-pier",
+        location_name: "Glasswater Pier",
+        title: "Tideglass",
+        description: "A smooth, sea-polished glass fragment from the western shore.",
+    },
+];
+
+pub const CRAFTED_CATALOGUE: [ItemDefinition; 1] = [ItemDefinition {
+    item_id: "keepsake.wayfarer-lantern",
+    location_id: "wayfarer-workshop",
+    location_name: "Wayfarer Workshop",
+    title: "Wayfarer's Lantern",
+    description: "A small, account-bound keepsake that holds a warm light for the road.",
+}];
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RecipeIngredient {
+    pub item_id: &'static str,
+    pub quantity: i32,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CraftingRecipe {
+    pub recipe_id: &'static str,
+    pub output_item_id: &'static str,
+    pub ingredients: [RecipeIngredient; 2],
+}
+
+pub const CRAFTING_RECIPES: [CraftingRecipe; 1] = [CraftingRecipe {
+    recipe_id: "wayfarer-lantern",
+    output_item_id: "keepsake.wayfarer-lantern",
+    ingredients: [
+        RecipeIngredient {
+            item_id: "material.mosslight-silk",
+            quantity: 1,
+        },
+        RecipeIngredient {
+            item_id: "material.tideglass",
+            quantity: 1,
+        },
+    ],
+}];
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CraftOutcome {
+    Crafted,
+    AlreadyCrafted,
+    MissingIngredients,
+    UnknownRecipe,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct InventoryEntry {#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InventoryEntry {
     pub item_id: String,
     pub title: String,
@@ -120,6 +182,86 @@ impl InventoryStore {
 
         Ok(InventorySnapshot { entries })
     }
+
+    /// Craft a fixed, account-bound recipe in one serialised PostgreSQL transaction.
+    pub async fn craft_recipe(
+        &self,
+        player_id: &str,
+        recipe_id: &str,
+    ) -> Result<CraftOutcome, sqlx::Error> {
+        let Some(recipe) = recipe_by_id(recipe_id) else {
+            return Ok(CraftOutcome::UnknownRecipe);
+        };
+
+        let mut transaction = self.pool.begin().await?;
+        sqlx::query(
+            "SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:inventory:' || $1, 0))",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?;
+
+        let already_crafted: bool = sqlx::query_scalar(
+            "SELECT EXISTS (
+                SELECT 1 FROM player_inventory_items
+                WHERE discord_user_id = $1
+                  AND item_id = $2
+                  AND source_type = 'craft_recipe'
+                  AND source_reference = $3
+            )",
+        )
+        .bind(player_id)
+        .bind(recipe.output_item_id)
+        .bind(recipe.recipe_id)
+        .fetch_one(&mut *transaction)
+        .await?;
+
+        if already_crafted {
+            transaction.commit().await?;
+            return Ok(CraftOutcome::AlreadyCrafted);
+        }
+
+        for ingredient in recipe.ingredients {
+            let available: i64 = sqlx::query_scalar(
+                "SELECT COALESCE(SUM(quantity), 0)::BIGINT
+                 FROM player_inventory_items
+                 WHERE discord_user_id = $1 AND item_id = $2",
+            )
+            .bind(player_id)
+            .bind(ingredient.item_id)
+            .fetch_one(&mut *transaction)
+            .await?;
+
+            if available < i64::from(ingredient.quantity) {
+                transaction.rollback().await?;
+                return Ok(CraftOutcome::MissingIngredients);
+            }
+        }
+
+        for ingredient in recipe.ingredients {
+            consume_inventory_item(
+                &mut transaction,
+                player_id,
+                ingredient.item_id,
+                ingredient.quantity,
+            )
+            .await?;
+        }
+
+        sqlx::query(
+            "INSERT INTO player_inventory_items
+             (discord_user_id, item_id, quantity, source_type, source_reference)
+             VALUES ($1, $2, 1, 'craft_recipe', $3)",
+        )
+        .bind(player_id)
+        .bind(recipe.output_item_id)
+        .bind(recipe.recipe_id)
+        .execute(&mut *transaction)
+        .await?;
+
+        transaction.commit().await?;
+        Ok(CraftOutcome::Crafted)
+    }
 }
 
 /// Record one Atlas postcard inside the caller's discovery transaction.
@@ -148,9 +290,106 @@ pub(crate) async fn record_atlas_keepsake(
     Ok(inserted > 0)
 }
 
+/// Record one fixed material from an Atlas discovery in the caller's transaction.
+pub(crate) async fn record_atlas_material(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+    location_id: &str,
+) -> Result<bool, sqlx::Error> {
+    let Some(definition) = MATERIAL_CATALOGUE
+        .iter()
+        .copied()
+        .find(|item| item.location_id == location_id)
+    else {
+        return Ok(false);
+    };
+
+    let inserted = sqlx::query(
+        "INSERT INTO player_inventory_items
+         (discord_user_id, item_id, quantity, source_type, source_reference)
+         VALUES ($1, $2, 1, 'atlas_discovery', $3)
+         ON CONFLICT (discord_user_id, item_id, source_type, source_reference) DO NOTHING",
+    )
+    .bind(player_id)
+    .bind(definition.item_id)
+    .bind(definition.location_id)
+    .execute(&mut **transaction)
+    .await?
+    .rows_affected();
+
+    Ok(inserted > 0)
+}
+
+async fn consume_inventory_item(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+    item_id: &str,
+    required_quantity: i32,
+) -> Result<(), sqlx::Error> {
+    let sources = sqlx::query_as::<_, (String, String, i32)>(
+        "SELECT source_type, source_reference, quantity
+         FROM player_inventory_items
+         WHERE discord_user_id = $1 AND item_id = $2
+         ORDER BY acquired_at ASC, source_type ASC, source_reference ASC
+         FOR UPDATE",
+    )
+    .bind(player_id)
+    .bind(item_id)
+    .fetch_all(&mut **transaction)
+    .await?;
+
+    let mut remaining = required_quantity;
+    for (source_type, source_reference, quantity) in sources {
+        if remaining == 0 {
+            break;
+        }
+
+        let consumed = remaining.min(quantity);
+        if consumed == quantity {
+            sqlx::query(
+                "DELETE FROM player_inventory_items
+                 WHERE discord_user_id = $1 AND item_id = $2
+                   AND source_type = $3 AND source_reference = $4",
+            )
+            .bind(player_id)
+            .bind(item_id)
+            .bind(&source_type)
+            .bind(&source_reference)
+            .execute(&mut **transaction)
+            .await?;
+        } else {
+            sqlx::query(
+                "UPDATE player_inventory_items SET quantity = quantity - $5
+                 WHERE discord_user_id = $1 AND item_id = $2
+                   AND source_type = $3 AND source_reference = $4",
+            )
+            .bind(player_id)
+            .bind(item_id)
+            .bind(&source_type)
+            .bind(&source_reference)
+            .bind(consumed)
+            .execute(&mut **transaction)
+            .await?;
+        }
+        remaining -= consumed;
+    }
+
+    debug_assert_eq!(remaining, 0, "validated recipe inputs must still be available");
+    Ok(())
+}
+
+pub fn recipe_by_id(recipe_id: &str) -> Option<CraftingRecipe> {
+    CRAFTING_RECIPES
+        .iter()
+        .copied()
+        .find(|recipe| recipe.recipe_id == recipe_id)
+}
+
 pub fn definition_by_id(item_id: &str) -> Option<ItemDefinition> {
     POSTCARD_CATALOGUE
         .iter()
+        .chain(MATERIAL_CATALOGUE.iter())
+        .chain(CRAFTED_CATALOGUE.iter())
         .copied()
         .find(|item| item.item_id == item_id)
 }
@@ -186,7 +425,7 @@ pub fn render_inventory(snapshot: &InventorySnapshot) -> String {
         .join("\n\n");
 
     format!(
-        "**Your Satchel** · {} item record{}\n\n{}\n\nKeepsakes are account-bound. Trading and crafting are not enabled.",
+        "**Your Satchel** · {} item record{}\n\n{}\n\nAtlas materials and crafted keepsakes are account-bound. Trading is not enabled.",
         snapshot.entries.len(),
         if snapshot.entries.len() == 1 { "" } else { "s" },
         entries
@@ -226,7 +465,7 @@ pub fn render_collection(snapshot: &InventorySnapshot) -> String {
         .join("\n\n");
 
     format!(
-        "**The Postcard Wall** · {collected}/{} collected\n\n{}\n\nEach postcard is earned once by discovering its location. There are no random drops.",
+        "**The Postcard Wall** · {collected}/{} collected\n\n{}\n\nEach postcard is earned once by discovering its location. The Workshop uses fixed recipes and verified materials; there are no random drops.",
         POSTCARD_CATALOGUE.len(),
         entries
     )
@@ -236,7 +475,10 @@ pub fn render_collection(snapshot: &InventorySnapshot) -> String {
 mod tests {
     use std::collections::HashSet;
 
-    use super::{POSTCARD_CATALOGUE, definition_by_id, definition_for_location};
+    use super::{
+        CRAFTED_CATALOGUE, CRAFTING_RECIPES, MATERIAL_CATALOGUE, POSTCARD_CATALOGUE,
+        definition_by_id, definition_for_location, recipe_by_id,
+    };
 
     #[test]
     fn postcard_catalogue_is_stable_and_covers_each_atlas_location_once() {
@@ -256,6 +498,15 @@ mod tests {
             assert_eq!(definition_by_id(item.item_id), Some(item));
             assert_eq!(definition_for_location(item.location_id), Some(item));
         }
+
+        for item in MATERIAL_CATALOGUE.into_iter().chain(CRAFTED_CATALOGUE) {
+            assert!(!item.title.is_empty());
+            assert!(!item.description.is_empty());
+            assert_eq!(definition_by_id(item.item_id), Some(item));
+        }
+
+        assert_eq!(recipe_by_id("wayfarer-lantern"), Some(CRAFTING_RECIPES[0]));
+        assert_eq!(recipe_by_id("unknown"), None);
     }
 }
 
@@ -265,7 +516,95 @@ mod postgres_tests {
 
     use crate::database::Database;
 
-    use super::{InventoryStore, record_atlas_keepsake};
+    use super::{CraftOutcome, InventoryStore, record_atlas_keepsake, record_atlas_material};
+
+    #[tokio::test]
+    async fn fixed_recipe_consumes_verified_inputs_once_and_preserves_output_provenance() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        use crate::database::Database;
+
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must point to the CI PostgreSQL service");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("connect and migrate PostgreSQL");
+        let pool = database.pool();
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos()
+            % 1_000_000_000_000_000_000;
+        let player_id = format!("craft-{nonce}");
+        let profiles = crate::profile::ProfileStore::new(pool.clone());
+        profiles
+            .get_or_create(&player_id, "Craft Test")
+            .await
+            .expect("create player profile");
+
+        let mut transaction = pool.begin().await.expect("begin material grant");
+        assert!(
+            record_atlas_material(&mut transaction, &player_id, "mosslight-grove")
+                .await
+                .expect("grant Mosslight material")
+        );
+        assert!(
+            record_atlas_material(&mut transaction, &player_id, "glasswater-pier")
+                .await
+                .expect("grant Tideglass material")
+        );
+        assert!(
+            !record_atlas_material(&mut transaction, &player_id, "glasswater-pier")
+                .await
+                .expect("duplicate material grant is ignored")
+        );
+        transaction.commit().await.expect("commit material grant");
+
+        let inventory = InventoryStore::new(pool.clone());
+        assert_eq!(
+            inventory
+                .craft_recipe(&player_id, "wayfarer-lantern")
+                .await
+                .expect("craft recipe"),
+            CraftOutcome::Crafted
+        );
+        assert_eq!(
+            inventory
+                .craft_recipe(&player_id, "wayfarer-lantern")
+                .await
+                .expect("repeat recipe"),
+            CraftOutcome::AlreadyCrafted
+        );
+
+        let snapshot = inventory
+            .snapshot(&player_id)
+            .await
+            .expect("read crafted inventory");
+        assert_eq!(snapshot.entries.len(), 1);
+        assert_eq!(snapshot.entries[0].item_id, "keepsake.wayfarer-lantern");
+        assert_eq!(snapshot.entries[0].source_type, "craft_recipe");
+        assert_eq!(snapshot.entries[0].source_reference, "wayfarer-lantern");
+
+        let export = profiles
+            .export_json(&player_id)
+            .await
+            .expect("export crafted provenance");
+        assert!(export.contains("keepsake.wayfarer-lantern"));
+
+        let deletion = profiles
+            .delete_account(&player_id)
+            .await
+            .expect("delete crafted inventory with account");
+        assert_eq!(deletion.inventory_items_removed, 1);
+        assert!(
+            inventory
+                .snapshot(&player_id)
+                .await
+                .expect("read deleted inventory")
+                .entries
+                .is_empty()
+        );
+    }
 
     #[tokio::test]
     async fn atlas_keepsakes_are_idempotent_and_account_deletion_removes_them() {

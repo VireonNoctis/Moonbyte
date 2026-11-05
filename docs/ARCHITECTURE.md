@@ -61,7 +61,8 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - Ordered SQL migrations are recorded in `moonbyte_schema_migrations` and guarded by an advisory transaction lock at startup.
 - Session mutations use row-level locks and short transactions. Do not hold a transaction over Discord HTTP calls.
 - Game result, statistics, first-completion ledger credit and achievement changes commit with the completed session.
-- Atlas travel, first discovery, the matching Chronicle fragment and its account-bound postcard commit together; the inventory write is idempotent and retains the Atlas source ID.
+- Atlas travel, first discovery, the matching Chronicle fragment, account-bound postcard and any authored material grant commit together; inventory writes are idempotent and retain the Atlas source ID.
+- A fixed recipe consumes source-backed inventory rows and inserts its account-bound output in one transaction. A per-player advisory lock serialises recipe attempts.
 - Expedition checkpoint history and each active participant's Atlas/Chronicle effects are written in the same transaction through owning service boundaries.
 - Quest reward claims use a unique player/date/objective key and an immutable ledger entry.
 - Guild settings use PostgreSQL notifications to invalidate per-process cache entries.
@@ -69,7 +70,7 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 
 ## Privacy and security boundaries
 
-- Every player-owned table has a clear owner and export/deletion path. Inventory records retain stable item IDs, quantity, source type, source reference and acquisition timestamp; the player export includes this provenance and account deletion removes the rows.
+- Every player-owned table has a clear owner and export/deletion path. Inventory records retain stable item IDs, quantity, source type, source reference and acquisition timestamp; export covers postcard, material and crafted-item provenance, and account deletion removes all inventory rows.
 - Guild settings are not player profile data. Guild permissions do not grant access to private player history.
 - Private profiles, statistics, quest state, inventory, Chronicle pages, rivalries and Expedition details are returned privately where required.
 - Raw message text is not persisted as analytics. Tokens, authorization headers, private payloads, quest seeds and unnecessary player identifiers are not logged.

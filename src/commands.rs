@@ -153,21 +153,17 @@ pub async fn handle_game_component(
         .await;
     }
 
-    if let Some(guild_id) = guild_key.as_deref() {
-        if let Some(settings) = data.guild_settings().get(guild_id) {
-            if let Some(allowed_channel) = settings.command_channel_id {
-                if allowed_channel != interaction.channel_id.to_string() {
-                    return component_notice(
-                        discord,
-                        interaction,
-                        format!(
-                            "Game controls for this server are restricted to <#{allowed_channel}>."
-                        ),
-                    )
-                    .await;
-                }
-            }
-        }
+    if let Some(guild_id) = guild_key.as_deref()
+        && let Some(settings) = data.guild_settings().get(guild_id)
+        && let Some(allowed_channel) = settings.command_channel_id
+        && allowed_channel != interaction.channel_id.to_string()
+    {
+        return component_notice(
+            discord,
+            interaction,
+            format!("Game controls for this server are restricted to <#{allowed_channel}>."),
+        )
+        .await;
     }
 
     let current = match data
@@ -270,8 +266,21 @@ pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
+    let started = std::time::Instant::now();
+    let database_ready = ctx.data().database().health_check().await.is_ok();
+    let database_latency = started.elapsed().as_millis();
+
+    if !database_ready {
+        tracing::warn!(event = "database_readiness_check_failed");
+    }
+
+    let database_status = if database_ready {
+        format!("reachable · {database_latency}ms")
+    } else {
+        "unavailable".to_owned()
+    };
     ctx.say(format!(
-        "Moonbyte is online. Process uptime: {} seconds.",
+        "Moonbyte process: responsive · uptime: {}s\nDatabase: {database_status}",
         ctx.data().uptime().as_secs()
     ))
     .await?;
@@ -891,6 +900,38 @@ pub async fn collection(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let snapshot = ctx.data().inventory().snapshot(&player_id).await?;
     send_private(ctx, crate::inventory::render_collection(&snapshot)).await
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn craft(
+    ctx: Context<'_>,
+    #[description = "Fixed recipe ID: wayfarer-lantern"] recipe: String,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let outcome = ctx
+        .data()
+        .inventory()
+        .craft_recipe(&player_id, recipe.trim())
+        .await?;
+
+    let message = match outcome {
+        crate::inventory::CraftOutcome::Crafted => {
+            "✨ **Wayfarer's Lantern crafted.** It has been added to your Satchel.".to_owned()
+        }
+        crate::inventory::CraftOutcome::AlreadyCrafted => {
+            "You already crafted the Wayfarer's Lantern. The recipe can only be completed once."
+                .to_owned()
+        }
+        crate::inventory::CraftOutcome::MissingIngredients => {
+            "The recipe needs 1 Mosslight Silk and 1 Tideglass. Discover Mosslight Grove and Glasswater Pier through the Atlas to earn them."
+                .to_owned()
+        }
+        crate::inventory::CraftOutcome::UnknownRecipe => {
+            "Unknown recipe. The available recipe is wayfarer-lantern.".to_owned()
+        }
+    };
+
+    send_private(ctx, message).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1611,6 +1652,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         achievements_command,
         inventory(),
         collection(),
+        craft(),
         quests_command,
         quest(),
         wayfarer_command,
@@ -1724,6 +1766,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}achievements / /achievements — view your unlocked achievements\n\
          {safe_prefix}inventory / /inventory — inspect your account-bound keepsakes\n\
          {safe_prefix}collection / /collection — view your Atlas postcard collection\n\
+         {safe_prefix}craft wayfarer-lantern / /craft — make a fixed, one-time keepsake\n\
          {safe_prefix}stats / /stats — view completed game statistics\n\
          {safe_prefix}quests / /quests — open today's optional quest board\n\
          {safe_prefix}quest accept|claim <id> / /quest — accept or claim a daily quest\n\
@@ -1761,13 +1804,13 @@ parent session; aggregate statistics and earned wallet/ledger records remain unt
 requests deletion. The first completion of each game type earns 10 Moonbits once per player. \
 Achievements such as first completion, first victory, completing all four games, ten total \
 games and five wins unlock once and remain until account deletion; they do not grant currency. \
-Atlas discoveries grant one account-bound postcard per location. Use `.inventory` and `.collection` to inspect keepsakes and provenance. Trading and crafting are not enabled.\n\n\
+Atlas discoveries grant account-bound keepsakes and fixed materials with recorded provenance. Use `.inventory` and `.collection` to inspect them; `.craft wayfarer-lantern` consumes one of each material to make one lantern. Trading is not enabled.\n\n\
 Player profiles store a Discord user ID, display name, optional bio, private-by-default \
 visibility and two preference flags. Use `.privacy_data` to inspect your current records, \
 `.privacy_export` to receive a private JSON export, and `.privacy_delete` to begin confirmed \
 deletion. Profile and privacy responses are sent by DM when invoked in a server.\n\n\
 Deletion removes the profile, per-game statistics, achievements, Moonbits wallet/ledger records, \
-Atlas location/discovery records, private Chronicle fragments, account-bound keepsakes and their provenance, your Expedition participation, and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
+Atlas location/discovery records, private Chronicle fragments, postcards, fixed materials, crafted keepsakes and their provenance, your Expedition participation, and every session/result snapshot containing your ID from the current PostgreSQL schema. It can end shared sessions. It cannot delete \
 Discord's own messages, Discord account data, other participants' copies, or backups outside \
 the current database.\n\n\
 Moonbyte does not claim end-to-end encryption or encryption at rest. This is a summary of the \
@@ -1836,6 +1879,7 @@ mod tests {
             ".achievements / /achievements",
             ".inventory / /inventory",
             ".collection / /collection",
+            ".craft wayfarer-lantern / /craft",
             ".stats / /stats",
             ".quests / /quests",
             ".quest accept|claim <id> / /quest",

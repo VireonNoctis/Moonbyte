@@ -24,6 +24,7 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 /// Services shared by the Discord command adapter.
 pub struct DataServices {
+    pub database: database::Database,
     pub games: game::GameRuntime,
     pub profiles: profile::ProfileStore,
     pub wallets: wallet::WalletStore,
@@ -40,6 +41,7 @@ pub struct DataServices {
 /// Data shared with every Poise command invocation.
 pub struct Data {
     prefix: String,
+    database: database::Database,
     started_at: Instant,
     games: game::GameRuntime,
     profiles: profile::ProfileStore,
@@ -57,6 +59,7 @@ pub struct Data {
 impl Data {
     pub fn new(prefix: String, services: DataServices) -> Self {
         let DataServices {
+            database,
             games,
             profiles,
             wallets,
@@ -71,6 +74,7 @@ impl Data {
         } = services;
         Self {
             prefix,
+            database,
             started_at: Instant::now(),
             games,
             profiles,
@@ -88,6 +92,10 @@ impl Data {
 
     pub fn prefix(&self) -> &str {
         &self.prefix
+    }
+
+    pub fn database(&self) -> &database::Database {
+        &self.database
     }
 
     /// Resolve the active guild prefix, falling back to DEFAULT_PREFIX.

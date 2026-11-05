@@ -20,7 +20,7 @@ New users must review both current policies and run `.consent accept` before ord
 
 | Prefix | Slash | Purpose |
 |---|---|---|
-| `.tavern` | `/tavern` | Open the 14-destination Tavern Wayfinder. |
+| `.tavern` | `/tavern` | Open the 15-destination Tavern Wayfinder. |
 | `.profile` | `/profile` | View a private player profile. |
 | `.profile_edit` | `/profile_edit` | Set a display name and short bio. |
 | `.settings` | `/settings` | Save profile visibility and preference flags. |
@@ -29,6 +29,7 @@ New users must review both current policies and run `.consent accept` before ord
 | `.achievements` | `/achievements` | View five fixed achievement milestones. |
 | `.inventory` | `/inventory` | Inspect personal keepsakes with quantity and source provenance. |
 | `.collection` | `/collection` | View the five Atlas postcards and collection progress. |
+| `.craft wayfarer-lantern` | `/craft` | Use one Mosslight Silk and one Tideglass to craft the account-bound Wayfarer's Lantern once. |
 | `.quests` | `/quests` | Open the optional daily objective board. |
 | `.quest accept <id>` / `.quest claim <id>` | `/quest` | Opt into an objective or claim its fixed completed reward. |
 | `.wayfarer` | `/wayfarer` | View cumulative journey days. |
@@ -74,7 +75,7 @@ The configuration command remains available from any channel so a server can rec
 ## Privacy controls
 
 1. `.privacy_data` privately lists the requester's current stored data categories, including inventory provenance.
-2. `.privacy_export` sends a private JSON export. Version 10 includes the requester's own Expedition participation/checkpoint history and account-bound Atlas keepsake provenance and omits other participants' IDs and private quest seeds.
+2. `.privacy_export` sends a private JSON export. Version 10 includes the requester's own Expedition participation/checkpoint history and account-bound postcard, material and crafted-item provenance and omits other participants' IDs and private quest seeds.
 3. `.privacy_delete` explains the exact deletion scope; it does not delete yet.
 4. `.privacy_delete DELETE` confirms deletion.
 

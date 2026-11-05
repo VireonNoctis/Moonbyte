@@ -1,6 +1,6 @@
 # Moonbyte — Final Product Vision and World Loom Constitution
 
-> **Version 4.2 · Authoritative product blueprint · 5 November 2026**
+> **Version 1.0.0 · Initial pre-launch product blueprint · 5 November 2026**
 >
 > This document consolidates the uploaded Final Vision v3.1, the ten World Loom design volumes, the live Rust/PostgreSQL foundation and the cross-system contracts needed to make Moonbyte one coherent product. It supersedes earlier vision drafts where they conflict. The ten volumes remain the detailed proposal catalogue; code, tests and the roadmap remain the source of truth for what is actually live.
 
@@ -186,15 +186,15 @@ The ten World Loom volumes remain the detailed source catalogue for forty domain
 
 ## 11. Scope and truth of implementation
 
-The current repository contains working Rust/PostgreSQL vertical slices for the runtime, four games, sessions, profiles, game results/statistics, achievements, first-completion Moonbits, guild command configuration, versioned policy consent, data inventory/export/deletion, Tavern/Wayfinder, the five-location Atlas, private Chronicle pages, five provenance-backed account-bound Atlas postcards with private inventory/collection views, optional daily quests, cumulative journey days, companion milestones, mutual private rivalries and Lantern Road Expedition v1. The postcard collection is included in version 10 privacy export and confirmed deletion.
+The repository contains a pre-launch Rust/PostgreSQL source implementation for the runtime, four games, sessions, profiles, game results/statistics, achievements, first-completion Moonbits, guild command configuration, versioned policy consent, data inventory/export/deletion, Tavern/Wayfarer, the five-location Atlas, private Chronicle pages, five provenance-backed account-bound Atlas postcards, two fixed Atlas materials, one deterministic keepsake recipe, optional daily quests, cumulative journey days, companion milestones, mutual private rivalries and Lantern Road Expedition v1. Inventory provenance is included in the current privacy export and deletion contract. No Discord bot application has been registered or deployed.
 
-The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are complete. In particular: larger Atlas regions, additional Expedition routes, authored story networks, Vaults, material gathering and a full resource inventory beyond the starter postcards, crafting, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card are not made live by this document.
+The rest of the World Loom remains a design proposal until code, migrations, commands, tests, documentation and privacy coverage are complete. In particular: larger Atlas regions, additional Expedition routes, authored story networks, Vaults, more material sources and recipes, homesteads, Bazaar trading, guild projects, seasonal releases, expanded mastery, the full Rival/Nemesis presentation and the unified Player Card remain future work.
 
 ## 12. Release order and acceptance gates
 
 1. **[Expedition foundation](IMPLEMENTATION.md) — implemented on this branch:** Lantern Road v1 has durable solo/group runs, opt-in membership, transactional Atlas/Chronicle hand-offs, pause/resume/leave, checkpoint concurrency protection and export/deletion coverage. Additional routes and authored story networks remain future work.
-2. **Inventory and provenance — starter collection implemented on this branch:** five account-bound Atlas postcards have stable IDs, verified discovery sources, duplicate protection, migration backfill, private `.inventory`/`.collection` views and privacy export/deletion coverage. Next extend this foundation to earned materials and recipes without random drops or trading before atomic ownership rules are proven.
-3. **Known-input crafting:** fixed recipes, validated ingredients, transactional output, no random yield.
+2. **Inventory and provenance — starter collection implemented in source:** five account-bound Atlas postcards plus two fixed materials are earned through verified Atlas discoveries, with migration backfill, private inventory views and privacy export/deletion coverage.
+3. **Known-input crafting — first recipe implemented in source:** the Wayfarer's Lantern consumes one Mosslight Silk and one Tideglass in one transaction, grants one account-bound output and cannot be repeated. Additional recipes and sources remain future work.
 4. **Puzzle Vault:** clear rules, published rewards, save checkpoints and verifiable completion.
 5. **Cooperative party and Guild projects:** explicit invitations, roles, contribution scope and guild isolation.
 6. **Bazaar:** fixed-price listing and explicit barter only after escrow, ledger, idempotency, anti-farming and concurrency tests.
