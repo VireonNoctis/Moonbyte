@@ -373,7 +373,10 @@ async fn consume_inventory_item(
         remaining -= consumed;
     }
 
-    debug_assert_eq!(remaining, 0, "validated recipe inputs must still be available");
+    debug_assert_eq!(
+        remaining, 0,
+        "validated recipe inputs must still be available"
+    );
     Ok(())
 }
 
