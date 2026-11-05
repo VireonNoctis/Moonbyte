@@ -1737,12 +1737,21 @@ async fn send_title_panel(
     ephemeral: bool,
 ) -> Result<(), Error> {
     let embed = CreateEmbed::new().title(title).description(description);
-    ctx.send(
-        poise::CreateReply::new()
-            .embed(embed)
-            .ephemeral(ephemeral),
-    )
-    .await?;
+    if ctx.prefix() == "/" {
+        ctx.send(
+            poise::CreateReply::new()
+                .embed(embed)
+                .ephemeral(ephemeral),
+        )
+        .await?;
+    } else if ephemeral && ctx.guild_id().is_some() {
+        let dm = ctx.author().create_dm_channel(ctx.http()).await?;
+        dm.send_message(ctx.http(), CreateMessage::new().embed(embed))
+            .await?;
+        ctx.say("I sent that panel to your DMs.").await?;
+    } else {
+        ctx.send(poise::CreateReply::new().embed(embed)).await?;
+    }
     Ok(())
 }
 
