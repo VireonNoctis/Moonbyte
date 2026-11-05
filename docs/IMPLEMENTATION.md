@@ -21,7 +21,7 @@
 
 ### Command presentation
 
-The command adapter now has a reusable Discord embed title-panel helper for substantial slash results. The Workshop craft response uses the **Wayfarer Workshop · Crafting** title and an ephemeral slash response. Unknown recipe input is checked against the known recipe catalogue; a close typo receives a “Did you mean …?” suggestion, while unrelated input receives ordinary usage guidance. Suggestions never auto-correct or execute. The same helper is intended for browse-style Games, Atlas, Expedition, Quest and collection views as those response paths are consolidated; private player data must retain private delivery.
+The command adapter now has a reusable Discord embed title-panel helper for substantial slash results. Craft uses **Wayfarer Workshop · Crafting**, Tavern uses **Tavern Wayfinder**, Games uses **Moonbyte Game Library**, and active game boards use their game name while retaining buttons. Slash panels are ephemeral; prefix commands retain normal message visibility. Unknown recipes, game IDs, Atlas destinations and finite Quest/Rival/Expedition action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute. Other private player views retain their existing private delivery path.
 
 
 ### Games and sessions
