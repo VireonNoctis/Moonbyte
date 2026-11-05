@@ -21,7 +21,7 @@
 
 ### Command presentation
 
-The command adapter now has a reusable Discord embed title-panel helper for substantial slash results. Craft uses **Wayfarer Workshop · Crafting**, Tavern uses **Tavern Wayfinder**, Games uses **Moonbyte Game Library**, and active game boards use their game name while retaining buttons. Craft uses an ephemeral slash result; Tavern and Games browse panels are public; game boards remain visible to participants. Prefix commands retain normal message visibility. Unknown recipes, game IDs, Atlas destinations and finite Quest/Rival/Expedition action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute. Other private player views retain their existing private delivery path.
+The command adapter now has a reusable Discord embed title-panel helper for substantial slash results. Craft uses **Wayfarer Workshop · Crafting**, Tavern uses **Tavern Wayfinder**, Games uses **Moonbyte Game Library**, and active game boards use their game name while retaining buttons. Craft uses an ephemeral slash result and DM-delivered prefix results when invoked in a server; Tavern and Games browse panels are public; game boards remain visible to participants. Other prefix commands retain normal message visibility. Unknown recipes, game IDs, Atlas destinations and finite Quest/Rival/Expedition action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute. Other private player views retain their existing private delivery path.
 
 
 ### Games and sessions
