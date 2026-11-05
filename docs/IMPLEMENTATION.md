@@ -21,8 +21,9 @@
 
 ### Command presentation
 
-The command adapter now has a reusable Discord embed title-panel helper for substantial slash results. Craft uses **Wayfarer Workshop · Crafting**, Tavern uses **Tavern Wayfinder**, Games uses **Moonbyte Game Library**, and active game boards use their game name while retaining buttons. Craft uses an ephemeral slash result and DM-delivered prefix results when invoked in a server; Tavern and Games browse panels are public; game boards remain visible to participants. Other prefix commands retain normal message visibility. Unknown recipes, game IDs, Atlas destinations and finite Quest/Rival/Expedition action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute. Other private player views retain their existing private delivery path.
+The command adapter uses a shared Discord embed title-panel builder for Craft, Tavern, Games, Expedition catalogue/status views and player-facing overview/browse screens. Relevant slash commands expose an optional `title` field, and matching prefix commands accept trailing title text after required arguments. Titles are trimmed, whitespace-normalised, mention-safe and bounded to Discord's 256-character embed-title limit. Player-owned views and active-session lists retain private DM delivery; public catalogue panels preserve their configured visibility. Game boards retain canonical titles and native controls.
 
+Unknown recipes, game IDs, Atlas destinations and finite Quest/Rival/Expedition action verbs receive conservative “Did you mean …?” guidance when a single option is clearly close. Suggestions never auto-correct or execute.
 
 ### Games and sessions
 

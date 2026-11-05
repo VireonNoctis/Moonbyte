@@ -4,9 +4,11 @@ The default prefix is `.`. Guild moderators with Manage Server can set a per-ser
 
 ## Command response UX
 
-Substantial slash-command results use a compact Discord embed title panel so the command context remains visible above the result. The shared Rust `send_title_panel` adapter is the reusable presentation path. It currently titles Craft (**Wayfarer Workshop · Crafting**), Tavern (**Tavern Wayfinder**) and the Games library; active game boards use the game name as their embed title while retaining native buttons. Apply it to other browse-style outputs such as Atlas, Expeditions, Quests and collection views when their response is a substantial panel, but do not add decorative embeds to tiny confirmations or weaken private-response handling. Visibility is intentional per command: Craft uses an ephemeral slash result and keeps prefix results in DMs when invoked in a server; browse panels are public, and active game boards remain visible to participants. Other prefix browse output retains normal message visibility.
+Substantial browse and overview results use a Discord embed title panel. Slash commands expose an optional `title` field on Craft, Tavern, Games, profile/data views, inventory/collection, Quests, Wayfarer, Rivalry, Atlas, Chronicle, travel and active-session views. Prefix commands accept title text after their required arguments (for example, `.craft wayfarer-lantern My Workshop`). Leave it blank to use Moonbyte's standard heading. Titles are whitespace-normalised, mention-safe and capped at Discord's 256-character title limit.
 
-Finite command arguments should provide conservative typo suggestions when one known value is clearly close (for example, a misspelled recipe ID). Suggestions are advisory only: Moonbyte never silently rewrites or executes a corrected command. Ambiguous or unrelated input receives the normal usage guidance instead.
+Craft keeps its current visibility: slash results are ephemeral and prefix results in a server are delivered by DM. Tavern and Games remain public browse panels. Player-owned views and active-session lists remain private and are DM-delivered when invoked in a server. Expedition catalogue/status screens use the same standard title panel while preserving the existing multi-part command grammar. Game boards retain their canonical title and native buttons. Tiny confirmations and action receipts remain ordinary messages.
+
+Finite command arguments receive conservative typo hints when one known value is clearly close. The suggestion is advisory only: Moonbyte never silently rewrites or executes a corrected recipe, game, destination or action. Ambiguous/unrelated input receives normal usage guidance instead.
 
 ## General and consent
 
@@ -26,30 +28,30 @@ New users must review both current policies and run `.consent accept` before ord
 
 | Prefix | Slash | Purpose |
 |---|---|---|
-| `.tavern` | `/tavern` | Open the 15-destination Tavern Wayfinder. |
-| `.profile` | `/profile` | View a private player profile. |
+| `.tavern [title]` | `/tavern title:` | Open the 15-destination Tavern Wayfinder. |
+| `.profile [title]` | `/profile title:` | View a private player profile. |
 | `.profile_edit` | `/profile_edit` | Set a display name and short bio. |
 | `.settings` | `/settings` | Save profile visibility and preference flags. |
-| `.stats` | `/stats` | View completed-game totals and per-game wins/draws. |
-| `.wallet` | `/wallet` | View earned-only Moonbits and ledger-entry count. |
-| `.achievements` | `/achievements` | View five fixed achievement milestones. |
-| `.inventory` | `/inventory` | Inspect personal keepsakes with quantity and source provenance. |
-| `.collection` | `/collection` | View the five Atlas postcards and collection progress. |
-| `.craft wayfarer-lantern` | `/craft` | Use one Mosslight Silk and one Tideglass to craft the account-bound Wayfarer's Lantern once. |
-| `.quests` | `/quests` | Open the optional daily objective board. |
+| `.stats [title]` | `/stats title:` | View completed-game totals and per-game wins/draws. |
+| `.wallet [title]` | `/wallet title:` | View earned-only Moonbits and ledger-entry count. |
+| `.achievements [title]` | `/achievements title:` | View five fixed achievement milestones. |
+| `.inventory [title]` | `/inventory title:` | Inspect personal keepsakes with quantity and source provenance. |
+| `.collection [title]` | `/collection title:` | View the five Atlas postcards and collection progress. |
+| `.craft wayfarer-lantern [title]` | `/craft recipe: title:` | Use one Mosslight Silk and one Tideglass to craft the account-bound Wayfarer's Lantern once. |
+| `.quests [title]` | `/quests title:` | Open the optional daily objective board. |
 | `.quest accept <id>` / `.quest claim <id>` | `/quest` | Opt into an objective or claim its fixed completed reward. |
-| `.wayfarer` | `/wayfarer` | View cumulative journey days. |
-| `.companion` | `/companion` | View cosmetic companion milestones. |
-| `.rivals` | `/rivals` | View private rivalry invitations and records. |
+| `.wayfarer [title]` | `/wayfarer title:` | View cumulative journey days. |
+| `.companion [title]` | `/companion title:` | View cosmetic companion milestones. |
+| `.rivals [title]` | `/rivals title:` | View private rivalry invitations and records. |
 | `.rival declare @player` / `accept <id>` / `decline <id>` | `/rival` | Manage mutual-consent rivalries. |
 
 ## World and Expeditions
 
 | Prefix | Slash | Purpose |
 |---|---|---|
-| `.atlas` | `/atlas` | View personal location, discoveries and direct routes. |
-| `.travel <location>` | `/travel` | Move to an adjacent Atlas location. |
-| `.chronicle` | `/chronicle` | Privately read lore pages unlocked through first discoveries. |
+| `.atlas [title]` | `/atlas title:` | View personal location, discoveries and direct routes. |
+| `.travel <location> [title]` | `/travel location: title:` | Move to an adjacent Atlas location. |
+| `.chronicle [title]` | `/chronicle title:` | Privately read lore pages unlocked through first discoveries. |
 | `.expedition` | `/expedition` | List routes, start/join/begin, inspect status, advance, pause, resume, leave or cancel. |
 
 Lantern Road is the one implemented route: Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Start solo with `.expedition start lantern-road solo` or create a same-server recruiting group with `.expedition start lantern-road group`. Other players join explicitly using `.expedition join <run-id>`. Shared runs support up to four participants. All participants must be at Lantern Square before the host begins. Use `.expedition status <run-id>`; advance with `.expedition advance <run-id> <checkpoint-id> <choice>`. Participants may pause, resume or leave. If the host leaves, ownership transfers to the earliest remaining active participant. Runs do not expire for inactivity.
@@ -58,12 +60,12 @@ Lantern Road is the one implemented route: Lantern Square → Mosslight Grove �
 
 | Prefix | Slash | Purpose |
 |---|---|---|
-| `.games` | `/games` | Browse the four playable games and their controls. |
+| `.games [title]` | `/games title:` | Browse the four playable games and their controls. |
 | `.play <game>` | `/play` | Start a solo game or create a two-player lobby. |
 | `.join <session>` | `/join` | Join an open two-player lobby in the same server. |
 | `.action <session> <input>` | `/action` | Submit a validated move or answer. |
 | `.session <session>` | `/session` | Inspect a session you participate in. |
-| `.sessions` | `/sessions` | List up to ten recent active sessions in the current server or DM scope. |
+| `.sessions [title]` | `/sessions title:` | List up to ten recent active sessions in the current server or DM scope. |
 | `.leave <session>` | `/leave` | End a session you participate in. |
 
 Current action formats: Tic-tac-toe uses 1-based `row,column`; Connect Four uses a 1-based column from 1–7; Memory Match uses a 1-based position from 1–8; Word Scramble accepts an answer. The first three games also expose numbered Discord buttons, with text commands retained as a fallback. Game state remains server-authoritative and stored in PostgreSQL.

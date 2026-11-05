@@ -595,7 +595,13 @@ pub async fn privacy(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn privacy_data(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     let inventory = ctx.data().profiles().inventory(&player_id).await?;
@@ -656,7 +662,7 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
         inventory.expedition_checkpoint_records,
         inventory.session_retention
     );
-    send_private(ctx, message).await
+    send_private_title_panel(ctx, "Your Moonbyte Data Inventory", title.as_deref(), message).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -782,7 +788,13 @@ pub async fn privacy_delete(
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn profile(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn profile(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let profile = ctx
         .data()
@@ -790,7 +802,7 @@ pub async fn profile(ctx: Context<'_>) -> Result<(), Error> {
         .get_or_create(&player_id, &ctx.author().name)
         .await?;
     let stats = ctx.data().profiles().game_stats(&player_id).await?;
-    send_private(ctx, render_profile(&profile, &stats)).await
+    send_private_title_panel(ctx, "Your Moonbyte Profile", title.as_deref(), render_profile(&profile, &stats)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -829,7 +841,13 @@ pub async fn profile_edit(
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn wallet(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn wallet(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let wallet = ctx.data().wallets().snapshot(&player_id).await?;
     let message = format!(
@@ -842,11 +860,17 @@ pub async fn wallet(ctx: Context<'_>) -> Result<(), Error> {
         wallet.ledger_entries,
         crate::wallet::FIRST_COMPLETION_REWARD
     );
-    send_private(ctx, message).await
+    send_private_title_panel(ctx, "Moonbits Wallet", title.as_deref(), message).await
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn achievements(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let prefix = ctx.data().command_prefix(ctx.guild_id());
     let player_id = ctx.author().id.to_string();
     let unlocked = ctx
@@ -856,8 +880,10 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
         .await?;
 
     if unlocked.is_empty() {
-        return send_private(
+        return send_private_title_panel(
             ctx,
+            "Achievement Gallery",
+            title.as_deref(),
             format!(
                 "**Your Achievement Gallery**\n\nNo achievements unlocked yet. \
                  Complete games to record your milestones. Use `{}games` to browse.",
@@ -881,8 +907,10 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
         .collect::<Vec<_>>()
         .join("\n\n");
 
-    send_private(
+    send_private_title_panel(
         ctx,
+        "Achievement Gallery",
+        title.as_deref(),
         format!(
             "**Your Achievement Gallery** · {} unlocked\n\n{}",
             unlocked.len(),
@@ -893,23 +921,39 @@ pub async fn achievements(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn inventory(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn inventory(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let snapshot = ctx.data().inventory().snapshot(&player_id).await?;
-    send_private(ctx, crate::inventory::render_inventory(&snapshot)).await
+    send_private_title_panel(ctx, "Your Satchel", title.as_deref(), crate::inventory::render_inventory(&snapshot)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn collection(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn collection(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let snapshot = ctx.data().inventory().snapshot(&player_id).await?;
-    send_private(ctx, crate::inventory::render_collection(&snapshot)).await
+    send_private_title_panel(ctx, "Postcard Wall", title.as_deref(), crate::inventory::render_collection(&snapshot)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn craft(
     ctx: Context<'_>,
     #[description = "Fixed recipe ID: wayfarer-lantern"] recipe: String,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let outcome = ctx
@@ -944,11 +988,17 @@ pub async fn craft(
         }
     };
 
-    send_title_panel(ctx, "Wayfarer Workshop · Crafting", &message, true).await
+    send_title_panel(ctx, "Wayfarer Workshop · Crafting", title.as_deref(), &message, true).await
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn quests(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn quests(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     ctx.data()
         .profiles()
@@ -983,8 +1033,10 @@ pub async fn quests(ctx: Context<'_>) -> Result<(), Error> {
                 .collect::<String>()
         })
         .unwrap_or_else(|| "unavailable".to_owned());
-    send_private(
+    send_private_title_panel(
         ctx,
+        "Daily Quest Board",
+        title.as_deref(),
         format!(
             "**The Wayfarer · Daily Quest Board**\n\n{}\n\nRotation fingerprint: SHA-512 {fingerprint}…\nThe board is fixed for the day. Accept only the quests you want to pursue; missed days do not remove progress or rewards. Rewards are fixed and credited to your immutable Moonbits ledger when claimed.",
             entries
@@ -1049,7 +1101,13 @@ pub async fn quest(
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn wayfarer(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn wayfarer(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let snapshot = ctx.data().wayfarer().snapshot(&player_id).await?;
     let next = snapshot
@@ -1061,8 +1119,10 @@ pub async fn wayfarer(ctx: Context<'_>) -> Result<(), Error> {
             )
         })
         .unwrap_or_else(|| "The final currently defined companion milestone is yours.".to_owned());
-    send_private(
+    send_private_title_panel(
         ctx,
+        "Wayfarer Thread",
+        title.as_deref(),
         format!(
             "**The Wayfarer Thread**\n\nJourney days: **{}**\nCompanion: **{}**\nJourney stage: **{}**\n{}\n\nMeaningful game completions and first-time Atlas discoveries count once per calendar day. Your total never decreases; missing a day carries no penalty. Optional quests and cosmetic companion milestones never affect game outcomes.",
             snapshot.active_days, snapshot.companion_name, snapshot.companion_stage, next
@@ -1072,11 +1132,19 @@ pub async fn wayfarer(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn companion(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn companion(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let snapshot = ctx.data().wayfarer().snapshot(&player_id).await?;
-    send_private(
+    send_private_title_panel(
         ctx,
+        "Companion Journal",
+        title.as_deref(),
         format!(
             "**{} · Companion Journal**\n\nCurrent stage: **{}**\nJourney days recorded: **{}**\n\nCompanion milestones are cosmetic. They do not boost stats, change game rules, or grant random rewards. Keep exploring at your own pace.",
             snapshot.companion_name, snapshot.companion_stage, snapshot.active_days
@@ -1086,13 +1154,21 @@ pub async fn companion(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn rivals(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn rivals(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let records = ctx.data().wayfarer().rivalries(&player_id).await?;
     if records.is_empty() {
         let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
-        return send_private(
+        return send_private_title_panel(
             ctx,
+            "Rivalry Hall",
+            title.as_deref(),
             format!(
                 "**Rivalry Hall**\n\nNo invitations or rivalries yet. A rivalry starts only when both players opt in. Use {prefix}rival declare @player to invite someone who has opened Moonbyte."
             ),
@@ -1125,8 +1201,10 @@ pub async fn rivals(ctx: Context<'_>) -> Result<(), Error> {
         })
         .collect::<Vec<_>>()
         .join("\n\n");
-    send_private(
+    send_private_title_panel(
         ctx,
+        "Rivalry Hall",
+        title.as_deref(),
         format!(
             "**Rivalry Hall**\n\n{entries}\n\nOnly matches completed after a rivalry becomes active are counted. Rivalry records are private to their two participants; they do not create public leaderboards."
         ),
@@ -1231,10 +1309,16 @@ fn parse_discord_user_id(value: &str) -> Option<String> {
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn stats(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn stats(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let stats = ctx.data().profiles().game_stats(&player_id).await?;
-    send_private(ctx, render_statistics(&stats)).await
+    send_private_title_panel(ctx, "Game Statistics", title.as_deref(), render_statistics(&stats)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1263,14 +1347,26 @@ pub async fn settings(
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn tavern(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn tavern(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let prefix = ctx.data().command_prefix(ctx.guild_id());
     let message = crate::tavern::render(&prefix);
-    send_title_panel(ctx, "Tavern Wayfinder", &message, false).await
+    send_title_panel(ctx, "Tavern Wayfinder", title.as_deref(), &message, false).await
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn atlas(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn atlas(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     ctx.data()
         .profiles()
@@ -1278,11 +1374,17 @@ pub async fn atlas(ctx: Context<'_>) -> Result<(), Error> {
         .await?;
     let snapshot = ctx.data().atlas().snapshot(&player_id).await?;
     let prefix = ctx.data().command_prefix(ctx.guild_id());
-    send_private(ctx, crate::atlas::render(&snapshot, &prefix)).await
+    send_private_title_panel(ctx, "Atlas", title.as_deref(), crate::atlas::render(&snapshot, &prefix)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn chronicle(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn chronicle(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     ctx.data()
         .profiles()
@@ -1291,7 +1393,7 @@ pub async fn chronicle(ctx: Context<'_>) -> Result<(), Error> {
     ctx.data().atlas().snapshot(&player_id).await?;
     let snapshot = ctx.data().chronicle().snapshot(&player_id).await?;
     let prefix = ctx.data().command_prefix(ctx.guild_id());
-    send_private(ctx, crate::chronicle::render(&snapshot, &prefix)).await
+    send_private_title_panel(ctx, "Chronicle Archive", title.as_deref(), crate::chronicle::render(&snapshot, &prefix)).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1299,6 +1401,10 @@ pub async fn travel(
     ctx: Context<'_>,
     #[description = "A directly connected location ID or name, such as mosslight-grove"]
     location: String,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let prefix = ctx.data().command_prefix(ctx.guild_id());
@@ -1318,8 +1424,10 @@ pub async fn travel(
                 Some(value) => format!("Did you mean {value}? "),
                 None => String::new(),
             };
-            return send_private(
+            return send_private_title_panel(
                 ctx,
+                "Atlas Journey",
+                title.as_deref(),
                 format!(
                     "{guidance}That place is not in the Atlas. Known locations: {}.",
                     crate::atlas::LOCATION_CATALOGUE
@@ -1332,8 +1440,10 @@ pub async fn travel(
             .await;
         }
         Err(crate::atlas::AtlasError::NotReachable) => {
-            return send_private(
+            return send_private_title_panel(
                 ctx,
+                "Atlas Journey",
+                title.as_deref(),
                 format!("That destination is not connected to your current location. Open `{}`atlas` to see the routes you can travel.", escape_user_text(&prefix)),
             )
             .await;
@@ -1349,8 +1459,10 @@ pub async fn travel(
     } else {
         format!("You are already at **{}**.", result.to.name)
     };
-    send_private(
+    send_private_title_panel(
         ctx,
+        "Atlas Journey",
+        title.as_deref(),
         format!(
             "{}\n\n{}",
             message,
@@ -1379,7 +1491,7 @@ pub async fn expedition(
         .to_ascii_lowercase();
 
     match action.as_str() {
-        "list" => send_private(ctx, crate::expedition::render_catalogue(&prefix)).await,
+        "list" => send_private_title_panel(ctx, "Expedition Routes", None, crate::expedition::render_catalogue(&prefix)).await,
         "start" => {
             let route = target.as_deref().unwrap_or(crate::expedition::ROUTE_ID);
             if route != crate::expedition::ROUTE_ID {
@@ -1412,7 +1524,7 @@ pub async fn expedition(
                 )).await?;
                 Ok(())
             } else {
-                send_private(ctx, crate::expedition::render(&run, &prefix)).await
+                send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
             }
         }
         "join" => {
@@ -1430,7 +1542,7 @@ pub async fn expedition(
                 .await?;
             ctx.data().atlas().snapshot(&player_id).await?;
             let run = ctx.data().expeditions().join(&player_id, guild, id).await?;
-            send_private(ctx, crate::expedition::render(&run, &prefix)).await
+            send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
         }
         "begin" | "status" | "pause" | "resume" | "leave" | "cancel" => {
             let id = parse_expedition_id(target.as_deref())?;
@@ -1473,7 +1585,7 @@ pub async fn expedition(
                 }
                 _ => unreachable!(),
             };
-            send_private(ctx, crate::expedition::render(&run, &prefix)).await
+            send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
         }
         "advance" => {
             let id = parse_expedition_id(target.as_deref())?;
@@ -1492,7 +1604,7 @@ pub async fn expedition(
                 .expeditions()
                 .advance(&player_id, guild_id.as_deref(), id, checkpoint, choice)
                 .await?;
-            send_private(ctx, crate::expedition::render(&run, &prefix)).await
+            send_private_title_panel(ctx, "Lantern Road Expedition", None, crate::expedition::render(&run, &prefix)).await
         }
         _ => {
             let suggestion = suggest_known_value(
@@ -1521,7 +1633,13 @@ fn parse_expedition_id(value: Option<&str>) -> Result<i64, Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn games(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
     let entries = GameKind::ALL
         .iter()
@@ -1542,7 +1660,7 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
         "First completion of each game type grants {} Moonbits once per player. Repeat completions do not grant more. Use {prefix}wallet to view your balance.\n\n{entries}",
         crate::wallet::FIRST_COMPLETION_REWARD
     );
-    send_title_panel(ctx, "Moonbyte Game Library", &message, false).await
+    send_title_panel(ctx, "Moonbyte Game Library", title.as_deref(), &message, false).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -1648,7 +1766,13 @@ pub async fn session(
 }
 
 #[poise::command(prefix_command, slash_command)]
-pub async fn sessions(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn sessions(
+    ctx: Context<'_>,
+    #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let scope = if guild_id.is_some() {
@@ -1663,9 +1787,12 @@ pub async fn sessions(ctx: Context<'_>) -> Result<(), Error> {
         .await?;
 
     if sessions.is_empty() {
-        ctx.say(format!("You don't have any active sessions in {scope}."))
-            .await?;
-        return Ok(());
+        return send_private_title_panel(
+            ctx,
+            "Active Game Sessions",
+            title.as_deref(),
+            format!("You don't have any active sessions in {scope}."),
+        ).await;
     }
 
     let entries = sessions
@@ -1682,9 +1809,14 @@ pub async fn sessions(ctx: Context<'_>) -> Result<(), Error> {
         .collect::<Vec<_>>()
         .join("\n\n");
 
-    ctx.say(format!(
-        "**Your active sessions in {scope}**\n\n{entries}\n\nUse `session <id>` to inspect a board or `action <id> <input>` to play. Showing up to 10 most recently updated sessions."
-    ))
+    send_private_title_panel(
+        ctx,
+        "Active Game Sessions",
+        title.as_deref(),
+        format!(
+            "**Your active sessions in {scope}**\n\n{entries}\n\nUse `session <id>` to inspect a board or `action <id> <input>` to play. Showing up to 10 most recently updated sessions."
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -1784,13 +1916,62 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
 
 /// Sends a compact Discord embed panel for substantial command results.
 /// Slash invocations are ephemeral; prefix invocations retain Discord's normal message visibility.
+fn panel_title(override_title: Option<&str>, fallback: &str) -> String {
+    let value = override_title
+        .map(str::trim)
+        .filter(|title| !title.is_empty())
+        .unwrap_or(fallback);
+    let collapsed = value.split_whitespace().collect::<Vec<_>>().join(" ");
+    escape_user_text(&collapsed).chars().take(256).collect()
+}
+
+fn panel_description(content: &str) -> String {
+    let content = content.trim();
+    let Some((heading, remainder)) = content.split_once('\n') else {
+        return content.to_owned();
+    };
+    let Some(heading) = heading.strip_prefix("**") else {
+        return content.to_owned();
+    };
+    let Some(close) = heading.find("**") else {
+        return content.to_owned();
+    };
+
+    let suffix = heading[close + 2..].trim();
+    let remainder = remainder.trim_start();
+    match (suffix.is_empty(), remainder.is_empty()) {
+        (true, true) => String::new(),
+        (true, false) => remainder.to_owned(),
+        (false, true) => suffix.to_owned(),
+        (false, false) => format!("{suffix}\n\n{remainder}"),
+    }
+}
+
+fn build_title_panel(
+    fallback: &str,
+    override_title: Option<&str>,
+    content: &str,
+) -> CreateEmbed {
+    let description = panel_description(content);
+    let description = if description.is_empty() {
+        "No additional details.".to_owned()
+    } else {
+        description.chars().take(4096).collect()
+    };
+
+    CreateEmbed::new()
+        .title(panel_title(override_title, fallback))
+        .description(description)
+}
+
 async fn send_title_panel(
     ctx: Context<'_>,
-    title: &str,
+    fallback: &str,
+    override_title: Option<&str>,
     description: &str,
     ephemeral: bool,
 ) -> Result<(), Error> {
-    let embed = CreateEmbed::new().title(title).description(description);
+    let embed = build_title_panel(fallback, override_title, description);
     if ctx.prefix() == "/" {
         ctx.send(poise::CreateReply::new().embed(embed).ephemeral(ephemeral))
             .await?;
@@ -1799,6 +1980,24 @@ async fn send_title_panel(
         dm.send_message(ctx.http(), CreateMessage::new().embed(embed))
             .await?;
         ctx.say("I sent that panel to your DMs.").await?;
+    } else {
+        ctx.send(poise::CreateReply::new().embed(embed)).await?;
+    }
+    Ok(())
+}
+
+async fn send_private_title_panel(
+    ctx: Context<'_>,
+    fallback: &str,
+    override_title: Option<&str>,
+    description: impl Into<String>,
+) -> Result<(), Error> {
+    let embed = build_title_panel(fallback, override_title, &description.into());
+    if ctx.guild_id().is_some() {
+        let dm = ctx.author().create_dm_channel(ctx.http()).await?;
+        dm.send_message(ctx.http(), CreateMessage::new().embed(embed))
+            .await?;
+        ctx.say("I sent those details to your DMs.").await?;
     } else {
         ctx.send(poise::CreateReply::new().embed(embed)).await?;
     }
@@ -2225,5 +2424,33 @@ mod tests {
         let message = help_message(&prefix);
         assert!(message.contains("@\u{200B}everyoneˋ"));
         assert!(!message.contains("@everyone"));
+    }
+}
+
+
+#[cfg(test)]
+mod title_panel_tests {
+    use super::{panel_description, panel_title};
+
+    #[test]
+    fn custom_title_is_normalised_mention_safe_and_bounded() {
+        assert_eq!(
+            panel_title(Some("  @everyone  My _Workshop_  "), "Default"),
+            "@\u{200B}everyone My \\_Workshop\\_"
+        );
+        assert_eq!(panel_title(Some("   "), "Default"), "Default");
+        assert_eq!(
+            panel_title(Some(&"x".repeat(300)), "Default").chars().count(),
+            256
+        );
+    }
+
+    #[test]
+    fn first_markdown_heading_moves_into_the_panel_title_without_losing_its_suffix() {
+        assert_eq!(
+            panel_description("**Your Satchel** · 2 item records\n\nMosslight Silk"),
+            "· 2 item records\n\nMosslight Silk"
+        );
+        assert_eq!(panel_description("A simple result"), "A simple result");
     }
 }
