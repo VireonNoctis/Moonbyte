@@ -16,5 +16,6 @@ ADRs record decisions that affect multiple modules or are expensive to reverse. 
 - [0010 — Private Chronicle pages from first Atlas discoveries](0010-private-chronicle-fragments.md).
 - [0011 — Provenance-backed account-owned inventory](0011-provenance-backed-inventory.md).
 - [0012 — Deterministic account-bound crafting](0012-deterministic-account-bound-crafting.md).
+- [0013 — First Puzzle Vault vertical slice](0013-first-puzzle-vault-vertical-slice.md) — solo authored rooms, verified solutions, durable checkpoints and one fixed keepsake.
 
 When a decision is replaced, retain the historical record and clearly identify the newer source. Do not create an ADR for a local implementation detail.
