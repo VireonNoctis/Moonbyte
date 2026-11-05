@@ -77,6 +77,10 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - No client-supplied score, winner, reward, currency balance or checkpoint is trusted.
 - Discord delivery failure never rolls back a committed game or Expedition state change; retry behavior must avoid duplicate effects.
 
+## Command presentation and input guidance
+
+The Discord adapter owns response formatting without moving domain rules into Serenity/Poise. Substantial slash results can use the shared `send_title_panel` helper to render a compact embed title and description; slash panels are ephemeral by default. Prefix output remains a normal Discord message. Use title panels for meaningful browse/workbench/board views, not every acknowledgement, and preserve private delivery for profile, inventory and other personal data. Finite command arguments may use the adapter's conservative edit-distance suggestion helper. A suggestion is never an automatic correction and must not execute a command on the player's behalf.
+
 ## Discord components
 
 Tic-tac-toe, Connect Four and Memory Match boards expose numbered native Discord buttons. Each custom ID binds the session ID, expected action count and a bounded game-specific input. The global interaction handler rechecks current consent, server command-channel policy, participant identity, guild scope and session state before forwarding the input to the same GameRuntime used by text commands. If the action count has advanced, the old board is refreshed from PostgreSQL without applying the move. Terminal controls are disabled. Word Scramble remains text-answer driven. The existing text command route remains available as an accessible fallback.
