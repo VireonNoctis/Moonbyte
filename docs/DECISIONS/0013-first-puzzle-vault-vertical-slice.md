@@ -17,7 +17,7 @@ The first blueprint is immutable at content version 1. Each room has a stable ID
 
 1. **Waystone Order** — order Fern, Star and Moon using the published clues: Fern precedes Star; Star precedes Moon. The only accepted sequence is Fern → Star → Moon.
 2. **Tideglass Code** — find a three-digit code with distinct digits from 1 through 5. The first digit is twice the second, the third is one more than the second, and the digits sum to nine. The unique solution is 423.
-3. **Keeper's Seal** — combine the three room marks in the displayed order to enter the fixed seal phrase. The authored phrase and its exact clue are published as part of the room definition; the verifier accepts only the canonical normalized answer.
+3. **Keeper's Seal** — combine the first room's solved sequence and the second room's code. The clue reads: “The seal remembers the order you set at the first waystone, then the three digits measured at Tideglass. Join those two answers with a hyphen.” The canonical answer is FERN-STAR-MOON-423.
 
 The content registry must validate stable IDs, non-empty clues, non-empty explanations, answer normalization and solution fixtures before a blueprint can be registered. Unit tests enumerate the finite Tideglass Code candidates and prove uniqueness. A room cannot be published if its solution is missing, duplicated or ambiguous.
 
