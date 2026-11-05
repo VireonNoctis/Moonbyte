@@ -39,6 +39,12 @@ impl Database {
         self.pool.clone()
     }
 
+    /// Check database connectivity without exposing connection details.
+    pub async fn health_check(&self) -> Result<(), sqlx::Error> {
+        let _: i32 = sqlx::query_scalar("SELECT 1").fetch_one(&self.pool).await?;
+        Ok(())
+    }
+
     /// Remove sessions whose inactivity window has elapsed.
     pub async fn remove_expired_sessions(&self) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("DELETE FROM game_sessions WHERE expires_at <= now()")
