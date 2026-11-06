@@ -2,7 +2,40 @@
 
 > Moonbyte World Loom · 40 connected system proposals · This is a design specification, not a claim of implementation.
 
-Each card is a distinct proposal with a stable graph identity, a player loop, state and ownership boundaries, Discord and Activity surfaces, privacy rules, acceptance tests and explicit cross-system links.
+Each card is a distinct proposal with a stable graph identity, a player loop, state and ownership boundaries, Discord-native interaction surfaces, privacy rules, acceptance tests and explicit cross-system links.
+
+**First implementation cut:** [Expedition Foundation v1](../EXPEDITION_FOUNDATION.md) narrows this volume to one authored Lantern Road route, durable versioned checkpoints, solo/consenting-party progression, and explicit Atlas, Chronicle, Wayfarer and privacy hand-offs. It is a roadmap specification only; none of the 40 volume proposals become live merely through documentation.
+
+
+## Wayfarer Thread integration contract — v4.0
+
+This volume is part of the authoritative [Moonbyte Final Vision](../MOONBYTE_FINAL_VISION.md). Its proposals must exchange verified outcomes through the [Wayfarer Thread Integration Contract](./INTEGRATION_CONTRACTS.md), not by reaching into another domain's private tables. The graph preserves the original idea IDs and domain relationships; the hand-offs below explain how those relationships become visible player journeys.
+
+### Domain hand-offs
+
+| Owning domain | Declared connections |
+|---|---|
+| **Atlas, Regions and World Discovery** (atlas) | routes to Expeditions, reveals Quests, records Archive discoveries and hosts Festival world changes |
+| **Expeditions and Exploration Sessions** (expedition) | uses the Atlas map, branches into Vaults, is organised by Guilds and creates Archive records |
+| **Quests, Mystery and Story** (quest) | anchored at Atlas places, resolved through Vaults, recognised by Mastery and discovered from Hearth |
+| **Vaults, Dungeons and Puzzle Spaces** (vault) | advances Quests, uses Craft blueprints, is verified by Fairness and supports Guild cooperation |
+
+### Concrete cross-system moments
+
+- Atlas first discovery → Chronicle lore page, Wayfarer activity and optional Quest eligibility; revisits update visit history but never duplicate first-discovery rewards.
+- Expedition checkpoint → durable resume point, route note and optional guild contribution; a failed Discord response must not erase the checkpoint.
+- Quest branch → visible prerequisites, consequences and return route; story flags are derived from committed Atlas or Expedition outcomes.
+- Vault completion → disclosed fixed reward and Archive entry; no paid or chance-based loot and no hidden loss on retreat.
+
+### Shared release rules
+
+- Emit typed domain events only after the source PostgreSQL transaction commits.
+- Consumers validate permissions and use stable idempotency keys; retries never duplicate an outcome.
+- Player, party, guild and server scopes remain distinct. A personal event is not public by default.
+- Every reward, material transformation and difficulty unlock is deterministic and visible.
+- Pause, resume, leave, mute and opt-out remain available. Absence never erases progress.
+- Export/deletion, accessible alternatives, moderation and recovery tests are required before any proposal is marked live.
+
 
 ## Domain 5 — Atlas, Regions and World Discovery
 
@@ -82,20 +115,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive the grand atlas view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive the grand atlas view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_world_index rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the grand atlas: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -119,7 +152,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -197,20 +230,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive discovery layers view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive discovery layers view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_discovery_fog rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for discovery layers: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -234,7 +267,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -312,20 +345,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive biome ecology view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive biome ecology view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_biomes rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for biome ecology: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -349,7 +382,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -427,20 +460,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive landmark network view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive landmark network view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_landmarks rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for landmark network: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -464,7 +497,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -542,20 +575,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive known passage network view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive known passage network view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_shortcuts rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for known passage network: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -579,7 +612,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -657,20 +690,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive environmental logic sites view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive environmental logic sites view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_environment_puzzles rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for environmental logic sites: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -694,7 +727,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -772,20 +805,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive atlas overlays view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive atlas overlays view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_map_layers rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for atlas overlays: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -809,7 +842,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -887,20 +920,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive cartographer's desk view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive cartographer's desk view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_cartographer rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for cartographer's desk: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -924,7 +957,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1002,20 +1035,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive the route planner view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive the route planner view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_route_planner rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the route planner: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1039,7 +1072,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1117,20 +1150,20 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive living world state view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive living world state view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the atlas_world_state rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for living world state: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1154,7 +1187,7 @@ The Atlas provides a navigable world graph. Discovery is evidence-based, persist
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1238,20 +1271,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive expedition planner view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive expedition planner view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_planner rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for expedition planner: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1275,7 +1308,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1353,20 +1386,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive route encounters view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive route encounters view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_route_events rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for route encounters: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1390,7 +1423,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1468,20 +1501,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive expedition roles view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive expedition roles view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_roles rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for expedition roles: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1505,7 +1538,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1583,20 +1616,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive prepared supply kit view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive prepared supply kit view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_supplies rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for prepared supply kit: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1620,7 +1653,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1698,20 +1731,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive waystation checkpoints view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive waystation checkpoints view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_camps rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for waystation checkpoints: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1735,7 +1768,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1813,20 +1846,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive the expedition journal view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive the expedition journal view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_journal rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the expedition journal: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1850,7 +1883,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -1928,20 +1961,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive return and recovery routes view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive return and recovery routes view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_recovery rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for return and recovery routes: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -1965,7 +1998,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2043,20 +2076,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive explorer contracts view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive explorer contracts view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_contracts rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for explorer contracts: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2080,7 +2113,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2158,20 +2191,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive discovery scorecard view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive discovery scorecard view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_score rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for discovery scorecard: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2195,7 +2228,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2273,20 +2306,20 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive expedition route archive view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive expedition route archive view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the expedition_replay rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for expedition route archive: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2310,7 +2343,7 @@ Expeditions turn the Atlas into bounded, resumable adventures with cooperative r
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2394,20 +2427,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive the quest board view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive the quest board view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_board rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the quest board: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2431,7 +2464,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2509,20 +2542,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive chapter arcs view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive chapter arcs view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_arcs rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for chapter arcs: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2546,7 +2579,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2624,20 +2657,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive choice and consequence graph view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive choice and consequence graph view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_branches rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for choice and consequence graph: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2661,7 +2694,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2739,20 +2772,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive the investigation desk view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive the investigation desk view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_mysteries rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the investigation desk: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2776,7 +2809,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2854,20 +2887,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive dialogue routes view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive dialogue routes view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_dialogue rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for dialogue routes: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -2891,7 +2924,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -2969,20 +3002,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive faction storylines view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive faction storylines view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_factions rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for faction storylines: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3006,7 +3039,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3084,20 +3117,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive local tales view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive local tales view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_side_stories rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for local tales: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3121,7 +3154,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3199,20 +3232,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive shared story decisions view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive shared story decisions view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_coop_story rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for shared story decisions: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3236,7 +3269,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3314,20 +3347,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive the chapter chronicle view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive the chapter chronicle view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_chronicle rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the chapter chronicle: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3351,7 +3384,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3429,20 +3462,20 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive story remix paths view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive story remix paths view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the quest_remix rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for story remix paths: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3466,7 +3499,7 @@ Quests provide authored purpose across the Tavern, Atlas, Vaults, NPCs and guild
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3550,20 +3583,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive vault blueprint library view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive vault blueprint library view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_blueprints rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for vault blueprint library: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3587,7 +3620,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3665,20 +3698,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive puzzle chambers view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive puzzle chambers view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_chambers rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for puzzle chambers: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3702,7 +3735,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3780,20 +3813,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive logic key mechanisms view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive logic key mechanisms view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_logic_keys rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for logic key mechanisms: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3817,7 +3850,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -3895,20 +3928,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive relic galleries view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive relic galleries view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_relic_rooms rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for relic galleries: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -3932,7 +3965,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4010,20 +4043,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive mastery trial rooms view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive mastery trial rooms view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_mastery_trials rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for mastery trial rooms: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4047,7 +4080,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4125,20 +4158,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive the grand mechanism view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive the grand mechanism view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_boss_logic rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for the grand mechanism: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4162,7 +4195,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4240,20 +4273,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive split-path chambers view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive split-path chambers view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_parallel_rooms rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for split-path chambers: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4277,7 +4310,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4355,20 +4388,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive vault save stones view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive vault save stones view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_checkpoints rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for vault save stones: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4392,7 +4425,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4470,20 +4503,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive fair difficulty profiles view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive fair difficulty profiles view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_difficulty rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for fair difficulty profiles: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4507,7 +4540,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 
@@ -4585,20 +4618,20 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Messages, embeds, buttons, select menus and modals expose only the actions valid for the current state.
 - Public boards contain only public game state; private clues, profile details, exports and trade offers use private delivery where supported.
 - A deleted message or expired interaction can be recreated from durable state without inventing a second session.
-### 15 · Visual Library and Activity surface
-- The visual library uses Next.js, React and TypeScript as a presentation layer, with the official Discord Embedded App SDK for Activity integration.
-- A responsive verified puzzle registry view can present richer maps, cards, timelines or editors while keeping a browser fallback where supported.
-- The Activity requests authorised view models and submits intent; it never computes trusted outcomes, balances, item ownership or permissions.
-- Discord-native controls remain available when the Activity cannot load, and the same state is readable in text.
+### 15 · Discord-native presentation
+- Discord commands, messages, embeds, buttons, select menus and modals are the presentation layer; Rust services retain ownership of rules and authoritative state.
+- A responsive verified puzzle registry view can present richer maps, cards, timelines or editors while keeping a command and text fallback where supported.
+- Discord interactions request authorised views and submit intent; they never compute trusted outcomes, balances, item ownership or permissions.
+- Commands and message-based controls form one native Discord experience, and the same state remains readable in text.
 ### 16 · Rust domain ownership
 - Rust owns the vault_solution_registry rules, state transitions, action validation, reward eligibility and event production.
 - The module should expose a narrow service contract and pure rule functions that can be tested without Discord or a live database.
 - Poise and Serenity adapt commands and interactions; they do not bypass application services or write SQL directly.
 - Tokio tasks remain bounded and event-driven; no per-frame loop, unbounded queue or global lock is introduced for this feature.
-### 17 · SQLite persistence contract
+### 17 · PostgreSQL persistence contract
 - Persist only durable facts required for verified puzzle registry: stable IDs, owner scope, state version, relevant event references and timestamps.
 - Balances and trades use immutable ledger entries; progress claims use unique idempotency keys; session state is versioned.
-- All related writes occur in short SQLite transactions; no transaction or lock is held across Discord HTTP calls.
+- All related writes occur in short PostgreSQL transactions; no transaction or lock is held across Discord HTTP calls.
 - Repository methods must support export, deletion, guild isolation, cleanup and restore tests for the records this node creates.
 ### 18 · Privacy, consent and permissions
 - Identity is derived from authenticated Discord context and verified by Rust; client-submitted user or guild IDs are never trusted alone.
@@ -4622,7 +4655,7 @@ Vaults are designed challenge spaces with disclosed rules, fixed rewards, saved 
 - Moderation actions are scoped, reasoned and audited; they cannot silently rewrite game results or delete a player's unrelated progress.
 ### 22 · Acceptance criteria and release path
 - Unit tests prove legal and illegal actions, state transitions, deterministic outputs and edge cases for this node.
-- Integration tests prove Discord delivery, SQLite persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
+- Integration tests prove Discord delivery, PostgreSQL persistence, restart recovery, privacy export/deletion and guild isolation where applicable.
 - MVP release begins with one narrow vertical slice; expanded variants ship only after the core contract is stable and measured.
 - The feature is not marked implemented merely because this concept document exists; release status must match tested code.
 

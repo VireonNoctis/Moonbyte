@@ -1,16 +1,22 @@
 # Moonbyte World Loom — Master Atlas
 
-- Status: **Expanded product design proposal; not implemented.**
+- Status: **Authoritative design catalogue with explicit implementation boundaries.** The live Rust/PostgreSQL slices are linked separately; the remaining proposals are not implemented merely by being documented. The Tavern Wayfinder, initial Atlas, optional Wayfarer quest board, cumulative activity milestones, cosmetic companion stages and mutual private rivalries are implemented; the 400 system proposals and their deeper domain behavior remain proposed until each has its own implementation and tests.
 - Scope: **400 individual system ideas across 40 connected domains.**
-- Documented idea volume: **48,295 lines** across the ten design volumes (before this index, mind map and machine-readable graph).
+- Documented idea volume: **48,610 lines** across the ten expanded design volumes (before this index, mind map and machine-readable graph). Seven integration contracts are tracked separately from the 400 original ideas.
 - System graph: [world_graph.json](./world_graph.json) — canonical node IDs, typed edges, rationales and shared invariants.
 - Mermaid diagrams: [world_map.mmd](./world_map.mmd) — complete idea hierarchy and cross-domain map.
 
+## Source of truth
+
+- [Moonbyte Final Vision v4.0](../MOONBYTE_FINAL_VISION.md) is the product-level authority and supersedes earlier vision drafts.
+- [Integration Contracts](./INTEGRATION_CONTRACTS.md) defines event ownership, schemas, idempotency and the Wayfarer Thread.
+- The ten volumes below remain the detailed specifications for 400 ideas across 40 domains. Each volume has its own concrete cross-domain hand-off contract.
+
 ## One world, one graph
 
-Moonbyte is designed as one connected world with several player-facing entrances. The Tavern is the social home and discovery layer. The Atlas and Expeditions make the world explorable. Quests and Vaults provide authored goals. Crafting converts known resources into useful objects. Collections preserve discoveries. The Bazaar circulates eligible earned items through fixed-price trades and transparent barter. Guilds and parties coordinate shared play. The Arcade supplies short sessions and skill practice. Character, mastery, homes and festivals turn the results into personal and community identity.
+Moonbyte is designed as one connected world with several player-facing entrances. The Tavern is the social home and discovery layer. The Atlas and Expeditions make the world explorable. The Wayfarer provides optional daily objectives; the broader Quests and Vaults domains provide authored long-form goals. Crafting converts known resources into useful objects. Collections preserve discoveries. The Bazaar circulates eligible earned items through fixed-price trades and transparent barter. Guilds and parties coordinate shared play. The Arcade supplies short sessions and skill practice. Character, mastery, homes and festivals turn the results into personal and community identity.
 
-The graph is not a collection of unrelated command ideas. It is a contract map: each feature has a stable identifier, one owning domain, typed incoming/outgoing connections, an explicit reason for every cross-system relationship and a consistent implementation boundary.
+The graph is not a collection of unrelated command ideas. It is a contract map: each feature has a stable identifier, one owning domain, typed incoming/outgoing connections, an explicit reason for every cross-system relationship and a consistent implementation boundary. Seven additional integration-contract nodes describe the Wayfarer Thread, Continuity Moments, Player Card, Rival/Nemesis, non-punitive Journey, Seasonal Almanac and Mastery Access; these are not counted as additional ideas.
 
 ## Ten design volumes
 
@@ -68,17 +74,28 @@ Puzzle or story creator → validation → moderation → private playtest → a
 ## World Loom invariants
 
 1. **One source of truth:** Rust owns game state, rules, permissions, reward eligibility, trades, fairness transcripts and persistence.
-2. **One presentation family:** Discord-native commands remain first-class; Next.js + React + TypeScript add rich views through the official Embedded App SDK where appropriate.
-3. **One initial database target:** PostgreSQL with versioned migrations, JSONB snapshots, short transactions and tested recovery.
+2. **One Discord-native surface:** Commands, messages, embeds, buttons, select menus and modals provide every player interaction. No separate client is required.
+3. **One initial database target:** PostgreSQL through SQLx with versioned migrations, JSONB snapshots, short transactions and tested recovery. SQLite and ScyllaDB are excluded.
 4. **One honest economy:** Moonbits are earned-only and non-redeemable. No betting, staking, cash-out, paid random rewards or chance-based tradable assets.
 5. **One coherent identity:** original full-colour pixel art, common content IDs, shared world locations and consistent state labels.
 6. **One engagement ethic:** players return for meaningful play, social choice, mastery and new content—not loss aversion, artificial scarcity or compulsive loops.
 7. **One privacy boundary:** only necessary data is stored; public, party, guild and personal scopes are distinct and documented.
 8. **One release truth:** every item in this atlas remains proposed until its own implementation and tests are complete.
+9. **One integration language:** the Wayfarer Thread emits typed, post-commit domain events; consumers are idempotent and own their writes.
+10. **One continuity ethic:** hand-offs are contextual and dismissible, never hidden auto-actions or notification spam.
+11. **One non-punitive journey:** unique active days count upward and are never reset; seasonal items have published reprises.
 
 ## Relationship semantics
 
-The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`, `records`, `unlocks`, `coordinates`, `secured_by`, `belongs_to` and `contains_idea`. An edge includes a human-readable reason. A feature without a relationship is an incomplete design and should not be added to the graph as an orphan.
+The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`, `records`, `unlocks`, `coordinates`, `secured_by`, `belongs_to`, `contains_idea`, `contains_contract`, `emits`, `consumes`, `projects_into` and `hands_off_to`. An edge includes a human-readable reason. A feature without a relationship is an incomplete design and should not be added to the graph as an orphan.
+
+## Implemented vertical-slice links
+
+The initial Tavern home and Wayfinder are implemented in [Tavern and Wayfinder](../TAVERN.md). Its eleven live destinations include the Common Tables, player profile, game record, earned-only ledger, achievement gallery, initial Atlas, private Chronicle, daily Quest Board, Wayfarer Thread, Companion Journal and private Rivalry Hall.
+
+The Atlas first slice is implemented in [Atlas starter map](../ATLAS.md): five authored locations, reciprocal direct-route connections, personal current-location state, persistent discoveries and bounded travel commands. First-time discoveries also unlock one private lore page in [The Chronicle](../CHRONICLE.md), with existing players backfilled and page records included in export/deletion. This does **not** mark the full Atlas domain as complete. The remaining Atlas concepts in Volume II, along with Expeditions, authored story-quest networks, community maps and narrative routes, remain proposals. The separate fixed-catalogue daily quest board is part of the implemented Wayfarer slice.
+
+The player foundation, completed-game statistics, achievements, Moonbits ledger and Wayfarer records are described in [Player Profiles](../PLAYER_PROFILES.md) and [Wayfarer](../WAYFARER.md). The World Loom graph remains a design contract for every node that has not shipped with its own ownership, persistence, permissions, privacy handling and acceptance tests.
 
 ## How to use this atlas
 
@@ -91,6 +108,8 @@ The graph uses explicit relationship types such as `hosts`, `routes_to`, `feeds`
 - Do not represent all concepts as approved catalogue games; this is a wider product-system map, not a release promise.
 
 ## Recommended first connected vertical slice
+
+The current next implementation cut for the Atlas/Expedition branch is [Expedition Foundation v1](../EXPEDITION_FOUNDATION.md). It deliberately starts with one verified route through the existing five-location Atlas before expanding into the full Expedition, Quest and Vault catalogue.
 
 1. Shared session and player identity contract.
 2. Tavern home with the Wayfinder and Common Tables.

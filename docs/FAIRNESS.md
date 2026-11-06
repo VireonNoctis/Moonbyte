@@ -1,86 +1,61 @@
 # Moonbyte Fairness and Randomness
 
-- Status: Target protocol; not implemented.
-- SHA-512 is the commitment hash and transcript-integrity primitive. It is not itself a random-number generator and does not guarantee a fair outcome on its own.
+- Status: The current daily quest rotation uses a PostgreSQL-generated UUID seed and a domain-separated SHA-512 selection with rejection sampling. A public commit–reveal verifier for game outcomes remains a future protocol; none of the four current games requires a verifiable random outcome.
+- SHA-512 is a commitment and transcript-integrity primitive. It is not a random-number generator or an encryption algorithm.
 
 ## 1. Goals
 
-For games with outcomes that players should be able to verify, Moonbyte should provide an auditable commit–reveal transcript:
+For a future game mechanic whose outcomes should be independently verifiable, Moonbyte may provide an auditable commit–reveal transcript:
 
-1. Moonbyte generates secret entropy using an operating-system-backed cryptographically secure random-number generator (CSPRNG).
-2. It publishes a SHA-512 commitment before the result can be influenced.
-3. Any agreed player-provided seed contributions are locked before the server seed is revealed.
-4. The result is derived deterministically from the committed entropy and the documented game/rules version.
-5. After completion or abort, the seed and transcript are revealed so anyone can recompute and verify the result.
+1. Generate secret entropy using an operating-system-backed cryptographically secure random-number generator (CSPRNG).
+2. Publish a SHA-512 commitment before the result can be influenced.
+3. Lock any agreed participant seed contributions before the server seed is revealed.
+4. Derive the result deterministically from the committed entropy and an explicit game/rules version.
+5. Reveal the seed and canonical transcript after completion or abort so an independent verifier can recompute the outcome.
 
-This proves that the revealed seed matches the earlier commitment. It does not prove that the server never withheld a result, that the entropy source was uncompromised, or that the game rules were unbiased. Those require operational controls and public audit behavior too.
+This proves that the reveal matches the earlier commitment. It does not prove that the server never withheld an unfavourable result or that the entropy source was uncompromised. Those require operational controls and public audit behavior too.
 
 ## 2. Commitment format
 
-Use a versioned, domain-separated, unambiguous byte encoding. The conceptual commitment is:
+Use a versioned, domain-separated, unambiguous byte encoding:
 
 `commit = SHA-512(encode("moonbyte/fairness/v1", session_id, game_id, rules_version, server_seed))`
 
-The implementation must define `encode` precisely (length-prefixed fields or another canonical binary format). Do not concatenate ambiguous variable-length strings.
+The implementation must define `encode` precisely, such as length-prefixed fields or a canonical binary format. Do not concatenate ambiguous variable-length strings.
 
-- `server_seed` is generated from OS-backed cryptographic entropy and kept secret until reveal.
-- `session_id`, `game_id`, and `rules_version` bind the commitment to one exact game session and ruleset.
-- The commitment is published in the session before the outcome is computed or shown.
+- Generate `server_seed` from OS-backed entropy and keep it secret until reveal.
+- Bind the commitment to one session, game ID and rules version.
+- Publish the commitment before computing or displaying the outcome.
 - Never reuse a server seed across sessions.
 
-## 3. Optional participant contributions
+## 3. Participant contributions
 
-For games that support participant contributions:
+For a future mode that accepts player contributions, freeze the ordered participant list and contributions before deriving the result. Missing contributions must follow a published deterministic rule. Late contributions must never change a result.
 
-- Each participant submits or generates a seed contribution before the contribution deadline.
-- Store the commitment/accepted contribution state before result derivation.
-- Freeze the ordered participant list and contributions when the session locks.
-- A missing contribution follows a published deterministic fallback (for example, a fixed empty contribution); it must not let the host reroll or selectively exclude a participant after seeing an outcome.
-- The contribution order is canonical and included in the transcript.
+## 4. Unbiased result derivation
 
-The final input is derived from the revealed server seed, the frozen participant contributions, session identity, game ID, and rules version using a separately specified domain. Never allow a late contribution to change a result.
-
-## 4. Deriving unbiased results
-
-- Use a documented deterministic derivation function, preferably HKDF-SHA-512 with a unique context for each draw.
-- Map generated bytes to the game's outcome using rejection sampling. Do not use a naive `random_value % range` mapping where it introduces modulo bias.
-- Record draw index and outcome mapping version so a verifier can reproduce multiple draws exactly.
-- Inject the entropy provider and clock into tests; test known transcripts and edge cases.
+- Use a documented deterministic derivation function with a unique context for each draw.
+- Map generated bytes through rejection sampling; avoid biased modulo mapping.
+- Record draw index and mapping version so the result can be reproduced.
+- Inject entropy providers into tests and verify known test vectors.
 - Never call a non-cryptographic PRNG a cryptographic source.
+
+The daily quest rotation is a separate feature: PostgreSQL supplies a UUID seed, then domain-separated SHA-512 digests and rejection sampling select the daily objectives. Its fingerprint is only a rotation label, not proof of a fair game outcome.
 
 ## 5. Reveal and verification
 
-On completion, timeout, or abort:
+A future implementation must reveal the seed and canonical transcript after completion, timeout or abort and provide a verifier. Committed, Revealed and Verified are distinct states. An unrevealed commitment is not verification.
 
-- Reveal the server seed and the canonical transcript.
-- Provide a `/fairness verify <session>` command (and prefix equivalent if supported) that recomputes the commitment and result.
-- Publish the algorithm version, rules version, commitment, reveal, participant contribution ordering, and draw mapping.
-- Mark aborted sessions as aborted; do not silently erase them or create a replacement result under the same session ID.
-- Retain enough transcript data for the published verification window, subject to the privacy policy.
-- Never publish private player data as part of a transcript.
+## 6. Scope and prohibitions
 
-The UI should show **Committed**, **Revealed**, and **Verified** as distinct states. A commitment that has not been revealed is not a completed verification.
+This protocol is for transparent, score-only game mechanics. It must not support betting, wagers, stakes, paid random rewards, cash-out or chance-based allocation of tradable assets. Moonbyte progression remains non-wagering, and current rewards are fixed and disclosed.
 
-## 6. Anti-manipulation requirements
+## 7. Release tests
 
-- Commit before the server can know player contributions or the final result.
-- No hidden rerolls, result replacement, or selective result disclosure.
-- No silent cancellation when the result is unfavorable.
-- Use immutable, append-only fairness events with a hash-linked sequence or equivalent tamper-evident audit storage.
-- Make all cancellation and expiry paths produce a verifiable transcript.
-- Use independent test vectors and external review before relying on the protocol for trust claims.
-- Do not present a hash string alone as proof that a game is fair.
-
-## 7. Scope and prohibited uses
-
-This protocol is for verifiable game mechanics and score-only entertainment. It must not support betting, wagers, stakes, pooled currency, paid random rewards, cash-out, or chance-based allocation of tradable assets. The Moonbyte economy uses deterministic rewards and published prices.
-
-## 8. Test requirements
-
-- Commitment recomputes from the reveal exactly.
-- Altered seed, session ID, game ID, rules version, or participant ordering fails verification.
-- Draw derivation is reproducible across platforms.
+- Commitment recomputes from the reveal.
+- Altered seed, session ID, game ID, rules version or participant ordering fails verification.
+- Result derivation is reproducible across platforms.
 - Range mapping has no modulo bias.
-- Duplicate, late, and missing participant contributions follow documented rules.
-- Aborted sessions remain verifiable and cannot be silently replaced.
-- The public verifier and internal engine agree on known test vectors.
+- Duplicate, late and missing contributions follow documented rules.
+- Aborted sessions remain auditable and cannot be silently replaced.
+- Public verifier and internal engine agree on known test vectors.

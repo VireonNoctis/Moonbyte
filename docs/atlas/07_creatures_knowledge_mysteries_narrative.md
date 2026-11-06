@@ -6,6 +6,38 @@
 
 Each proposal defines its mechanic, player loop, cross-domain connections, Rust ownership, persistence, privacy, Discord and Activity behaviour, accessibility, testing and release gates.
 
+
+## Wayfarer Thread integration contract — volume 7
+
+This volume is part of the authoritative [Moonbyte Final Vision](../MOONBYTE_FINAL_VISION.md). Its proposals exchange verified outcomes through the [World Loom Integration Contract](./INTEGRATION_CONTRACTS.md), never by reaching into another domain's private tables. The hand-offs below make the existing domain graph actionable without changing stable proposal IDs.
+
+### Domain hand-offs
+
+| Owning domain | Declared connections |
+|---|---|
+| **Creature Ecology, Companions and Sanctuaries** (`creature`) | Creature observations connect Atlas habitats, reviewed Archive species records, optional Homestead displays and Quests. |
+| **Libraries, Research and Learning** (`knowledge`) | Knowledge dossiers preserve source references, explain Vault methods, inform mysteries and support reviewed Creator study notes. |
+| **Community Mysteries and Deduction** (`mystery`) | Mystery cases consume authored Quest branches, cooperative Multiplayer clues, Atlas locations and reviewed Creator case files. |
+| **Narrative Cast and Character Stories** (`narrative`) | Narrative branches use Quest flags, Tavern scenes, Character choices and evergreen Festival chapters. |
+
+### Concrete cross-system moments
+
+- Field observation → reviewed species evidence → Bestiary page and habitat link; sightings are not automatically public.
+- Research dossier → cited evidence → mystery clue or Vault explanation; evidence and hypothesis remain distinct.
+- Case file → clue provenance → cooperative roles → verified solution; red herrings never invalidate the authored answer.
+- Character story choice → versioned narrative flag → recap and optional scene continuation; no pressure or loss for pausing.
+
+### Shared release rules
+
+- Emit typed domain events only after the source PostgreSQL transaction commits.
+- Consumers validate permissions and use stable idempotency keys; retries never duplicate an outcome.
+- Player, party, guild and server scopes remain distinct. A personal event is not public by default.
+- Rewards, material transformations and difficulty unlocks are deterministic and visible.
+- Pause, resume, leave, mute and opt-out remain available. Absence never erases progress.
+- Export/deletion, accessible alternatives, moderation and recovery tests are required before any proposal is marked live.
+- A graph node is not complete until its implementation, migration (where needed), tests and status link exist.
+
+
 ## Creature Ecology, Companions and Sanctuaries (`creature`)
 
 Original creatures inhabit the world. Care is forgiving: creatures never sicken, disappear or lose trust because a player is absent.
@@ -87,7 +119,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -101,14 +133,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -128,7 +160,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -212,7 +244,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -226,14 +258,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -253,7 +285,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -337,7 +369,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -351,14 +383,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -378,7 +410,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -462,7 +494,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -476,14 +508,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -503,7 +535,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -587,7 +619,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -601,14 +633,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -628,7 +660,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -712,7 +744,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -726,14 +758,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -753,7 +785,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -837,7 +869,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -851,14 +883,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -878,7 +910,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -962,7 +994,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -976,14 +1008,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1003,7 +1035,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1087,7 +1119,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1101,14 +1133,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1128,7 +1160,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1212,7 +1244,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1226,14 +1258,14 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1253,7 +1285,7 @@ Original creatures inhabit the world. Care is forgiving: creatures never sicken,
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1342,7 +1374,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1356,14 +1388,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1383,7 +1415,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1467,7 +1499,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1481,14 +1513,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1508,7 +1540,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1592,7 +1624,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1606,14 +1638,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1633,7 +1665,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1717,7 +1749,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1731,14 +1763,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1758,7 +1790,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1842,7 +1874,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1856,14 +1888,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -1883,7 +1915,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -1967,7 +1999,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -1981,14 +2013,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2008,7 +2040,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2092,7 +2124,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2106,14 +2138,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2133,7 +2165,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2217,7 +2249,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2231,14 +2263,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2258,7 +2290,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2342,7 +2374,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2356,14 +2388,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2383,7 +2415,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2467,7 +2499,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2481,14 +2513,14 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2508,7 +2540,7 @@ Knowledge is a first-class resource: players research, cross-reference, learn pu
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2597,7 +2629,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2611,14 +2643,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2638,7 +2670,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2722,7 +2754,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2736,14 +2768,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2763,7 +2795,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2847,7 +2879,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2861,14 +2893,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -2888,7 +2920,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -2972,7 +3004,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -2986,14 +3018,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3013,7 +3045,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3097,7 +3129,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3111,14 +3143,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3138,7 +3170,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3222,7 +3254,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3236,14 +3268,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3263,7 +3295,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3347,7 +3379,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3361,14 +3393,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3388,7 +3420,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3472,7 +3504,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3486,14 +3518,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3513,7 +3545,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3597,7 +3629,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3611,14 +3643,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3638,7 +3670,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3722,7 +3754,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3736,14 +3768,14 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3763,7 +3795,7 @@ Mysteries are shared, evidence-led investigations with authored clue paths and r
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3852,7 +3884,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3866,14 +3898,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -3893,7 +3925,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -3977,7 +4009,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -3991,14 +4023,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4018,7 +4050,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4102,7 +4134,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4116,14 +4148,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4143,7 +4175,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4227,7 +4259,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4241,14 +4273,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4268,7 +4300,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4352,7 +4384,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4366,14 +4398,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4393,7 +4425,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4477,7 +4509,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4491,14 +4523,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4518,7 +4550,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4602,7 +4634,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4616,14 +4648,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4643,7 +4675,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4727,7 +4759,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4741,14 +4773,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4768,7 +4800,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4852,7 +4884,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4866,14 +4898,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -4893,7 +4925,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.
@@ -4977,7 +5009,7 @@ Characters feel consistent through authored memories and player choices, never a
 ### 15 · Persistence
 - Persist only durable facts required by this feature; do not store raw command text or message history.
 - Use stable foreign keys, owner scopes, unique idempotency keys and constraints for one-time claims.
-- Related balance, inventory and ledger writes share one short SQLite transaction.
+- Related balance, inventory and ledger writes share one short PostgreSQL transaction.
 - No database transaction is held across Discord HTTP, rendering or slow awaits.
 ### 16 · Privacy
 - Public, party, guild, private and operational data are separate categories with distinct read policies.
@@ -4991,14 +5023,14 @@ Characters feel consistent through authored memories and player choices, never a
 - No gambling, wager, cash-out or paid chance mechanic can be derived from this feature.
 ### 18 · Discord surface
 - Prefix and slash commands call the same Rust application service and expose legal next actions only.
-- Messages, embeds, buttons, select menus and modals preserve a useful core flow without Activity.
+- Messages, embeds, buttons, select menus and modals preserve a useful core flow without an additional client.
 - Private records and offers are delivered privately where supported; public boards show public state only.
 - Deleted messages and expired interactions are recovered from durable state, never duplicated.
-### 19 · Activity surface
-- Next.js, React and TypeScript provide rich maps, boards, editors or service views where useful.
-- Discord's official Embedded App SDK supplies Activity context; browser fallback may support compatible views.
-- Frontend renders authorised view models and submits intent; it never decides trusted outcomes or ownership.
-- Important state retains a Discord-native or text alternative and a clear asset-failure state.
+### 19 · Discord-native interaction surface
+- Discord embeds, buttons, select menus and modals present maps, boards, editors or guided views where practical.
+- Serenity and Poise supply authenticated Discord context; command and text responses remain the fallback.
+- The Discord adapter renders authorised views and submits intent; Rust services decide trusted outcomes and ownership.
+- Important state retains a text-first alternative and clear guidance when optional art assets are unavailable.
 ### 20 · Accessibility
 - Critical information uses labels and symbols as well as colour.
 - Controls have explicit names and predictable focus order; mobile keeps the main action and exit visible.
@@ -5018,7 +5050,7 @@ Characters feel consistent through authored memories and player choices, never a
 - Test duplicate clicks, stale interactions, reconnects, deleted messages, partial writes, rate limits and concurrent actions.
 - Failed reservations release exactly once; successful retries return the original receipt.
 - Unit tests cover legal actions, versions, deterministic outputs and edge cases.
-- Integration tests cover SQLite rollback, restart recovery, export/deletion and guild isolation where relevant.
+- Integration tests cover PostgreSQL rollback, restart recovery, export/deletion and guild isolation where relevant.
 ### 24 · Release gate
 - Release as one genuine workflow with persistence, Discord interaction and Activity only where useful.
 - Validate content references, accessibility, localisation and asset rights before publication.

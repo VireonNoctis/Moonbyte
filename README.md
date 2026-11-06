@@ -2,158 +2,76 @@
 
 > A little world of games, right inside Discord.
 
-Moonbyte is a Discord-first gaming bot built around an original, full-colour pixel-art arcade experience. It brings quick mini-games, puzzles, multiplayer sessions, collection systems, and longer adventure/RPG experiences into the servers people already use.
+Moonbyte is a standalone, Discord-first gaming bot built in Rust. Its world combines quick games, puzzles, shared adventures and persistent player progress through Discord commands and native message interactions.
 
-Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage, commands, identity, and release lifecycle. It does not depend on Lunar's running bot, website, account system, or database.
+**The bot is the product.** Discord is the player interface; Rust owns game rules and authoritative state; PostgreSQL stores durable progress. No separate client is required.
 
-<p align="center"><strong>PIXEL WORLDS · QUICK GAMES · SHARED ADVENTURES</strong></p>
+## Pre-launch source implementation
 
-## Project status
+This repository contains Rust/Tokio/Serenity/Poise source and PostgreSQL persistence work. It is not a registered or deployed Discord bot application.
 
-**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes four Rust game modules: Tic-tac-toe, Connect Four, Memory Match and Word Scramble. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. Profiles, progression, Vaults, Bazaar and the live visual-game API remain implementation work.
+- Four playable games: Tic-tac-toe, Connect Four, Memory Match and Word Scramble.
+- Durable sessions, transactional moves, restart recovery and 24-hour inactive-session retention.
+- A private Player Card that brings together live game results, achievements, Wayfarer/Companion progress, Rivalry counts, Chronicle/collection and Vault status.
+- An earned-only Moonbits ledger: a fixed first-completion milestone per game type, with no purchase, transfer or wagering features.
+- A 16-destination Tavern Wayfinder, including the Satchel, Postcard Wall and Wayfarer Workshop.
+- A five-location Atlas with direct-route travel, private Chronicle pages, five account-bound postcards and two fixed discovery materials.
+- Optional daily quests, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries.
+- The Lantern Road Expedition, playable solo or with up to three consenting companions, with persistent checkpoints and Atlas/Chronicle hand-offs.
+- Mosslight Resonance, a private three-chamber solo Puzzle Vault unlocked through the Atlas, with resumable save stones and one fixed Mosslight Seal.
+- Versioned Terms/Privacy consent, private data inventory, version 11 export including keepsake and Vault progress provenance and confirmed account deletion.
+- Per-server command prefixes and optional command-channel routing.
 
-## The vision
+Three starter games have Discord-native numbered board controls, with text commands retained as a fallback. `.inventory` and `.collection` show account-bound discoveries; `.craft wayfarer-lantern` consumes the two verified Atlas materials to make one fixed keepsake. Discover Mosslight Grove to unlock `.vault list`; `/vault` offers action and chamber autocomplete, private clues and resumable progress. The code remains pre-launch source, not a deployed bot. Button payloads carry the displayed action version; stale controls refresh from PostgreSQL instead of replaying a move. Structured tracing records minimised lifecycle and cleanup events. Durable duplicate-interaction receipts, production monitoring, scheduled backups and a rehearsed live restore remain deployment work. A green CI run is not a substitute for live Discord deployment testing.
 
-Moonbyte should feel like opening a living, colourful handheld arcade and connected social adventure world inside Discord: a place to discover something new, master familiar games, invite friends, solve challenges, and return to evolving worlds.
+## Technology
 
-The product should be highly replayable without being manipulative. Depth comes from genuinely different games, skill mastery, discovery, cooperative goals, social play, and meaningful player choice—not from making play compulsive or difficult to leave. Players should always be able to stop, pause, mute reminders, and return without punishment.
+| Layer | Choice |
+|---|---|
+| Application and game rules | Rust, edition 2024 |
+| Async runtime | Tokio |
+| Discord API | Serenity |
+| Commands | Poise, shared prefix and slash handlers |
+| Storage | PostgreSQL through SQLx |
+| Player interface | Discord messages, embeds, buttons, select menus and modals |
+| Art | Original full-colour pixel art and custom emoji where useful |
 
-## Five game pillars
+The default prefix is `.`. Prefix commands require the Message Content privileged intent. Slash commands are also available.
 
-| Category | Direction | Examples to explore |
-| --- | --- | --- |
-| Existing Lunar games | Rebuild selected games and useful mechanics from Lunar in Rust. | Akinator-style guessing, coin flip, dice, 8-ball, reviewed collection mechanics. |
-| Original mini-games | Short, replayable experiences designed specifically for Moonbyte. | Memory match, word scramble, sequence recall, trivia, pattern recognition. |
-| Multiplayer | Friends, parties, public lobbies, and cooperative play. | Tic-tac-toe, Connect Four, team quiz, co-op puzzles, turn-based party games. |
-| Adventure / RPG | Persistent, story-led worlds with meaningful progression. | Exploration, quests, NPCs, inventory, crafting, collections, turn-based encounters. |
-| Puzzle / strategy | Thoughtful solo and group challenges. | Sudoku, nonograms, logic grids, deduction, chess/checkers, daily puzzles. |
+## Run locally
 
-Every listed title is a candidate, not a promise that it already exists. The catalogue should grow through polished releases rather than a target number of shallow games.
+1. Start PostgreSQL: `docker compose up -d postgres`.
+2. Set `DISCORD_TOKEN` and `DATABASE_URL` in the process environment. Set `DEFAULT_PREFIX` only when changing the default period prefix.
+3. Invite the bot with the `bot` and `applications.commands` scopes. Enable Message Content in the Discord developer settings when using prefix commands.
+4. Run `cargo run --locked`.
 
-## The player experience
+Moonbyte does not automatically load `.env` files. Never commit real credentials or log tokens/database URLs.
 
-- Discover games through a browsable library with categories, descriptions, player counts, estimated session length, and rules.
-- Start solo play or invite friends into a lobby.
-- Interact using Discord messages, buttons, select menus, and modals.
-- See clear boards, expressive sprites, colourful scenes, and readable result screens.
-- Keep appropriate progress, records, achievements, collections, and adventure saves.
-- Leave or pause supported sessions without being nagged or punished.
-- Find a different experience when a game is completed.
+## Validation
 
-## Visual Library
-
-The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the four implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
-
-- Discord Activity integration using the official Embedded App SDK remains planned and is not yet implemented.
-- A normal HTTPS browser fallback remains available for catalogue discovery and supported views.
-- The Rust/Tokio backend remains authoritative for game rules, session state, fairness, player progression, and PostgreSQL persistence.
-- Standard bot commands still use Discord messages, embeds, buttons, select menus, and modals. React is not rendered inside an ordinary Discord embed.
-
-## Command model
-
-The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
-
-| Command | Status | Purpose |
-| --- | --- | --- |
-| `.help` / `/help` | Implemented | List commands available in this build. |
-| `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
-| `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
-| `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
-| `.games` / `/games` | Implemented | Browse the four currently playable games and their controls. |
-| `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
-| `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
-| `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
-| `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
-| `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |
-| `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
-| `.daily` / `/daily` | Planned | Open the optional daily challenge. |
-| `.profile` / `/profile` | Planned | View a player profile and statistics. |
-| `.collection` / `/collection` | Planned | View collected cards, discoveries, and items. |
-| `.inventory` / `/inventory` | Planned | View usable items and cosmetics. |
-| `.quests` / `/quests` | Planned | Browse active and available quests. |
-| `.party` / `/party` | Planned | Create, invite, or manage a party. |
-| `.leaderboard` / `/leaderboard` | Planned | View supported rankings. |
-| `.achievements` / `/achievements` | Planned | Browse earned achievements. |
-| `.privacy data` / `/privacy data` | Planned | Inspect categories of data associated with the requester. |
-| `.privacy export` / `/privacy export` | Planned | Request a private copy of stored profile data. |
-| `.privacy delete` / `/privacy delete` | Planned | Request confirmed deletion of Moonbyte profile data. |
-| `.settings` / `/settings` | Planned | Configure player and server preferences. |
-| `.stop` / `/stop` | Planned | Leave or end an eligible active session. |
-
-Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
-
-The current `.privacy` command is an overview only. It does not provide a complete data inventory, export, or deletion flow. Active session state is persisted to PostgreSQL and can be recovered after a restart; inactive sessions expire after 24 hours. See [Command reference](docs/COMMANDS.md) and [Game Runtime](docs/GAME_RUNTIME.md) for exact behavior and limitations.
-
-## Privacy is a product feature
-
-Moonbyte's stance is **privacy by design and data minimisation**. We should collect only the information required to operate enabled game features, explain what is stored, avoid selling or sharing player data for advertising, and provide in-bot privacy controls.
-
-- No advertising trackers, behavioural profiling, or sale of personal data.
-- No AI training on player messages or game activity.
-- No raw message-content analytics. Prefix text is processed to identify the command and arguments, then discarded unless a specific game needs a value for its active session.
-- No cross-server exposure of guild settings or server-only leaderboards.
-- Profile export and deletion controls are part of the planned product, not an afterthought.
-- No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
-
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions to PostgreSQL, including their board state and participant/guild scope. It does not yet persist player profiles, inventories or a complete game-results history. Data inventory, export and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
-
-## Technology decisions
-
-| Area | Decision | Purpose |
-| --- | --- | --- |
-| Language | **Rust** | Performance, memory safety, and explicit game-state modelling. |
-| Async runtime | **Tokio** | Efficient asynchronous Discord networking and concurrent session coordination. |
-| Discord API | **Serenity** | Gateway, HTTP, interactions, and sharding support. |
-| Command framework | **Poise** | Shared prefix and slash command definitions. |
-| Persistent storage | **PostgreSQL** | Transactional database for session persistence, recovery and future player systems. |
-| Database access | **SQLx with PostgreSQL only** | Async connection pooling, migrations, JSONB state snapshots and transactional row locking. |
-| Visual library | **Next.js + React + TypeScript** | Catalogue browsing, responsive game UI, and Activity-capable views. |
-| Discord embedded UI | **Discord Embedded App SDK** | Connects the web frontend to Discord when running as an Activity. |
-| Art direction | **Original full-colour pixel art** | Distinctive characters, worlds, boards, and interface elements. |
-
-PostgreSQL uses versioned migrations, indexes, bounded connection pooling, JSONB session snapshots, and short row-locked transactions. The supported deployment remains one bot process until cross-process interaction idempotency and load behavior are tested.
-
-## Economy, Vaults and Bazaar
-
-Moonbyte's planned progression system includes a personal Vault, cooperative Puzzle/Expedition/Guild Vaults, collectible Archives, crafting, and a player Bazaar with fixed-price listings, transparent barter, escrow, and trade history. Rewards and prices are disclosed and deterministic.
-
-Moonbyte will not implement gambling, betting, wagering, staking, paid random rewards, cash-out, or chance-based tradable rewards. Casual random games are score-only and never risk or award currency/items. See [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) and [Fairness and Randomness](docs/FAIRNESS.md).
-
-## Documentation
-
-- [Product vision](docs/PRODUCT_VISION.md) — detailed product goals, engagement principles, systems, safety, and non-goals.
-- [Privacy policy and data practices](docs/PRIVACY.md) — data categories, purposes, retention, controls, limits, and security stance.
-- [Architecture](docs/ARCHITECTURE.md) — runtime boundaries, game engine, concurrency, persistence, rendering, and operations.
-- [Game catalogue](docs/GAME_CATALOGUE.md) — approved game selections, inherited Lunar baseline, shared contracts, and release quality gates.
-- [Economy, Vaults & Bazaar](docs/ECONOMY_AND_VAULTS.md) — player inventory, vault experiences, fixed-price trading, and non-wagering economy rules.
-- [Moonbyte World Loom](docs/atlas/README.md) — 400 connected system ideas across 40 domains, ten design volumes, a 40,000+ line specification and the machine-readable mind-map graph.
-- [Fairness and randomness](docs/FAIRNESS.md) — SHA-512 commit–reveal protocol, unbiased result derivation, and verification requirements.
-- [Lunar migration plan](docs/MIGRATION_FROM_LUNAR.md) — what may be reused conceptually and what must be rebuilt or audited.
-- [Roadmap](docs/ROADMAP.md) — phased implementation, deliverables, and exit criteria.
-- [Architecture decisions](docs/DECISIONS/README.md) — accepted decisions and trade-offs.
-- [Engineering instructions](AGENTS.md) — repository rules for contributors and coding agents.
-
-## Development status
-
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, result history, progression and privacy export/deletion remain future work.
-
-Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
-
-The repository validation and Rust checks are:
-
-~~~bash
+```bash
 python3 scripts/validate.py
 cargo fmt --all -- --check
 cargo test --workspace --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
-~~~
+```
 
-CI runs the repository validator plus Rust formatting, tests, and Clippy. Do not describe the Discord gateway or database as operational until those adapters are implemented and exercised.
+CI provisions PostgreSQL and runs repository validation, formatting, tests and Clippy.
 
-## Data and privacy
+## Documentation — one source per concern
 
-The intended data model contains only information needed to provide enabled features: Discord identifiers, player and guild settings, game progress, achievements, collections, results, and recoverable session state. Raw message content should not be retained as gameplay analytics. Players should be able to inspect and request deletion of their stored profile data. Guild-specific configuration and rankings must remain isolated.
+- [Final Vision](docs/MOONBYTE_FINAL_VISION.md) — product principles, connected world and long-term design.
+- [Implementation Map](docs/IMPLEMENTATION.md) — what is live, module ownership, data boundaries and current gaps.
+- [Architecture](docs/ARCHITECTURE.md) — Rust layers, PostgreSQL transactions, recovery and operational constraints.
+- [Command Reference](docs/COMMANDS.md) — every registered prefix/slash command and current game flow.
+- [Game Catalogue](docs/GAME_CATALOGUE.md) — approved original game concepts and release gates.
+- [Roadmap](docs/ROADMAP.md) — completed work and next engineering slices.
+- [Privacy Policy](docs/PRIVACY.md) and [Terms of Service](docs/TERMS_OF_SERVICE.md) — the current player-facing policies.
+- [Fairness and Randomness](docs/FAIRNESS.md) — the target verification protocol and current randomness boundary.
+- [Project Setup](docs/PROJECT_SETUP.md) — development and deployment prerequisites.
+- [World Loom volumes and integration contracts](docs/atlas/README.md) — the detailed proposal catalogue and cross-system ownership rules.
+- [Architecture decisions](docs/DECISIONS/README.md) — accepted decisions and their rationale.
 
-## Licensing
+## Product boundaries
 
-A project license has not yet been selected. Until one is added, do not assume that code or assets may be reused, modified, or redistributed. Lunar source material and all third-party assets must have their provenance and license checked before migration.
+Moonbyte is a game and community experience, not a betting or gambling product. There are no stakes, wagers, paid random rewards, cash-out or pay-to-win mechanics. Daily objectives are optional; missed days never remove progress. Players can leave or pause supported activities without punishment.
