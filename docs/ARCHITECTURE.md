@@ -69,12 +69,14 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - Puzzle Vault mutations use the same per-player advisory lock as privacy deletion, row-lock the open run and commit each correct save stone atomically. Completion, Chronicle unlock, Wayfarer activity and the one-time keepsake share the final checkpoint transaction.
 - Quest reward claims use a unique player/date/objective key and an immutable ledger entry.
 - Guild settings use PostgreSQL notifications to invalidate per-process cache entries.
+- Guild Project contributions are inserted and aggregated inside the originating shared Expedition transaction. A project-row lock serialises join, leave and contribution; a unique `(project, run, checkpoint)` key prevents duplicate credit.
+- Guild Project membership is player-owned and belongs in inventory/export/deletion. Contribution rows deliberately omit contributor IDs; account deletion clears the Expedition actor reference while preserving anonymous server progress. Actual guild removal cascades the server-owned board.
 - State/content versions are explicit; unsupported persisted versions fail clearly instead of silently resetting.
 
 ## Privacy and security boundaries
 
 - Every player-owned table has a clear owner and export/deletion path. Inventory records retain stable item IDs, quantity, source type, source reference and acquisition timestamp; export covers postcard, material, crafted-item and Vault-keepsake provenance, and account deletion removes all inventory rows. Vault run/checkpoint tables are included in private inventory, JSON export and deletion; incorrect guesses are never persisted.
-- Guild settings are not player profile data. Guild permissions do not grant access to private player history.
+- Guild settings and project aggregates are server-owned, not player profile data. Project membership is personal and exportable/deletable; the board never exposes enrollee names. Guild permissions do not grant access to private player history.
 - Private profiles, statistics, quest state, inventory, Chronicle pages, Vault progress, rivalries and Expedition details are returned privately where required.
 - Raw message text is not persisted as analytics. Tokens, authorization headers, private payloads, quest seeds and unnecessary player identifiers are not logged.
 - No client-supplied score, winner, reward, currency balance or checkpoint is trusted.

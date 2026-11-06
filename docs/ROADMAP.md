@@ -13,7 +13,7 @@
 - [x] Graceful Ctrl-C and Unix SIGTERM shutdown with minimised structured tracing.
 - [x] Four playable games and guild-scoped multiplayer lobbies.
 - [x] Numbered Discord board controls for Tic-tac-toe, Connect Four and Memory Match, routed through the authoritative GameRuntime.
-- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 11 export and confirmed deletion; export uses a repeatable-read snapshot and deletion-race coverage is deterministic.
+- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 12 export and confirmed deletion; export uses a repeatable-read snapshot and deletion-race coverage is deterministic.
 - [x] Completed results, aggregate statistics, five achievements and the earned-only Moonbits ledger.
 - [x] Sixteen Tavern destinations, including the Satchel, Postcard Wall and Workshop.
 - [x] Five-location Atlas, direct-neighbour travel, private Chronicle pages and five account-bound postcards.
@@ -25,6 +25,7 @@
 - [x] Version 1.0.0 initial privacy policy and product blueprint labels.
 - [x] Mosslight Resonance solo Puzzle Vault: three authored chambers, explicit private entry, PostgreSQL save stones, resume/pause/leave, fixed one-time keepsake, Chronicle/Wayfarer hand-off, export/deletion and concurrency/replay coverage. CI passed 89 PostgreSQL-backed tests, rustfmt and Clippy; private development-guild interaction verification remains a deployment gate.
 - [x] Private Player Card v1: private cross-system projection from the owning game, achievement, Wayfarer, Rivalry, Chronicle, inventory and Vault stores, with command shortcuts. The read-only panel renderer and source build are CI-tested; public/guild profile projections remain deferred.
+- [x] First opt-in Guild Project: a server-scoped Lantern Road Survey with manager-authorised setup, explicit join/leave, private aggregate status, idempotent shared-Expedition contributions, anonymous progress, membership export/deletion and actual-uninstall cleanup.
 
 ## Remaining before a first Discord bot deployment
 
@@ -48,14 +49,14 @@
    - Add more authored materials and deterministic recipes only after the first Workshop recipe is fully verified.
    - Add further authored Puzzle Vault blueprints only after Mosslight Resonance has passed its privacy, concurrency, replay and recovery gates. The first implementation is tracked against [ADR 0013](DECISIONS/0013-first-puzzle-vault-vertical-slice.md).
    - Add more Expedition routes, story quests and reviewed original word/puzzle packs.
-   - Add opt-in guild projects and shared collections only after membership, visibility, moderation and deletion boundaries are tested.
+   - Expand the first Guild Project into reviewed shared collections and milestone hand-offs only after moderation, visibility, reward settlement and abuse boundaries are tested.
 
 ## Later proposals
 
 - Fixed-price Bazaar listings and work orders after ownership, moderation, duplicate protection and atomic settlement are complete.
 - Mastery, expanded Player Card sections, seasonal Almanac, festivals, additional companion cosmetics and homesteads after their owning systems exist. The private Player Card v1 is a read-only projection; public and guild-facing cards remain deferred.
 - Public player directory and leaderboards only with explicit visibility controls and privacy-complete projections.
-- Broader social surfaces only after guild isolation, consent and deletion boundaries are complete.
+- Broader social surfaces only after guild isolation, consent and deletion boundaries are complete. The first Guild Project does not expose member lists or public player profiles.
 
 ## Release gates
 

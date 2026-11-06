@@ -3,7 +3,8 @@ use std::{process::ExitCode, time::Duration};
 use moonbyte::{
     Data, DataServices, Error, achievement::AchievementStore, atlas::AtlasStore,
     chronicle::ChronicleStore, commands, config::Config, consent::ConsentStore, database::Database,
-    expedition::ExpeditionStore, game::GameRuntime, guild_settings::GuildSettingsStore,
+    expedition::ExpeditionStore, game::GameRuntime, guild_project::GuildProjectStore,
+    guild_settings::GuildSettingsStore,
     inventory::InventoryStore, profile::ProfileStore, vault::VaultStore, wallet::WalletStore,
     wayfarer::WayfarerStore,
 };
@@ -170,7 +171,7 @@ async fn run() -> Result<(), Error> {
                                 .guild_settings()
                                 .remove_guild_data(&incomplete.id.to_string())
                                 .await?;
-                            let projects_removed = crate::guild_project::GuildProjectStore::new(
+                            let projects_removed = GuildProjectStore::new(
                                 framework.user_data.database().pool(),
                             )
                             .remove_guild(&incomplete.id.to_string())

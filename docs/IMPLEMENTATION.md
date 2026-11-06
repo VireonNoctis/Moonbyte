@@ -79,13 +79,15 @@ Vault panels use the shared private title-panel builder. Slash invocations expos
 - The global command gate requires acceptance of current Terms and Privacy versions before ordinary commands. Legal/privacy commands remain available.
 - Profile creation uses the same per-user PostgreSQL advisory lock as confirmed account deletion and re-checks both current policy versions inside the transaction. A deterministic PostgreSQL regression test queues a stale creation behind deletion and verifies it is rejected after deletion commits.
 - Game-session creation and joining take the relevant player lock and re-check consent/profile existence. Moves lock participant IDs in stable order before the session row, then verify the participant set is unchanged. Domain progress handlers require an existing profile and do not create one.
-- Private data inventory and JSON export are implemented. Export schema is version 11 and includes item IDs, quantity, source type, source reference and acquisition timestamp, plus Vault runs and solved chamber checkpoints. Export reads all categories through one read-only PostgreSQL `REPEATABLE READ` transaction, keeping related profile, progress, balance and ledger records on a single database snapshot.
-- Confirmed deletion removes player-owned records across profiles, consent, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, inventory, Wayfarer/rivalries, Expedition participation/history and Puzzle Vault runs/checkpoints.
+- Private data inventory and JSON export are implemented. Export schema is version 12 and includes item IDs, quantity, source type, source reference and acquisition timestamp, plus Vault runs and solved chamber checkpoints, and opt-in Guild Project memberships. Export reads all categories through one read-only PostgreSQL `REPEATABLE READ` transaction, keeping related profile, progress, balance and ledger records on a single database snapshot.
+- Confirmed deletion removes player-owned records across profiles, consent, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, inventory, Wayfarer/rivalries, Expedition participation/history, Puzzle Vault runs/checkpoints and Guild Project memberships. Anonymous Guild Project contribution aggregates remain.
 - A shared game-session snapshot is removed when it contains the deleting player; the receipt explains that co-participant session access is consequently ended. Independent player aggregates remain.
 
-### Guild settings
+### Guild settings and cooperative projects
 
-Manage Server permissions protect guild prefix and optional command-channel configuration. Settings are stored separately from player profiles, cached for command dispatch and invalidated through PostgreSQL LISTEN/NOTIFY. Actual bot removal triggers cleanup of that guild's settings and guild-scoped active sessions; temporary guild unavailability does not.
+Manage Server permissions protect guild prefix and optional command-channel configuration. Settings are stored separately from player profiles, cached for command dispatch and invalidated through PostgreSQL LISTEN/NOTIFY. Actual bot removal triggers cleanup of that guild's settings, guild-scoped active sessions and project board; temporary guild unavailability does not.
+
+The first Guild Project is the fixed **Lantern Road Survey**. A member with Manage Server or Administrator can open it once; opening again returns the existing board without resetting progress. Players explicitly join or leave. Its private board displays aggregate progress, enrolment count and the invoking player's own enrolment state, never member names. Only a checkpoint completed by an enrolled player in an active, same-server shared Lantern Road Expedition counts. Contribution rows contain no contributor ID; account deletion removes personal membership and anonymises retained Expedition checkpoint actor links without rolling back server progress.
 
 ### Moonbits
 
@@ -114,6 +116,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 | Tavern destinations | `src/tavern.rs` |
 | Puzzle Vault rules and persistent runs | `src/vault.rs` |
 | Guild configuration | `src/guild_settings.rs` |
+| Guild Projects | `src/guild_project.rs` |
 
 ## Known gaps
 
@@ -121,7 +124,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 - Backup/restore scripts and a PostgreSQL readiness probe exist, but no scheduled backup service, production monitoring or rehearsed live restore has been configured.
 - Discord application creation, bot invite configuration, secrets provisioning and live guild verification have not been performed.
 - More original games, reviewed word/puzzle packs and additional authored Expedition routes.
-- Additional reviewed Vault blueprints/chambers, opt-in guild projects and a fixed-price Bazaar after ownership, moderation, idempotency and settlement contracts are proven.
+- Additional reviewed Vault blueprints/chambers, opt-in shared collections and a fixed-price Bazaar after ownership, moderation, idempotency and settlement contracts are proven.
 - Public player directory/leaderboards, mastery, Almanac/seasonal content and homesteads remain proposals until their privacy and ownership contracts are implemented.
 
 ## Canonical documents

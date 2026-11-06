@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-07 — Opt-in Guild Project foundation
+
+- Added a server-scoped Lantern Road Survey with Manage Server setup, explicit member join/leave and private aggregate status.
+- Count only opted-in actors' checkpoints in active same-server shared Lantern Road Expeditions; contribution writes are idempotent and share the Expedition transaction.
+- Kept contribution rows free of contributor IDs. Export personal memberships (schema v12), remove memberships and actor links on deletion, and preserve anonymous server progress.
+- Remove server-owned project state on actual bot removal; temporary guild unavailability does not trigger cleanup.
+- Added PostgreSQL integration coverage for opt-in, non-member exclusion, guild isolation, completion, deletion/anonymisation and uninstall cleanup.
+
+
 ## 2026-11-07 — Consistent privacy exports and deletion concurrency
 
 - Run every player-export read through one read-only PostgreSQL `REPEATABLE READ` transaction so related records cannot be mixed across concurrent commits.

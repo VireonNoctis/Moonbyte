@@ -63,6 +63,17 @@ The Atlas panel and Tavern Wayfinder both link to the Vault; the Atlas displays 
 
 Lantern Road is the one implemented route: Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Start solo with `.expedition start lantern-road solo` or create a same-server recruiting group with `.expedition start lantern-road group`. Other players join explicitly using `.expedition join <run-id>`. Shared runs support up to four participants. All participants must be at Lantern Square before the host begins. Use `.expedition status <run-id>`; advance with `.expedition advance <run-id> <checkpoint-id> <choice>`. Participants may pause, resume or leave. If the host leaves, ownership transfers to the earliest remaining active participant. Runs do not expire for inactivity.
 
+## Server projects
+
+| Prefix | Slash | Purpose |
+|---|---|---|
+| `.guild start` | `/guild action:start` | Open the server's Lantern Road Survey board. Requires Manage Server or Administrator. Repeating setup preserves progress. |
+| `.guild join` | `/guild action:join` | Explicitly enrol yourself; only your later shared Expedition checkpoints count. |
+| `.guild leave` | `/guild action:leave` | Opt out of future contributions without removing earned server progress. |
+| `.guild status` | `/guild action:status` | View aggregate progress and your own enrolment state privately; member names are never shown. |
+
+The first project requires two opted-in checkpoint events from active same-server shared Lantern Road Expeditions. Solo runs and activity before enrolment do not count. Contribution records have no contributor ID. Leaving or deleting an account does not roll back anonymous server progress; actual bot removal deletes the server board.
+
 ## Games and sessions
 
 | Prefix | Slash | Purpose |
@@ -90,8 +101,8 @@ The configuration command remains available from any channel so a server can rec
 ## Privacy controls
 
 1. `.privacy_data` privately lists the requester's current stored data categories, including inventory provenance.
-2. `.privacy_export` sends a private JSON export. Version 11 includes the requester's own Expedition participation/checkpoint history, Puzzle Vault runs and solved chamber checkpoints, and account-bound postcard, material, crafted-item and Vault-keepsake provenance. It omits other participants' IDs, private quest seeds and unsaved Vault guesses.
+2. `.privacy_export` sends a private JSON export. Version 12 includes the requester's own Expedition participation/checkpoint history, Puzzle Vault runs and solved chamber checkpoints, account-bound postcard/material/crafted-item/Vault-keepsake provenance, and opt-in Guild Project memberships. It omits other participants' IDs, private quest seeds and unsaved Vault guesses.
 3. `.privacy_delete` explains the exact deletion scope; it does not delete yet.
 4. `.privacy_delete DELETE` confirms deletion.
 
-Deleting a player removes that player's owned records, including inventory provenance, and shared game-session snapshots containing their Discord ID. The command warns that deleting a shared snapshot also ends that session for its co-participants. It cannot delete Discord's own records, copies held by other participants or external infrastructure backups. See [Privacy Policy](PRIVACY.md) and [Implementation Map](IMPLEMENTATION.md).
+Deleting a player removes that player's owned records, including inventory provenance and Guild Project memberships, and anonymises their Expedition checkpoint actor links. Anonymous server project aggregates remain. Shared game-session snapshots containing their Discord ID are removed. The command warns that deleting a shared snapshot also ends that session for its co-participants. It cannot delete Discord's own records, copies held by other participants or external infrastructure backups. See [Privacy Policy](PRIVACY.md) and [Implementation Map](IMPLEMENTATION.md).
