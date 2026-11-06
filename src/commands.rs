@@ -2722,9 +2722,9 @@ fn render_player_card(
          **Wayfarer Thread**\nJourney days: {} · Companion: {} ({})\n{}\n\n\
          **Rivalry Hall**\n{} active · {} {}\n\n\
          **Quick routes**\n\
-         \`{prefix}games\` · \`{prefix}stats\` · \`{prefix}atlas\` · \`{prefix}chronicle\`\n\
-         \`{prefix}quests\` · \`{prefix}expedition\` · \`{prefix}vault list\`\n\
-         \`{prefix}inventory\` · \`{prefix}collection\` · \`{prefix}companion\` · \`{prefix}rivals\` · \`{prefix}settings\`\n\n\
+         `{prefix}games` · `{prefix}stats` · `{prefix}atlas` · `{prefix}chronicle`\n\
+         `{prefix}quests` · `{prefix}expedition` · `{prefix}vault list`\n\
+         `{prefix}inventory` · `{prefix}collection` · `{prefix}companion` · `{prefix}rivals` · `{prefix}settings`\n\n\
          This personal card is visible only to you. Public and guild-facing profile cards are not enabled yet.",
         escape_user_text(&profile.display_name),
         bio,
