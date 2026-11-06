@@ -347,12 +347,10 @@ impl ExpeditionStore {
              VALUES ($1, $2, $3, $4, $5, $6)",
         ).bind(id).bind(ROUTE_VERSION).bind(checkpoint_index).bind(next.id)
          .bind(choice.trim().to_ascii_lowercase()).bind(player).execute(&mut *tx).await?;
-        if row.shared {
-            if let Some(guild_id) = row.guild_id.as_deref() {
-                self.guild_projects
-                    .record_shared_checkpoint(&mut tx, guild_id, player, id, next.id)
-                    .await?;
-            }
+        if row.shared && let Some(guild_id) = row.guild_id.as_deref() {
+            self.guild_projects
+                .record_shared_checkpoint(&mut tx, guild_id, player, id, next.id)
+                .await?;
         }
         sqlx::query("UPDATE expedition_participants SET last_checkpoint_index = $2 WHERE expedition_run_id = $1 AND is_active")
             .bind(id).bind(checkpoint_index).execute(&mut *tx).await?;
