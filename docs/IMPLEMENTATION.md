@@ -1,6 +1,6 @@
 # Moonbyte Implementation Map
 
-> **Document version 1.0.0 · Pre-launch source status · 5 November 2026**
+> **Document version 1.0.0 · Pre-launch source status · 6 November 2026**
 >
 > This map describes the Rust/PostgreSQL source in this repository. No Discord bot application has been registered or deployed. The Final Vision describes intended product direction; the Roadmap records implementation and release work.
 
@@ -77,6 +77,8 @@ Vault panels use the shared private title-panel builder. Slash invocations expos
 - Profiles store a player-selected display name, optional short bio, visibility and preference flags.
 - `.profile` is a private, read-only Player Card composed from owning services: game totals, achievements, Wayfarer journey days, Companion stage, Rivalry counts, Chronicle pages, postcards, Satchel items and latest Puzzle Vault progress. It also provides command shortcuts. It does not initialise Atlas state, alter progress, or expose public/guild profile projections.
 - The global command gate requires acceptance of current Terms and Privacy versions before ordinary commands. Legal/privacy commands remain available.
+- Profile creation uses the same per-user PostgreSQL advisory lock as confirmed account deletion and re-checks both current policy versions inside the transaction. A command that passed an earlier preflight cannot recreate a deleted profile.
+- Game-session creation and joining take the relevant player lock and re-check consent/profile existence. Moves lock participant IDs in stable order before the session row, then verify the participant set is unchanged. Domain progress handlers require an existing profile and do not create one.
 - Private data inventory and JSON export are implemented. Export schema is version 11 and includes item IDs, quantity, source type, source reference and acquisition timestamp, plus Vault runs and solved chamber checkpoints.
 - Confirmed deletion removes player-owned records across profiles, consent, sessions/results, statistics, achievements, wallet/ledger, Atlas/Chronicle, inventory, Wayfarer/rivalries, Expedition participation/history and Puzzle Vault runs/checkpoints.
 - A shared game-session snapshot is removed when it contains the deleting player; the receipt explains that co-participant session access is consequently ended. Independent player aggregates remain.

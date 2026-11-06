@@ -23,8 +23,8 @@
 - [x] Lantern Road Expedition v1 with solo/group state, explicit opt-in, persistent checkpoints, pause/resume/leave and privacy coverage.
 - [x] Manual PostgreSQL backup and guarded empty-database restore scripts, plus a database readiness check in the ping command.
 - [x] Version 1.0.0 initial privacy policy and product blueprint labels.
-- [ ] Mosslight Resonance solo Puzzle Vault: authored rooms, command/autocomplete, PostgreSQL migrations, checkpoints and privacy coverage are implemented on PR #3; CI and private development-guild interaction verification remain release gates.
-- [ ] Private Player Card v1: source implementation is in PR #3; verify the read-only cross-system projection and Discord presentation in CI before marking complete.
+- [x] Mosslight Resonance solo Puzzle Vault: three authored chambers, explicit private entry, PostgreSQL save stones, resume/pause/leave, fixed one-time keepsake, Chronicle/Wayfarer hand-off, export/deletion and concurrency/replay coverage. CI passed 89 PostgreSQL-backed tests, rustfmt and Clippy; private development-guild interaction verification remains a deployment gate.
+- [x] Private Player Card v1: private cross-system projection from the owning game, achievement, Wayfarer, Rivalry, Chronicle, inventory and Vault stores, with command shortcuts. The read-only panel renderer and source build are CI-tested; public/guild profile projections remain deferred.
 
 ## Remaining before a first Discord bot deployment
 
