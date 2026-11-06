@@ -1,6 +1,9 @@
 //! Persistent Lantern Road runs. Domain state is authoritative in PostgreSQL.
 
-use crate::{atlas::{self, AtlasError, LOCATION_CATALOGUE}, guild_project::GuildProjectStore};
+use crate::{
+    atlas::{self, AtlasError, LOCATION_CATALOGUE},
+    guild_project::GuildProjectStore,
+};
 use sqlx::{PgPool, Postgres, Transaction};
 use std::fmt;
 
@@ -149,7 +152,10 @@ pub struct ExpeditionStore {
 
 impl ExpeditionStore {
     pub fn new(pool: PgPool) -> Self {
-        Self { guild_projects: GuildProjectStore::new(pool.clone()), pool }
+        Self {
+            guild_projects: GuildProjectStore::new(pool.clone()),
+            pool,
+        }
     }
 
     pub async fn start(

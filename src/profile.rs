@@ -1144,11 +1144,13 @@ impl ProfileStore {
         .fetch_all(&mut *transaction)
         .await?
         .into_iter()
-        .map(|(guild_id, project_key, joined_at)| ExportedGuildProjectMembership {
-            guild_id,
-            project_key,
-            joined_at,
-        })
+        .map(
+            |(guild_id, project_key, joined_at)| ExportedGuildProjectMembership {
+                guild_id,
+                project_key,
+                joined_at,
+            },
+        )
         .collect();
 
         let inventory_items = sqlx::query_as::<_, (String, i32, String, String, String)>(
@@ -1535,13 +1537,12 @@ impl ProfileStore {
                 .await?
                 .rows_affected();
 
-        let guild_project_memberships_removed = sqlx::query(
-            "DELETE FROM guild_project_members WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+        let guild_project_memberships_removed =
+            sqlx::query("DELETE FROM guild_project_members WHERE discord_user_id = $1")
+                .bind(player_id)
+                .execute(&mut *transaction)
+                .await?
+                .rows_affected();
         // Remove the personal actor link while retaining anonymous guild progress.
         let expedition_checkpoint_actors_anonymized = sqlx::query(
             "UPDATE expedition_checkpoint_history SET completed_by = NULL WHERE completed_by = $1",

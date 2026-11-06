@@ -2405,8 +2405,13 @@ pub async fn guild(
     action: String,
 ) -> Result<(), Error> {
     let Some(guild_id) = ctx.guild_id() else {
-        return send_private_title_panel(ctx, "Lantern Road Survey", None,
-            "Guild Projects are only available inside a Discord server.").await;
+        return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "Guild Projects are only available inside a Discord server.",
+                )
+                .await;
     };
     let guild_key = guild_id.to_string();
     let player_id = ctx.author().id.to_string();
@@ -2424,8 +2429,13 @@ pub async fn guild(
                 _ => false,
             };
             if !authorised {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "Only a server member with **Manage Server** or **Administrator** can open this board.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "Only a server member with **Manage Server** or **Administrator** can open this board.",
+                )
+                .await;
             }
             let snapshot = projects.start_or_get(&guild_key).await?;
             send_guild_project_board(ctx, &snapshot).await
@@ -2433,45 +2443,85 @@ pub async fn guild(
         "join" => {
             let current = projects.snapshot(&guild_key, &player_id).await?;
             let Some(current) = current else {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "This server has no project yet. A member with Manage Server can run `.guild start`.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "This server has no project yet. A member with Manage Server can run `.guild start`.",
+                )
+                .await;
             };
             if current.status != "active" {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "This project is complete, so new members cannot enrol.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "This project is complete, so new members cannot enrol.",
+                )
+                .await;
             }
-            ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+            ctx.data()
+                .profiles()
+                .get_or_create(&player_id, &ctx.author().name)
+                .await?;
             let Some(snapshot) = projects.join(&guild_key, &player_id).await? else {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "This project closed before your enrolment was recorded.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "This project closed before your enrolment was recorded.",
+                )
+                .await;
             };
             send_guild_project_board(ctx, &snapshot).await
         }
         "leave" => {
             let Some(current) = projects.snapshot(&guild_key, &player_id).await? else {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "This server has no Guild Project board.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "This server has no Guild Project board.",
+                )
+                .await;
             };
             if !current.joined {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "You are not enrolled in this project.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "You are not enrolled in this project.",
+                )
+                .await;
             }
             let Some(snapshot) = projects.leave(&guild_key, &player_id).await? else {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "This Guild Project board no longer exists.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "This Guild Project board no longer exists.",
+                )
+                .await;
             };
             send_guild_project_board(ctx, &snapshot).await
         }
         "status" => {
             let Some(snapshot) = projects.snapshot(&guild_key, &player_id).await? else {
-                return send_private_title_panel(ctx, "Lantern Road Survey", None,
-                    "No project has been opened here. A member with Manage Server can run `.guild start`.").await;
+                return send_private_title_panel(
+                    ctx,
+                    "Lantern Road Survey",
+                    None,
+                    "No project has been opened here. A member with Manage Server can run `.guild start`.",
+                )
+                .await;
             };
             send_guild_project_board(ctx, &snapshot).await
         }
         _ => {
             let suggestion = suggest_known_value(&action, &["start", "join", "leave", "status"]);
-            let hint = suggestion.map(|value| format!(" Did you mean `{value}`?")).unwrap_or_default();
+            let hint = suggestion
+                .map(|value| format!(" Did you mean `{value}`?"))
+                .unwrap_or_default();
             send_private_title_panel(ctx, "Lantern Road Survey", None,
                 format!("Choose `start`, `join`, `leave` or `status`.{hint}\n\nStarting requires Manage Server. Enrolment is optional.")).await
         }
@@ -2482,7 +2532,10 @@ async fn send_guild_project_board(
     ctx: Context<'_>,
     snapshot: &crate::guild_project::ProjectSnapshot,
 ) -> Result<(), Error> {
-    let progress = format!("{}/{} shared checkpoints", snapshot.contribution_count, snapshot.contribution_goal);
+    let progress = format!(
+        "{}/{} shared checkpoints",
+        snapshot.contribution_count, snapshot.contribution_goal
+    );
     let enrolment = if snapshot.joined {
         "You are enrolled. Use `.guild leave` to opt out."
     } else if snapshot.status == "active" {
@@ -2490,7 +2543,11 @@ async fn send_guild_project_board(
     } else {
         "Enrolment is closed because this project is complete."
     };
-    let status = if snapshot.status == "completed" { "Complete" } else { "In progress" };
+    let status = if snapshot.status == "completed" {
+        "Complete"
+    } else {
+        "In progress"
+    };
     send_private_title_panel(
         ctx,
         "Lantern Road Survey",

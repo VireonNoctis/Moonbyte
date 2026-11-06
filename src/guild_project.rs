@@ -140,7 +140,16 @@ impl GuildProjectStore {
         .await?;
 
         Ok(row.map(
-            |(id, project_key, name, status, contribution_count, contribution_goal, member_count, joined)| {
+            |(
+                id,
+                project_key,
+                name,
+                status,
+                contribution_count,
+                contribution_goal,
+                member_count,
+                joined,
+            )| {
                 ProjectSnapshot {
                     id,
                     project_key,
@@ -277,10 +286,7 @@ mod postgres_tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::{
-        atlas::AtlasStore,
-        database::Database,
-        expedition::ExpeditionStore,
-        profile::ProfileStore,
+        atlas::AtlasStore, database::Database, expedition::ExpeditionStore, profile::ProfileStore,
     };
 
     use super::GuildProjectStore;
@@ -319,77 +325,163 @@ mod postgres_tests {
                 .expect("create an explicitly-consented test profile");
         }
 
-        let first = projects.start_or_get(&guild_id).await.expect("start first board");
-        let repeated = projects.start_or_get(&guild_id).await.expect("repeat setup");
+        let first = projects
+            .start_or_get(&guild_id)
+            .await
+            .expect("start first board");
+        let repeated = projects
+            .start_or_get(&guild_id)
+            .await
+            .expect("repeat setup");
         assert_eq!(first.id, repeated.id, "setup is idempotent");
         assert_eq!(first.contribution_count, 0);
         assert_eq!(first.member_count, 0);
 
-        let other_server = projects.start_or_get(&other_guild_id).await.expect("start isolated board");
+        let other_server = projects
+            .start_or_get(&other_guild_id)
+            .await
+            .expect("start isolated board");
         assert_ne!(first.id, other_server.id);
 
-        let joined = projects.join(&guild_id, &member_id).await.expect("join").expect("active board");
+        let joined = projects
+            .join(&guild_id, &member_id)
+            .await
+            .expect("join")
+            .expect("active board");
         assert!(joined.joined);
         assert_eq!(joined.member_count, 1);
-        let left = projects.leave(&guild_id, &member_id).await.expect("leave").expect("board remains");
+        let left = projects
+            .leave(&guild_id, &member_id)
+            .await
+            .expect("leave")
+            .expect("board remains");
         assert!(!left.joined);
         assert_eq!(left.member_count, 0);
-        let joined = projects.join(&guild_id, &member_id).await.expect("rejoin").expect("active board");
+        let joined = projects
+            .join(&guild_id, &member_id)
+            .await
+            .expect("rejoin")
+            .expect("active board");
         assert!(joined.joined);
 
-        let member_export = profiles.export_json(&member_id).await.expect("export personal membership");
+        let member_export = profiles
+            .export_json(&member_id)
+            .await
+            .expect("export personal membership");
         assert!(member_export.contains("\"format_version\": 12"));
         assert!(member_export.contains(&guild_id));
         assert!(member_export.contains("lantern_road_survey"));
-        let inventory = profiles.inventory(&member_id).await.expect("inventory membership");
+        let inventory = profiles
+            .inventory(&member_id)
+            .await
+            .expect("inventory membership");
         assert_eq!(inventory.guild_project_membership_records, 1);
 
-        atlas.snapshot(&host_id).await.expect("host starts at Lantern Square");
-        atlas.snapshot(&member_id).await.expect("member starts at Lantern Square");
-        atlas.snapshot(&observer_id).await.expect("observer starts at Lantern Square");
+        atlas
+            .snapshot(&host_id)
+            .await
+            .expect("host starts at Lantern Square");
+        atlas
+            .snapshot(&member_id)
+            .await
+            .expect("member starts at Lantern Square");
+        atlas
+            .snapshot(&observer_id)
+            .await
+            .expect("observer starts at Lantern Square");
 
-        let run = expeditions.start(&host_id, Some(&guild_id), true).await.expect("start shared Expedition");
-        expeditions.join(&member_id, &guild_id, run.run_id).await.expect("member joins Expedition");
-        expeditions.join(&observer_id, &guild_id, run.run_id).await.expect("observer joins Expedition");
-        expeditions.begin(&host_id, Some(&guild_id), run.run_id).await.expect("begin shared Expedition");
+        let run = expeditions
+            .start(&host_id, Some(&guild_id), true)
+            .await
+            .expect("start shared Expedition");
+        expeditions
+            .join(&member_id, &guild_id, run.run_id)
+            .await
+            .expect("member joins Expedition");
+        expeditions
+            .join(&observer_id, &guild_id, run.run_id)
+            .await
+            .expect("observer joins Expedition");
+        expeditions
+            .begin(&host_id, Some(&guild_id), run.run_id)
+            .await
+            .expect("begin shared Expedition");
 
         // Being in an Expedition alone never enrols the host or contributes.
         expeditions
-            .advance(&host_id, Some(&guild_id), run.run_id, "mosslight-grove", "inspect")
+            .advance(
+                &host_id,
+                Some(&guild_id),
+                run.run_id,
+                "mosslight-grove",
+                "inspect",
+            )
             .await
             .expect("first checkpoint");
-        let after_unopted = projects.snapshot(&guild_id, &observer_id).await
-            .expect("read board").expect("project exists");
+        let after_unopted = projects
+            .snapshot(&guild_id, &observer_id)
+            .await
+            .expect("read board")
+            .expect("project exists");
         assert_eq!(after_unopted.contribution_count, 0);
         assert!(!after_unopted.joined);
 
-        projects.join(&guild_id, &host_id).await.expect("host opts in").expect("board active");
+        projects
+            .join(&guild_id, &host_id)
+            .await
+            .expect("host opts in")
+            .expect("board active");
         expeditions
-            .advance(&host_id, Some(&guild_id), run.run_id, "ember-archive", "star")
+            .advance(
+                &host_id,
+                Some(&guild_id),
+                run.run_id,
+                "ember-archive",
+                "star",
+            )
             .await
             .expect("opted-in host checkpoint");
         expeditions
-            .advance(&member_id, Some(&guild_id), run.run_id, "starfall-observatory", "chart")
+            .advance(
+                &member_id,
+                Some(&guild_id),
+                run.run_id,
+                "starfall-observatory",
+                "chart",
+            )
             .await
             .expect("opted-in member final checkpoint");
 
-        let completed = projects.snapshot(&guild_id, &observer_id).await
-            .expect("read completed board").expect("project exists");
+        let completed = projects
+            .snapshot(&guild_id, &observer_id)
+            .await
+            .expect("read completed board")
+            .expect("project exists");
         assert_eq!(completed.status, "completed");
         assert_eq!(completed.contribution_count, completed.contribution_goal);
         assert_eq!(completed.contribution_count, 2);
         assert_eq!(completed.member_count, 2);
         assert!(!completed.joined);
-        assert!(projects.join(&guild_id, &observer_id).await
-            .expect("completed project rejects enrolment").is_none());
+        assert!(
+            projects
+                .join(&guild_id, &observer_id)
+                .await
+                .expect("completed project rejects enrolment")
+                .is_none()
+        );
 
-        let deletion = profiles.delete_account(&host_id).await
+        let deletion = profiles
+            .delete_account(&host_id)
+            .await
             .expect("delete project member while keeping guild progress");
         assert_eq!(deletion.guild_project_memberships_removed, 1);
         assert_eq!(deletion.expedition_checkpoint_actors_anonymized, 2);
 
-        let persisted = projects.snapshot(&guild_id, &member_id).await
-            .expect("read surviving project").expect("project survives member deletion");
+        let persisted = projects
+            .snapshot(&guild_id, &member_id)
+            .await
+            .expect("read surviving project")
+            .expect("project survives member deletion");
         assert_eq!(persisted.status, "completed");
         assert_eq!(persisted.contribution_count, 2);
         assert_eq!(persisted.member_count, 1);
@@ -411,10 +503,34 @@ mod postgres_tests {
         .expect("verify actor identity was removed");
         assert_eq!(actor_links, 0);
 
-        profiles.delete_account(&member_id).await.expect("delete remaining member");
-        profiles.delete_account(&observer_id).await.expect("delete other Expedition participant");
-        assert_eq!(projects.remove_guild(&guild_id).await.expect("remove server board"), 1);
-        assert!(projects.snapshot(&guild_id, "").await.expect("verify uninstall").is_none());
-        assert_eq!(projects.remove_guild(&other_guild_id).await.expect("remove isolated board"), 1);
+        profiles
+            .delete_account(&member_id)
+            .await
+            .expect("delete remaining member");
+        profiles
+            .delete_account(&observer_id)
+            .await
+            .expect("delete other Expedition participant");
+        assert_eq!(
+            projects
+                .remove_guild(&guild_id)
+                .await
+                .expect("remove server board"),
+            1
+        );
+        assert!(
+            projects
+                .snapshot(&guild_id, "")
+                .await
+                .expect("verify uninstall")
+                .is_none()
+        );
+        assert_eq!(
+            projects
+                .remove_guild(&other_guild_id)
+                .await
+                .expect("remove isolated board"),
+            1
+        );
     }
 }
