@@ -741,7 +741,7 @@ mod tests {
         let profiles = ProfileStore::new(pool.clone());
         let atlas = AtlasStore::new(pool.clone());
         let wayfarer = WayfarerStore::new(pool.clone());
-        let store = super::ExpeditionStore::new(pool);
+        let store = super::ExpeditionStore::new(pool.clone());
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system clock after epoch")

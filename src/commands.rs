@@ -932,10 +932,18 @@ pub async fn profile_edit(
         .profiles()
         .update_identity(&player_id, display_name.trim(), bio)
         .await?;
-    let stats = ctx.data().profiles().game_stats(&player_id).await?;
+    let bio = profile
+        .bio
+        .as_deref()
+        .map(escape_user_text)
+        .unwrap_or_else(|| "Not set".to_owned());
     send_private(
         ctx,
-        format!("Profile saved.\n\n{}", render_profile(&profile, &stats)),
+        format!(
+            "**Profile saved**\n\nDisplay name: {}\nBio: {}",
+            escape_user_text(&profile.display_name),
+            bio
+        ),
     )
     .await
 }
