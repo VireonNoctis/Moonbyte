@@ -4,9 +4,8 @@ use moonbyte::{
     Data, DataServices, Error, achievement::AchievementStore, atlas::AtlasStore,
     chronicle::ChronicleStore, commands, config::Config, consent::ConsentStore, database::Database,
     expedition::ExpeditionStore, game::GameRuntime, guild_project::GuildProjectStore,
-    guild_settings::GuildSettingsStore,
-    inventory::InventoryStore, profile::ProfileStore, vault::VaultStore, wallet::WalletStore,
-    wayfarer::WayfarerStore,
+    guild_settings::GuildSettingsStore, inventory::InventoryStore, profile::ProfileStore,
+    vault::VaultStore, wallet::WalletStore, wayfarer::WayfarerStore,
 };
 use poise::serenity_prelude as serenity;
 
