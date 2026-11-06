@@ -380,9 +380,7 @@ pub(crate) async fn record_vault_keepsake(
     run_id: i64,
     blueprint_version: i16,
 ) -> Result<bool, sqlx::Error> {
-    let source_reference = format!(
-        "vault-run:{run_id}:mosslight-resonance:v{blueprint_version}"
-    );
+    let source_reference = format!("vault-run:{run_id}:mosslight-resonance:v{blueprint_version}");
     let inserted = sqlx::query(
         "INSERT INTO player_inventory_items
          (discord_user_id, item_id, quantity, source_type, source_reference)

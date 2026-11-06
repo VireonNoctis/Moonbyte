@@ -588,12 +588,11 @@ impl ProfileStore {
         .bind(player_id)
         .fetch_one(&self.pool)
         .await?;
-        let vault_run_records: i64 = sqlx::query_scalar(
-            "SELECT count(*) FROM player_vault_runs WHERE discord_user_id = $1",
-        )
-        .bind(player_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let vault_run_records: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM player_vault_runs WHERE discord_user_id = $1")
+                .bind(player_id)
+                .fetch_one(&self.pool)
+                .await?;
         let vault_checkpoint_records: i64 = sqlx::query_scalar(
             "SELECT count(*) FROM player_vault_checkpoints c
              JOIN player_vault_runs r USING (vault_run_id)
@@ -1062,7 +1061,17 @@ impl ProfileStore {
 
         let vault_runs = sqlx::query_as::<
             _,
-            (i64, String, i16, String, i16, i64, String, String, Option<String>),
+            (
+                i64,
+                String,
+                i16,
+                String,
+                i16,
+                i64,
+                String,
+                String,
+                Option<String>,
+            ),
         >(
             "SELECT vault_run_id, blueprint_id, content_version, state,
                     current_room_index, row_version, created_at::text,
@@ -1111,12 +1120,14 @@ impl ProfileStore {
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(|(vault_run_id, room_id, room_index, solved_at)| ExportedVaultCheckpoint {
-            vault_run_id,
-            room_id,
-            room_index,
-            solved_at,
-        })
+        .map(
+            |(vault_run_id, room_id, room_index, solved_at)| ExportedVaultCheckpoint {
+                vault_run_id,
+                room_id,
+                room_index,
+                solved_at,
+            },
+        )
         .collect();
 
         let export = PlayerExport {
@@ -1775,7 +1786,10 @@ mod postgres_tests {
 
         // Reproduce an invocation that already passed the global consent preflight.
         assert!(
-            consents.is_current(&player_id).await.expect("consent preflight"),
+            consents
+                .is_current(&player_id)
+                .await
+                .expect("consent preflight"),
             "the in-flight command has already passed its consent preflight"
         );
 
@@ -1796,11 +1810,18 @@ mod postgres_tests {
                 | Err(super::ProfileError::Database(sqlx::Error::RowNotFound))
         ));
         assert!(
-            store.get(&player_id).await.expect("inspect final profile").is_none(),
+            store
+                .get(&player_id)
+                .await
+                .expect("inspect final profile")
+                .is_none(),
             "the stale command must not recreate the deleted profile"
         );
         assert!(
-            !consents.is_current(&player_id).await.expect("inspect final consent"),
+            !consents
+                .is_current(&player_id)
+                .await
+                .expect("inspect final consent"),
             "deletion must not be undone by the stale command"
         );
     }

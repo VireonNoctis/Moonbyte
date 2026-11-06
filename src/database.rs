@@ -16,7 +16,8 @@ const EXPEDITION_MIGRATION: &str = include_str!("../migrations/0011_expeditions.
 const INVENTORY_MIGRATION: &str = include_str!("../migrations/0012_player_inventory.sql");
 const CRAFTING_MIGRATION: &str = include_str!("../migrations/0013_atlas_crafting_materials.sql");
 const VAULT_MIGRATION: &str = include_str!("../migrations/0014_mosslight_resonance_vault.sql");
-const VAULT_CHRONICLE_MIGRATION: &str = include_str!("../migrations/0015_mosslight_resonance_chronicle.sql");
+const VAULT_CHRONICLE_MIGRATION: &str =
+    include_str!("../migrations/0015_mosslight_resonance_chronicle.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]

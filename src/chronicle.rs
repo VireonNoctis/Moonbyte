@@ -216,8 +216,16 @@ mod tests {
                 .iter()
                 .filter(|fragment| fragment.location_id == location.id)
                 .count();
-            let expected = if location.id == "mosslight-grove" { 2 } else { 1 };
-            assert_eq!(matches, expected, "unexpected page count for {}", location.id);
+            let expected = if location.id == "mosslight-grove" {
+                2
+            } else {
+                1
+            };
+            assert_eq!(
+                matches, expected,
+                "unexpected page count for {}",
+                location.id
+            );
         }
     }
     #[test]

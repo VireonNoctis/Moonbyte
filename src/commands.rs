@@ -815,16 +815,15 @@ pub async fn profile(
 
     // The card reads each owning service without duplicating its state. Opening
     // it never creates an Atlas discovery, changes a quest, or mutates a reward.
-    let (stats, journey, rivalries, chronicle, inventory, achievements, vault_run) =
-        tokio::join!(
-            ctx.data().profiles().game_stats(&player_id),
-            ctx.data().wayfarer().snapshot(&player_id),
-            ctx.data().wayfarer().rivalries(&player_id),
-            ctx.data().chronicle().snapshot(&player_id),
-            ctx.data().inventory().snapshot(&player_id),
-            ctx.data().achievements().list_for_player(&player_id),
-            ctx.data().vault().latest_snapshot(&player_id),
-        );
+    let (stats, journey, rivalries, chronicle, inventory, achievements, vault_run) = tokio::join!(
+        ctx.data().profiles().game_stats(&player_id),
+        ctx.data().wayfarer().snapshot(&player_id),
+        ctx.data().wayfarer().rivalries(&player_id),
+        ctx.data().chronicle().snapshot(&player_id),
+        ctx.data().inventory().snapshot(&player_id),
+        ctx.data().achievements().list_for_player(&player_id),
+        ctx.data().vault().latest_snapshot(&player_id),
+    );
     let stats = stats?;
     let journey = journey?;
     let rivalries = rivalries?;
@@ -1135,10 +1134,17 @@ pub async fn vault(
     title: Option<String>,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
-    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     let prefix = escape_user_text(&ctx.data().command_prefix(ctx.guild_id()));
-    let action = action.as_deref().map(str::trim).filter(|value| !value.is_empty())
-        .unwrap_or("list").to_ascii_lowercase();
+    let action = action
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .unwrap_or("list")
+        .to_ascii_lowercase();
     let panel_title = resolve_vault_panel_title(
         &action,
         target.as_deref(),
@@ -1177,12 +1183,25 @@ pub async fn vault(
             let selected = target.as_deref().unwrap_or_default().trim();
             if crate::vault::resolve_blueprint_id(selected).is_none() {
                 let message = match suggest_known_value(selected, &[crate::vault::BLUEPRINT_ID]) {
-                    Some(value) => format!("Unknown blueprint. Did you mean {prefix}vault enter {value} confirm?"),
-                    None => "Use .vault enter mosslight-resonance confirm for the available blueprint.".to_owned(),
+                    Some(value) => format!(
+                        "Unknown blueprint. Did you mean {prefix}vault enter {value} confirm?"
+                    ),
+                    None => {
+                        "Use .vault enter mosslight-resonance confirm for the available blueprint."
+                            .to_owned()
+                    }
                 };
-                return send_private_title_panel(ctx, "Mosslight Resonance · Entry", panel_title.as_deref(), message).await;
+                return send_private_title_panel(
+                    ctx,
+                    "Mosslight Resonance · Entry",
+                    panel_title.as_deref(),
+                    message,
+                )
+                .await;
             }
-            if !details.as_deref().map(str::trim)
+            if !details
+                .as_deref()
+                .map(str::trim)
                 .is_some_and(|value| value.eq_ignore_ascii_case("confirm"))
             {
                 return send_private_title_panel(
@@ -1197,30 +1216,52 @@ pub async fn vault(
                          and no repeatable reward.\n\n\
                          Confirm with {prefix}vault enter mosslight-resonance confirm."
                     ),
-                ).await;
+                )
+                .await;
             }
             match store.enter(&player_id).await {
                 Ok(entry) => {
-                    let heading = if entry.created { "A new save stone is ready." }
-                        else { "Your existing run is ready." };
+                    let heading = if entry.created {
+                        "A new save stone is ready."
+                    } else {
+                        "Your existing run is ready."
+                    };
                     send_private_title_panel(
                         ctx,
                         "Mosslight Resonance · Puzzle Vault",
                         panel_title.as_deref(),
-                        format!("**{heading}**\n\n{}", render_vault_snapshot(&entry.snapshot, &prefix)),
-                    ).await
+                        format!(
+                            "**{heading}**\n\n{}",
+                            render_vault_snapshot(&entry.snapshot, &prefix)
+                        ),
+                    )
+                    .await
                 }
-                Err(error) => send_private_title_panel(
-                    ctx, "Mosslight Resonance · Entry", panel_title.as_deref(), error.to_string()
-                ).await,
+                Err(error) => {
+                    send_private_title_panel(
+                        ctx,
+                        "Mosslight Resonance · Entry",
+                        panel_title.as_deref(),
+                        error.to_string(),
+                    )
+                    .await
+                }
             }
         }
         "status" => {
             let message = match store.latest_snapshot(&player_id).await? {
                 Some(snapshot) => render_vault_snapshot(&snapshot, &prefix),
-                None => format!("No run yet. Use {prefix}vault list to review Mosslight Resonance."),
+                None => {
+                    format!("No run yet. Use {prefix}vault list to review Mosslight Resonance.")
+                }
             };
-            send_private_title_panel(ctx, "Mosslight Resonance · Saved Progress", panel_title.as_deref(), message).await
+            send_private_title_panel(
+                ctx,
+                "Mosslight Resonance · Saved Progress",
+                panel_title.as_deref(),
+                message,
+            )
+            .await
         }
         "solve" => {
             let room_id = target.as_deref().unwrap_or_default().trim();
@@ -1245,24 +1286,42 @@ pub async fn vault(
                     } else {
                         format!(
                             "**Chamber solved.** {}\n\n{}",
-                            solved.map(|room| room.explanation).unwrap_or("Your save stone is set."),
+                            solved
+                                .map(|room| room.explanation)
+                                .unwrap_or("Your save stone is set."),
                             render_vault_snapshot(&snapshot, &prefix)
                         )
                     };
-                    send_private_title_panel(ctx, "Mosslight Resonance · Save Stone", panel_title.as_deref(), message).await
+                    send_private_title_panel(
+                        ctx,
+                        "Mosslight Resonance · Save Stone",
+                        panel_title.as_deref(),
+                        message,
+                    )
+                    .await
                 }
                 Err(crate::vault::VaultError::WrongRoom) => {
                     let current = store.active_snapshot(&player_id).await?;
-                    let expected = current.and_then(|snapshot| snapshot.current_room)
-                        .map(|room| room.id).unwrap_or("the current chamber");
+                    let expected = current
+                        .and_then(|snapshot| snapshot.current_room)
+                        .map(|room| room.id)
+                        .unwrap_or("the current chamber");
                     let message = match suggest_known_value(room_id, &[expected]) {
                         Some(value) => format!("That is not the current chamber. Did you mean {value}? Progress is unchanged."),
                         None => "That is not the current chamber. Check .vault status; progress is unchanged.".to_owned(),
                     };
-                    send_private_title_panel(ctx, "Mosslight Resonance · Chamber", panel_title.as_deref(), message).await
+                    send_private_title_panel(
+                        ctx,
+                        "Mosslight Resonance · Chamber",
+                        panel_title.as_deref(),
+                        message,
+                    )
+                    .await
                 }
                 Err(crate::vault::VaultError::IncorrectAnswer) => {
-                    let hint = store.active_snapshot(&player_id).await?
+                    let hint = store
+                        .active_snapshot(&player_id)
+                        .await?
                         .and_then(|snapshot| snapshot.current_room)
                         .map(|room| room.hint)
                         .unwrap_or("Revisit the published clue and compare each condition.");
@@ -1271,11 +1330,18 @@ pub async fn vault(
                         "Mosslight Resonance · Chamber",
                         panel_title.as_deref(),
                         format!("Not quite. Your save stone is unchanged. Hint: {hint}"),
-                    ).await
+                    )
+                    .await
                 }
-                Err(error) => send_private_title_panel(
-                    ctx, "Mosslight Resonance · Chamber", panel_title.as_deref(), error.to_string()
-                ).await,
+                Err(error) => {
+                    send_private_title_panel(
+                        ctx,
+                        "Mosslight Resonance · Chamber",
+                        panel_title.as_deref(),
+                        error.to_string(),
+                    )
+                    .await
+                }
             }
         }
         "pause" | "resume" | "leave" => {
@@ -1296,22 +1362,43 @@ pub async fn vault(
                         render_vault_snapshot(&snapshot, &prefix)
                     };
                     send_private_title_panel(
-                        ctx, "Mosslight Resonance · Run Status", panel_title.as_deref(), message
-                    ).await
+                        ctx,
+                        "Mosslight Resonance · Run Status",
+                        panel_title.as_deref(),
+                        message,
+                    )
+                    .await
                 }
-                Err(error) => send_private_title_panel(
-                    ctx, "Mosslight Resonance", panel_title.as_deref(), error.to_string()
-                ).await,
+                Err(error) => {
+                    send_private_title_panel(
+                        ctx,
+                        "Mosslight Resonance",
+                        panel_title.as_deref(),
+                        error.to_string(),
+                    )
+                    .await
+                }
             }
         }
         _ => {
             let message = match suggest_known_value(
-                &action, &["list", "enter", "status", "solve", "pause", "resume", "leave"]
+                &action,
+                &[
+                    "list", "enter", "status", "solve", "pause", "resume", "leave",
+                ],
             ) {
                 Some(value) => format!("Unknown action. Did you mean {prefix}vault {value}?"),
-                None => "Unknown Vault action. Use .vault list to see available actions.".to_owned(),
+                None => {
+                    "Unknown Vault action. Use .vault list to see available actions.".to_owned()
+                }
             };
-            send_private_title_panel(ctx, "Mosslight Resonance · Help", panel_title.as_deref(), message).await
+            send_private_title_panel(
+                ctx,
+                "Mosslight Resonance · Help",
+                panel_title.as_deref(),
+                message,
+            )
+            .await
         }
     }
 }
@@ -1337,19 +1424,25 @@ fn resolve_vault_panel_title(
 }
 
 fn render_vault_snapshot(snapshot: &crate::vault::VaultSnapshot, prefix: &str) -> String {
-    let saved = crate::vault::ROOMS.iter()
+    let saved = crate::vault::ROOMS
+        .iter()
         .filter(|room| snapshot.completed_room_ids.iter().any(|id| id == room.id))
         .map(|room| format!("✓ {}", room.title))
         .collect::<Vec<_>>();
-    let saved = if saved.is_empty() { "No save stones set yet.".to_owned() }
-        else { saved.join("\n") };
+    let saved = if saved.is_empty() {
+        "No save stones set yet.".to_owned()
+    } else {
+        saved.join("\n")
+    };
     let current = match snapshot.current_room {
         Some(room) => format!(
             "**{}** · {}\n{}\n\nSubmit with {prefix}vault solve {} <answer>.",
             room.title, room.id, room.clue, room.id
         ),
-        None if snapshot.state == "completed" =>
-            "All chambers are complete. You can replay for practice without another keepsake.".to_owned(),
+        None if snapshot.state == "completed" => {
+            "All chambers are complete. You can replay for practice without another keepsake."
+                .to_owned()
+        }
         None => "No chamber is currently open.".to_owned(),
     };
     let next = match snapshot.state.as_str() {
@@ -1361,7 +1454,9 @@ fn render_vault_snapshot(snapshot: &crate::vault::VaultSnapshot, prefix: &str) -
     format!(
         "**Mosslight Resonance** · Run #{}\nStatus: **{}** · {}/3 chambers saved\n\n\
          **Saved chambers**\n{saved}\n\n{current}\n\n{next}",
-        snapshot.run_id, snapshot.state, snapshot.completed_room_ids.len()
+        snapshot.run_id,
+        snapshot.state,
+        snapshot.completed_room_ids.len()
     )
 }
 
@@ -2129,7 +2224,10 @@ pub async fn play(
         }
     };
     let player_id = ctx.author().id.to_string();
-    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let snapshot = ctx
         .data()
@@ -2159,7 +2257,10 @@ pub async fn join(
     #[description = "The session ID shown in the lobby"] session_id: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
-    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+    ctx.data()
+        .profiles()
+        .get_or_create(&player_id, &ctx.author().name)
+        .await?;
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let snapshot = ctx
         .data()
@@ -2551,10 +2652,7 @@ async fn autocomplete_expedition_action(
     build_autocomplete_response(partial, options)
 }
 
-async fn autocomplete_vault_action(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_vault_action(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let options = [
         ("List · Browse available Puzzle Vaults", "list"),
         ("Enter · Confirm a solo Vault run", "enter"),
@@ -2570,17 +2668,16 @@ async fn autocomplete_vault_action(
     build_autocomplete_response(partial, options)
 }
 
-async fn autocomplete_vault_target(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_vault_target(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let mut options = vec![(
         "Mosslight Resonance · 3 solo chambers".to_owned(),
         crate::vault::BLUEPRINT_ID.to_owned(),
     )];
-    options.extend(crate::vault::ROOMS.iter().map(|room| {
-        (format!("{} · Chamber ID", room.title), room.id.to_owned())
-    }));
+    options.extend(
+        crate::vault::ROOMS
+            .iter()
+            .map(|room| (format!("{} · Chamber ID", room.title), room.id.to_owned())),
+    );
     build_autocomplete_response(partial, options)
 }
 
@@ -2704,10 +2801,22 @@ fn render_player_card(
         .next_companion_milestone
         .map(|days| format!("{days} more active day(s) to the next companion milestone"))
         .unwrap_or_else(|| "All currently defined companion milestones reached".to_owned());
-    let game_word = if progress.games_played == 1 { "game" } else { "games" };
-    let win_word = if progress.games_won == 1 { "win" } else { "wins" };
+    let game_word = if progress.games_played == 1 {
+        "game"
+    } else {
+        "games"
+    };
+    let win_word = if progress.games_won == 1 {
+        "win"
+    } else {
+        "wins"
+    };
     let draw_word = if progress.draws == 1 { "draw" } else { "draws" };
-    let satchel_word = if progress.satchel_items == 1 { "item" } else { "items" };
+    let satchel_word = if progress.satchel_items == 1 {
+        "item"
+    } else {
+        "items"
+    };
     let invitation_word = if progress.pending_rivalries == 1 {
         "invitation"
     } else {

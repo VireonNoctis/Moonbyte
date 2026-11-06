@@ -293,7 +293,8 @@ impl VaultStore {
     ) -> Result<VaultSnapshot, VaultError> {
         let mut transaction = self.pool.begin().await?;
         lock_player(&mut transaction, player_id).await?;
-        let (run_id, state, current_room_index) = lock_active_run(&mut transaction, player_id).await?;
+        let (run_id, state, current_room_index) =
+            lock_active_run(&mut transaction, player_id).await?;
 
         if state != "active" {
             return Err(VaultError::NotActive);
@@ -306,7 +307,11 @@ impl VaultStore {
         if room.id != room_id {
             return Err(VaultError::WrongRoom);
         }
-        if !room.accepted_answers.iter().any(|accepted| answers_match(answer, accepted)) {
+        if !room
+            .accepted_answers
+            .iter()
+            .any(|accepted| answers_match(answer, accepted))
+        {
             return Err(VaultError::IncorrectAnswer);
         }
 
@@ -450,9 +455,8 @@ fn normalise_answer(input: &str) -> String {
 
 pub fn resolve_blueprint_id(input: &str) -> Option<&'static str> {
     let input = input.trim();
-    (BLUEPRINT_ID.eq_ignore_ascii_case(input)
-        || "Mosslight Resonance".eq_ignore_ascii_case(input))
-    .then_some(BLUEPRINT_ID)
+    (BLUEPRINT_ID.eq_ignore_ascii_case(input) || "Mosslight Resonance".eq_ignore_ascii_case(input))
+        .then_some(BLUEPRINT_ID)
 }
 
 #[cfg(test)]
@@ -465,7 +469,10 @@ mod tests {
     fn authored_blueprint_has_three_unique_complete_chambers() {
         assert_eq!(ROOMS.len(), 3);
         assert_eq!(BLUEPRINT_VERSION, 1);
-        assert_eq!(resolve_blueprint_id("Mosslight Resonance"), Some(BLUEPRINT_ID));
+        assert_eq!(
+            resolve_blueprint_id("Mosslight Resonance"),
+            Some(BLUEPRINT_ID)
+        );
         assert_eq!(resolve_blueprint_id("unknown"), None);
 
         let ids = ROOMS.map(|room| room.id);
@@ -504,7 +511,10 @@ mod tests {
 
     #[test]
     fn combined_seal_matches_the_two_saved_answers_in_order() {
-        assert!(answers_match("FERN → STAR → MOON-423", "fern-star-moon-423"));
+        assert!(answers_match(
+            "FERN → STAR → MOON-423",
+            "fern-star-moon-423"
+        ));
         assert!(!answers_match("423-fern-star-moon", "fern-star-moon-423"));
     }
 
@@ -523,12 +533,8 @@ mod postgres_tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::{
-        atlas::AtlasStore,
-        chronicle::ChronicleStore,
-        database::Database,
-        inventory::InventoryStore,
-        profile::ProfileStore,
-        wayfarer::WayfarerStore,
+        atlas::AtlasStore, chronicle::ChronicleStore, database::Database,
+        inventory::InventoryStore, profile::ProfileStore, wayfarer::WayfarerStore,
     };
 
     use super::{VaultError, VaultStore};
@@ -553,9 +559,15 @@ mod postgres_tests {
         crate::profile::create_test_player(pool.clone(), &player_id, "Vault Test")
             .await
             .expect("create consented player profile");
-        atlas.snapshot(&player_id).await.expect("create starting Atlas state");
+        atlas
+            .snapshot(&player_id)
+            .await
+            .expect("create starting Atlas state");
 
-        assert!(matches!(store.enter(&player_id).await, Err(VaultError::NotDiscovered)));
+        assert!(matches!(
+            store.enter(&player_id).await,
+            Err(VaultError::NotDiscovered)
+        ));
         atlas
             .travel(&player_id, "mosslight-grove")
             .await
@@ -608,23 +620,43 @@ mod postgres_tests {
             .await
             .expect("load the persisted run after service reconstruction")
             .expect("active run survives service reconstruction");
-        assert_eq!(recovered.current_room_index as usize, recovered.completed_room_ids.len());
-        assert_eq!(recovered.current_room.expect("recovered room").id, "tideglass-code");
+        assert_eq!(
+            recovered.current_room_index as usize,
+            recovered.completed_room_ids.len()
+        );
+        assert_eq!(
+            recovered.current_room.expect("recovered room").id,
+            "tideglass-code"
+        );
 
         let other_player = format!("{player_id}-other");
-        assert!(store.latest_snapshot(&other_player).await.expect("other player's history").is_none());
+        assert!(
+            store
+                .latest_snapshot(&other_player)
+                .await
+                .expect("other player's history")
+                .is_none()
+        );
         assert!(matches!(
             store.snapshot(&other_player, entry.snapshot.run_id).await,
             Err(VaultError::RunNotFound)
         ));
         assert!(matches!(
-            store.solve(&other_player, "waystone-order", "fern-star-moon").await,
+            store
+                .solve(&other_player, "waystone-order", "fern-star-moon")
+                .await,
             Err(VaultError::NoActiveRun)
         ));
 
-        let left = store.leave(&player_id).await.expect("leave without deleting the save stone");
+        let left = store
+            .leave(&player_id)
+            .await
+            .expect("leave without deleting the save stone");
         assert_eq!(left.state, "left");
-        let returned = store.enter(&player_id).await.expect("return to the left run");
+        let returned = store
+            .enter(&player_id)
+            .await
+            .expect("return to the left run");
         assert!(!returned.created);
         assert_eq!(returned.snapshot.run_id, entry.snapshot.run_id);
         assert_eq!(returned.snapshot.completed_room_ids.len(), 1);
@@ -633,7 +665,10 @@ mod postgres_tests {
 
         let paused = store.pause(&player_id).await.expect("pause the run");
         assert_eq!(paused.state, "paused");
-        let resumed = store.resume(&player_id).await.expect("resume saved progress");
+        let resumed = store
+            .resume(&player_id)
+            .await
+            .expect("resume saved progress");
         assert_eq!(resumed.state, "active");
         assert_eq!(
             resumed.current_room.expect("second room").id,
@@ -653,7 +688,10 @@ mod postgres_tests {
         assert!(completed.current_room.is_none());
 
         let inventory = InventoryStore::new(pool.clone());
-        let keepsakes = inventory.snapshot(&player_id).await.expect("read keepsakes");
+        let keepsakes = inventory
+            .snapshot(&player_id)
+            .await
+            .expect("read keepsakes");
         assert_eq!(
             keepsakes
                 .entries
@@ -662,7 +700,9 @@ mod postgres_tests {
                 .count(),
             1
         );
-        let keepsake_source = keepsakes.entries.iter()
+        let keepsake_source = keepsakes
+            .entries
+            .iter()
             .find(|item| item.item_id == "keepsake.mosslight-seal")
             .expect("keepsake source");
         assert_eq!(
@@ -686,7 +726,10 @@ mod postgres_tests {
         );
 
         // Replays are allowed, but the same fixed provenance key prevents a second keepsake.
-        let replay = store.enter(&player_id).await.expect("start a practice replay");
+        let replay = store
+            .enter(&player_id)
+            .await
+            .expect("start a practice replay");
         assert!(replay.created);
         store
             .solve(&player_id, "waystone-order", "fern-star-moon")
@@ -700,7 +743,10 @@ mod postgres_tests {
             .solve(&player_id, "keepers-seal", "fern-star-moon-423")
             .await
             .expect("replay chamber three");
-        let replay_keepsakes = inventory.snapshot(&player_id).await.expect("read replay reward");
+        let replay_keepsakes = inventory
+            .snapshot(&player_id)
+            .await
+            .expect("read replay reward");
         assert_eq!(
             replay_keepsakes
                 .entries
@@ -716,7 +762,10 @@ mod postgres_tests {
             .expect("inspect Vault data inventory");
         assert_eq!(profiles_inventory.vault_run_records, 2);
         assert_eq!(profiles_inventory.vault_checkpoint_records, 6);
-        let export = profiles.export_json(&player_id).await.expect("export Vault progress");
+        let export = profiles
+            .export_json(&player_id)
+            .await
+            .expect("export Vault progress");
         assert!(export.contains("\"format_version\": 11"));
         assert!(export.contains("mosslight-resonance"));
         assert!(export.contains("waystone-order"));
