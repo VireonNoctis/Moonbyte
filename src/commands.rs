@@ -2406,12 +2406,12 @@ pub async fn guild(
 ) -> Result<(), Error> {
     let Some(guild_id) = ctx.guild_id() else {
         return send_private_title_panel(
-                    ctx,
-                    "Lantern Road Survey",
-                    None,
-                    "Guild Projects are only available inside a Discord server.",
-                )
-                .await;
+            ctx,
+            "Lantern Road Survey",
+            None,
+            "Guild Projects are only available inside a Discord server.",
+        )
+        .await;
     };
     let guild_key = guild_id.to_string();
     let player_id = ctx.author().id.to_string();
