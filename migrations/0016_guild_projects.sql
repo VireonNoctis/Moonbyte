@@ -36,4 +36,4 @@ CREATE TABLE IF NOT EXISTS guild_project_contributions (
 );
 
 COMMENT ON COLUMN guild_project_contributions.expedition_run_id IS
-    'Opaque source locator without a foreign key; retains anonymous guild progress after a source Expedition is deleted.';
+    'Opaque source locator without a foreign key and retains anonymous guild progress after a source Expedition is deleted.';
