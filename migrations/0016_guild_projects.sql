@@ -1,5 +1,5 @@
 -- One fixed, optional cooperative project per Discord server.
--- Membership is personal; contribution rows are anonymous guild aggregates.
+-- Membership is personal and contribution rows are anonymous guild aggregates.
 CREATE TABLE IF NOT EXISTS guild_projects (
     guild_project_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     guild_id TEXT NOT NULL,
