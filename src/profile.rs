@@ -652,7 +652,8 @@ impl ProfileStore {
     }
 
     pub async fn export_json(&self, player_id: &str) -> Result<String, ProfileError> {
-        self.export_json_with_checkpoint(player_id, || async {}).await
+        self.export_json_with_checkpoint(player_id, || async {})
+            .await
     }
 
     async fn export_json_with_checkpoint<F, Fut>(
@@ -1867,7 +1868,10 @@ mod postgres_tests {
                 // Commit after the export reads its wallet balance but before it
                 // reads the ledger. A READ COMMITTED multi-query export would
                 // combine the old balance with the new ledger entry.
-                let mut mutation = pool.begin().await.expect("begin concurrent wallet mutation");
+                let mut mutation = pool
+                    .begin()
+                    .await
+                    .expect("begin concurrent wallet mutation");
                 sqlx::query(
                     "INSERT INTO player_wallets (discord_user_id, balance, version) \
                      VALUES ($1, 10, 1)",
@@ -1885,7 +1889,10 @@ mod postgres_tests {
                 .execute(&mut *mutation)
                 .await
                 .expect("insert matching wallet ledger entry");
-                mutation.commit().await.expect("commit concurrent wallet mutation");
+                mutation
+                    .commit()
+                    .await
+                    .expect("commit concurrent wallet mutation");
             })
             .await
             .expect("export a consistent player snapshot");
@@ -1967,13 +1974,12 @@ mod postgres_tests {
             "the in-flight command has already passed its consent preflight"
         );
 
-        let lock_key: i64 = sqlx::query_scalar(
-            "SELECT hashtextextended('moonbyte:user:' || $1, 0)",
-        )
-        .bind(&player_id)
-        .fetch_one(&pool)
-        .await
-        .expect("derive the per-player advisory lock key");
+        let lock_key: i64 =
+            sqlx::query_scalar("SELECT hashtextextended('moonbyte:user:' || $1, 0)")
+                .bind(&player_id)
+                .fetch_one(&pool)
+                .await
+                .expect("derive the per-player advisory lock key");
         let mut blocker = pool.begin().await.expect("begin advisory-lock blocker");
         sqlx::query("SELECT pg_advisory_xact_lock($1)")
             .bind(lock_key)
@@ -1985,9 +1991,8 @@ mod postgres_tests {
         // on this exact advisory key before starting the stale profile command.
         let deletion_store = store.clone();
         let deletion_player_id = player_id.clone();
-        let deletion = tokio::spawn(async move {
-            deletion_store.delete_account(&deletion_player_id).await
-        });
+        let deletion =
+            tokio::spawn(async move { deletion_store.delete_account(&deletion_player_id).await });
         wait_for_player_advisory_waiters(&pool, lock_key, 1).await;
 
         let creation_store = store.clone();
@@ -2001,7 +2006,10 @@ mod postgres_tests {
 
         // Releasing the blocker preserves PostgreSQL's lock queue order: deletion
         // commits first, then the stale creation re-checks consent and is rejected.
-        blocker.commit().await.expect("release advisory-lock blocker");
+        blocker
+            .commit()
+            .await
+            .expect("release advisory-lock blocker");
         let deletion = deletion
             .await
             .expect("join account deletion")
