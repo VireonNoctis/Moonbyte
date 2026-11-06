@@ -170,10 +170,16 @@ async fn run() -> Result<(), Error> {
                                 .guild_settings()
                                 .remove_guild_data(&incomplete.id.to_string())
                                 .await?;
+                            let projects_removed = crate::guild_project::GuildProjectStore::new(
+                                framework.user_data.database().pool(),
+                            )
+                            .remove_guild(&incomplete.id.to_string())
+                            .await?;
                             tracing::info!(
                                 event = "guild_data_cleaned",
                                 command_settings_removed = cleanup.command_settings_removed,
-                                active_sessions_removed = cleanup.sessions_removed
+                                active_sessions_removed = cleanup.sessions_removed,
+                                projects_removed
                             );
                         }
                     }

@@ -623,7 +623,7 @@ pub async fn privacy_data(
          Wayfarer active days: {}\n\
          Daily quest rotations: {}\n\
          Daily quest records: {}\n\
-         Rivalry records: {}\nExpedition participations: {}\nExpedition checkpoints: {}\nPuzzle Vault runs: {}\nPuzzle Vault save stones: {}\n\n\
+         Rivalry records: {}\nExpedition participations: {}\nExpedition checkpoints: {}\nPuzzle Vault runs: {}\nPuzzle Vault save stones: {}\\nGuild Project memberships: {}\n\n\
          {}\n\n\
          Use `{prefix}privacy_export` to receive a JSON copy, or `{prefix}privacy_delete` to begin \
          the two-step deletion flow. This inventory covers the current PostgreSQL schema.",
@@ -663,6 +663,7 @@ pub async fn privacy_data(
         inventory.expedition_checkpoint_records,
         inventory.vault_run_records,
         inventory.vault_checkpoint_records,
+        inventory.guild_project_membership_records,
         inventory.session_retention
     );
     send_private_title_panel(
@@ -710,7 +711,7 @@ pub async fn privacy_delete(
             format!(
                 "**Delete your Moonbyte profile?**\n\n\
              This removes your profile, policy-acceptance record, unlocked achievements, Moonbits wallet and ledger \
-             entries, Atlas location/discovery records, Chronicle archive pages, account-bound keepsakes and their provenance, Puzzle Vault runs and solved chamber checkpoints, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, and every stored game-session snapshot \
+             entries, Atlas location/discovery records, Chronicle archive pages, account-bound keepsakes and their provenance, Puzzle Vault runs and solved chamber checkpoints, daily quest rotations and progress, Wayfarer activity days, rivalry invitations and match records, your personal Guild Project memberships, and every stored game-session snapshot \
              containing your Discord ID. Shared sessions will end for \
              every participant because their state is stored together. This cannot be undone.\n\n\
              To confirm, run `{prefix}privacy_delete DELETE`. No deletion has happened yet.",
@@ -744,7 +745,7 @@ pub async fn privacy_delete(
          Wayfarer activity days removed: {}\n\
          Daily quest rotations removed: {}\n\
          Daily quest records removed: {}\n\
-         Rivalry records removed: {}\nExpedition participations removed: {}\nExpedition runs transferred to a new host: {}\nExpedition runs cancelled: {}\nEmpty Expedition runs removed: {}\nPuzzle Vault runs removed: {}\nPuzzle Vault save stones removed: {}\n\
+         Rivalry records removed: {}\nExpedition participations removed: {}\nExpedition runs transferred to a new host: {}\nExpedition runs cancelled: {}\nEmpty Expedition runs removed: {}\nPuzzle Vault runs removed: {}\nPuzzle Vault save stones removed: {}\\nGuild Project memberships removed: {}\\nExpedition actor links anonymised: {}\n\
          Policy acceptance record removed: {}\n\n\
          This confirms deletion from the current Moonbyte PostgreSQL tables only. \
          It cannot delete Discord messages, Discord account data, or copies retained \
@@ -782,6 +783,8 @@ pub async fn privacy_delete(
         deletion.expedition_runs_removed,
         deletion.vault_runs_removed,
         deletion.vault_checkpoints_removed,
+        deletion.guild_project_memberships_removed,
+        deletion.expedition_checkpoint_actors_anonymized,
         if deletion.consent_record_removed {
             "yes"
         } else {
@@ -2394,6 +2397,111 @@ pub async fn leave(
     Ok(())
 }
 
+#[poise::command(prefix_command, slash_command, guild_only)]
+pub async fn guild(
+    ctx: Context<'_>,
+    #[description = "Choose start, join, leave or status."]
+    #[autocomplete = "autocomplete_guild_project_action"]
+    action: String,
+) -> Result<(), Error> {
+    let Some(guild_id) = ctx.guild_id() else {
+        return send_private_title_panel(ctx, "Lantern Road Survey", None,
+            "Guild Projects are only available inside a Discord server.").await;
+    };
+    let guild_key = guild_id.to_string();
+    let player_id = ctx.author().id.to_string();
+    let action = action.trim().to_ascii_lowercase();
+    let projects = crate::guild_project::GuildProjectStore::new(ctx.data().database().pool());
+
+    match action.as_str() {
+        "start" => {
+            let authorised = match (ctx.partial_guild().await, ctx.author_member().await) {
+                (Some(guild), Some(member)) => {
+                    let permissions = guild.member_permissions(&member);
+                    permissions.contains(poise::serenity_prelude::Permissions::MANAGE_GUILD)
+                        || permissions.contains(poise::serenity_prelude::Permissions::ADMINISTRATOR)
+                }
+                _ => false,
+            };
+            if !authorised {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "Only a server member with **Manage Server** or **Administrator** can open this board.").await;
+            }
+            let snapshot = projects.start_or_get(&guild_key).await?;
+            send_guild_project_board(ctx, &snapshot).await
+        }
+        "join" => {
+            let current = projects.snapshot(&guild_key, &player_id).await?;
+            let Some(current) = current else {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "This server has no project yet. A member with Manage Server can run `.guild start`.").await;
+            };
+            if current.status != "active" {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "This project is complete, so new members cannot enrol.").await;
+            }
+            ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
+            let Some(snapshot) = projects.join(&guild_key, &player_id).await? else {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "This project closed before your enrolment was recorded.").await;
+            };
+            send_guild_project_board(ctx, &snapshot).await
+        }
+        "leave" => {
+            let Some(current) = projects.snapshot(&guild_key, &player_id).await? else {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "This server has no Guild Project board.").await;
+            };
+            if !current.joined {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "You are not enrolled in this project.").await;
+            }
+            let Some(snapshot) = projects.leave(&guild_key, &player_id).await? else {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "This Guild Project board no longer exists.").await;
+            };
+            send_guild_project_board(ctx, &snapshot).await
+        }
+        "status" => {
+            let Some(snapshot) = projects.snapshot(&guild_key, &player_id).await? else {
+                return send_private_title_panel(ctx, "Lantern Road Survey", None,
+                    "No project has been opened here. A member with Manage Server can run `.guild start`.").await;
+            };
+            send_guild_project_board(ctx, &snapshot).await
+        }
+        _ => {
+            let suggestion = suggest_known_value(&action, &["start", "join", "leave", "status"]);
+            let hint = suggestion.map(|value| format!(" Did you mean `{value}`?")).unwrap_or_default();
+            send_private_title_panel(ctx, "Lantern Road Survey", None,
+                format!("Choose `start`, `join`, `leave` or `status`.{hint}\n\nStarting requires Manage Server. Enrolment is optional.")).await
+        }
+    }
+}
+
+async fn send_guild_project_board(
+    ctx: Context<'_>,
+    snapshot: &crate::guild_project::ProjectSnapshot,
+) -> Result<(), Error> {
+    let progress = format!("{}/{} shared checkpoints", snapshot.contribution_count, snapshot.contribution_goal);
+    let enrolment = if snapshot.joined {
+        "You are enrolled. Use `.guild leave` to opt out."
+    } else if snapshot.status == "active" {
+        "You are not enrolled. Use `.guild join` to opt in."
+    } else {
+        "Enrolment is closed because this project is complete."
+    };
+    let status = if snapshot.status == "completed" { "Complete" } else { "In progress" };
+    send_private_title_panel(
+        ctx,
+        "Lantern Road Survey",
+        None,
+        format!(
+            "**{status}**\n\nProgress: **{progress}**\nOpted-in members: **{}**\n\n{enrolment}\n\nOnly checkpoints you complete in a shared Lantern Road Expedition after opting in count. The board shows aggregate progress, not member names.",
+            snapshot.member_count
+        ),
+    ).await
+}
+
 pub fn all() -> Vec<poise::Command<Data, Error>> {
     let mut tavern_command = tavern();
     tavern_command.aliases = vec!["t".into()].into();
@@ -2457,6 +2565,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         chronicle(),
         travel_command,
         expedition(),
+        guild(),
         vault(),
         games_command,
         play_command,
@@ -2719,6 +2828,22 @@ async fn autocomplete_profile_visibility(
     build_autocomplete_response(partial, options)
 }
 
+async fn autocomplete_guild_project_action(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("Start · Manage Server required", "start"),
+        ("Join · Opt in to shared progress", "join"),
+        ("Leave · Opt out of future progress", "leave"),
+        ("Status · View your private aggregate board", "status"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
+    build_autocomplete_response(partial, options)
+}
+
 /// Returns a conservative suggestion for a misspelled command argument.
 /// Suggestions are advisory only: the user must submit the corrected value themselves.
 fn suggest_known_value<'a>(input: &str, choices: &'a [&'a str]) -> Option<&'a str> {
@@ -2945,7 +3070,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}tavern / /tavern — open the Tavern and live Wayfinder\n\
          {safe_prefix}atlas / /atlas — inspect your world map and known routes\n\
          {safe_prefix}travel <location> / /travel — follow a connected Atlas route\n\
-         {safe_prefix}expedition list|start|join|begin|status|advance|pause|resume|leave|cancel / /expedition — play the Lantern Road\n\
+         {safe_prefix}expedition list|start|join|begin|status|advance|pause|resume|leave|cancel / /expedition — play the Lantern Road\n         {safe_prefix}guild start|join|leave|status / /guild — manage the opt-in server project\n\
          {safe_prefix}vault list|enter|status|solve|pause|resume|leave / /vault — play Mosslight Resonance\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\

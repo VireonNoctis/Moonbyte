@@ -11,6 +11,7 @@ pub mod emoji;
 pub mod expedition;
 pub mod game;
 pub mod guild_settings;
+pub mod guild_project;
 pub mod inventory;
 pub mod profile;
 pub mod tavern;

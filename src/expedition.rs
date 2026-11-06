@@ -1,6 +1,6 @@
 //! Persistent Lantern Road runs. Domain state is authoritative in PostgreSQL.
 
-use crate::atlas::{self, AtlasError, LOCATION_CATALOGUE};
+use crate::{atlas::{self, AtlasError, LOCATION_CATALOGUE}, guild_project::GuildProjectStore};
 use sqlx::{PgPool, Postgres, Transaction};
 use std::fmt;
 
@@ -144,11 +144,12 @@ impl From<sqlx::Error> for ExpeditionError {
 #[derive(Clone)]
 pub struct ExpeditionStore {
     pool: PgPool,
+    guild_projects: GuildProjectStore,
 }
 
 impl ExpeditionStore {
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        Self { guild_projects: GuildProjectStore::new(pool.clone()), pool }
     }
 
     pub async fn start(
@@ -340,6 +341,13 @@ impl ExpeditionStore {
              VALUES ($1, $2, $3, $4, $5, $6)",
         ).bind(id).bind(ROUTE_VERSION).bind(checkpoint_index).bind(next.id)
          .bind(choice.trim().to_ascii_lowercase()).bind(player).execute(&mut *tx).await?;
+        if row.shared {
+            if let Some(guild_id) = row.guild_id.as_deref() {
+                self.guild_projects
+                    .record_shared_checkpoint(&mut tx, guild_id, player, id, next.id)
+                    .await?;
+            }
+        }
         sqlx::query("UPDATE expedition_participants SET last_checkpoint_index = $2 WHERE expedition_run_id = $1 AND is_active")
             .bind(id).bind(checkpoint_index).execute(&mut *tx).await?;
         let completed = next_index == LANTERN_ROAD.len() - 1;

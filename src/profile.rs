@@ -97,6 +97,7 @@ pub struct ProfileInventory {
     pub expedition_checkpoint_records: i64,
     pub vault_run_records: i64,
     pub vault_checkpoint_records: i64,
+    pub guild_project_membership_records: i64,
     pub session_retention: &'static str,
 }
 
@@ -131,6 +132,8 @@ pub struct PlayerDeletion {
     pub expedition_runs_removed: u64,
     pub vault_runs_removed: u64,
     pub vault_checkpoints_removed: u64,
+    pub guild_project_memberships_removed: u64,
+    pub expedition_checkpoint_actors_anonymized: u64,
     pub consent_record_removed: bool,
     pub profile_removed: bool,
 }
@@ -291,11 +294,18 @@ struct ExportedVaultCheckpoint {
     solved_at: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExportedGuildProjectMembership {
+    guild_id: String,
+    project_key: String,
+    joined_at: String,
+}
+
 #[derive(Debug, Serialize)]
 struct PlayerExport {
     format_version: u16,
     exported_at: String,
-    data_categories: [&'static str; 20],
+    data_categories: [&'static str; 21],
     profile: Option<PlayerProfile>,
     consent_record: Option<ExportedConsent>,
     game_sessions: Vec<ExportedSession>,
@@ -316,6 +326,7 @@ struct PlayerExport {
     expedition_checkpoints: Vec<ExportedExpeditionCheckpoint>,
     vault_runs: Vec<ExportedVaultRun>,
     vault_checkpoints: Vec<ExportedVaultCheckpoint>,
+    guild_project_memberships: Vec<ExportedGuildProjectMembership>,
     limitations: [&'static str; 3],
 }
 
@@ -602,6 +613,13 @@ impl ProfileStore {
         .fetch_one(&self.pool)
         .await?;
 
+        let guild_project_membership_records: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM guild_project_members WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+
         Ok(ProfileInventory {
             profile_record,
             consent_record,
@@ -623,6 +641,7 @@ impl ProfileStore {
             expedition_checkpoint_records,
             vault_run_records,
             vault_checkpoint_records,
+            guild_project_membership_records,
             session_retention: "Game sessions and their result records expire after 24 hours of inactivity. Expedition participation and route history remain until account deletion; active runs are safely cancelled when no active participants remain.",
         })
     }
@@ -1114,6 +1133,24 @@ impl ProfileStore {
         )
         .collect();
 
+        let guild_project_memberships = sqlx::query_as::<_, (String, String, String)>(
+            "SELECT p.guild_id, p.project_key, m.joined_at::text
+             FROM guild_project_members m
+             JOIN guild_projects p USING (guild_project_id)
+             WHERE m.discord_user_id = $1
+             ORDER BY m.joined_at ASC, p.guild_id ASC, p.project_key ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&mut *transaction)
+        .await?
+        .into_iter()
+        .map(|(guild_id, project_key, joined_at)| ExportedGuildProjectMembership {
+            guild_id,
+            project_key,
+            joined_at,
+        })
+        .collect();
+
         let inventory_items = sqlx::query_as::<_, (String, i32, String, String, String)>(
             r#"SELECT item_id, quantity, source_type, source_reference, acquired_at::text
                FROM player_inventory_items
@@ -1209,7 +1246,7 @@ impl ProfileStore {
         .collect();
 
         let export = PlayerExport {
-            format_version: 11,
+            format_version: 12,
             exported_at,
             data_categories: [
                 "player profile and preferences",
@@ -1232,6 +1269,7 @@ impl ProfileStore {
                 "shared Expedition checkpoint history",
                 "your Puzzle Vault runs and saved state",
                 "your solved Puzzle Vault chamber checkpoints",
+                "your opt-in guild project memberships",
             ],
             profile,
             consent_record,
@@ -1253,6 +1291,7 @@ impl ProfileStore {
             expedition_checkpoints,
             vault_runs,
             vault_checkpoints,
+            guild_project_memberships,
             limitations: [
                 "Discord independently retains interactions under its own policies.",
                 "This export includes records in the current Moonbyte PostgreSQL schema only.",
@@ -1496,6 +1535,22 @@ impl ProfileStore {
                 .await?
                 .rows_affected();
 
+        let guild_project_memberships_removed = sqlx::query(
+            "DELETE FROM guild_project_members WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+        // Remove the personal actor link while retaining anonymous guild progress.
+        let expedition_checkpoint_actors_anonymized = sqlx::query(
+            "UPDATE expedition_checkpoint_history SET completed_by = NULL WHERE completed_by = $1",
+        )
+        .bind(player_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+
         let consent_record_removed =
             sqlx::query("DELETE FROM user_consents WHERE discord_user_id = $1")
                 .bind(player_id)
@@ -1532,6 +1587,8 @@ impl ProfileStore {
             expedition_runs_removed,
             vault_runs_removed,
             vault_checkpoints_removed,
+            guild_project_memberships_removed,
+            expedition_checkpoint_actors_anonymized,
             consent_record_removed,
             profile_removed,
         })
@@ -1782,7 +1839,7 @@ mod postgres_tests {
             !export.contains("rotation_seed"),
             "private quest seed must not be exported"
         );
-        assert!(export.contains("\"format_version\": 11"));
+        assert!(export.contains("\"format_version\": 12"));
         assert!(export.contains(&completed_session.id));
 
         let deletion = store
