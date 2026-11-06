@@ -91,7 +91,7 @@ impl GameRuntime {
         }
 
         #[cfg(test)]
-        crate::profile::create_test_player(self.pool.clone(), player_id, player_id)
+        crate::profile::create_test_player(self.pool.clone(), player_id, "Game Tester")
             .await
             .expect("register an explicitly-consented game test player");
 
@@ -129,7 +129,7 @@ impl GameRuntime {
         guild_id: Option<&str>,
     ) -> Result<SessionSnapshot, GameRuntimeError> {
         #[cfg(test)]
-        crate::profile::create_test_player(self.pool.clone(), player_id, player_id)
+        crate::profile::create_test_player(self.pool.clone(), player_id, "Game Tester")
             .await
             .expect("register an explicitly-consented joining test player");
 
