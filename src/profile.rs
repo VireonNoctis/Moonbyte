@@ -1825,5 +1825,4 @@ mod postgres_tests {
             "deletion must not be undone by the stale command"
         );
     }
-
 }
