@@ -309,9 +309,11 @@ mod postgres_tests {
             .as_nanos()
             % 1_000_000_000_000_000_000;
 
-        let host_id = format!("guild-project-host-{nonce}");
-        let member_id = format!("guild-project-member-{nonce}");
-        let observer_id = format!("guild-project-observer-{nonce}");
+        // player_profiles validates Discord IDs as decimal snowflakes.
+        let base_id = nonce % 100_000_000_000_000_000 + 100_000_000_000_000_000;
+        let host_id = base_id.to_string();
+        let member_id = (base_id + 1).to_string();
+        let observer_id = (base_id + 2).to_string();
         let guild_id = format!("guild-project-server-{nonce}");
         let other_guild_id = format!("guild-project-other-server-{nonce}");
 

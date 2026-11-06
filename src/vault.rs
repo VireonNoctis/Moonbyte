@@ -766,7 +766,7 @@ mod postgres_tests {
             .export_json(&player_id)
             .await
             .expect("export Vault progress");
-        assert!(export.contains("\"format_version\": 11"));
+        assert!(export.contains("\"format_version\": 12"));
         assert!(export.contains("mosslight-resonance"));
         assert!(export.contains("waystone-order"));
 
