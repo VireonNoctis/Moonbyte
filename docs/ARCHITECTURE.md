@@ -65,6 +65,7 @@ Expedition runs have their own durable state machine and checkpoint history. Unl
 - A fixed recipe consumes source-backed inventory rows and inserts its account-bound output in one transaction. A per-player advisory lock serialises recipe attempts.
 - Expedition checkpoint history and each active participant's Atlas/Chronicle effects are written in the same transaction through owning service boundaries.
 - Profile creation, game-session entry and account deletion share a per-player advisory lock and re-check both current policy versions inside the transaction. Game actions acquire participant locks in stable order before taking the session row; domain events cannot recreate deleted profiles.
+- Player JSON export runs every profile, consent, game, progress, wallet and ledger read through one read-only `REPEATABLE READ` transaction. The snapshot prevents a concurrent commit from producing mixed before/after records in one export.
 - Puzzle Vault mutations use the same per-player advisory lock as privacy deletion, row-lock the open run and commit each correct save stone atomically. Completion, Chronicle unlock, Wayfarer activity and the one-time keepsake share the final checkpoint transaction.
 - Quest reward claims use a unique player/date/objective key and an immutable ledger entry.
 - Guild settings use PostgreSQL notifications to invalidate per-process cache entries.

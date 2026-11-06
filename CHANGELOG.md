@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-07 — Consistent privacy exports and deletion concurrency
+
+- Run every player-export read through one read-only PostgreSQL `REPEATABLE READ` transaction so related records cannot be mixed across concurrent commits.
+- Add a PostgreSQL regression test that commits a wallet and matching ledger entry between the export's balance and ledger reads, proving the export stays on its original snapshot.
+- Make the profile-creation/deletion race test deterministic by queuing a stale creation behind the deletion transaction's advisory lock and requiring the post-deletion consent re-check to reject it.
+- Align the privacy, architecture, implementation and roadmap documents with the verified data-integrity contract.
+
 ## 2026-11-05 — Pre-launch operations and Workshop crafting
 
 - Added fixed Atlas material sources at Mosslight Grove and Glasswater Pier, with migration backfill for existing discoveries.

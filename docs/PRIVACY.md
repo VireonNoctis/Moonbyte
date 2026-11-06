@@ -4,7 +4,7 @@
 - Version: 1.0.0.
 - Status note: initial pre-launch policy baseline. Review again after the Discord application, hosting provider, database provider and operational logging configuration are selected.
 - Source status: this repository contains pre-launch Rust/PostgreSQL implementation work for the runtime, games, profiles, Atlas/Chronicle, five account-bound postcards, two fixed Atlas materials, one deterministic recipe, Wayfarer, Expedition and Mosslight Resonance Puzzle Vault foundations. No Discord bot application has been registered or deployed. The current player-owned schema has private data inventory, version 11 JSON export and confirmed deletion coverage.
-- Last updated: 2026-11-05.
+- Last updated: 2026-11-07.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
 ## 1. Our stance
@@ -134,7 +134,7 @@ The current prefix and slash commands provide:
 | `.privacy_delete` | Read the deletion scope and confirmation instructions. |
 | `.privacy_delete DELETE` | Confirm deletion of the profile, statistics, achievements, wallet/ledger, Atlas, Chronicle, account-bound inventory/provenance, Wayfarer, daily quest history, rivalries, Expedition participation, Puzzle Vault runs/checkpoints and all session snapshots containing the requester. Host ownership is transferred where possible; a run is cancelled if no active participant remains and removed when no participant history remains. |
 
-When invoked in a server, profile details and personal title panels use ephemeral slash responses or DM delivery for prefix commands. JSON exports and deletion receipts are sent by DM. These outputs are never posted as public channel content. The Terms and Privacy documents are delivered as private attachments for slash commands. Prefix invocations can show the documents in the channel where the command was run. The export describes the current schema only and excludes other participants' Discord IDs, private quest seeds, and unsaved Vault guesses or answer text. Account-bound Atlas keepsakes are included with their acquisition provenance. If DM delivery fails, the command returns an error rather than exposing private data. The Privacy Policy summary and attachment may be shown in the invoking channel for prefix invocations; slash-command policy attachments are ephemeral.
+When invoked in a server, profile details and personal title panels use ephemeral slash responses or DM delivery for prefix commands. JSON exports and deletion receipts are sent by DM. These outputs are never posted as public channel content. The Terms and Privacy documents are delivered as private attachments for slash commands. Prefix invocations can show the documents in the channel where the command was run. The export describes the current schema only and excludes other participants' Discord IDs, private quest seeds, and unsaved Vault guesses or answer text. It is assembled inside one read-only PostgreSQL `REPEATABLE READ` transaction, so profile, progress, wallet balances and ledger entries come from one consistent snapshot even when activity commits during export. Account-bound Atlas keepsakes are included with their acquisition provenance. If DM delivery fails, the command returns an error rather than exposing private data. The Privacy Policy summary and attachment may be shown in the invoking channel for prefix invocations; slash-command policy attachments are ephemeral.
 
 ### Consent gate
 

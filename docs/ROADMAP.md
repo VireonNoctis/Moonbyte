@@ -13,7 +13,7 @@
 - [x] Graceful Ctrl-C and Unix SIGTERM shutdown with minimised structured tracing.
 - [x] Four playable games and guild-scoped multiplayer lobbies.
 - [x] Numbered Discord board controls for Tic-tac-toe, Connect Four and Memory Match, routed through the authoritative GameRuntime.
-- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 11 export and confirmed deletion.
+- [x] Player profiles/preferences, versioned policy consent, private data inventory, version 11 export and confirmed deletion; export uses a repeatable-read snapshot and deletion-race coverage is deterministic.
 - [x] Completed results, aggregate statistics, five achievements and the earned-only Moonbits ledger.
 - [x] Sixteen Tavern destinations, including the Satchel, Postcard Wall and Workshop.
 - [x] Five-location Atlas, direct-neighbour travel, private Chronicle pages and five account-bound postcards.

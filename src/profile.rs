@@ -3,7 +3,7 @@
 //! Only fields required by the player-facing profile are stored. Discord remains
 //! the identity provider; Moonbyte does not request email, real name, or location.
 
-use std::fmt;
+use std::{fmt, future::Future};
 
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -652,13 +652,69 @@ impl ProfileStore {
     }
 
     pub async fn export_json(&self, player_id: &str) -> Result<String, ProfileError> {
-        let profile = self.get(player_id).await?;
+        self.export_json_with_checkpoint(player_id, || async {}).await
+    }
+
+    async fn export_json_with_checkpoint<F, Fut>(
+        &self,
+        player_id: &str,
+        after_wallet_balance: F,
+    ) -> Result<String, ProfileError>
+    where
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        let mut transaction = self.pool.begin().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+            .execute(&mut *transaction)
+            .await?;
+
+        let profile = sqlx::query_as::<
+            _,
+            (
+                String,
+                String,
+                Option<String>,
+                String,
+                bool,
+                bool,
+                String,
+                String,
+            ),
+        >(
+            "SELECT discord_user_id, display_name, bio, visibility, show_statistics, quiet_mode, \
+             created_at::text, updated_at::text FROM player_profiles WHERE discord_user_id = $1",
+        )
+        .bind(player_id)
+        .fetch_optional(&mut *transaction)
+        .await?
+        .map(
+            |(
+                discord_user_id,
+                display_name,
+                bio,
+                visibility,
+                show_statistics,
+                quiet_mode,
+                created_at,
+                updated_at,
+            )| PlayerProfile {
+                discord_user_id,
+                display_name,
+                bio,
+                visibility,
+                show_statistics,
+                quiet_mode,
+                created_at,
+                updated_at,
+            },
+        );
         let consent_record = sqlx::query_as::<_, (String, String, String, Option<String>)>(
             "SELECT terms_version, privacy_version, accepted_at::text, accepted_in_guild_id \
              FROM user_consents WHERE discord_user_id = $1",
         )
         .bind(player_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *transaction)
         .await?
         .map(
             |(terms_version, privacy_version, accepted_at, accepted_in_guild_id)| ExportedConsent {
@@ -675,7 +731,7 @@ impl ProfileStore {
              ORDER BY created_at DESC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?;
 
         let result_rows = sqlx::query_as::<_, (String, String, String, i64, String)>(
@@ -684,7 +740,7 @@ impl ProfileStore {
              ORDER BY completed_at DESC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?;
         let game_results = result_rows
             .into_iter()
@@ -698,7 +754,25 @@ impl ProfileStore {
                 },
             )
             .collect();
-        let game_statistics = self.game_stats(player_id).await?;
+        let game_statistics = sqlx::query_as::<_, (String, i64, i64, i64, String)>(
+            "SELECT game_id, games_played, games_won, draws, updated_at::text \
+             FROM player_game_stats WHERE discord_user_id = $1 \
+             ORDER BY games_played DESC, game_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&mut *transaction)
+        .await?
+        .into_iter()
+        .map(
+            |(game_id, games_played, games_won, draws, updated_at)| PlayerGameStat {
+                game_id,
+                games_played,
+                games_won,
+                draws,
+                updated_at,
+            },
+        )
+        .collect();
         let achievements = sqlx::query_as::<_, (String, String, String, String, String, String)>(
             "SELECT d.achievement_id, d.title, d.description, d.category, \
              p.source_session_id, p.unlocked_at::text \
@@ -708,7 +782,7 @@ impl ProfileStore {
              ORDER BY p.unlocked_at ASC, d.achievement_id ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -729,13 +803,16 @@ impl ProfileStore {
             "SELECT COALESCE((SELECT balance FROM player_wallets WHERE discord_user_id = $1), 0)",
         )
         .bind(player_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *transaction)
         .await?;
+        // The test checkpoint commits a concurrent update between the paired
+        // wallet reads. Production exports retain the same transaction snapshot.
+        after_wallet_balance().await;
         let wallet_rows = sqlx::query_as::<_, (i64, i64, String, String, String)>(
             "SELECT entry_id, amount_delta, reason, source_id, created_at::text FROM wallet_ledger_entries WHERE discord_user_id = $1 ORDER BY entry_id ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?;
         let wallet_ledger_entries = wallet_rows
             .into_iter()
@@ -754,7 +831,7 @@ impl ProfileStore {
             "SELECT current_location_id, updated_at::text FROM player_world_state WHERE discord_user_id = $1",
         )
         .bind(player_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *transaction)
         .await?
         .map(|(current_location_id, updated_at)| ExportedWorldState {
             current_location_id,
@@ -766,7 +843,7 @@ impl ProfileStore {
              ORDER BY discovered_at ASC, location_id ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -784,7 +861,7 @@ impl ProfileStore {
              WHERE discord_user_id = $1 ORDER BY unlocked_at ASC, fragment_id ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -801,7 +878,7 @@ impl ProfileStore {
              WHERE discord_user_id = $1 ORDER BY activity_date ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?;
 
         let daily_quests = sqlx::query_as::<
@@ -822,7 +899,7 @@ impl ProfileStore {
              WHERE discord_user_id = $1 ORDER BY quest_date DESC, quest_id ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -857,7 +934,7 @@ impl ProfileStore {
              WHERE discord_user_id = $1 ORDER BY quest_date DESC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(|(quest_date, commitment_sha512)| ExportedQuestRotation {
@@ -890,7 +967,7 @@ impl ProfileStore {
              ORDER BY created_at ASC, rivalry_id ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -923,7 +1000,7 @@ impl ProfileStore {
         .collect();
 
         let exported_at: String = sqlx::query_scalar("SELECT now()::text")
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *transaction)
             .await?;
 
         let game_sessions = rows
@@ -971,7 +1048,7 @@ impl ProfileStore {
              ORDER BY r.created_at DESC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -1014,7 +1091,7 @@ impl ProfileStore {
         )
         .bind(player_id)
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -1043,7 +1120,7 @@ impl ProfileStore {
                ORDER BY acquired_at ASC, item_id ASC, source_reference ASC"#,
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -1081,7 +1158,7 @@ impl ProfileStore {
              ORDER BY created_at ASC, vault_run_id ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -1117,7 +1194,7 @@ impl ProfileStore {
              ORDER BY c.vault_run_id ASC, c.room_index ASC",
         )
         .bind(player_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *transaction)
         .await?
         .into_iter()
         .map(
@@ -1181,6 +1258,7 @@ impl ProfileStore {
                 "Expedition details include only your own participation and shared checkpoint history, not other players' private profiles.",
             ],
         };
+        transaction.commit().await?;
         Ok(serde_json::to_string_pretty(&export)?)
     }
 
@@ -1537,7 +1615,7 @@ mod tests {
 
 #[cfg(test)]
 mod postgres_tests {
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
     use crate::{
         atlas::AtlasStore,
@@ -1546,7 +1624,7 @@ mod postgres_tests {
         game::{GameKind, GameRuntime},
     };
 
-    use super::ProfileStore;
+    use super::{ProfileError, ProfileStore};
 
     #[tokio::test]
     async fn profile_export_and_deletion_cover_current_player_records() {
@@ -1765,6 +1843,102 @@ mod postgres_tests {
     }
 
     #[tokio::test]
+    async fn export_uses_one_snapshot_when_wallet_changes_mid_export() {
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must point to the CI PostgreSQL service");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("connect and migrate PostgreSQL");
+        let pool = database.pool();
+        let store = ProfileStore::new(pool.clone());
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos()
+            % 1_000_000_000_000_000_000;
+        let player_id = format!("snap-{nonce}");
+
+        crate::profile::create_test_player(pool.clone(), &player_id, "Snapshot Pilot")
+            .await
+            .expect("create an explicitly-consented profile");
+
+        let exported = store
+            .export_json_with_checkpoint(&player_id, || async {
+                // Commit after the export reads its wallet balance but before it
+                // reads the ledger. A READ COMMITTED multi-query export would
+                // combine the old balance with the new ledger entry.
+                let mut mutation = pool.begin().await.expect("begin concurrent wallet mutation");
+                sqlx::query(
+                    "INSERT INTO player_wallets (discord_user_id, balance, version) \
+                     VALUES ($1, 10, 1)",
+                )
+                .bind(&player_id)
+                .execute(&mut *mutation)
+                .await
+                .expect("insert concurrent wallet balance");
+                sqlx::query(
+                    "INSERT INTO wallet_ledger_entries \
+                     (discord_user_id, amount_delta, reason, source_id, idempotency_key) \
+                     VALUES ($1, 10, 'first_game_completion', 'snapshot-test', 'snapshot-test')",
+                )
+                .bind(&player_id)
+                .execute(&mut *mutation)
+                .await
+                .expect("insert matching wallet ledger entry");
+                mutation.commit().await.expect("commit concurrent wallet mutation");
+            })
+            .await
+            .expect("export a consistent player snapshot");
+
+        let export: serde_json::Value =
+            serde_json::from_str(&exported).expect("parse exported player JSON");
+        assert_eq!(export["wallet_balance"], 0);
+        assert_eq!(
+            export["wallet_ledger_entries"]
+                .as_array()
+                .expect("wallet ledger array")
+                .len(),
+            0,
+            "the export must not mix a pre-commit balance with a post-commit ledger"
+        );
+
+        let wallet = crate::wallet::WalletStore::new(pool)
+            .snapshot(&player_id)
+            .await
+            .expect("read committed wallet state");
+        assert_eq!(wallet.balance, 10);
+        assert_eq!(wallet.ledger_entries, 1);
+    }
+
+    async fn wait_for_player_advisory_waiters(
+        pool: &sqlx::PgPool,
+        lock_key: i64,
+        expected_waiters: i64,
+    ) {
+        tokio::time::timeout(Duration::from_secs(10), async {
+            loop {
+                let waiters: i64 = sqlx::query_scalar(
+                    "SELECT count(*) FROM pg_locks \
+                     WHERE locktype = 'advisory' \
+                       AND classid = (($1::bigint >> 32) & 4294967295)::oid \
+                       AND objid = ($1::bigint & 4294967295)::oid \
+                       AND objsubid = 1 AND NOT granted",
+                )
+                .bind(lock_key)
+                .fetch_one(pool)
+                .await
+                .expect("inspect PostgreSQL advisory-lock waiters");
+                if waiters >= expected_waiters {
+                    return;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("expected profile operations to queue behind the held advisory lock");
+    }
+
+    #[tokio::test]
     async fn in_flight_profile_creation_cannot_recreate_data_after_account_deletion() {
         let database_url = std::env::var("DATABASE_URL")
             .expect("DATABASE_URL must point to the CI PostgreSQL service");
@@ -1793,22 +1967,53 @@ mod postgres_tests {
             "the in-flight command has already passed its consent preflight"
         );
 
-        let (creation, deletion) = tokio::join!(
-            store.get_or_create(&player_id, "Late Command"),
-            store.delete_account(&player_id),
-        );
-        let deletion = deletion.expect("complete account deletion");
+        let lock_key: i64 = sqlx::query_scalar(
+            "SELECT hashtextextended('moonbyte:user:' || $1, 0)",
+        )
+        .bind(&player_id)
+        .fetch_one(&pool)
+        .await
+        .expect("derive the per-player advisory lock key");
+        let mut blocker = pool.begin().await.expect("begin advisory-lock blocker");
+        sqlx::query("SELECT pg_advisory_xact_lock($1)")
+            .bind(lock_key)
+            .execute(&mut *blocker)
+            .await
+            .expect("hold the per-player advisory lock");
+
+        // Queue deletion first, then wait until PostgreSQL confirms it is blocked
+        // on this exact advisory key before starting the stale profile command.
+        let deletion_store = store.clone();
+        let deletion_player_id = player_id.clone();
+        let deletion = tokio::spawn(async move {
+            deletion_store.delete_account(&deletion_player_id).await
+        });
+        wait_for_player_advisory_waiters(&pool, lock_key, 1).await;
+
+        let creation_store = store.clone();
+        let creation_player_id = player_id.clone();
+        let creation = tokio::spawn(async move {
+            creation_store
+                .get_or_create(&creation_player_id, "Late Command")
+                .await
+        });
+        wait_for_player_advisory_waiters(&pool, lock_key, 2).await;
+
+        // Releasing the blocker preserves PostgreSQL's lock queue order: deletion
+        // commits first, then the stale creation re-checks consent and is rejected.
+        blocker.commit().await.expect("release advisory-lock blocker");
+        let deletion = deletion
+            .await
+            .expect("join account deletion")
+            .expect("complete account deletion");
         assert!(deletion.profile_removed);
         assert!(deletion.consent_record_removed);
 
-        // Creation may commit before deletion (and then be deleted), or wait
-        // behind deletion and be rejected because the current consent row is gone.
-        assert!(matches!(
-            creation,
-            Ok(_)
-                | Err(super::ProfileError::ConsentRequired)
-                | Err(super::ProfileError::Database(sqlx::Error::RowNotFound))
-        ));
+        let creation = creation.await.expect("join stale profile creation");
+        assert!(
+            matches!(creation, Err(ProfileError::ConsentRequired)),
+            "a stale command queued behind deletion must re-check consent after the delete commits"
+        );
         assert!(
             store
                 .get(&player_id)
