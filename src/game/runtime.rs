@@ -866,7 +866,7 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .expect("system clock after epoch")
             .as_nanos();
-        let player_id = format!("component-version-{nonce}");
+        let player_id = format!("cv-{nonce}");
         let session = runtime
             .start(GameKind::MemoryMatch, &player_id, None)
             .await

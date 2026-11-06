@@ -333,7 +333,7 @@ mod postgres_tests {
             .expect("system clock after epoch")
             .as_nanos();
         let guild_id = format!("guild-settings-test-{nonce}");
-        let player_id = format!("guild-settings-player-{nonce}");
+        let player_id = format!("guild-player-{nonce}");
 
         first
             .save(&guild_id, "mb!", Some("123456789012345678"), &player_id)
