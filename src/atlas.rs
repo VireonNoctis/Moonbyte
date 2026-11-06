@@ -534,10 +534,9 @@ mod tests {
         let player_id = format!("atlas-{nonce}");
         let store = super::AtlasStore::new(pool.clone());
         let profiles = crate::profile::ProfileStore::new(pool.clone());
-        profiles
-            .get_or_create(&player_id, "Atlas Test")
+        crate::profile::create_test_player(pool.clone(), &player_id, "Atlas Test")
             .await
-            .expect("create player profile");
+            .expect("create consented player profile");
 
         let initial = store.snapshot(&player_id).await.expect("open Atlas");
         assert_eq!(initial.current_location.id, "lantern-square");

@@ -2129,6 +2129,7 @@ pub async fn play(
         }
     };
     let player_id = ctx.author().id.to_string();
+    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let snapshot = ctx
         .data()
@@ -2158,6 +2159,7 @@ pub async fn join(
     #[description = "The session ID shown in the lobby"] session_id: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
+    ctx.data().profiles().get_or_create(&player_id, &ctx.author().name).await?;
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let snapshot = ctx
         .data()

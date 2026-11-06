@@ -752,18 +752,15 @@ mod tests {
         let outsider_id = format!("exp-outsider-{nonce:x}");
         let guild_id = format!("exp-guild-{nonce:x}");
 
-        profiles
-            .get_or_create(&host_id, "Expedition Host")
+        crate::profile::create_test_player(pool.clone(), &host_id, "Expedition Host")
             .await
-            .expect("create host profile");
-        profiles
-            .get_or_create(&member_id, "Expedition Member")
+            .expect("create consented host profile");
+        crate::profile::create_test_player(pool.clone(), &member_id, "Expedition Member")
             .await
-            .expect("create member profile");
-        profiles
-            .get_or_create(&outsider_id, "Expedition Observer")
+            .expect("create consented member profile");
+        crate::profile::create_test_player(pool.clone(), &outsider_id, "Expedition Observer")
             .await
-            .expect("create outsider profile");
+            .expect("create consented observer profile");
         atlas.snapshot(&host_id).await.expect("host starting place");
         atlas
             .snapshot(&member_id)

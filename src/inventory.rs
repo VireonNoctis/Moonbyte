@@ -638,10 +638,9 @@ mod postgres_tests {
             % 1_000_000_000_000_000_000;
         let player_id = format!("craft-{nonce}");
         let profiles = crate::profile::ProfileStore::new(pool.clone());
-        profiles
-            .get_or_create(&player_id, "Craft Test")
+        crate::profile::create_test_player(pool.clone(), &player_id, "Craft Test")
             .await
-            .expect("create player profile");
+            .expect("create consented player profile");
 
         let mut transaction = pool.begin().await.expect("begin material grant");
         assert!(
@@ -722,10 +721,9 @@ mod postgres_tests {
             % 1_000_000_000_000_000_000;
         let player_id = format!("inv-{nonce}");
         let profiles = crate::profile::ProfileStore::new(pool.clone());
-        profiles
-            .get_or_create(&player_id, "Inventory Test")
+        crate::profile::create_test_player(pool.clone(), &player_id, "Inventory Test")
             .await
-            .expect("create player profile");
+            .expect("create consented player profile");
 
         let mut transaction = pool.begin().await.expect("begin discovery transaction");
         assert!(

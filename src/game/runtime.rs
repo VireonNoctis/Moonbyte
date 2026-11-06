@@ -21,6 +21,7 @@ pub enum GameRuntimeError {
     Serialization(serde_json::Error),
     UnsupportedStateVersion(i16),
     StaleAction,
+    PlayerNotReady,
 }
 
 impl fmt::Display for GameRuntimeError {
@@ -40,6 +41,9 @@ impl fmt::Display for GameRuntimeError {
             Self::StaleAction => {
                 formatter.write_str("That game board is out of date. Refresh it before moving.")
             }
+            Self::PlayerNotReady => {
+                formatter.write_str("Your player profile or current policy acceptance is no longer available. Review the current Terms and Privacy Policy before starting or continuing a game.")
+            }
         }
     }
 }
@@ -50,7 +54,7 @@ impl std::error::Error for GameRuntimeError {
             Self::Domain(error) => Some(error),
             Self::Database(error) => Some(error),
             Self::Serialization(error) => Some(error),
-            Self::UnsupportedStateVersion(_) | Self::StaleAction => None,
+            Self::UnsupportedStateVersion(_) | Self::StaleAction | Self::PlayerNotReady => None,
         }
     }
 }
@@ -86,7 +90,14 @@ impl GameRuntime {
             return Err(GameError::WrongGuild.into());
         }
 
+        #[cfg(test)]
+        crate::profile::create_test_player(self.pool.clone(), player_id, player_id)
+            .await
+            .expect("register an explicitly-consented game test player");
+
         let mut transaction = self.pool.begin().await?;
+        lock_player(&mut transaction, player_id).await?;
+        require_current_player(&mut transaction, player_id).await?;
         let sequence: i64 = sqlx::query_scalar("SELECT nextval('moonbyte_session_id_seq')")
             .fetch_one(&mut *transaction)
             .await?;
@@ -117,7 +128,14 @@ impl GameRuntime {
         player_id: &str,
         guild_id: Option<&str>,
     ) -> Result<SessionSnapshot, GameRuntimeError> {
+        #[cfg(test)]
+        crate::profile::create_test_player(self.pool.clone(), player_id, player_id)
+            .await
+            .expect("register an explicitly-consented joining test player");
+
         let mut transaction = self.pool.begin().await?;
+        lock_player(&mut transaction, player_id).await?;
+        require_current_player(&mut transaction, player_id).await?;
         let mut session = load_for_update(&mut transaction, session_id).await?;
         session.join(player_id, guild_id)?;
         persist_locked(&mut transaction, &session).await?;
@@ -166,7 +184,35 @@ impl GameRuntime {
         expected_action_count: Option<u32>,
     ) -> Result<SessionSnapshot, GameRuntimeError> {
         let mut transaction = self.pool.begin().await?;
+        // Read participants without locking the session, then acquire all per-player
+        // deletion locks in stable order before taking the session row. This matches
+        // account deletion's lock order and prevents writes into deleted profiles.
+        let players_json: Option<String> = sqlx::query_scalar(
+            "SELECT (session_state -> 'players')::text FROM game_sessions \
+             WHERE session_id = $1 AND expires_at > now()",
+        )
+        .bind(normalise_session_id(session_id))
+        .fetch_optional(&mut *transaction)
+        .await?;
+        let players_json = players_json.ok_or(GameError::NotJoinable)?;
+        let mut locked_player_ids: Vec<String> = serde_json::from_str(&players_json)?;
+        locked_player_ids.sort();
+        locked_player_ids.dedup();
+        if locked_player_ids.is_empty() {
+            return Err(GameError::NotJoinable.into());
+        }
+        for id in &locked_player_ids {
+            lock_player(&mut transaction, id).await?;
+            require_current_player(&mut transaction, id).await?;
+        }
+
         let mut session = load_for_update(&mut transaction, session_id).await?;
+        let mut current_player_ids = session.snapshot().players;
+        current_player_ids.sort();
+        current_player_ids.dedup();
+        if current_player_ids != locked_player_ids {
+            return Err(GameRuntimeError::StaleAction);
+        }
         if session.guild_id() != guild_id {
             return Err(GameError::WrongGuild.into());
         }
@@ -250,6 +296,48 @@ impl GameRuntime {
         transaction.commit().await?;
         Ok(session.snapshot())
     }
+}
+
+async fn lock_player(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
+        .bind(player_id)
+        .execute(&mut **transaction)
+        .await?;
+    Ok(())
+}
+
+async fn require_current_player(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), GameRuntimeError> {
+    let current_consent: bool = sqlx::query_scalar(
+        "SELECT EXISTS (
+            SELECT 1 FROM user_consents
+            WHERE discord_user_id = $1
+              AND terms_version = $2
+              AND privacy_version = $3
+        )",
+    )
+    .bind(player_id)
+    .bind(crate::consent::TERMS_VERSION)
+    .bind(crate::consent::PRIVACY_VERSION)
+    .fetch_one(&mut **transaction)
+    .await?;
+    let profile_exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS (
+            SELECT 1 FROM player_profiles WHERE discord_user_id = $1
+        )",
+    )
+    .bind(player_id)
+    .fetch_one(&mut **transaction)
+    .await?;
+    if !current_consent || !profile_exists {
+        return Err(GameRuntimeError::PlayerNotReady);
+    }
+    Ok(())
 }
 
 async fn load_for_update(

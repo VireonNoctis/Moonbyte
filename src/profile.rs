@@ -15,6 +15,7 @@ pub enum ProfileError {
     InvalidDisplayName,
     InvalidBio,
     InvalidVisibility,
+    ConsentRequired,
 }
 
 impl fmt::Display for ProfileError {
@@ -32,6 +33,9 @@ impl fmt::Display for ProfileError {
             }
             Self::InvalidVisibility => {
                 formatter.write_str("Visibility must be either public or private.")
+            }
+            Self::ConsentRequired => {
+                formatter.write_str("Review the current Terms of Service and Privacy Policy, then accept them before creating player data.")
             }
         }
     }
@@ -332,14 +336,43 @@ impl ProfileStore {
         default_name: &str,
     ) -> Result<PlayerProfile, ProfileError> {
         let display_name = normalise_display_name(default_name)?;
+        let mut transaction = self.pool.begin().await?;
+
+        // Account deletion and profile creation share a per-player advisory lock.
+        // Re-check consent only after acquiring it: a command may have passed the
+        // global preflight immediately before the player confirmed deletion.
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
+            .bind(player_id)
+            .execute(&mut *transaction)
+            .await?;
+
+        let current_consent: bool = sqlx::query_scalar(
+            "SELECT EXISTS (
+                SELECT 1 FROM user_consents
+                WHERE discord_user_id = $1
+                  AND terms_version = $2
+                  AND privacy_version = $3
+            )",
+        )
+        .bind(player_id)
+        .bind(crate::consent::TERMS_VERSION)
+        .bind(crate::consent::PRIVACY_VERSION)
+        .fetch_one(&mut *transaction)
+        .await?;
+        if !current_consent {
+            return Err(ProfileError::ConsentRequired);
+        }
+
         sqlx::query(
             "INSERT INTO player_profiles (discord_user_id, display_name) \
              VALUES ($1, $2) ON CONFLICT (discord_user_id) DO NOTHING",
         )
         .bind(player_id)
         .bind(display_name)
-        .execute(&self.pool)
+        .execute(&mut *transaction)
         .await?;
+
+        transaction.commit().await?;
         self.get(player_id)
             .await?
             .ok_or_else(|| ProfileError::Database(sqlx::Error::RowNotFound))
@@ -1415,6 +1448,20 @@ impl ProfileStore {
     }
 }
 
+#[cfg(test)]
+pub(crate) async fn create_test_player(
+    pool: PgPool,
+    player_id: &str,
+    display_name: &str,
+) -> Result<PlayerProfile, Box<dyn std::error::Error + Send + Sync>> {
+    crate::consent::ConsentStore::new(pool.clone())
+        .accept(player_id, None)
+        .await?;
+    Ok(ProfileStore::new(pool)
+        .get_or_create(player_id, display_name)
+        .await?)
+}
+
 fn normalise_display_name(value: &str) -> Result<String, ProfileError> {
     let value = value.trim();
     if value.is_empty() || value.chars().count() > 32 || value.chars().any(char::is_control) {
@@ -1705,4 +1752,57 @@ mod postgres_tests {
             "deleted session state must no longer be recoverable"
         );
     }
+
+    #[tokio::test]
+    async fn in_flight_profile_creation_cannot_recreate_data_after_account_deletion() {
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must point to the CI PostgreSQL service");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("connect and migrate PostgreSQL");
+        let pool = database.pool();
+        let store = ProfileStore::new(pool.clone());
+        let consents = ConsentStore::new(pool.clone());
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos();
+        let player_id = format!("delete-race-{nonce}");
+
+        crate::profile::create_test_player(pool.clone(), &player_id, "Deletion Race")
+            .await
+            .expect("create an explicitly-consented profile");
+
+        // Reproduce an invocation that already passed the global consent preflight.
+        assert!(
+            consents.is_current(&player_id).await.expect("consent preflight"),
+            "the in-flight command has already passed its consent preflight"
+        );
+
+        let (creation, deletion) = tokio::join!(
+            store.get_or_create(&player_id, "Late Command"),
+            store.delete_account(&player_id),
+        );
+        let deletion = deletion.expect("complete account deletion");
+        assert!(deletion.profile_removed);
+        assert!(deletion.consent_record_removed);
+
+        // Creation may commit before deletion (and then be deleted), or wait
+        // behind deletion and be rejected because the current consent row is gone.
+        assert!(matches!(
+            creation,
+            Ok(_)
+                | Err(super::ProfileError::ConsentRequired)
+                | Err(super::ProfileError::Database(sqlx::Error::RowNotFound))
+        ));
+        assert!(
+            store.get(&player_id).await.expect("inspect final profile").is_none(),
+            "the stale command must not recreate the deleted profile"
+        );
+        assert!(
+            !consents.is_current(&player_id).await.expect("inspect final consent"),
+            "deletion must not be undone by the stale command"
+        );
+    }
+
 }

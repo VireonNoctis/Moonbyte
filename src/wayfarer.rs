@@ -635,14 +635,19 @@ async fn ensure_player(
     transaction: &mut Transaction<'_, Postgres>,
     player_id: &str,
 ) -> Result<(), sqlx::Error> {
-    // A player can join from a lobby before opening their profile command.
-    sqlx::query(
-        "INSERT INTO player_profiles (discord_user_id, display_name) \
-         VALUES ($1, $1) ON CONFLICT (discord_user_id) DO NOTHING",
+    // Profile creation belongs to the consent-aware ProfileStore. Domain events
+    // must never recreate a profile after deletion has removed consent.
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS (
+            SELECT 1 FROM player_profiles WHERE discord_user_id = $1
+        )",
     )
     .bind(player_id)
-    .execute(&mut **transaction)
+    .fetch_one(&mut **transaction)
     .await?;
+    if !exists {
+        return Err(sqlx::Error::RowNotFound);
+    }
     Ok(())
 }
 
@@ -840,10 +845,9 @@ mod tests {
             .as_nanos()
             % 100_000_000_000_000_000;
         let player_id = format!("1{nonce:017}");
-        profiles
-            .get_or_create(&player_id, "Quest Tester")
+        crate::profile::create_test_player(database.pool(), &player_id, "Quest Tester")
             .await
-            .expect("create profile");
+            .expect("create consented profile");
 
         let first = store
             .daily_quests(&player_id)
@@ -926,14 +930,12 @@ mod tests {
             % 100_000_000_000_000_000;
         let first_id = format!("1{nonce:017}");
         let second_id = format!("2{nonce:017}");
-        profiles
-            .get_or_create(&first_id, "First Pilot")
+        crate::profile::create_test_player(database.pool(), &first_id, "First Pilot")
             .await
-            .expect("create first profile");
-        profiles
-            .get_or_create(&second_id, "Second Pilot")
+            .expect("create consented first profile");
+        crate::profile::create_test_player(database.pool(), &second_id, "Second Pilot")
             .await
-            .expect("create second profile");
+            .expect("create consented second profile");
 
         assert!(
             !store

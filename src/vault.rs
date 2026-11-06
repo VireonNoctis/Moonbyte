@@ -550,10 +550,9 @@ mod postgres_tests {
         let atlas = AtlasStore::new(pool.clone());
         let store = VaultStore::new(pool.clone());
 
-        profiles
-            .get_or_create(&player_id, "Vault Test")
+        crate::profile::create_test_player(pool.clone(), &player_id, "Vault Test")
             .await
-            .expect("create player profile");
+            .expect("create consented player profile");
         atlas.snapshot(&player_id).await.expect("create starting Atlas state");
 
         assert!(matches!(store.enter(&player_id).await, Err(VaultError::NotDiscovered)));
