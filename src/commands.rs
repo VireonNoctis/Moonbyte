@@ -2321,17 +2321,33 @@ pub async fn expedition(
             .await
         }
         "start" => {
-            let route = target.as_deref().unwrap_or(crate::expedition::ROUTE_ID);
-            if route != crate::expedition::ROUTE_ID {
-                return send_private(ctx, "The current route is lantern-road. Other routes will appear when authored and released.").await;
-            }
+            let route_id = target.as_deref().unwrap_or(crate::expedition::ROUTE_ID);
+            let Some(route) = crate::expedition::route_definition(route_id) else {
+                let route_ids = crate::expedition::EXPEDITION_ROUTES
+                    .iter()
+                    .map(|route| route.id)
+                    .collect::<Vec<_>>();
+                let suggestion = suggest_known_value(route_id, &route_ids)
+                    .map(|value| format!(" Did you mean `{value}`?"))
+                    .unwrap_or_default();
+                return send_private(
+                    ctx,
+                    format!(
+                        "Unknown Expedition route `{}`.{} Available routes: `{}`.",
+                        escape_user_text(route_id),
+                        suggestion,
+                        route_ids.join("`, `")
+                    ),
+                )
+                .await;
+            };
             let mode = details
                 .as_deref()
                 .unwrap_or("solo")
                 .trim()
                 .to_ascii_lowercase();
             if mode != "solo" && mode != "group" {
-                return send_private(ctx, "Choose solo or group for the Lantern Road.").await;
+                return send_private(ctx, "Choose solo or group for this Expedition.").await;
             }
             ctx.data()
                 .profiles()
@@ -2342,19 +2358,19 @@ pub async fn expedition(
             let run = ctx
                 .data()
                 .expeditions()
-                .start(&player_id, guild_id.as_deref(), shared)
+                .start_route(&player_id, guild_id.as_deref(), route.id, shared)
                 .await?;
             if shared {
                 let safe_prefix = escape_user_text(&prefix);
                 ctx.say(format!(
-                    "**Lantern Road group run #{} is recruiting.** Share the run ID with up to three friends. Each person must join explicitly with {}expedition join {}. The host can begin when everyone is ready. Personal Atlas progress is not shown here.",
-                    run.run_id, safe_prefix, run.run_id
+                    "**{} group run #{} is recruiting.** Share the run ID with up to three friends. Each person must join explicitly with {}expedition join {}. The host can begin when everyone is ready. Personal Atlas progress is not shown here.",
+                    route.title, run.run_id, safe_prefix, run.run_id
                 )).await?;
                 Ok(())
             } else {
                 send_private_title_panel(
                     ctx,
-                    "Lantern Road Expedition",
+                    route.title,
                     None,
                     crate::expedition::render(&run, &prefix),
                 )
@@ -2378,7 +2394,7 @@ pub async fn expedition(
             let run = ctx.data().expeditions().join(&player_id, guild, id).await?;
             send_private_title_panel(
                 ctx,
-                "Lantern Road Expedition",
+                run.route_title,
                 None,
                 crate::expedition::render(&run, &prefix),
             )
@@ -2427,7 +2443,7 @@ pub async fn expedition(
             };
             send_private_title_panel(
                 ctx,
-                "Lantern Road Expedition",
+                run.route_title,
                 None,
                 crate::expedition::render(&run, &prefix),
             )
@@ -2452,7 +2468,7 @@ pub async fn expedition(
                 .await?;
             send_private_title_panel(
                 ctx,
-                "Lantern Road Expedition",
+                run.route_title,
                 None,
                 crate::expedition::render(&run, &prefix),
             )
@@ -2471,7 +2487,10 @@ pub async fn expedition(
                 .unwrap_or_default();
             send_private(
                 ctx,
-                format!("{guidance}Use {0}expedition list, start lantern-road solo|group, join RUN_ID, begin RUN_ID, status RUN_ID, advance RUN_ID CHECKPOINT_ID CHOICE, pause RUN_ID, resume RUN_ID, leave RUN_ID, or cancel RUN_ID.", escape_user_text(&prefix)),
+                format!(
+                    "{guidance}Use {0}expedition list, start <route-id> solo|group, join RUN_ID, begin RUN_ID, status RUN_ID, advance RUN_ID CHECKPOINT_ID CHOICE, pause RUN_ID, resume RUN_ID, leave RUN_ID, or cancel RUN_ID.",
+                    escape_user_text(&prefix)
+                ),
             ).await
         }
     }

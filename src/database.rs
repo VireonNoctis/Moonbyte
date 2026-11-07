@@ -21,6 +21,8 @@ const VAULT_CHRONICLE_MIGRATION: &str =
 const GUILD_PROJECT_MIGRATION: &str = include_str!("../migrations/0016_guild_projects.sql");
 const WAYFARER_ACTIVITY_MIGRATION: &str =
     include_str!("../migrations/0017_wayfarer_cross_system_activities.sql");
+const GLASSWATER_EXPEDITION_MIGRATION: &str =
+    include_str!("../migrations/0018_glasswater_expedition_route.sql");
 
 /// PostgreSQL connection pool and ordered schema migrations.
 #[derive(Clone)]
@@ -102,6 +104,7 @@ impl Database {
             (15_i64, VAULT_CHRONICLE_MIGRATION),
             (16_i64, GUILD_PROJECT_MIGRATION),
             (17_i64, WAYFARER_ACTIVITY_MIGRATION),
+            (18_i64, GLASSWATER_EXPEDITION_MIGRATION),
         ] {
             let already_applied: bool = sqlx::query_scalar(
                 "SELECT EXISTS (SELECT 1 FROM moonbyte_schema_migrations WHERE version = $1)",

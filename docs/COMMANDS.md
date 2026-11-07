@@ -64,7 +64,7 @@ Mosslight Resonance is a solo three-chamber Puzzle Vault unlocked by discovering
 
 The Atlas panel and Tavern Wayfinder both link to the Vault; the Atlas displays the entry after Mosslight Grove is discovered.
 
-Lantern Road is the one implemented route: Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Start solo with `.expedition start lantern-road solo` or create a same-server recruiting group with `.expedition start lantern-road group`. Other players join explicitly using `.expedition join <run-id>`. Shared runs support up to four participants. All participants must be at Lantern Square before the host begins. Use `.expedition status <run-id>`; advance with `.expedition advance <run-id> <checkpoint-id> <choice>`. Participants may pause, resume or leave. If the host leaves, ownership transfers to the earliest remaining active participant. Runs do not expire for inactivity.
+Two routes are live: Lantern Road (Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory) and Glasswater Crossing (Lantern Square → Glasswater Pier → Starfall Observatory → Mosslight Grove). Start either solo or in a same-server recruiting group with `.expedition start <route-id> solo|group`. Other players join explicitly using `.expedition join <run-id>`. Shared runs support up to four participants. All participants must be at Lantern Square before the host begins. Use `.expedition status <run-id>`; advance with `.expedition advance <run-id> <checkpoint-id> <choice>`. Participants may pause, resume or leave. If the host leaves, ownership transfers to the earliest remaining active participant. Runs do not expire for inactivity.
 
 ## Server projects
 

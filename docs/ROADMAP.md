@@ -23,6 +23,7 @@
 - [x] Derived per-game and overall Mastery ranks calculated from existing statistics; added `.mastery [game]` and the private Player Card projection without adding a data table.
 - [x] Dedicated `.streak` / `.streak milestones` views backed by the canonical companion milestone catalogue, and a private Chronicle Rivalry Log for mutually accepted head-to-head records.
 - [x] Lantern Road Expedition v1 with solo/group state, explicit opt-in, persistent checkpoints, pause/resume/leave and privacy coverage.
+- [x] Versioned Expedition route catalogue with the second authored Glasswater Crossing route, reciprocal Atlas-edge tests, route-specific clue validation, PostgreSQL migration 0018, and export/deletion-backed integration coverage.
 - [x] Manual PostgreSQL backup and guarded empty-database restore scripts, plus a database readiness check in the ping command.
 - [x] Version 1.0.0 initial privacy policy and product blueprint labels.
 - [x] Mosslight Resonance solo Puzzle Vault: three authored chambers, explicit private entry, PostgreSQL save stones, resume/pause/leave, fixed one-time keepsake, Chronicle/Wayfarer hand-off, export/deletion and concurrency/replay coverage. CI passed 96 PostgreSQL-backed tests, rustfmt, the PostgreSQL backup/restore round-trip and Clippy; private development-guild interaction verification remains a deployment gate.
@@ -51,7 +52,7 @@
 4. **Expand the connected game world**
    - Add more authored materials and deterministic recipes only after the first Workshop recipe is fully verified.
    - Add further authored Puzzle Vault blueprints only after Mosslight Resonance has passed its privacy, concurrency, replay and recovery gates. The first implementation is tracked against [ADR 0013](DECISIONS/0013-first-puzzle-vault-vertical-slice.md).
-   - Add more Expedition routes, story quests and reviewed original word/puzzle packs.
+   - Add a further authored Expedition route, story quests and reviewed original word/puzzle packs. Lantern Road and Glasswater Crossing now share the versioned route service; the Lantern Road Survey remains exclusive to its original route.
    - Expand the first Guild Project into reviewed shared collections and milestone hand-offs only after moderation, visibility, reward settlement and abuse boundaries are tested.
 
 ## Later proposals
