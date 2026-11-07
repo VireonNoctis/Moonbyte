@@ -9,6 +9,8 @@ use std::fmt;
 
 pub const ROUTE_ID: &str = "lantern-road";
 pub const ROUTE_VERSION: i16 = 1;
+pub const GLASSWATER_ROUTE_ID: &str = "glasswater-crossing";
+pub const GLASSWATER_ROUTE_VERSION: i16 = 1;
 pub const MAX_PARTICIPANTS: i64 = 4;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -18,6 +20,16 @@ pub struct Checkpoint {
     pub title: &'static str,
     pub prompt: &'static str,
     pub choices: &'static [&'static str],
+    pub correct_choice: Option<&'static str>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RouteDefinition {
+    pub id: &'static str,
+    pub version: i16,
+    pub title: &'static str,
+    pub summary: &'static str,
+    pub checkpoints: &'static [Checkpoint],
 }
 
 pub const LANTERN_ROAD: [Checkpoint; 4] = [
@@ -27,6 +39,7 @@ pub const LANTERN_ROAD: [Checkpoint; 4] = [
         title: "The Lantern Square Departure",
         prompt: "The road begins where the first lantern was lit. Check the route and prepare to set out.",
         choices: &["ready"],
+        correct_choice: None,
     },
     Checkpoint {
         id: "mosslight-grove",
@@ -34,6 +47,7 @@ pub const LANTERN_ROAD: [Checkpoint; 4] = [
         title: "The Mosslight Observation",
         prompt: "The old stones hold the grove's stories. Choose how to make your first observation.",
         choices: &["listen", "inspect"],
+        correct_choice: None,
     },
     Checkpoint {
         id: "ember-archive",
@@ -41,6 +55,7 @@ pub const LANTERN_ROAD: [Checkpoint; 4] = [
         title: "The Ember Archive Riddle",
         prompt: "The keeper shows two marks on the old road chart: a lantern and a star. Which mark points toward the Starfall Observatory?",
         choices: &["star", "lantern"],
+        correct_choice: Some("star"),
     },
     Checkpoint {
         id: "starfall-observatory",
@@ -48,8 +63,65 @@ pub const LANTERN_ROAD: [Checkpoint; 4] = [
         title: "The Starfall Chart",
         prompt: "The observatory is reached. Set the final chart in its place to complete the Lantern Road.",
         choices: &["chart"],
+        correct_choice: None,
     },
 ];
+
+pub const GLASSWATER_CROSSING: [Checkpoint; 4] = [
+    Checkpoint {
+        id: "lantern-square",
+        location_id: "lantern-square",
+        title: "The Lantern Square Departure",
+        prompt: "The coastal path starts at Lantern Square. Check the tide notes before leaving.",
+        choices: &["ready"],
+        correct_choice: None,
+    },
+    Checkpoint {
+        id: "glasswater-pier",
+        location_id: "glasswater-pier",
+        title: "The Glasswater Survey",
+        prompt: "The pier has two calm channels. Record the shoreline before following the connected star path.",
+        choices: &["survey"],
+        correct_choice: None,
+    },
+    Checkpoint {
+        id: "glasswater-star-chart",
+        location_id: "starfall-observatory",
+        title: "The Western Star Chart",
+        prompt: "From the observatory, the clear western marker points back toward Mosslight Grove. Which direction is recorded on the chart?",
+        choices: &["east", "west"],
+        correct_choice: Some("west"),
+    },
+    Checkpoint {
+        id: "mosslight-return",
+        location_id: "mosslight-grove",
+        title: "The Mosslight Return",
+        prompt: "The crossing ends at Mosslight Grove. Record the return marker to complete the route.",
+        choices: &["record"],
+        correct_choice: None,
+    },
+];
+
+pub const EXPEDITION_ROUTES: [RouteDefinition; 2] = [
+    RouteDefinition {
+        id: ROUTE_ID,
+        version: ROUTE_VERSION,
+        title: "The Lantern Road",
+        summary: "Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory",
+        checkpoints: &LANTERN_ROAD,
+    },
+    RouteDefinition {
+        id: GLASSWATER_ROUTE_ID,
+        version: GLASSWATER_ROUTE_VERSION,
+        title: "The Glasswater Crossing",
+        summary: "Lantern Square → Glasswater Pier → Starfall Observatory → Mosslight Grove",
+        checkpoints: &GLASSWATER_CROSSING,
+    },
+];
+
+pub fn route_definition(route_id: &str) -> Option<&'static RouteDefinition> {
+    EXPEDITION_ROUTES.iter().find(|route| route.id == route_id)
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Participant {
@@ -61,6 +133,9 @@ pub struct Participant {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Snapshot {
     pub run_id: i64,
+    pub route_id: String,
+    pub route_title: &'static str,
+    pub route_checkpoint_count: usize,
     pub content_version: i16,
     pub guild_id: Option<String>,
     pub shared: bool,
@@ -102,7 +177,7 @@ impl fmt::Display for ExpeditionError {
             Self::Atlas(error) => error.fmt(f),
             Self::SharedRequiresGuild => f.write_str("A shared Expedition must be created inside a Discord server."),
             Self::WrongGuild => f.write_str("That group run belongs to a different Discord server."),
-            Self::NotAtStart => f.write_str("You must be at Lantern Square before starting or joining the Lantern Road."),
+            Self::NotAtStart => f.write_str("You must be at the route starting location before starting or joining this Expedition."),
             Self::RunNotFound => f.write_str("That Expedition run was not found."),
             Self::NotParticipant => f.write_str("Only a participant can view that private run."),
             Self::NotActiveParticipant => f.write_str("You are not an active participant in that run."),
@@ -111,10 +186,10 @@ impl fmt::Display for ExpeditionError {
             Self::NotActive => f.write_str("That run is not active."),
             Self::NotPaused => f.write_str("That run is not paused."),
             Self::NotHost => f.write_str("Only the current host can start or cancel this group run."),
-            Self::PartyFull => f.write_str("The Lantern Road supports at most four participants."),
+            Self::PartyFull => f.write_str("An Expedition supports at most four participants."),
             Self::StaleCheckpoint => f.write_str("That checkpoint is no longer next. Refresh the run status before advancing."),
             Self::InvalidChoice => f.write_str("That choice is not available at this checkpoint."),
-            Self::IncorrectAnswer => f.write_str("That clue does not match the chart. Nothing advanced; review the archive clue and try again."),
+            Self::IncorrectAnswer => f.write_str("That clue does not match this route. Nothing advanced; review the checkpoint and try again."),
             Self::UnknownRoute => f.write_str("This run refers to an unknown route or checkpoint."),
         }
     }
@@ -164,6 +239,17 @@ impl ExpeditionStore {
         guild: Option<&str>,
         shared: bool,
     ) -> Result<Snapshot, ExpeditionError> {
+        self.start_route(player, guild, ROUTE_ID, shared).await
+    }
+
+    pub async fn start_route(
+        &self,
+        player: &str,
+        guild: Option<&str>,
+        route_id: &str,
+        shared: bool,
+    ) -> Result<Snapshot, ExpeditionError> {
+        let route = route_definition(route_id).ok_or(ExpeditionError::UnknownRoute)?;
         if shared && guild.is_none() {
             return Err(ExpeditionError::SharedRequiresGuild);
         }
@@ -175,7 +261,7 @@ impl ExpeditionStore {
             "INSERT INTO expedition_runs (route_id, content_version, guild_id, host_discord_user_id, shared, state, current_checkpoint_index, started_at)
              VALUES ($1, $2, $3, $4, $5, $6, 0, CASE WHEN $5 THEN NULL ELSE now() END)
              RETURNING expedition_run_id",
-        ).bind(ROUTE_ID).bind(ROUTE_VERSION).bind(guild).bind(player).bind(shared).bind(state)
+        ).bind(route.id).bind(route.version).bind(guild).bind(player).bind(shared).bind(state)
          .fetch_one(&mut *tx).await?;
         sqlx::query("INSERT INTO expedition_participants (expedition_run_id, discord_user_id) VALUES ($1, $2)")
             .bind(id).bind(player).execute(&mut *tx).await?;
@@ -207,7 +293,9 @@ impl ExpeditionStore {
             .fetch_optional(&mut *tx)
             .await?
             .ok_or(ExpeditionError::RunNotFound)?;
-        if route_id != ROUTE_ID || content_version != ROUTE_VERSION {
+        if !route_definition(&route_id)
+            .is_some_and(|route| route.version == content_version)
+        {
             return Err(ExpeditionError::UnknownRoute);
         }
         if !shared || saved_guild.as_deref() != Some(guild) {
@@ -291,7 +379,7 @@ impl ExpeditionStore {
         id: i64,
     ) -> Result<Snapshot, ExpeditionError> {
         let row = load_run(&self.pool, id).await?;
-        ensure_supported_route(&row)?;
+        let route = ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         let member: bool = sqlx::query_scalar(
             "SELECT EXISTS (SELECT 1 FROM expedition_participants WHERE expedition_run_id = $1 AND discord_user_id = $2)",
@@ -301,10 +389,11 @@ impl ExpeditionStore {
         }
         let index =
             usize::try_from(row.checkpoint_index).map_err(|_| ExpeditionError::UnknownRoute)?;
-        let current = *LANTERN_ROAD
+        let current = *route
+            .checkpoints
             .get(index)
             .ok_or(ExpeditionError::UnknownRoute)?;
-        let next = LANTERN_ROAD.get(index + 1).copied();
+        let next = route.checkpoints.get(index + 1).copied();
         let participants = sqlx::query_as::<_, (String, bool)>(
             "SELECT discord_user_id, is_active FROM expedition_participants WHERE expedition_run_id = $1 ORDER BY joined_at ASC, discord_user_id ASC",
         ).bind(id).fetch_all(&self.pool).await?
@@ -314,6 +403,9 @@ impl ExpeditionStore {
          }).collect();
         Ok(Snapshot {
             run_id: id,
+            route_id: row.route_id,
+            route_title: route.title,
+            route_checkpoint_count: route.checkpoints.len(),
             content_version: row.content_version,
             guild_id: row.guild_id,
             shared: row.shared,
@@ -337,7 +429,7 @@ impl ExpeditionStore {
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
         let row = lock_run(&mut tx, id).await?;
-        ensure_supported_route(&row)?;
+        let route = ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
         if row.state != "active" {
             return Err(ExpeditionError::NotActive);
@@ -348,14 +440,16 @@ impl ExpeditionStore {
         }
         let next_index =
             usize::try_from(row.checkpoint_index).map_err(|_| ExpeditionError::UnknownRoute)? + 1;
-        let next = *LANTERN_ROAD
+        let next = *route
+            .checkpoints
             .get(next_index)
             .ok_or(ExpeditionError::NotActive)?;
         if next.id != expected {
             return Err(ExpeditionError::StaleCheckpoint);
         }
-        validate_choice(next_index, choice)?;
-        let previous = LANTERN_ROAD
+        validate_checkpoint_choice(next, choice)?;
+        let previous = route
+            .checkpoints
             .get(next_index - 1)
             .ok_or(ExpeditionError::UnknownRoute)?;
         for member in &members {
@@ -367,9 +461,12 @@ impl ExpeditionStore {
         sqlx::query(
             "INSERT INTO expedition_checkpoint_history (expedition_run_id, content_version, checkpoint_index, checkpoint_id, choice_id, completed_by)
              VALUES ($1, $2, $3, $4, $5, $6)",
-        ).bind(id).bind(ROUTE_VERSION).bind(checkpoint_index).bind(next.id)
+        ).bind(id).bind(route.version).bind(checkpoint_index).bind(next.id)
          .bind(choice.trim().to_ascii_lowercase()).bind(player).execute(&mut *tx).await?;
+        // The first Guild Project is specifically a Lantern Road Survey.
+        // Other shared routes must never contribute to its server-owned board.
         if row.shared
+            && row.route_id == ROUTE_ID
             && let Some(guild_id) = row.guild_id.as_deref()
         {
             self.guild_projects
@@ -378,7 +475,7 @@ impl ExpeditionStore {
         }
         sqlx::query("UPDATE expedition_participants SET last_checkpoint_index = $2 WHERE expedition_run_id = $1 AND is_active")
             .bind(id).bind(checkpoint_index).execute(&mut *tx).await?;
-        let completed = next_index == LANTERN_ROAD.len() - 1;
+        let completed = next_index == route.checkpoints.len() - 1;
         sqlx::query(
             "UPDATE expedition_runs SET current_checkpoint_index = $2,
              state = CASE WHEN $3 THEN 'completed' ELSE 'active' END,
@@ -525,12 +622,12 @@ struct RunRow {
     checkpoint_index: i16,
     row_version: i64,
 }
-fn ensure_supported_route(row: &RunRow) -> Result<(), ExpeditionError> {
-    if row.route_id == ROUTE_ID && row.content_version == ROUTE_VERSION {
-        Ok(())
-    } else {
-        Err(ExpeditionError::UnknownRoute)
-    }
+fn ensure_supported_route(
+    row: &RunRow,
+) -> Result<&'static RouteDefinition, ExpeditionError> {
+    route_definition(&row.route_id)
+        .filter(|route| route.version == row.content_version)
+        .ok_or(ExpeditionError::UnknownRoute)
 }
 
 async fn load_run(pool: &PgPool, id: i64) -> Result<RunRow, ExpeditionError> {
@@ -630,26 +727,51 @@ fn scope(saved: &Option<String>, requested: Option<&str>) -> Result<(), Expediti
         Err(ExpeditionError::WrongGuild)
     }
 }
-fn validate_choice(index: usize, choice: &str) -> Result<(), ExpeditionError> {
-    let checkpoint = LANTERN_ROAD
-        .get(index)
-        .ok_or(ExpeditionError::UnknownRoute)?;
+fn validate_checkpoint_choice(
+    checkpoint: &Checkpoint,
+    choice: &str,
+) -> Result<(), ExpeditionError> {
     let choice = choice.trim().to_ascii_lowercase();
     if !checkpoint.choices.contains(&choice.as_str()) {
         return Err(ExpeditionError::InvalidChoice);
     }
-    if checkpoint.id == "ember-archive" && choice != "star" {
+    if checkpoint
+        .correct_choice
+        .is_some_and(|correct| correct != choice)
+    {
         return Err(ExpeditionError::IncorrectAnswer);
     }
     Ok(())
 }
 
+fn validate_choice(index: usize, choice: &str) -> Result<(), ExpeditionError> {
+    let checkpoint = LANTERN_ROAD
+        .get(index)
+        .ok_or(ExpeditionError::UnknownRoute)?;
+    validate_checkpoint_choice(checkpoint, choice)
+}
+
 pub fn render_catalogue(prefix: &str) -> String {
     let p = safe_prefix(prefix);
-    format!(
-        "**Expedition Routes**\n\n**The Lantern Road** — Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory\nFour checkpoints · Solo or up to four players in one server · No deadline or attendance penalty\n\nStart solo: {p}expedition start lantern-road solo\nCreate a group: {p}expedition start lantern-road group"
-    )
+    let routes = EXPEDITION_ROUTES
+        .iter()
+        .map(|route| {
+            format!(
+                "**{}** (`{}`, v{}) — {}\n{} checkpoints · Solo or up to four players in one server · No deadline or attendance penalty\nStart solo: {p}expedition start {} solo\nCreate a group: {p}expedition start {} group",
+                route.title,
+                route.id,
+                route.version,
+                route.summary,
+                route.checkpoints.len(),
+                route.id,
+                route.id
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    format!("**Expedition Routes**\n\n{routes}")
 }
+
 pub fn render(snapshot: &Snapshot, prefix: &str) -> String {
     let p = safe_prefix(prefix);
     let participants = snapshot
@@ -685,7 +807,7 @@ pub fn render(snapshot: &Snapshot, prefix: &str) -> String {
         "active" if snapshot.next.is_some() => format!(
             "{p}expedition advance {} {} <choice>\n{p}expedition pause {}\n{p}expedition leave {}",
             snapshot.run_id,
-            snapshot.next.map(|c| c.id).unwrap_or(""),
+            snapshot.next.map(|checkpoint| checkpoint.id).unwrap_or(""),
             snapshot.run_id,
             snapshot.run_id
         ),
@@ -693,24 +815,26 @@ pub fn render(snapshot: &Snapshot, prefix: &str) -> String {
             "{p}expedition resume {}\n{p}expedition leave {}",
             snapshot.run_id, snapshot.run_id
         ),
-        "completed" => {
-            "The Lantern Road is complete. Your Atlas and private Chronicle remain yours."
-                .to_owned()
-        }
+        "completed" => format!(
+            "{} is complete. Your Atlas and private Chronicle remain yours.",
+            snapshot.route_title
+        ),
         "cancelled" => "This run was cancelled. Completed discoveries remain.".to_owned(),
         _ => "No action is available.".to_owned(),
     };
     let place = LOCATION_CATALOGUE
         .iter()
-        .find(|p| p.id == snapshot.current.location_id)
-        .map(|p| p.name)
+        .find(|location| location.id == snapshot.current.location_id)
+        .map(|location| location.name)
         .unwrap_or("Unknown");
     format!(
-        "**The Lantern Road · Expedition #{}**\n\nState: **{}** · Checkpoint: **{}/{}** · Route v{}\nCurrent place: **{}**\nParticipants:\n{}\n\n{}\n\n{}",
+        "**{} · Expedition #{}**\n\nRoute: `{}` · State: **{}** · Checkpoint: **{}/{}** · Route v{}\nCurrent place: **{}**\nParticipants:\n{}\n\n{}\n\n{}",
+        snapshot.route_title,
         snapshot.run_id,
+        snapshot.route_id,
         snapshot.state,
         snapshot.checkpoint_index + 1,
-        LANTERN_ROAD.len(),
+        snapshot.route_checkpoint_count,
         snapshot.content_version,
         place,
         participants,
@@ -745,6 +869,49 @@ mod tests {
             assert!(from.routes_to.contains(&pair[1].location_id));
             assert!(to.routes_to.contains(&pair[0].location_id));
         }
+    }
+
+    #[test]
+    fn every_route_uses_existing_reciprocal_atlas_edges() {
+        for route in EXPEDITION_ROUTES {
+            assert_eq!(route.checkpoints.len(), 4);
+            for pair in route.checkpoints.windows(2) {
+                let from = LOCATION_CATALOGUE
+                    .iter()
+                    .find(|location| location.id == pair[0].location_id)
+                    .expect("known route source");
+                let to = LOCATION_CATALOGUE
+                    .iter()
+                    .find(|location| location.id == pair[1].location_id)
+                    .expect("known route destination");
+                assert!(from.routes_to.contains(&to.id), "{} route edge missing", route.id);
+                assert!(to.routes_to.contains(&from.id), "{} route edge is not reciprocal", route.id);
+            }
+        }
+    }
+
+    #[test]
+    fn route_registry_rejects_unknown_ids_and_pins_each_content_version() {
+        assert_eq!(route_definition(ROUTE_ID).map(|route| route.version), Some(1));
+        assert_eq!(route_definition(GLASSWATER_ROUTE_ID).map(|route| route.version), Some(1));
+        assert!(route_definition("unknown-road").is_none());
+    }
+
+    #[test]
+    fn glasswater_chart_requires_the_reviewed_western_direction() {
+        let chart = GLASSWATER_CROSSING
+            .iter()
+            .find(|checkpoint| checkpoint.id == "glasswater-star-chart")
+            .expect("Glasswater clue exists");
+        assert_eq!(validate_checkpoint_choice(chart, "west"), Ok(()));
+        assert_eq!(
+            validate_checkpoint_choice(chart, "east"),
+            Err(ExpeditionError::IncorrectAnswer)
+        );
+        assert_eq!(
+            validate_checkpoint_choice(chart, "north"),
+            Err(ExpeditionError::InvalidChoice)
+        );
     }
 
     #[test]
@@ -1043,9 +1210,68 @@ mod tests {
             .expect("remove final participant and orphaned run history");
         assert_eq!(member_deletion.expedition_participations_removed, 1);
         assert_eq!(member_deletion.expedition_runs_removed, 1);
+        let glasswater = store
+            .start_route(&outsider_id, None, GLASSWATER_ROUTE_ID, false)
+            .await
+            .expect("start Glasswater Crossing");
+        assert_eq!(glasswater.route_id, GLASSWATER_ROUTE_ID);
+        assert_eq!(glasswater.route_title, "The Glasswater Crossing");
+        store
+            .advance(&outsider_id, None, glasswater.run_id, "glasswater-pier", "survey")
+            .await
+            .expect("survey Glasswater Pier");
+        let chart = store
+            .advance(
+                &outsider_id,
+                None,
+                glasswater.run_id,
+                "glasswater-star-chart",
+                "west",
+            )
+            .await
+            .expect("follow western chart");
+        assert_eq!(chart.current.location_id, "starfall-observatory");
+        let completed_crossing = store
+            .advance(
+                &outsider_id,
+                None,
+                glasswater.run_id,
+                "mosslight-return",
+                "record",
+            )
+            .await
+            .expect("complete Glasswater Crossing");
+        assert_eq!(completed_crossing.state, "completed");
+        assert!(!store
+            .has_completed_lantern_road(&outsider_id)
+            .await
+            .expect("Glasswater does not count as a Lantern Road archive record"));
+        let crossing_history: Vec<String> = sqlx::query_scalar(
+            "SELECT checkpoint_id FROM expedition_checkpoint_history
+             WHERE expedition_run_id = $1 ORDER BY checkpoint_index",
+        )
+        .bind(glasswater.run_id)
+        .fetch_all(&pool)
+        .await
+        .expect("read Glasswater checkpoint history");
+        assert_eq!(
+            crossing_history,
+            vec![
+                String::from("glasswater-pier"),
+                String::from("glasswater-star-chart"),
+                String::from("mosslight-return")
+            ]
+        );
+        let crossing_export = profiles
+            .export_json(&outsider_id)
+            .await
+            .expect("export Glasswater route history");
+        assert!(crossing_export.contains("glasswater-crossing"));
+        assert!(crossing_export.contains("glasswater-star-chart"));
+
         profiles
             .delete_account(&outsider_id)
             .await
-            .expect("remove test observer account");
+            .expect("remove test observer and second-route history");
     }
 }
