@@ -20,10 +20,12 @@
 - [x] Two fixed materials earned through authored Atlas discoveries, with migration backfill.
 - [x] One deterministic crafting recipe with atomic input consumption, account-bound output provenance and repeat-craft protection.
 - [x] Optional Wayfarer objectives, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries; seven stable daily objectives now include first-time crafting and completed Expeditions, committed atomically with their source actions.
+- [x] Derived per-game and overall Mastery ranks calculated from existing statistics; added `.mastery [game]` and the private Player Card projection without adding a data table.
+- [x] Dedicated `.streak` / `.streak milestones` views backed by the canonical companion milestone catalogue, and a private Chronicle Rivalry Log for mutually accepted head-to-head records.
 - [x] Lantern Road Expedition v1 with solo/group state, explicit opt-in, persistent checkpoints, pause/resume/leave and privacy coverage.
 - [x] Manual PostgreSQL backup and guarded empty-database restore scripts, plus a database readiness check in the ping command.
 - [x] Version 1.0.0 initial privacy policy and product blueprint labels.
-- [x] Mosslight Resonance solo Puzzle Vault: three authored chambers, explicit private entry, PostgreSQL save stones, resume/pause/leave, fixed one-time keepsake, Chronicle/Wayfarer hand-off, export/deletion and concurrency/replay coverage. CI passed 89 PostgreSQL-backed tests, rustfmt and Clippy; private development-guild interaction verification remains a deployment gate.
+- [x] Mosslight Resonance solo Puzzle Vault: three authored chambers, explicit private entry, PostgreSQL save stones, resume/pause/leave, fixed one-time keepsake, Chronicle/Wayfarer hand-off, export/deletion and concurrency/replay coverage. CI passed 96 PostgreSQL-backed tests, rustfmt, the PostgreSQL backup/restore round-trip and Clippy; private development-guild interaction verification remains a deployment gate.
 - [x] Private Player Card v1: private cross-system projection from the owning game, achievement, Wayfarer, Rivalry, Chronicle, inventory and Vault stores, with command shortcuts. The read-only panel renderer and source build are CI-tested; public/guild profile projections remain deferred.
 - [x] First opt-in Guild Project: a server-scoped Lantern Road Survey with manager-authorised setup, explicit join/leave, private aggregate status, idempotent shared-Expedition contributions, anonymous progress, membership export/deletion and actual-uninstall cleanup.
 
@@ -54,7 +56,7 @@
 ## Later proposals
 
 - Fixed-price Bazaar listings and work orders after ownership, moderation, duplicate protection and atomic settlement are complete.
-- Mastery, expanded Player Card sections, seasonal Almanac, festivals, additional companion cosmetics and homesteads after their owning systems exist. The private Player Card v1 is a read-only projection; public and guild-facing cards remain deferred.
+- Seasonal Almanac, festivals, additional companion cosmetics and homesteads after their owning systems exist. The private Player Card remains a read-only projection; public and guild-facing cards remain deferred.
 - Public player directory and leaderboards only with explicit visibility controls and privacy-complete projections.
 - Broader social surfaces only after guild isolation, consent and deletion boundaries are complete. The first Guild Project does not expose member lists or public player profiles.
 

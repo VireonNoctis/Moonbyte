@@ -936,6 +936,7 @@ pub async fn profile(
     let games_played = stats.iter().map(|entry| entry.games_played).sum();
     let games_won = stats.iter().map(|entry| entry.games_won).sum();
     let draws = stats.iter().map(|entry| entry.draws).sum();
+    let mastery = crate::mastery::summarize(games_played, games_won);
     let active_rivalries = rivalries
         .iter()
         .filter(|record| record.status == "active")
@@ -980,6 +981,10 @@ pub async fn profile(
         games_played,
         games_won,
         draws,
+        mastery_rank: mastery.rank,
+        mastery_points: mastery.points,
+        mastery_next_rank: mastery.next_rank,
+        mastery_points_to_next: mastery.points_to_next_rank,
         achievements_unlocked: achievements.len(),
         achievements_total: crate::achievement::ACHIEVEMENT_CATALOGUE.len(),
         journey_days: journey.active_days,
@@ -1712,6 +1717,74 @@ pub async fn wayfarer(
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn streak(
+    ctx: Context<'_>,
+    #[description = "Choose status or milestones. Leave blank to view your current count."]
+    #[autocomplete = "autocomplete_streak_view"]
+    view: Option<String>,
+    #[description = "Optional heading for this result."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let snapshot = ctx.data().wayfarer().snapshot(&player_id).await?;
+    let view = view.unwrap_or_else(|| "status".to_owned());
+    match view.trim().to_ascii_lowercase().as_str() {
+        "" | "status" => {
+            let next = snapshot
+                .next_milestone
+                .map(|threshold| {
+                    format!(
+                        "{} more active day(s) to {}",
+                        threshold - snapshot.active_days,
+                        crate::wayfarer::COMPANION_MILESTONES
+                            .iter()
+                            .find(|(days, _)| *days == threshold)
+                            .map(|(_, stage)| *stage)
+                            .unwrap_or("the next milestone")
+                    )
+                })
+                .unwrap_or_else(|| "All currently defined companion milestones reached".to_owned());
+            send_private_title_panel(
+                ctx,
+                "Wayfarer Streak",
+                title.as_deref(),
+                format!(
+                    "**Wayfarer Streak**\n\nJourney days: **{}**\nCompanion: **{}**\nCurrent stage: **{}**\n{}\n\nThe count grows when a meaningful daily activity is completed. It never resets after absence.",
+                    snapshot.active_days,
+                    snapshot.companion_name,
+                    snapshot.companion_stage,
+                    next
+                ),
+            )
+            .await
+        }
+        "milestones" => send_private_title_panel(
+            ctx,
+            "Wayfarer Streak Milestones",
+            title.as_deref(),
+            render_streak_milestones(snapshot.active_days),
+        )
+        .await,
+        other => {
+            let suggestion = suggest_known_value(other, &["status", "milestones"])
+                .map(|value| format!(" Did you mean `{value}`?"))
+                .unwrap_or_default();
+            send_private(
+                ctx,
+                format!(
+                    "Unknown Streak view `{}`.{} Use `.streak` or `.streak milestones`.",
+                    escape_user_text(other),
+                    suggestion
+                ),
+            )
+            .await
+        }
+    }
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn companion(
     ctx: Context<'_>,
     #[description = "Optional heading for this result. Leave blank to use Moonbyte's default title."]
@@ -1910,6 +1983,52 @@ pub async fn stats(
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn mastery(
+    ctx: Context<'_>,
+    #[description = "Choose a game to view its rank, or leave blank for the full Mastery Library."]
+    #[max_length = 100]
+    #[autocomplete = "autocomplete_game"]
+    game: Option<String>,
+    #[description = "Optional heading for this result."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
+    let selected_game = match game.as_deref() {
+        Some(value) => match GameKind::parse(value) {
+            Ok(game) => Some(game),
+            Err(_) => {
+                let choices = ["tic-tac-toe", "connect-four", "memory-match", "word-scramble"];
+                let guidance = suggest_known_value(value, &choices)
+                    .map(|suggestion| format!(" Did you mean `{suggestion}`?"))
+                    .unwrap_or_default();
+                return send_private(
+                    ctx,
+                    format!(
+                        "Unknown game `{}`.{} Choose one of: `{}`.",
+                        escape_user_text(value),
+                        guidance,
+                        choices.join("`, `")
+                    ),
+                )
+                .await;
+            }
+        },
+        None => None,
+    };
+
+    let player_id = ctx.author().id.to_string();
+    let stats = ctx.data().profiles().game_stats(&player_id).await?;
+    send_private_title_panel(
+        ctx,
+        "Mastery Library",
+        title.as_deref(),
+        render_mastery(&stats, selected_game),
+    )
+    .await
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn settings(
     ctx: Context<'_>,
     #[description = "Choose whether your profile is public or private."]
@@ -1987,13 +2106,20 @@ pub async fn chronicle(
         .get_or_create(&player_id, &ctx.author().name)
         .await?;
     ctx.data().atlas().snapshot(&player_id).await?;
-    let snapshot = ctx.data().chronicle().snapshot(&player_id).await?;
+    let (snapshot, rivalries) = tokio::join!(
+        ctx.data().chronicle().snapshot(&player_id),
+        ctx.data().wayfarer().rivalries(&player_id),
+    );
+    let snapshot = snapshot?;
+    let rivalries = rivalries?;
     let prefix = ctx.data().command_prefix(ctx.guild_id());
+    let chronicle = crate::chronicle::render(&snapshot, &prefix);
+    let rivalry_log = render_chronicle_rivalry_log(&rivalries);
     send_private_title_panel(
         ctx,
         "Chronicle Archive",
         title.as_deref(),
-        crate::chronicle::render(&snapshot, &prefix),
+        format!("{chronicle}\n\n{rivalry_log}"),
     )
     .await
 }
@@ -2705,6 +2831,8 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         settings(),
         wallet_command,
         achievements_command,
+        mastery(),
+        streak(),
         inventory(),
         collection(),
         craft(),
@@ -2876,6 +3004,20 @@ async fn autocomplete_game(_ctx: Context<'_>, partial: &str) -> CreateAutocomple
             )
         })
         .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_streak_view(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("Status · View your cumulative Wayfarer count", "status"),
+        ("Milestones · Review every companion threshold", "milestones"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
     build_autocomplete_response(partial, options)
 }
 
@@ -3053,6 +3195,10 @@ struct PlayerCardProgress<'a> {
     games_played: i64,
     games_won: i64,
     draws: i64,
+    mastery_rank: &'static str,
+    mastery_points: i64,
+    mastery_next_rank: Option<&'static str>,
+    mastery_points_to_next: i64,
     achievements_unlocked: usize,
     achievements_total: usize,
     journey_days: i64,
@@ -3089,6 +3235,10 @@ fn render_player_card(
         .next_companion_milestone
         .map(|days| format!("{days} more active day(s) to the next companion milestone"))
         .unwrap_or_else(|| "All currently defined companion milestones reached".to_owned());
+    let mastery_next = progress
+        .mastery_next_rank
+        .map(|rank| format!("{} points to {rank}", progress.mastery_points_to_next))
+        .unwrap_or_else(|| "highest current rank".to_owned());
     let game_word = if progress.games_played == 1 {
         "game"
     } else {
@@ -3115,12 +3265,14 @@ fn render_player_card(
         "**{}**\n{}\n\n\
          **Profile settings**\nVisibility: {} · Statistics sharing: {} · Quiet mode: {}\n\n\
          **Arcade record**\n{} {} · {} {} · {} {}\nAchievements: {}/{}\n\n\
+         **Mastery**\nMastery: {} · {} points · {}\n\n\
          **World & collection**\nChronicle: {}/{} pages · Postcards: {}/{}\nSatchel: {} {}\nPuzzle Vault: {}\n\n\
          **Wayfarer Thread**\nJourney days: {} · Companion: {} ({})\n{}\n\n\
          **Rivalry Hall**\n{} active · {} {}\n\n\
          **Quick routes**\n\
          `{prefix}games` · `{prefix}stats` · `{prefix}atlas` · `{prefix}chronicle`\n\
          `{prefix}quests` · `{prefix}expedition` · `{prefix}vault list`\n\
+         `{prefix}mastery` · `{prefix}streak` · `{prefix}rivals`\n\
          `{prefix}inventory` · `{prefix}collection` · `{prefix}companion` · `{prefix}rivals` · `{prefix}settings`\n\n\
          This personal card is visible only to you. Public and guild-facing profile cards are not enabled yet.",
         escape_user_text(&profile.display_name),
@@ -3136,6 +3288,9 @@ fn render_player_card(
         draw_word,
         progress.achievements_unlocked,
         progress.achievements_total,
+        escape_user_text(progress.mastery_rank),
+        progress.mastery_points,
+        mastery_next,
         progress.chronicle_unlocked,
         progress.chronicle_total,
         progress.postcards_unlocked,
@@ -3155,6 +3310,130 @@ fn render_player_card(
 fn render_privacy_overview(prefix: &str) -> String {
     let prefix = escape_user_text(prefix);
     PRIVACY_OVERVIEW.replace("`.privacy", &format!("`{prefix}privacy"))
+}
+
+fn mastery_progress_line(progress: crate::mastery::MasteryProgress) -> String {
+    match (progress.next_rank, progress.next_rank_threshold) {
+        (Some(next_rank), Some(threshold)) => format!(
+            "Progress to {next_rank}: {}/{} points · {} more to go",
+            progress.points, threshold, progress.points_to_next_rank
+        ),
+        _ => "Highest currently defined rank reached.".to_owned(),
+    }
+}
+
+fn render_mastery(
+    stats: &[crate::profile::PlayerGameStat],
+    selected_game: Option<GameKind>,
+) -> String {
+    let totals = |game: Option<GameKind>| {
+        stats
+            .iter()
+            .filter(|entry| {
+                game.map(|kind| entry.game_id == kind.definition().id)
+                    .unwrap_or(true)
+            })
+            .fold((0_i64, 0_i64), |(played, wins), entry| {
+                (
+                    played.saturating_add(entry.games_played.max(0)),
+                    wins.saturating_add(entry.games_won.max(0)),
+                )
+            })
+    };
+
+    if let Some(game) = selected_game {
+        let (games_played, games_won) = totals(Some(game));
+        let progress = crate::mastery::summarize(games_played, games_won);
+        return format!(
+            "**{} Mastery**\n\nRank: **{}**\nMastery points: **{}**\nCompleted games: {} · Wins: {}\n{}\n\nPoints are derived from your game record: one per completed game and two additional points per win. Mastery currently provides no gameplay advantage.",
+            game.definition().name,
+            progress.rank,
+            progress.points,
+            games_played,
+            games_won,
+            mastery_progress_line(progress)
+        );
+    }
+
+    let (games_played, games_won) = totals(None);
+    let overall = crate::mastery::summarize(games_played, games_won);
+    let entries = GameKind::ALL
+        .iter()
+        .map(|game| {
+            let (played, wins) = totals(Some(*game));
+            let progress = crate::mastery::summarize(played, wins);
+            format!(
+                "• **{}** — {} · {} points · {} completed · {} wins",
+                game.definition().name,
+                progress.rank,
+                progress.points,
+                played,
+                wins
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    format!(
+        "**Mastery Library**\n\nOverall rank: **{}** · {} points\n{}\n\n**Per-game ranks**\n{}\n\nScoring: one point per completed game plus two additional points per win. Mastery ranks are descriptive and do not alter game outcomes or grant purchasable advantages.",
+        overall.rank,
+        overall.points,
+        mastery_progress_line(overall),
+        entries
+    )
+}
+
+fn render_streak_milestones(active_days: i64) -> String {
+    let active_days = active_days.max(0);
+    let entries = crate::wayfarer::COMPANION_MILESTONES
+        .iter()
+        .map(|(threshold, stage)| {
+            if active_days >= *threshold {
+                format!("✓ **{threshold} days** — {stage} · reached")
+            } else {
+                format!(
+                    "◇ **{threshold} days** — {stage} · {} more active day(s)",
+                    threshold - active_days
+                )
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    format!(
+        "**Wayfarer Streak Milestones**\n\nJourney days recorded: **{active_days}**\n\n{entries}\n\nThis is a cumulative count, not a consecutive-day streak. Missing a day never removes progress or previously reached milestones."
+    )
+}
+
+fn render_chronicle_rivalry_log(records: &[crate::wayfarer::RivalryRecord]) -> String {
+    let active = records
+        .iter()
+        .filter(|record| record.status == "active")
+        .collect::<Vec<_>>();
+    if active.is_empty() {
+        return String::from(
+            "**Rivalry Log**\n\nNo active mutual rivalries yet. A record appears here only after both players accept an invitation.",
+        );
+    }
+
+    let entries = active
+        .iter()
+        .map(|record| {
+            format!(
+                "• **<@{}>** — {} matches · {} wins · {} losses · {} draws",
+                record.opponent_id,
+                record.matches_played,
+                record.your_wins,
+                record.opponent_wins,
+                record.draws
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    format!(
+        "**Rivalry Log**\n\n{entries}\n\nOnly completed matches after mutual acceptance are counted. This private summary shows the verified head-to-head record; it does not retain message content or individual moves."
+    )
 }
 
 fn render_statistics(stats: &[crate::profile::PlayerGameStat]) -> String {
@@ -3216,9 +3495,11 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}collection / /collection — view your Atlas postcard collection\n\
          {safe_prefix}craft wayfarer-lantern / /craft — make a fixed, one-time keepsake\n\
          {safe_prefix}stats / /stats — view completed game statistics\n\
+         {safe_prefix}mastery [game] / /mastery — view derived Mastery ranks\n\
          {safe_prefix}quests / /quests — open today's optional quest board\n\
          {safe_prefix}quest accept|claim <id> / /quest — accept or claim a daily quest\n\
          {safe_prefix}wayfarer / /wayfarer — view your non-resetting journey record\n\
+         {safe_prefix}streak [status|milestones] / /streak — view your cumulative journey and companion thresholds\n\
          {safe_prefix}companion / /companion — view cosmetic companion milestones\n\
          {safe_prefix}rivals / /rivals — view private rivalry invitations and records\n\
          {safe_prefix}rival declare|accept|decline <user/id> / /rival — manage mutual rivalries\n\
@@ -3330,9 +3611,11 @@ mod tests {
             ".collection / /collection",
             ".craft wayfarer-lantern / /craft",
             ".stats / /stats",
+            ".mastery [game] / /mastery",
             ".quests / /quests",
             ".quest accept|claim <id> / /quest",
             ".wayfarer / /wayfarer",
+            ".streak [status|milestones] / /streak",
             ".companion / /companion",
             ".rivals / /rivals",
             ".rival declare|accept|decline <user/id> / /rival",
@@ -3542,7 +3825,8 @@ mod title_panel_tests {
 mod autocomplete_tests {
     use super::{
         PlayerCardProgress, autocomplete_value_matches, game_component_button_state,
-        render_player_card, resolve_vault_panel_title,
+        render_chronicle_rivalry_log, render_player_card, render_streak_milestones,
+        resolve_vault_panel_title,
     };
     use crate::profile::PlayerProfile;
 
@@ -3587,6 +3871,10 @@ mod autocomplete_tests {
             games_played: 8,
             games_won: 5,
             draws: 1,
+            mastery_rank: "Adept",
+            mastery_points: 18,
+            mastery_next_rank: Some("Veteran"),
+            mastery_points_to_next: 17,
             achievements_unlocked: 3,
             achievements_total: 5,
             journey_days: 7,
@@ -3608,6 +3896,7 @@ mod autocomplete_tests {
         assert!(card.contains("Statistics sharing: Hidden from others"));
         assert!(card.contains("Quiet mode: On"));
         assert!(card.contains("8 games · 5 wins · 1 draw"));
+        assert!(card.contains("Mastery: Adept · 18 points · 17 points to Veteran"));
         assert!(card.contains("Chronicle: 2/6 pages · Postcards: 2/5"));
         assert!(card.contains("Mallow (Trail Scout)"));
         assert!(card.contains("2 active · 1 invitation"));
@@ -3655,6 +3944,50 @@ mod autocomplete_tests {
             "Wayfarer's Lantern",
             "wayfarer-lantern"
         ));
+    }
+
+    #[test]
+    fn streak_milestones_show_reached_and_future_count_up_thresholds() {
+        let panel = render_streak_milestones(7);
+        assert!(panel.contains("Journey days recorded: **7**"));
+        assert!(panel.contains("Trail Scout · reached"));
+        assert!(panel.contains("Wayfinder · 7 more active day(s)"));
+        assert!(panel.contains("never removes progress"));
+    }
+
+    #[test]
+    fn chronicle_rivalry_log_includes_only_mutually_active_records() {
+        let records = vec![
+            crate::wayfarer::RivalryRecord {
+                rivalry_id: 10,
+                opponent_id: "12345678901234567".to_owned(),
+                status: "active".to_owned(),
+                invited_by: "player".to_owned(),
+                matches_played: 4,
+                your_wins: 2,
+                opponent_wins: 1,
+                draws: 1,
+                created_at: "2026-11-01".to_owned(),
+                updated_at: "2026-11-07".to_owned(),
+            },
+            crate::wayfarer::RivalryRecord {
+                rivalry_id: 11,
+                opponent_id: "22345678901234567".to_owned(),
+                status: "pending".to_owned(),
+                invited_by: "player".to_owned(),
+                matches_played: 0,
+                your_wins: 0,
+                opponent_wins: 0,
+                draws: 0,
+                created_at: "2026-11-01".to_owned(),
+                updated_at: "2026-11-07".to_owned(),
+            },
+        ];
+
+        let log = render_chronicle_rivalry_log(&records);
+        assert!(log.contains("4 matches · 2 wins · 1 losses · 1 draws"));
+        assert!(!log.contains("22345678901234567"));
+        assert!(log.contains("Only completed matches after mutual acceptance"));
     }
 
     #[test]

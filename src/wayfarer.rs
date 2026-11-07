@@ -508,24 +508,26 @@ fn quest_definition(id: &str) -> Option<QuestDefinition> {
         .find(|quest| quest.id == id)
 }
 
+/// Cumulative journey-day milestones. Absence never reduces the recorded total.
+pub const COMPANION_MILESTONES: [(i64, &str); 7] = [
+    (1, "New Companion"),
+    (3, "Pathfinder"),
+    (7, "Trail Scout"),
+    (14, "Wayfinder"),
+    (30, "Starbound"),
+    (60, "Constellation Keeper"),
+    (100, "Elder Star"),
+];
+
 fn companion_stage(active_days: i64) -> (&'static str, Option<i64>) {
-    let milestones = [
-        (100, "Elder Star"),
-        (60, "Constellation Keeper"),
-        (30, "Starbound"),
-        (14, "Wayfinder"),
-        (7, "Trail Scout"),
-        (3, "Pathfinder"),
-        (1, "New Companion"),
-    ];
-    let stage = milestones
+    let stage = COMPANION_MILESTONES
         .iter()
+        .rev()
         .find(|(threshold, _)| active_days >= *threshold)
         .map(|(_, stage)| *stage)
         .unwrap_or("Waiting at Lantern Square");
-    let next = milestones
+    let next = COMPANION_MILESTONES
         .iter()
-        .rev()
         .find(|(threshold, _)| active_days < *threshold)
         .map(|(threshold, _)| *threshold);
     (stage, next)

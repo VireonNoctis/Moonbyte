@@ -35,6 +35,7 @@ New users must review both current policies and run `.consent accept` before ord
 | `.profile_edit` | `/profile_edit` | Set a display name and short bio. |
 | `.settings` | `/settings` | Save profile visibility and preference flags. |
 | `.stats [title]` | `/stats title:` | View completed-game totals and per-game wins/draws. |
+| `.mastery [game]` | `/mastery game:` | View calculated overall or per-game ranks derived from completions and wins; no extra data is stored. |
 | `.wallet [title]` | `/wallet title:` | View earned-only Moonbits and ledger-entry count. |
 | `.achievements [title]` | `/achievements title:` | View five fixed achievement milestones. |
 | `.inventory [title]` | `/inventory title:` | Inspect personal keepsakes with quantity and source provenance. |
@@ -43,6 +44,7 @@ New users must review both current policies and run `.consent accept` before ord
 | `.quests [title]` | `/quests title:` | Open the optional daily objective board. |
 | `.quest accept <id>` / `.quest claim <id>` | `/quest` | Opt into an objective or claim its fixed completed reward. |
 | `.wayfarer [title]` | `/wayfarer title:` | View cumulative journey days. |
+| `.streak [status|milestones]` | `/streak view:` | View the non-resetting journey count or the complete companion milestone ladder. |
 | `.companion [title]` | `/companion title:` | View cosmetic companion milestones. |
 | `.rivals [title]` | `/rivals title:` | View private rivalry invitations and records. |
 | `.rival declare @player` / `accept <id>` / `decline <id>` | `/rival` | Manage mutual-consent rivalries. |
@@ -53,7 +55,7 @@ New users must review both current policies and run `.consent accept` before ord
 |---|---|---|
 | `.atlas [title]` | `/atlas title:` | View personal location, discoveries and direct routes. |
 | `.travel <location> [title]` | `/travel location: title:` | Location autocomplete shows each place and region; route reachability is checked before travel. |
-| `.chronicle [title]` | `/chronicle title:` | Privately read lore pages unlocked through first discoveries. |
+| `.chronicle [title]` | `/chronicle title:` | Privately read lore pages and your mutual Rivalry Log. |
 | `.vault [action] [target] [details] [title]` | `/vault action: target: details: title:` | Open Mosslight Resonance, enter after confirmation, inspect progress, solve a chamber, pause, resume or leave. Action and chamber fields use Discord autocomplete; browse/status actions accept a custom panel title. Solve answers remain one canonical token, with optional title text after the answer. |
 | `.expedition` | `/expedition` | List routes, start/join/begin, inspect status, advance, pause, resume, leave or cancel. |
 

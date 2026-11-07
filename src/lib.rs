@@ -13,6 +13,7 @@ pub mod game;
 pub mod guild_project;
 pub mod guild_settings;
 pub mod inventory;
+pub mod mastery;
 pub mod profile;
 pub mod tavern;
 pub mod vault;

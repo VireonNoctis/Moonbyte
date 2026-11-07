@@ -13,7 +13,7 @@
 | Prefix | `.` by default; per-guild override supported |
 | Storage | PostgreSQL through SQLx |
 | Deployment contract | One supported bot process with PostgreSQL |
-| Schema | Ordered migrations through `0016_guild_projects.sql` |
+| Schema | Ordered migrations through `0017_wayfarer_cross_system_activities.sql` |
 | Player interface | Discord-native commands and messages; numbered board buttons for Tic-tac-toe, Connect Four and Memory Match |
 | Toolchain | Pinned in `rust-toolchain.toml` |
 
@@ -44,6 +44,8 @@ Tic-tac-toe, Connect Four and Memory Match expose numbered Discord buttons route
 
 The Tavern Wayfinder exposes sixteen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel, Postcard Wall, Wayfarer Workshop and the Puzzle Vault.
 
+The Chronicle contains private first-discovery lore pages and a Rivalry Log projection. For each mutually accepted rivalry it displays the aggregate head-to-head match/win/loss/draw record from the owning Wayfarer store; pending invitations are not presented as active history and individual messages or moves are not retained.
+
 The Atlas contains five authored locations and reciprocal route edges. A player begins at Lantern Square and can travel only to a directly connected location. First discovery unlocks one private Chronicle fragment and one account-bound postcard in the same PostgreSQL transaction. Revisits do not duplicate pages, keepsakes or rewards.
 
 The Lantern Road is one bounded authored route: Lantern Square → Mosslight Grove → The Ember Archive → Starfall Observatory. Solo runs and same-guild groups of up to four are supported. Every participant opts in. The state machine supports recruiting, active, paused, completed and cancelled states; checkpoints are versioned and persisted, participant-specific Atlas/Chronicle/inventory effects use their owning services, and export/deletion includes each participant's own history. Runs can remain paused; there is no attendance deadline.
@@ -68,7 +70,10 @@ Vault panels use the shared private title-panel builder. Slash invocations expos
 - Three optional daily objectives are selected from a fixed seven-objective catalogue covering game play, first-time Atlas discovery, Workshop crafting and completed Expeditions.
 - Quest acceptance is explicit; rewards are fixed, disclosed and claimed through the immutable wallet ledger.
 - Rotation uses a PostgreSQL UUID seed and domain-separated SHA-512 derivation with unbiased selection. The private seed is not exported.
-- Journey days are cumulative and never reset after absence. Meaningful completed games, first-time Atlas discoveries, successful first-time Workshop crafts and completed authored Expeditions feed the same daily activity record; each source is written in its owning transaction.
+- Journey days are cumulative and never reset after absence. Successful first-time crafts and completed authored Expeditions update the same daily activity record and their optional quest in the same source transaction.
+- `.streak` exposes the current count and the canonical seven-step companion milestone ladder; `.streak milestones` shows reached and future thresholds without penalising missed days.
+- `.mastery [game]` computes an overall or per-game rank from the existing game-stat rows. The formula is explicit (one point per completion and two additional points per win); ranks are descriptive only and do not change outcomes, unlock unavailable content or create another persisted profile field.
+- The private Player Card includes the aggregate Mastery rank and score without storing a duplicate copy. Meaningful completed games, first-time Atlas discoveries, successful first-time Workshop crafts and completed authored Expeditions feed the same daily activity record; each source is written in its owning transaction.
 - Companion milestones are cosmetic and do not change game rules.
 - Rivalries are private and become active only through mutual acceptance. Only later completed two-player sessions count.
 
@@ -112,6 +117,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 | Atlas and travel | `src/atlas.rs` |
 | Chronicle | `src/chronicle.rs` |
 | Wayfarer, quests and rivalries | `src/wayfarer.rs` |
+| Derived game Mastery ranks | `src/mastery.rs` |
 | Expedition route and run state | `src/expedition.rs` |
 | Tavern destinations | `src/tavern.rs` |
 | Puzzle Vault rules and persistent runs | `src/vault.rs` |
@@ -125,7 +131,7 @@ The first completion of each game type awards a fixed 10 Moonbits once per playe
 - Discord application creation, bot invite configuration, secrets provisioning and live guild verification have not been performed.
 - More original games, reviewed word/puzzle packs and additional authored Expedition routes.
 - Additional reviewed Vault blueprints/chambers, opt-in shared collections and a fixed-price Bazaar after ownership, moderation, idempotency and settlement contracts are proven.
-- Public player directory/leaderboards, mastery, Almanac/seasonal content and homesteads remain proposals until their privacy and ownership contracts are implemented.
+- Public player directory/leaderboards, Almanac/seasonal content and homesteads remain proposals until their privacy and ownership contracts are implemented.
 
 ## Canonical documents
 
