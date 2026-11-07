@@ -1760,13 +1760,15 @@ pub async fn streak(
             )
             .await
         }
-        "milestones" => send_private_title_panel(
-            ctx,
-            "Wayfarer Streak Milestones",
-            title.as_deref(),
-            render_streak_milestones(snapshot.active_days),
-        )
-        .await,
+        "milestones" => {
+            send_private_title_panel(
+                ctx,
+                "Wayfarer Streak Milestones",
+                title.as_deref(),
+                render_streak_milestones(snapshot.active_days),
+            )
+            .await
+        }
         other => {
             let suggestion = suggest_known_value(other, &["status", "milestones"])
                 .map(|value| format!(" Did you mean `{value}`?"))
@@ -1998,7 +2000,12 @@ pub async fn mastery(
         Some(value) => match GameKind::parse(value) {
             Ok(game) => Some(game),
             Err(_) => {
-                let choices = ["tic-tac-toe", "connect-four", "memory-match", "word-scramble"];
+                let choices = [
+                    "tic-tac-toe",
+                    "connect-four",
+                    "memory-match",
+                    "word-scramble",
+                ];
                 let guidance = suggest_known_value(value, &choices)
                     .map(|suggestion| format!(" Did you mean `{suggestion}`?"))
                     .unwrap_or_default();
@@ -3007,13 +3014,13 @@ async fn autocomplete_game(_ctx: Context<'_>, partial: &str) -> CreateAutocomple
     build_autocomplete_response(partial, options)
 }
 
-async fn autocomplete_streak_view(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_streak_view(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let options = [
         ("Status · View your cumulative Wayfarer count", "status"),
-        ("Milestones · Review every companion threshold", "milestones"),
+        (
+            "Milestones · Review every companion threshold",
+            "milestones",
+        ),
     ]
     .into_iter()
     .map(|(label, value)| (label.to_owned(), value.to_owned()))

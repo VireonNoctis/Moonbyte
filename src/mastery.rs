@@ -11,12 +11,30 @@ struct RankTier {
 }
 
 const RANKS: [RankTier; 6] = [
-    RankTier { threshold: 0, name: "Newcomer" },
-    RankTier { threshold: 5, name: "Novice" },
-    RankTier { threshold: 15, name: "Adept" },
-    RankTier { threshold: 35, name: "Veteran" },
-    RankTier { threshold: 75, name: "Virtuoso" },
-    RankTier { threshold: 150, name: "Mythic" },
+    RankTier {
+        threshold: 0,
+        name: "Newcomer",
+    },
+    RankTier {
+        threshold: 5,
+        name: "Novice",
+    },
+    RankTier {
+        threshold: 15,
+        name: "Adept",
+    },
+    RankTier {
+        threshold: 35,
+        name: "Veteran",
+    },
+    RankTier {
+        threshold: 75,
+        name: "Virtuoso",
+    },
+    RankTier {
+        threshold: 150,
+        name: "Mythic",
+    },
 ];
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
