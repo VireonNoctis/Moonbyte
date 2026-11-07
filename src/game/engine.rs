@@ -11,9 +11,7 @@ pub enum GameAction {
 }
 
 pub(super) fn is_valid_word_guess(value: &str) -> bool {
-    !value.is_empty()
-        && value.len() <= 32
-        && value.bytes().all(|byte| byte.is_ascii_alphabetic())
+    !value.is_empty() && value.len() <= 32 && value.bytes().all(|byte| byte.is_ascii_alphabetic())
 }
 
 impl GameAction {
