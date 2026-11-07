@@ -26,12 +26,12 @@ trap cleanup EXIT
 
 source_database="$(psql --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
     --dbname="$DATABASE_URL" --command="SELECT current_database()")"
-target_database="$(psql --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
-    --dbname="$MOONBYTE_RESTORE_TEST_DATABASE_URL" --command="SELECT current_database()")"
-[[ "$target_database" == "$restore_database" ]] || {
-    echo "Restore drill target must be the disposable $restore_database database." >&2
+expected_target_url="${DATABASE_URL%/*}/$restore_database"
+[[ "$MOONBYTE_RESTORE_TEST_DATABASE_URL" == "$expected_target_url" ]] || {
+    echo "Restore drill target URL must use the source server and disposable $restore_database database." >&2
     exit 1
 }
+target_database="$restore_database"
 [[ "$source_database" != "$target_database" ]] || {
     echo "Source and restore-test databases must be different." >&2
     exit 1
