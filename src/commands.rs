@@ -1985,6 +1985,83 @@ pub async fn stats(
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn almanac(
+    ctx: Context<'_>,
+    #[description = "Choose calendar or archive. Leave blank for the published chapter calendar."]
+    #[autocomplete = "autocomplete_almanac_view"]
+    view: Option<String>,
+    #[description = "Optional heading for this result."]
+    #[max_length = 256]
+    #[rest]
+    title: Option<String>,
+) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let (date, atlas, inventory, completed_expedition) = tokio::join!(
+        ctx.data().database().current_utc_date(),
+        ctx.data().atlas().snapshot(&player_id),
+        ctx.data().inventory().snapshot(&player_id),
+        ctx.data().expeditions().has_completed_lantern_road(&player_id),
+    );
+    let date = date?;
+    let atlas = atlas?;
+    let inventory = inventory?;
+    let completed_expedition = completed_expedition?;
+
+    let evidence = crate::almanac::ArchiveEvidence {
+        atlas_discovery: atlas
+            .discoveries
+            .iter()
+            .any(|discovery| discovery.location.id != "lantern-square"),
+        wayfarer_lantern: inventory
+            .entries
+            .iter()
+            .any(|entry| entry.item_id == "keepsake.wayfarer-lantern"),
+        mosslight_seal: inventory
+            .entries
+            .iter()
+            .any(|entry| entry.item_id == "keepsake.mosslight-seal"),
+        completed_lantern_road: completed_expedition,
+    };
+
+    match view
+        .as_deref()
+        .unwrap_or("calendar")
+        .trim()
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "" | "calendar" => send_private_title_panel(
+            ctx,
+            "Seasonal Almanac",
+            title.as_deref(),
+            crate::almanac::render_calendar(&date),
+        )
+        .await,
+        "archive" => send_private_title_panel(
+            ctx,
+            "Your Seasonal Archive",
+            title.as_deref(),
+            crate::almanac::render_archive(&date, evidence),
+        )
+        .await,
+        other => {
+            let suggestion = suggest_known_value(other, &["calendar", "archive"])
+                .map(|value| format!(" Did you mean `{value}`?"))
+                .unwrap_or_default();
+            send_private(
+                ctx,
+                format!(
+                    "Unknown Almanac view `{}`.{} Use `.almanac` or `.almanac archive`.",
+                    escape_user_text(other),
+                    suggestion
+                ),
+            )
+            .await
+        }
+    }
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn mastery(
     ctx: Context<'_>,
     #[description = "Choose a game to view its rank, or leave blank for the full Mastery Library."]
@@ -2840,6 +2917,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         achievements_command,
         mastery(),
         streak(),
+        almanac(),
         inventory(),
         collection(),
         craft(),
@@ -3011,6 +3089,20 @@ async fn autocomplete_game(_ctx: Context<'_>, partial: &str) -> CreateAutocomple
             )
         })
         .collect();
+    build_autocomplete_response(partial, options)
+}
+
+async fn autocomplete_almanac_view(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> CreateAutocompleteResponse {
+    let options = [
+        ("Calendar · View four published annual chapter windows", "calendar"),
+        ("Archive · Review permanent personal milestone proof", "archive"),
+    ]
+    .into_iter()
+    .map(|(label, value)| (label.to_owned(), value.to_owned()))
+    .collect();
     build_autocomplete_response(partial, options)
 }
 
@@ -3507,6 +3599,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}quest accept|claim <id> / /quest — accept or claim a daily quest\n\
          {safe_prefix}wayfarer / /wayfarer — view your non-resetting journey record\n\
          {safe_prefix}streak [status|milestones] / /streak — view your cumulative journey and companion thresholds\n\
+         {safe_prefix}almanac [calendar|archive] / /almanac — view published seasonal windows and your permanent archive\
          {safe_prefix}companion / /companion — view cosmetic companion milestones\n\
          {safe_prefix}rivals / /rivals — view private rivalry invitations and records\n\
          {safe_prefix}rival declare|accept|decline <user/id> / /rival — manage mutual rivalries\n\
@@ -3623,6 +3716,7 @@ mod tests {
             ".quest accept|claim <id> / /quest",
             ".wayfarer / /wayfarer",
             ".streak [status|milestones] / /streak",
+            ".almanac [calendar|archive] / /almanac",
             ".companion / /companion",
             ".rivals / /rivals",
             ".rival declare|accept|decline <user/id> / /rival",

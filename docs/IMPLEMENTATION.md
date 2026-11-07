@@ -42,7 +42,7 @@ Tic-tac-toe, Connect Four and Memory Match expose numbered Discord buttons route
 
 ### Tavern and world
 
-The Tavern Wayfinder exposes sixteen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel, Postcard Wall, Wayfarer Workshop and the Puzzle Vault.
+The Tavern Wayfinder exposes seventeen registered destinations: Common Tables, player profile and record, Moonbits Ledger, Achievement Gallery, Atlas, Chronicle, Quest Board, Wayfarer Thread, Companion Journal, Rivalry Hall, Expedition Board, player Satchel, Postcard Wall, Wayfarer Workshop, the Puzzle Vault and the Seasonal Almanac.
 
 The Chronicle contains private first-discovery lore pages and a Rivalry Log projection. For each mutually accepted rivalry it displays the aggregate head-to-head match/win/loss/draw record from the owning Wayfarer store; pending invitations are not presented as active history and individual messages or moves are not retained.
 
@@ -64,6 +64,13 @@ Vault panels use the shared private title-panel builder. Slash invocations expos
 - Inventory items retain stable IDs and source provenance. These starter keepsakes cannot be bought, sold, transferred or spent.
 - The Wayfarer Workshop supports one deterministic recipe: one Mosslight Silk plus one Tideglass yields one account-bound Wayfarer's Lantern. Input consumption and output creation share a transaction; a per-player advisory lock and unique recipe provenance prevent duplicate crafting.
 - More recipes, gathering sources, trading and Bazaar listings are not live.
+
+### Seasonal Almanac
+
+- `.almanac` publishes four annual 21-day recognition windows in UTC: Lantern Bloom (1–21 March), Tideglass Days (1–21 June), Starfall Observances (1–21 September) and Hearthlight Gathering (1–21 December). Next reprise dates are calculated from the PostgreSQL UTC calendar date.
+- `.almanac archive` is a private, read-only projection over the player's Atlas discoveries, account-bound Wayfarer's Lantern, Mosslight Seal and completed Lantern Road participant records. It adds no duplicate seasonal item, currency or player table.
+- Every archive marker has an evergreen source command. Missing a published window never blocks source activity or removes a record.
+- This slice delivers the calendar and personal archive only. Seasonal quest packs, art, NPC dialogue and event-specific story chapters remain future content and are not presented as live.
 
 ### Wayfarer and social progress
 

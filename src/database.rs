@@ -51,6 +51,13 @@ impl Database {
         Ok(())
     }
 
+    /// Read the authoritative UTC calendar date for published Almanac windows.
+    pub async fn current_utc_date(&self) -> Result<String, sqlx::Error> {
+        sqlx::query_scalar("SELECT to_char((now() AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD')")
+            .fetch_one(&self.pool)
+            .await
+    }
+
     /// Remove sessions whose inactivity window has elapsed.
     pub async fn remove_expired_sessions(&self) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("DELETE FROM game_sessions WHERE expires_at <= now()")

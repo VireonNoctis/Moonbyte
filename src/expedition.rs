@@ -262,6 +262,31 @@ impl ExpeditionStore {
         self.snapshot(player, guild, id).await
     }
 
+    /// Read whether this player completed Lantern Road as an active participant.
+    /// This powers the Almanac archive only; it creates no additional reward.
+    pub async fn has_completed_lantern_road(
+        &self,
+        player: &str,
+    ) -> Result<bool, ExpeditionError> {
+        Ok(sqlx::query_scalar(
+            "SELECT EXISTS (
+                SELECT 1
+                FROM expedition_runs AS runs
+                JOIN expedition_participants AS participants
+                  ON participants.expedition_run_id = runs.expedition_run_id
+                WHERE runs.route_id = $2
+                  AND runs.state = 'completed'
+                  AND participants.discord_user_id = $1
+                  AND participants.is_active = FALSE
+                  AND participants.last_checkpoint_index = 3
+            )",
+        )
+        .bind(player)
+        .bind(ROUTE_ID)
+        .fetch_one(&self.pool)
+        .await?)
+    }
+
     pub async fn snapshot(
         &self,
         player: &str,
@@ -963,6 +988,18 @@ mod tests {
             .expect("complete the route");
         assert_eq!(completed.state, "completed");
         assert_eq!(completed.checkpoint_index, 3);
+        assert!(
+            store
+                .has_completed_lantern_road(&member_id)
+                .await
+                .expect("read completed Expedition archive evidence")
+        );
+        assert!(
+            !store
+                .has_completed_lantern_road(&outsider_id)
+                .await
+                .expect("read unrelated player's archive evidence")
+        );
         let expedition_quest: (String, i16, i16) = sqlx::query_as(
             "SELECT status, progress, target FROM player_daily_quests
              WHERE discord_user_id = $1 AND quest_date = CURRENT_DATE

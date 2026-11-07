@@ -16,7 +16,7 @@ pub struct TavernDestination {
 }
 
 /// Real destinations currently backed by registered commands.
-pub const AVAILABLE_DESTINATIONS: [TavernDestination; 16] = [
+pub const AVAILABLE_DESTINATIONS: [TavernDestination; 17] = [
     TavernDestination {
         id: "arcade",
         title: "The Common Tables",
@@ -145,6 +145,14 @@ pub const AVAILABLE_DESTINATIONS: [TavernDestination; 16] = [
         emoji: EmojiKey::Treasure,
         fallback: "🛠️",
     },
+    TavernDestination {
+        id: "seasonal-almanac",
+        title: "The Seasonal Almanac",
+        description: "Review published annual chapter windows and your permanent archive.",
+        command: "almanac",
+        emoji: EmojiKey::Crystal,
+        fallback: "📅",
+    },
 ];
 
 /// Render the initial Tavern Wayfinder using only live commands.
@@ -186,7 +194,7 @@ mod tests {
 
     #[test]
     fn wayfinder_only_lists_real_registered_destinations() {
-        assert_eq!(AVAILABLE_DESTINATIONS.len(), 16);
+        assert_eq!(AVAILABLE_DESTINATIONS.len(), 17);
         assert_eq!(
             AVAILABLE_DESTINATIONS.map(|destination| destination.command),
             [
@@ -205,7 +213,8 @@ mod tests {
                 "inventory",
                 "collection",
                 "vault list",
-                "craft wayfarer-lantern"
+                "craft wayfarer-lantern",
+                "almanac"
             ]
         );
 
@@ -232,6 +241,8 @@ mod tests {
         assert!(home.contains(".vault list"));
         assert!(home.contains("The Puzzle Vault"));
         assert!(home.contains("Wayfarer Workshop"));
+        assert!(home.contains(".almanac"));
+        assert!(home.contains("The Seasonal Almanac"));
         assert!(home.contains("Your Satchel"));
         assert!(home.contains("The Postcard Wall"));
         assert!(home.contains("Rivalry Hall"));

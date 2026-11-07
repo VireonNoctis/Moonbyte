@@ -1,6 +1,7 @@
 //! Moonbyte application foundation, game domain and Discord command modules.
 
 pub mod achievement;
+pub mod almanac;
 pub mod atlas;
 pub mod chronicle;
 pub mod commands;

@@ -28,6 +28,7 @@
 - [x] Mosslight Resonance solo Puzzle Vault: three authored chambers, explicit private entry, PostgreSQL save stones, resume/pause/leave, fixed one-time keepsake, Chronicle/Wayfarer hand-off, export/deletion and concurrency/replay coverage. CI passed 96 PostgreSQL-backed tests, rustfmt, the PostgreSQL backup/restore round-trip and Clippy; private development-guild interaction verification remains a deployment gate.
 - [x] Private Player Card v1: private cross-system projection from the owning game, achievement, Wayfarer, Rivalry, Chronicle, inventory and Vault stores, with command shortcuts. The read-only panel renderer and source build are CI-tested; public/guild profile projections remain deferred.
 - [x] First opt-in Guild Project: a server-scoped Lantern Road Survey with manager-authorised setup, explicit join/leave, private aggregate status, idempotent shared-Expedition contributions, anonymous progress, membership export/deletion and actual-uninstall cleanup.
+- [x] Seasonal Almanac v1: four published annual UTC chapter windows and a private archive projection over Atlas, Workshop, Vault and completed Expedition evidence; all source routes remain evergreen and no duplicate seasonal reward state is stored.
 
 ## Remaining before a first Discord bot deployment
 
@@ -56,7 +57,7 @@
 ## Later proposals
 
 - Fixed-price Bazaar listings and work orders after ownership, moderation, duplicate protection and atomic settlement are complete.
-- Seasonal Almanac, festivals, additional companion cosmetics and homesteads after their owning systems exist. The private Player Card remains a read-only projection; public and guild-facing cards remain deferred.
+- Festivals with authored seasonal quest/art/story content, additional companion cosmetics and homesteads after their owning systems exist. The private Player Card remains a read-only projection; public and guild-facing cards remain deferred.
 - Public player directory and leaderboards only with explicit visibility controls and privacy-complete projections.
 - Broader social surfaces only after guild isolation, consent and deletion boundaries are complete. The first Guild Project does not expose member lists or public player profiles.
 

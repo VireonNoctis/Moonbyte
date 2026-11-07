@@ -30,12 +30,13 @@ New users must review both current policies and run `.consent accept` before ord
 
 | Prefix | Slash | Purpose |
 |---|---|---|
-| `.tavern [title]` | `/tavern title:` | Open the 16-destination Tavern Wayfinder. |
+| `.tavern [title]` | `/tavern title:` | Open the 17-destination Tavern Wayfinder. |
 | `.profile [title]` | `/profile title:` | Open your private Player Card: game totals, achievements, Wayfarer/Companion, Rivalry counts, Chronicle/collection progress and Vault status, with shortcuts to live systems. |
 | `.profile_edit` | `/profile_edit` | Set a display name and short bio. |
 | `.settings` | `/settings` | Save profile visibility and preference flags. |
 | `.stats [title]` | `/stats title:` | View completed-game totals and per-game wins/draws. |
 | `.mastery [game]` | `/mastery game:` | View calculated overall or per-game ranks derived from completions and wins; no extra data is stored. |
+| `.almanac [calendar|archive]` | `/almanac view:` | View four annual UTC chapter windows or your private archive proof. Archive routes remain available year-round. |
 | `.wallet [title]` | `/wallet title:` | View earned-only Moonbits and ledger-entry count. |
 | `.achievements [title]` | `/achievements title:` | View five fixed achievement milestones. |
 | `.inventory [title]` | `/inventory title:` | Inspect personal keepsakes with quantity and source provenance. |
