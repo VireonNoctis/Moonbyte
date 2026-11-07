@@ -32,7 +32,7 @@ pub struct RouteDefinition {
     pub checkpoints: &'static [Checkpoint],
 }
 
-pub const LANTERN_ROAD: [Checkpoint; 4] = [
+pub static LANTERN_ROAD: [Checkpoint; 4] = [
     Checkpoint {
         id: "lantern-square",
         location_id: "lantern-square",
@@ -67,7 +67,7 @@ pub const LANTERN_ROAD: [Checkpoint; 4] = [
     },
 ];
 
-pub const GLASSWATER_CROSSING: [Checkpoint; 4] = [
+pub static GLASSWATER_CROSSING: [Checkpoint; 4] = [
     Checkpoint {
         id: "lantern-square",
         location_id: "lantern-square",
@@ -102,7 +102,7 @@ pub const GLASSWATER_CROSSING: [Checkpoint; 4] = [
     },
 ];
 
-pub const EXPEDITION_ROUTES: [RouteDefinition; 2] = [
+pub static EXPEDITION_ROUTES: [RouteDefinition; 2] = [
     RouteDefinition {
         id: ROUTE_ID,
         version: ROUTE_VERSION,
