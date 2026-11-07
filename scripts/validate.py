@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the template's own configuration without third-party packages."""
+"""Validate repository configuration and security invariants without third-party packages."""
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ CONFIG_FILES = (
     ".vscode/settings.json",
 )
 WORKFLOW_DIR = Path(".github/workflows")
-ACTION_REFERENCE = re.compile(r"^[0-9a-fA-F]{40}$")
 
 
 def validate_json_files() -> list[str]:
@@ -34,9 +33,26 @@ def validate_json_files() -> list[str]:
     return errors
 
 
-def validate_action_pins() -> list[str]:
+def validate_action_reference(reference: str) -> str | None:
+    """Return an explanation when an external action reference is mutable."""
+    if reference.startswith("./"):
+        return None
+
+    if reference.startswith("docker://"):
+        if not re.fullmatch(
+            r"docker://[^@\\s]+@sha256:[0-9a-fA-F]{64}", reference
+        ):
+            return "Docker action image must use a full 64-character SHA-256 digest"
+        return None
+
+    if not re.fullmatch(r"[^@\\s]+@[0-9a-fA-F]{40}", reference):
+        return "Action must use a full 40-character commit SHA"
+    return None
+
+
+def validate_action_pins(root: Path = ROOT) -> list[str]:
     errors: list[str] = []
-    workflow_root = ROOT / WORKFLOW_DIR
+    workflow_root = root / WORKFLOW_DIR
 
     if not workflow_root.exists():
         return errors
@@ -45,34 +61,23 @@ def validate_action_pins() -> list[str]:
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
         except (OSError, UnicodeError) as exc:
-            errors.append(f"{path.relative_to(ROOT)}: cannot read workflow ({exc})")
+            errors.append(f"{path.relative_to(root)}: cannot read workflow ({exc})")
             continue
 
         for line_number, line in enumerate(lines, start=1):
             stripped = line.strip()
-            if not stripped.startswith("uses:"):
+            match = re.match(r"^(?:-\\s*)?uses:\\s*(.*?)\\s*$", stripped)
+            if not match:
                 continue
 
-            reference = stripped.split(":", 1)[1].split("#", 1)[0].strip().strip("'\"")
-            if reference.startswith(("./", "docker://")):
-                continue
-
-            if "@" not in reference:
+            reference = match.group(1).split("#", 1)[0].strip().strip("'").strip('"')
+            reason = validate_action_reference(reference)
+            if reason:
                 errors.append(
-                    f"{path.relative_to(ROOT)}:{line_number}: "
-                    f"Action reference is not pinned: {reference}"
-                )
-                continue
-
-            revision = reference.rsplit("@", 1)[1]
-            if not ACTION_REFERENCE.fullmatch(revision):
-                errors.append(
-                    f"{path.relative_to(ROOT)}:{line_number}: "
-                    f"Action must use a full 40-character commit SHA: {reference}"
+                    f"{path.relative_to(root)}:{line_number}: {reason}: {reference}"
                 )
 
     return errors
-
 
 def validate_atlas() -> list[str]:
     """Validate the connected Moonbyte World Loom design graph."""

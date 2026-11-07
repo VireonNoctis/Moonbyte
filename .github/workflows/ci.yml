@@ -42,6 +42,9 @@ jobs:
       - name: Validate repository configuration
         run: python3 scripts/validate.py
 
+      - name: Test repository validation helpers
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+
       - name: Install stable Rust toolchain
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master at 2026-10-16
         with:

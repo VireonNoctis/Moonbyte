@@ -2,7 +2,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::engine::{GameAction, GameError, apply_action};
+use super::engine::{GameAction, GameError, apply_action, is_valid_word_guess};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum GameKind {
@@ -47,7 +47,7 @@ impl GameKind {
                 name: "Word Scramble",
                 description: "Reconstruct an original five-letter word from its scrambled letters.",
                 players: "1 player",
-                controls: "Use .action <session> <answer> to submit your guess.",
+                controls: "Use .action <session> <answer> with 1–32 ASCII letters.",
             },
         }
     }
@@ -298,7 +298,17 @@ impl WordScrambleState {
         let guesses = if self.guesses.is_empty() {
             String::from("none")
         } else {
-            self.guesses.join(", ")
+            self.guesses
+                .iter()
+                .map(|guess| {
+                    if is_valid_word_guess(guess) {
+                        guess.as_str()
+                    } else {
+                        "[invalid guess omitted]"
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(", ")
         };
         format!(
             "Scrambled word: BITOR\nAttempts remaining: {}\nPrevious guesses: {}",
@@ -478,6 +488,19 @@ mod tests {
             serde_json::from_str(r#"{"answer":"ORBIT","attempts_left":2}"#)
                 .expect("legacy session snapshot");
         assert!(state.guesses.is_empty());
+    }
+
+    #[test]
+    fn legacy_unsafe_guesses_are_not_replayed_into_discord_messages() {
+        let state: WordScrambleState = serde_json::from_str(
+            r#"{"answer":"ORBIT","attempts_left":2,"guesses":["@everyone","PLANET"]}"#,
+        )
+        .expect("legacy session snapshot");
+
+        let rendered = state.render();
+        assert!(!rendered.contains("@everyone"));
+        assert!(rendered.contains("[invalid guess omitted]"));
+        assert!(rendered.contains("PLANET"));
     }
 
     #[test]

@@ -13,7 +13,7 @@
 | Prefix | `.` by default; per-guild override supported |
 | Storage | PostgreSQL through SQLx |
 | Deployment contract | One supported bot process with PostgreSQL |
-| Schema | Ordered migrations through `0015_mosslight_resonance_chronicle.sql` |
+| Schema | Ordered migrations through `0016_guild_projects.sql` |
 | Player interface | Discord-native commands and messages; numbered board buttons for Tic-tac-toe, Connect Four and Memory Match |
 | Toolchain | Pinned in `rust-toolchain.toml` |
 
