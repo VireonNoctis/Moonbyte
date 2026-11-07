@@ -19,7 +19,7 @@
 - [x] Five-location Atlas, direct-neighbour travel, private Chronicle pages and five account-bound postcards.
 - [x] Two fixed materials earned through authored Atlas discoveries, with migration backfill.
 - [x] One deterministic crafting recipe with atomic input consumption, account-bound output provenance and repeat-craft protection.
-- [x] Optional Wayfarer objectives, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries.
+- [x] Optional Wayfarer objectives, cumulative journey days, cosmetic companion milestones and mutually accepted private rivalries; seven stable daily objectives now include first-time crafting and completed Expeditions, committed atomically with their source actions.
 - [x] Lantern Road Expedition v1 with solo/group state, explicit opt-in, persistent checkpoints, pause/resume/leave and privacy coverage.
 - [x] Manual PostgreSQL backup and guarded empty-database restore scripts, plus a database readiness check in the ping command.
 - [x] Version 1.0.0 initial privacy policy and product blueprint labels.

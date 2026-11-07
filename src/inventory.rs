@@ -310,6 +310,8 @@ impl InventoryStore {
         .execute(&mut *transaction)
         .await?;
 
+        crate::wayfarer::record_crafting_completion(&mut transaction, player_id).await?;
+
         transaction.commit().await?;
         Ok(CraftOutcome::Crafted)
     }
@@ -658,6 +660,24 @@ mod postgres_tests {
         );
         transaction.commit().await.expect("commit material grant");
 
+        let wayfarer = crate::wayfarer::WayfarerStore::new(pool.clone());
+        wayfarer
+            .daily_quests(&player_id)
+            .await
+            .expect("create today's optional quest rotation");
+        sqlx::query(
+            "INSERT INTO player_daily_quests
+             (discord_user_id, quest_date, quest_id, status, progress, target, reward_moonbits)
+             VALUES ($1, CURRENT_DATE, 'craft_one_item', 'active', 0, 1, 7)
+             ON CONFLICT (discord_user_id, quest_date, quest_id)
+             DO UPDATE SET status = 'active', progress = 0, target = 1,
+                           completed_at = NULL, claimed_at = NULL",
+        )
+        .bind(&player_id)
+        .execute(&pool)
+        .await
+        .expect("activate crafting quest for integration test");
+
         let inventory = InventoryStore::new(pool.clone());
         assert_eq!(
             inventory
@@ -682,6 +702,22 @@ mod postgres_tests {
         assert_eq!(snapshot.entries[0].item_id, "keepsake.wayfarer-lantern");
         assert_eq!(snapshot.entries[0].source_type, "craft_recipe");
         assert_eq!(snapshot.entries[0].source_reference, "wayfarer-lantern");
+
+        let crafting_quest: (String, i16, i16) = sqlx::query_as(
+            "SELECT status, progress, target FROM player_daily_quests
+             WHERE discord_user_id = $1 AND quest_date = CURRENT_DATE
+               AND quest_id = 'craft_one_item'",
+        )
+        .bind(&player_id)
+        .fetch_one(&pool)
+        .await
+        .expect("read crafting quest progress");
+        assert_eq!(crafting_quest, (String::from("completed"), 1, 1));
+        assert_eq!(
+            wayfarer.snapshot(&player_id).await.expect("Wayfarer after crafting").active_days,
+            1,
+            "a successful craft contributes to the same count-up journey day"
+        );
 
         let export = profiles
             .export_json(&player_id)

@@ -18,7 +18,7 @@ pub struct QuestDefinition {
     pub reward_moonbits: i64,
 }
 
-pub const DAILY_QUEST_CATALOGUE: [QuestDefinition; 5] = [
+pub const DAILY_QUEST_CATALOGUE: [QuestDefinition; 7] = [
     QuestDefinition {
         id: "play_one_game",
         title: "Warm Up the Arcade",
@@ -53,6 +53,20 @@ pub const DAILY_QUEST_CATALOGUE: [QuestDefinition; 5] = [
         description: "Discover one new Atlas location today.",
         target: 1,
         reward_moonbits: 7,
+    },
+    QuestDefinition {
+        id: "craft_one_item",
+        title: "Light the Workshop",
+        description: "Craft one keepsake at the Wayfarer Workshop today.",
+        target: 1,
+        reward_moonbits: 7,
+    },
+    QuestDefinition {
+        id: "complete_one_expedition",
+        title: "Walk the Whole Road",
+        description: "Complete an authored Expedition today.",
+        target: 1,
+        reward_moonbits: 10,
     },
 ];
 
@@ -668,6 +682,8 @@ async fn record_activity_day(
 enum QuestEvent<'a> {
     Game { game_id: &'a str, won: bool },
     AtlasDiscovery,
+    Crafting,
+    ExpeditionCompletion,
 }
 
 async fn progress_active_quests(
@@ -697,6 +713,8 @@ async fn progress_active_quests(
                 }
             }
             (QuestEvent::AtlasDiscovery, "discover_one_place") => true,
+            (QuestEvent::Crafting, "craft_one_item") => true,
+            (QuestEvent::ExpeditionCompletion, "complete_one_expedition") => true,
             _ => false,
         };
         if !should_advance {
@@ -750,15 +768,26 @@ pub(crate) async fn record_atlas_discovery(
     progress_active_quests(transaction, player_id, QuestEvent::AtlasDiscovery).await
 }
 
-/// Count a completed authored Expedition as meaningful activity. No current
-/// daily quest consumes this event, so completion does not change quest progress.
+/// Count a completed authored Expedition and progress its optional daily objective.
 pub(crate) async fn record_expedition_completion(
     transaction: &mut Transaction<'_, Postgres>,
     player_id: &str,
 ) -> Result<(), sqlx::Error> {
     ensure_player(transaction, player_id).await?;
     ensure_daily_quests(transaction, player_id).await?;
-    record_activity_day(transaction, player_id).await
+    record_activity_day(transaction, player_id).await?;
+    progress_active_quests(transaction, player_id, QuestEvent::ExpeditionCompletion).await
+}
+
+/// Count a successful first-time craft and progress its optional daily objective.
+pub(crate) async fn record_crafting_completion(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), sqlx::Error> {
+    ensure_player(transaction, player_id).await?;
+    ensure_daily_quests(transaction, player_id).await?;
+    record_activity_day(transaction, player_id).await?;
+    progress_active_quests(transaction, player_id, QuestEvent::Crafting).await
 }
 
 /// Record completion of a verified Puzzle Vault as meaningful activity. No current

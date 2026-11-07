@@ -65,10 +65,10 @@ Vault panels use the shared private title-panel builder. Slash invocations expos
 
 ### Wayfarer and social progress
 
-- Three optional daily objectives are selected from a fixed five-objective catalogue.
+- Three optional daily objectives are selected from a fixed seven-objective catalogue covering game play, first-time Atlas discovery, Workshop crafting and completed Expeditions.
 - Quest acceptance is explicit; rewards are fixed, disclosed and claimed through the immutable wallet ledger.
 - Rotation uses a PostgreSQL UUID seed and domain-separated SHA-512 derivation with unbiased selection. The private seed is not exported.
-- Journey days are cumulative and never reset after absence.
+- Journey days are cumulative and never reset after absence. Meaningful completed games, first-time Atlas discoveries, successful first-time Workshop crafts and completed authored Expeditions feed the same daily activity record; each source is written in its owning transaction.
 - Companion milestones are cosmetic and do not change game rules.
 - Rivalries are private and become active only through mutual acceptance. Only later completed two-player sessions count.
 

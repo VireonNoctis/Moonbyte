@@ -772,6 +772,22 @@ mod tests {
         crate::profile::create_test_player(pool.clone(), &member_id, "Expedition Member")
             .await
             .expect("create consented member profile");
+        wayfarer
+            .daily_quests(&member_id)
+            .await
+            .expect("create member's daily quest rotation");
+        sqlx::query(
+            "INSERT INTO player_daily_quests
+             (discord_user_id, quest_date, quest_id, status, progress, target, reward_moonbits)
+             VALUES ($1, CURRENT_DATE, 'complete_one_expedition', 'active', 0, 1, 10)
+             ON CONFLICT (discord_user_id, quest_date, quest_id)
+             DO UPDATE SET status = 'active', progress = 0, target = 1,
+                           completed_at = NULL, claimed_at = NULL",
+        )
+        .bind(&member_id)
+        .execute(&pool)
+        .await
+        .expect("activate Expedition quest for integration test");
         crate::profile::create_test_player(pool.clone(), &outsider_id, "Expedition Observer")
             .await
             .expect("create consented observer profile");
@@ -947,6 +963,16 @@ mod tests {
             .expect("complete the route");
         assert_eq!(completed.state, "completed");
         assert_eq!(completed.checkpoint_index, 3);
+        let expedition_quest: (String, i16, i16) = sqlx::query_as(
+            "SELECT status, progress, target FROM player_daily_quests
+             WHERE discord_user_id = $1 AND quest_date = CURRENT_DATE
+               AND quest_id = 'complete_one_expedition'",
+        )
+        .bind(&member_id)
+        .fetch_one(&pool)
+        .await
+        .expect("read Expedition quest progress");
+        assert_eq!(expedition_quest, (String::from("completed"), 1, 1));
 
         let member_atlas = atlas
             .snapshot(&member_id)

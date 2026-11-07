@@ -1599,7 +1599,7 @@ pub async fn quest(
             send_private(
                 ctx,
                 format!(
-                    "Quest accepted: {}. Your progress is recorded automatically from completed games and first-time Atlas discoveries. Check .quests to follow it.",
+                    "Quest accepted: {}. Your progress is recorded automatically from completed games, first-time Atlas discoveries, successful crafts and completed Expeditions. Check .quests to follow it.",
                     escape_user_text(&quest_id)
                 ),
             )
@@ -1658,7 +1658,7 @@ pub async fn wayfarer(
         "Wayfarer Thread",
         title.as_deref(),
         format!(
-            "**The Wayfarer Thread**\n\nJourney days: **{}**\nCompanion: **{}**\nJourney stage: **{}**\n{}\n\nMeaningful game completions and first-time Atlas discoveries count once per calendar day. Your total never decreases; missing a day carries no penalty. Optional quests and cosmetic companion milestones never affect game outcomes.",
+            "**The Wayfarer Thread**\n\nJourney days: **{}**\nCompanion: **{}**\nJourney stage: **{}**\n{}\n\nMeaningful game completions, first-time Atlas discoveries, successful Workshop crafts and completed Expeditions count once per calendar day. Your total never decreases; missing a day carries no penalty. Optional quests and cosmetic companion milestones never affect game outcomes.",
             snapshot.active_days, snapshot.companion_name, snapshot.companion_stage, next
         ),
     )
