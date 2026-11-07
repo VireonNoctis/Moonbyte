@@ -9,7 +9,8 @@ use crate::{
 use poise::serenity_prelude::{
     AutocompleteChoice, ButtonStyle, ChannelId, ComponentInteraction, CreateActionRow,
     CreateAttachment, CreateAutocompleteResponse, CreateButton, CreateEmbed,
-    CreateInteractionResponse, CreateInteractionResponseMessage, CreateMessage,
+    CreateInteractionResponse, CreateInteractionResponseFollowup,
+    CreateInteractionResponseMessage, CreateMessage, EditInteractionResponse,
 };
 
 use crate::guild_settings::{GuildCommandSettings, validate_prefix};
@@ -130,25 +131,66 @@ async fn component_notice(
     Ok(())
 }
 
+/// Sends a private notice after the component interaction has already been acknowledged.
+async fn component_followup_notice(
+    discord: &poise::serenity_prelude::Context,
+    interaction: &ComponentInteraction,
+    content: impl Into<String>,
+) -> Result<(), Error> {
+    interaction
+        .create_followup(
+            discord,
+            CreateInteractionResponseFollowup::new()
+                .content(content)
+                .ephemeral(true),
+        )
+        .await?;
+    Ok(())
+}
+
 /// Handles versioned game-board buttons from Discord's native component event.
 pub async fn handle_game_component(
     discord: &poise::serenity_prelude::Context,
     data: &Data,
     interaction: &ComponentInteraction,
 ) -> Result<(), Error> {
+    // Ignore components owned by other handlers. A malformed game control gets
+    // a real response rather than Discord's generic "interaction failed" state.
+    let game_prefix = format!("{GAME_COMPONENT_PREFIX}:");
+    if !interaction.data.custom_id.starts_with(&game_prefix) {
+        return Ok(());
+    }
     let Some((session_id, expected_action_version, value)) =
         parse_game_component_id(&interaction.data.custom_id)
     else {
-        return Ok(());
+        return component_notice(discord, interaction, "That game control is not valid.").await;
     };
+
+    // Acknowledge before any database work. PostgreSQL row locks and consent
+    // checks can take longer than Discord's initial interaction response window.
+    interaction
+        .create_response(discord, CreateInteractionResponse::Acknowledge)
+        .await?;
 
     let player_id = interaction.user.id.to_string();
     let guild_id = interaction.guild_id;
     let guild_key = guild_id.map(|id| id.to_string());
 
-    if !data.consents().is_current(&player_id).await? {
+    let consent_is_current = match data.consents().is_current(&player_id).await {
+        Ok(is_current) => is_current,
+        Err(_) => {
+            tracing::warn!(event = "game_component_consent_check_failed");
+            return component_followup_notice(
+                discord,
+                interaction,
+                "Moonbyte could not verify your current consent. Please try again.",
+            )
+            .await;
+        }
+    };
+    if !consent_is_current {
         let prefix = escape_user_text(&data.command_prefix(guild_id));
-        return component_notice(
+        return component_followup_notice(
             discord,
             interaction,
             format!(
@@ -163,7 +205,7 @@ pub async fn handle_game_component(
         && let Some(allowed_channel) = settings.command_channel_id
         && allowed_channel != interaction.channel_id.to_string()
     {
-        return component_notice(
+        return component_followup_notice(
             discord,
             interaction,
             format!("Game controls for this server are restricted to <#{allowed_channel}>."),
@@ -178,7 +220,7 @@ pub async fn handle_game_component(
     {
         Ok(snapshot) => snapshot,
         Err(error) => {
-            return component_notice(discord, interaction, error.to_string()).await;
+            return component_followup_notice(discord, interaction, error.to_string()).await;
         }
     };
 
@@ -186,20 +228,25 @@ pub async fn handle_game_component(
     // A retry or a click from an older board refreshes the view without applying
     // another move.
     if current.action_count != expected_action_version || current.phase != GamePhase::Active {
-        let refreshed = CreateInteractionResponseMessage::new()
+        let refreshed = EditInteractionResponse::new()
             .content(format!(
-                "{}\n\nThis board was refreshed because that control was out of date.",
+                "{}
+
+This board was refreshed because that control was out of date.",
                 current.render()
             ))
             .components(game_components(&current));
-        interaction
-            .create_response(discord, CreateInteractionResponse::UpdateMessage(refreshed))
-            .await?;
+        interaction.edit_response(discord, refreshed).await?;
         return Ok(());
     }
 
     let Some(input) = game_action_input(current.game, value) else {
-        return component_notice(discord, interaction, "That game control is not valid.").await;
+        return component_followup_notice(
+            discord,
+            interaction,
+            "That game control is not valid.",
+        )
+        .await;
     };
 
     match data
@@ -214,34 +261,43 @@ pub async fn handle_game_component(
         .await
     {
         Ok(snapshot) => {
-            let updated = CreateInteractionResponseMessage::new()
+            let updated = EditInteractionResponse::new()
                 .content(snapshot.render())
                 .components(game_components(&snapshot));
-            interaction
-                .create_response(discord, CreateInteractionResponse::UpdateMessage(updated))
-                .await?;
+            interaction.edit_response(discord, updated).await?;
             tracing::debug!(
                 event = "game_component_action_applied",
                 game = snapshot.game.definition().id
             );
         }
         Err(crate::game::GameRuntimeError::StaleAction) => {
-            let latest = data
+            let latest = match data
                 .games()
                 .get(&session_id, &player_id, guild_key.as_deref())
-                .await?;
-            let refreshed = CreateInteractionResponseMessage::new()
+                .await
+            {
+                Ok(snapshot) => snapshot,
+                Err(_) => {
+                    return component_followup_notice(
+                        discord,
+                        interaction,
+                        "Another move was accepted first, but Moonbyte could not refresh the board. Please reopen the game.",
+                    )
+                    .await;
+                }
+            };
+            let refreshed = EditInteractionResponse::new()
                 .content(format!(
-                    "{}\n\nThis board was refreshed because another move was accepted first.",
+                    "{}
+
+This board was refreshed because another move was accepted first.",
                     latest.render()
                 ))
                 .components(game_components(&latest));
-            interaction
-                .create_response(discord, CreateInteractionResponse::UpdateMessage(refreshed))
-                .await?;
+            interaction.edit_response(discord, refreshed).await?;
         }
         Err(error) => {
-            component_notice(discord, interaction, error.to_string()).await?;
+            component_followup_notice(discord, interaction, error.to_string()).await?;
         }
     }
 
