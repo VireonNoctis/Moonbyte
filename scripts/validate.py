@@ -40,12 +40,12 @@ def validate_action_reference(reference: str) -> str | None:
 
     if reference.startswith("docker://"):
         if not re.fullmatch(
-            r"docker://[^@\\s]+@sha256:[0-9a-fA-F]{64}", reference
+            r"docker://[^@\s]+@sha256:[0-9a-fA-F]{64}", reference
         ):
             return "Docker action image must use a full 64-character SHA-256 digest"
         return None
 
-    if not re.fullmatch(r"[^@\\s]+@[0-9a-fA-F]{40}", reference):
+    if not re.fullmatch(r"[^@\s]+@[0-9a-fA-F]{40}", reference):
         return "Action must use a full 40-character commit SHA"
     return None
 
@@ -66,7 +66,7 @@ def validate_action_pins(root: Path = ROOT) -> list[str]:
 
         for line_number, line in enumerate(lines, start=1):
             stripped = line.strip()
-            match = re.match(r"^(?:-\\s*)?uses:\\s*(.*?)\\s*$", stripped)
+            match = re.match(r"^(?:-\s*)?uses:\s*(.*?)\s*$", stripped)
             if not match:
                 continue
 
