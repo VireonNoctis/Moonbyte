@@ -2000,7 +2000,9 @@ pub async fn almanac(
         ctx.data().database().current_utc_date(),
         ctx.data().atlas().snapshot(&player_id),
         ctx.data().inventory().snapshot(&player_id),
-        ctx.data().expeditions().has_completed_lantern_road(&player_id),
+        ctx.data()
+            .expeditions()
+            .has_completed_lantern_road(&player_id),
     );
     let date = date?;
     let atlas = atlas?;
@@ -2030,20 +2032,24 @@ pub async fn almanac(
         .to_ascii_lowercase()
         .as_str()
     {
-        "" | "calendar" => send_private_title_panel(
-            ctx,
-            "Seasonal Almanac",
-            title.as_deref(),
-            crate::almanac::render_calendar(&date),
-        )
-        .await,
-        "archive" => send_private_title_panel(
-            ctx,
-            "Your Seasonal Archive",
-            title.as_deref(),
-            crate::almanac::render_archive(&date, evidence),
-        )
-        .await,
+        "" | "calendar" => {
+            send_private_title_panel(
+                ctx,
+                "Seasonal Almanac",
+                title.as_deref(),
+                crate::almanac::render_calendar(&date),
+            )
+            .await
+        }
+        "archive" => {
+            send_private_title_panel(
+                ctx,
+                "Your Seasonal Archive",
+                title.as_deref(),
+                crate::almanac::render_archive(&date, evidence),
+            )
+            .await
+        }
         other => {
             let suggestion = suggest_known_value(other, &["calendar", "archive"])
                 .map(|value| format!(" Did you mean `{value}`?"))
@@ -3092,13 +3098,16 @@ async fn autocomplete_game(_ctx: Context<'_>, partial: &str) -> CreateAutocomple
     build_autocomplete_response(partial, options)
 }
 
-async fn autocomplete_almanac_view(
-    _ctx: Context<'_>,
-    partial: &str,
-) -> CreateAutocompleteResponse {
+async fn autocomplete_almanac_view(_ctx: Context<'_>, partial: &str) -> CreateAutocompleteResponse {
     let options = [
-        ("Calendar · View four published annual chapter windows", "calendar"),
-        ("Archive · Review permanent personal milestone proof", "archive"),
+        (
+            "Calendar · View four published annual chapter windows",
+            "calendar",
+        ),
+        (
+            "Archive · Review permanent personal milestone proof",
+            "archive",
+        ),
     ]
     .into_iter()
     .map(|(label, value)| (label.to_owned(), value.to_owned()))

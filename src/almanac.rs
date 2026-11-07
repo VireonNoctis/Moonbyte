@@ -136,7 +136,10 @@ fn next_reprise(date: UtcDate, chapter: SeasonalChapter) -> String {
     } else {
         date.year.saturating_add(1)
     };
-    format!("{year:04}-{:02}-{:02}", chapter.start_month, chapter.start_day)
+    format!(
+        "{year:04}-{:02}-{:02}",
+        chapter.start_month, chapter.start_day
+    )
 }
 
 /// Render the four annual published windows using a database-supplied UTC date.
@@ -213,16 +216,31 @@ mod tests {
     #[test]
     fn published_windows_include_both_boundary_days() {
         let lantern = SEASONAL_CHAPTERS[0];
-        assert!(in_published_window(UtcDate::parse("2026-03-01").unwrap(), lantern));
-        assert!(in_published_window(UtcDate::parse("2026-03-21").unwrap(), lantern));
-        assert!(!in_published_window(UtcDate::parse("2026-03-22").unwrap(), lantern));
+        assert!(in_published_window(
+            UtcDate::parse("2026-03-01").unwrap(),
+            lantern
+        ));
+        assert!(in_published_window(
+            UtcDate::parse("2026-03-21").unwrap(),
+            lantern
+        ));
+        assert!(!in_published_window(
+            UtcDate::parse("2026-03-22").unwrap(),
+            lantern
+        ));
     }
 
     #[test]
     fn reprise_dates_are_predictable_and_annual() {
         let lantern = SEASONAL_CHAPTERS[0];
-        assert_eq!(next_reprise(UtcDate::parse("2026-02-28").unwrap(), lantern), "2026-03-01");
-        assert_eq!(next_reprise(UtcDate::parse("2026-03-22").unwrap(), lantern), "2027-03-01");
+        assert_eq!(
+            next_reprise(UtcDate::parse("2026-02-28").unwrap(), lantern),
+            "2026-03-01"
+        );
+        assert_eq!(
+            next_reprise(UtcDate::parse("2026-03-22").unwrap(), lantern),
+            "2027-03-01"
+        );
         assert_eq!(
             next_reprise(UtcDate::parse("2026-12-22").unwrap(), SEASONAL_CHAPTERS[3]),
             "2027-12-01"
@@ -236,7 +254,9 @@ mod tests {
         assert!(calendar.contains("Tideglass Days"));
         assert!(calendar.contains("published chapter window is open"));
         assert!(calendar.contains("2026-09-01"));
-        assert!(calendar.contains("seasonal quests, art packs and event-specific story chapters are not yet part"));
+        assert!(calendar.contains(
+            "seasonal quests, art packs and event-specific story chapters are not yet part"
+        ));
     }
 
     #[test]
@@ -260,6 +280,8 @@ mod tests {
     #[test]
     fn invalid_dates_are_reported_without_panicking() {
         assert!(render_calendar("not-a-date").contains("temporarily unavailable"));
-        assert!(render_archive("2026-02-30", ArchiveEvidence::default()).contains("unavailable UTC"));
+        assert!(
+            render_archive("2026-02-30", ArchiveEvidence::default()).contains("unavailable UTC")
+        );
     }
 }

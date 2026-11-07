@@ -264,10 +264,7 @@ impl ExpeditionStore {
 
     /// Read whether this player completed Lantern Road as an active participant.
     /// This powers the Almanac archive only; it creates no additional reward.
-    pub async fn has_completed_lantern_road(
-        &self,
-        player: &str,
-    ) -> Result<bool, ExpeditionError> {
+    pub async fn has_completed_lantern_road(&self, player: &str) -> Result<bool, ExpeditionError> {
         Ok(sqlx::query_scalar(
             "SELECT EXISTS (
                 SELECT 1
