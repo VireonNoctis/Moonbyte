@@ -9,8 +9,8 @@ use crate::{
 use poise::serenity_prelude::{
     AutocompleteChoice, ButtonStyle, ChannelId, ComponentInteraction, CreateActionRow,
     CreateAttachment, CreateAutocompleteResponse, CreateButton, CreateEmbed,
-    CreateInteractionResponse, CreateInteractionResponseFollowup,
-    CreateInteractionResponseMessage, CreateMessage, EditInteractionResponse,
+    CreateInteractionResponse, CreateInteractionResponseFollowup, CreateInteractionResponseMessage,
+    CreateMessage, EditInteractionResponse,
 };
 
 use crate::guild_settings::{GuildCommandSettings, validate_prefix};
@@ -241,12 +241,8 @@ This board was refreshed because that control was out of date.",
     }
 
     let Some(input) = game_action_input(current.game, value) else {
-        return component_followup_notice(
-            discord,
-            interaction,
-            "That game control is not valid.",
-        )
-        .await;
+        return component_followup_notice(discord, interaction, "That game control is not valid.")
+            .await;
     };
 
     match data
