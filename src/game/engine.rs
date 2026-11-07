@@ -10,6 +10,12 @@ pub enum GameAction {
     WordAnswer { answer: String },
 }
 
+pub(super) fn is_valid_word_guess(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 32
+        && value.bytes().all(|byte| byte.is_ascii_alphabetic())
+}
+
 impl GameAction {
     pub fn parse(game: GameKind, input: &str) -> Result<Self, GameError> {
         match game {
@@ -57,7 +63,7 @@ impl GameAction {
             }
             GameKind::WordScramble => {
                 let answer = input.trim();
-                if answer.is_empty() || answer.chars().count() > 32 {
+                if !is_valid_word_guess(answer) {
                     return Err(GameError::InvalidAction);
                 }
                 Ok(Self::WordAnswer {
@@ -282,7 +288,11 @@ fn apply_word_scramble(
     if state.attempts_left == 0 {
         return Err(GameError::AlreadyFinished);
     }
-    let answer = answer.trim().to_ascii_uppercase();
+    let answer = answer.trim();
+    if !is_valid_word_guess(answer) {
+        return Err(GameError::InvalidAction);
+    }
+    let answer = answer.to_ascii_uppercase();
     if state
         .guesses
         .iter()
@@ -414,6 +424,55 @@ mod tests {
                 assert!(!result.is_complete);
             }
         }
+    }
+
+    #[test]
+    fn word_scramble_parser_accepts_letters_and_rejects_mentions_markup_and_controls() {
+        assert_eq!(
+            GameAction::parse(GameKind::WordScramble, "Orbit"),
+            Ok(GameAction::WordAnswer {
+                answer: String::from("Orbit"),
+            })
+        );
+
+        for invalid in [
+            "@everyone",
+            "<@123456789>",
+            "`ORBIT`",
+            "two words",
+            "ORBIT\n@everyone",
+            "café",
+        ] {
+            assert_eq!(
+                GameAction::parse(GameKind::WordScramble, invalid),
+                Err(GameError::InvalidAction),
+                "unexpectedly accepted {invalid:?}"
+            );
+        }
+
+        let too_long = "A".repeat(33);
+        assert_eq!(
+            GameAction::parse(GameKind::WordScramble, &too_long),
+            Err(GameError::InvalidAction)
+        );
+    }
+
+    #[test]
+    fn direct_word_scramble_actions_cannot_bypass_input_validation() {
+        let mut state = GameState::WordScramble(WordScrambleState::default());
+        let before = state.clone();
+
+        assert_eq!(
+            apply_action(
+                &mut state,
+                0,
+                GameAction::WordAnswer {
+                    answer: String::from("@everyone"),
+                }
+            ),
+            Err(GameError::InvalidAction)
+        );
+        assert_eq!(state, before);
     }
 
     #[test]
