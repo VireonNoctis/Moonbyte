@@ -3279,7 +3279,7 @@ fn render_player_card(
          **Quick routes**\n\
          `{prefix}games` · `{prefix}stats` · `{prefix}atlas` · `{prefix}chronicle`\n\
          `{prefix}quests` · `{prefix}expedition` · `{prefix}vault list`\n\
-         `{prefix}mastery` · `{prefix}streak` · `{prefix}rivals`\n\
+         `{prefix}mastery` · `{prefix}streak`\n\
          `{prefix}inventory` · `{prefix}collection` · `{prefix}companion` · `{prefix}rivals` · `{prefix}settings`\n\n\
          This personal card is visible only to you. Public and guild-facing profile cards are not enabled yet.",
         escape_user_text(&profile.display_name),

@@ -80,7 +80,7 @@ Vault panels use the shared private title-panel builder. Slash invocations expos
 ### Profiles, consent and privacy
 
 - Profiles store a player-selected display name, optional short bio, visibility and preference flags.
-- `.profile` is a private, read-only Player Card composed from owning services: game totals, achievements, Wayfarer journey days, Companion stage, Rivalry counts, Chronicle pages, postcards, Satchel items and latest Puzzle Vault progress. It also provides command shortcuts. It does not initialise Atlas state, alter progress, or expose public/guild profile projections.
+- `.profile` is a private, read-only Player Card composed from owning services: game totals and derived Mastery rank, achievements, Wayfarer journey days, Companion stage, Rivalry counts, Chronicle pages, postcards, Satchel items and latest Puzzle Vault progress. It also provides command shortcuts. It does not initialise Atlas state, alter progress, or expose public/guild profile projections.
 - The global command gate requires acceptance of current Terms and Privacy versions before ordinary commands. Legal/privacy commands remain available.
 - Profile creation uses the same per-user PostgreSQL advisory lock as confirmed account deletion and re-checks both current policy versions inside the transaction. A deterministic PostgreSQL regression test queues a stale creation behind deletion and verifies it is rejected after deletion commits.
 - Game-session creation and joining take the relevant player lock and re-check consent/profile existence. Moves lock participant IDs in stable order before the session row, then verify the participant set is unchanged. Domain progress handlers require an existing profile and do not create one.
