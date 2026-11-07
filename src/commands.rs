@@ -41,6 +41,14 @@ fn parse_game_component_id(custom_id: &str) -> Option<(String, u32, u8)> {
     Some((session_id, action_version, value))
 }
 
+fn game_component_button_state(phase: GamePhase) -> Option<bool> {
+    match phase {
+        GamePhase::WaitingForPlayers => None,
+        GamePhase::Active => Some(false),
+        GamePhase::Completed | GamePhase::Abandoned => Some(true),
+    }
+}
+
 fn game_action_input(game: GameKind, value: u8) -> Option<String> {
     match game {
         GameKind::TicTacToe if value < 9 => Some(format!("{},{}", value / 3 + 1, value % 3 + 1)),
@@ -61,10 +69,9 @@ fn game_components(snapshot: &SessionSnapshot) -> Vec<CreateActionRow> {
 
     // Waiting lobbies have no legal moves yet. Terminal boards retain disabled
     // controls so the final message clearly shows that play has ended.
-    if snapshot.phase == GamePhase::WaitingForPlayers {
+    let Some(disabled) = game_component_button_state(snapshot.phase) else {
         return Vec::new();
-    }
-    let disabled = snapshot.phase != GamePhase::Active;
+    };
     let values = (start..start + count).collect::<Vec<_>>();
 
     values
@@ -145,6 +152,21 @@ async fn component_followup_notice(
                 .ephemeral(true),
         )
         .await?;
+    Ok(())
+}
+
+/// Edits the source board after an acknowledged component interaction. If the
+/// message was deleted or Discord rejects the edit, report the saved state privately.
+async fn edit_game_component_board(
+    discord: &poise::serenity_prelude::Context,
+    interaction: &ComponentInteraction,
+    response: EditInteractionResponse,
+    fallback: impl Into<String>,
+) -> Result<(), Error> {
+    if interaction.edit_response(discord, response).await.is_err() {
+        tracing::warn!(event = "game_component_board_edit_failed");
+        component_followup_notice(discord, interaction, fallback).await?;
+    }
     Ok(())
 }
 
@@ -236,7 +258,15 @@ This board was refreshed because that control was out of date.",
                 current.render()
             ))
             .components(game_components(&current));
-        interaction.edit_response(discord, refreshed).await?;
+        edit_game_component_board(
+            discord,
+            interaction,
+            refreshed,
+            format!(
+                "This control was out of date, but the board could not be refreshed. Run .session {session_id} to view the latest state."
+            ),
+        )
+        .await?;
         return Ok(());
     }
 
@@ -260,7 +290,15 @@ This board was refreshed because that control was out of date.",
             let updated = EditInteractionResponse::new()
                 .content(snapshot.render())
                 .components(game_components(&snapshot));
-            interaction.edit_response(discord, updated).await?;
+            edit_game_component_board(
+                discord,
+                interaction,
+                updated,
+                format!(
+                    "Your move was saved, but Discord could not update the board. Run .session {session_id} before making another move."
+                ),
+            )
+            .await?;
             tracing::debug!(
                 event = "game_component_action_applied",
                 game = snapshot.game.definition().id
@@ -290,7 +328,15 @@ This board was refreshed because another move was accepted first.",
                     latest.render()
                 ))
                 .components(game_components(&latest));
-            interaction.edit_response(discord, refreshed).await?;
+            edit_game_component_board(
+                discord,
+                interaction,
+                refreshed,
+                format!(
+                    "Another move was accepted first, but the board could not refresh. Run .session {session_id} to view the latest state."
+                ),
+            )
+            .await?;
         }
         Err(error) => {
             component_followup_notice(discord, interaction, error.to_string()).await?;
@@ -3495,8 +3541,8 @@ mod title_panel_tests {
 #[cfg(test)]
 mod autocomplete_tests {
     use super::{
-        PlayerCardProgress, autocomplete_value_matches, render_player_card,
-        resolve_vault_panel_title,
+        PlayerCardProgress, autocomplete_value_matches, game_component_button_state,
+        render_player_card, resolve_vault_panel_title,
     };
     use crate::profile::PlayerProfile;
 
@@ -3609,5 +3655,25 @@ mod autocomplete_tests {
             "Wayfarer's Lantern",
             "wayfarer-lantern"
         ));
+    }
+
+    #[test]
+    fn game_controls_are_omitted_waiting_and_disabled_after_terminal_states() {
+        assert_eq!(
+            game_component_button_state(crate::game::GamePhase::WaitingForPlayers),
+            None
+        );
+        assert_eq!(
+            game_component_button_state(crate::game::GamePhase::Active),
+            Some(false)
+        );
+        assert_eq!(
+            game_component_button_state(crate::game::GamePhase::Completed),
+            Some(true)
+        );
+        assert_eq!(
+            game_component_button_state(crate::game::GamePhase::Abandoned),
+            Some(true)
+        );
     }
 }

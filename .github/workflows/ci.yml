@@ -74,5 +74,14 @@ jobs:
       - name: Test Rust workspace against PostgreSQL
         run: cargo test --workspace --locked
 
+      - name: Verify PostgreSQL backup and restore round-trip
+        run: |
+          docker run --rm --network host \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e MOONBYTE_RESTORE_TEST_DATABASE_URL="postgres://moonbyte:moonbyte@127.0.0.1:5432/moonbyte_restore_test" \
+            postgres:17-alpine sh -ec 'apk add --no-cache bash >/dev/null && bash scripts/test-backup-restore.sh'
+
       - name: Check Rust code with Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings

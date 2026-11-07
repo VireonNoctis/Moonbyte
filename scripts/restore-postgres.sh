@@ -27,9 +27,14 @@ checksum_file="$backup_file.sha256"
     exit 1
 }
 
-expected_checksum="$(awk 'NR == 1 { print $1 }' "$checksum_file")"
+mapfile -t checksum_lines < "$checksum_file"
+[[ ${#checksum_lines[@]} -eq 1 && "${checksum_lines[0]}" =~ ^[[:xdigit:]]{64}$ ]] || {
+    echo "Backup checksum manifest is malformed." >&2
+    exit 1
+}
+expected_checksum="${checksum_lines[0]}"
 actual_checksum="$(sha256sum "$backup_file" | awk '{print $1}')"
-[[ -n "$expected_checksum" && "$expected_checksum" == "$actual_checksum" ]] || {
+[[ "$expected_checksum" == "$actual_checksum" ]] || {
     echo "Backup checksum verification failed." >&2
     exit 1
 }
@@ -37,7 +42,17 @@ pg_restore --list "$backup_file" >/dev/null
 
 existing_objects="$(psql --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
     --dbname="$DATABASE_URL" \
-    --command="SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f')")"
+    --command="SELECT
+        (SELECT count(*) FROM pg_class c
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+         WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f'))
+        + (SELECT count(*) FROM pg_proc p
+           JOIN pg_namespace n ON n.oid = p.pronamespace
+           WHERE n.nspname = 'public')
+        + (SELECT count(*) FROM pg_type t
+           JOIN pg_namespace n ON n.oid = t.typnamespace
+           WHERE n.nspname = 'public' AND t.typrelid = 0 AND t.typelem = 0
+             AND t.typtype IN ('d', 'e', 'r', 'm', 'p'))")"
 
 [[ "$existing_objects" == "0" ]] || {
     echo "Target database is not empty; restore refused. Use a newly created empty database." >&2

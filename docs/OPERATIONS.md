@@ -35,15 +35,18 @@ DATABASE_URL='postgresql://…' MOONBYTE_BACKUP_DIR='/secure/backups' ./scripts/
 
 The script:
 - Uses `pg_dump` custom format with owner/ACL metadata excluded.
-- Writes a restrictive-permission file and a SHA-256 sidecar.
-- Validates that the archive can be listed before publishing it.
+- Builds the archive and checksum in temporary files before publishing them.
+- Validates that the archive can be listed and that the checksum is a complete 64-character SHA-256 value.
+- Publishes both files with owner-only permissions and removes partial output on ordinary command failures.
 - Refuses to overwrite a same-timestamp backup.
+
+CI also runs a real PostgreSQL 17 round-trip against a disposable database: it verifies a restored probe row, checks malformed checksums are rejected, and confirms a second restore into the populated target is refused. This is repeatable CI evidence, not a production restore rehearsal.
 
 Store backups off the bot host, encrypt them at rest and restrict read access. The script does not schedule backups or upload them to remote storage. Before public deployment, choose a schedule and retention policy; a daily backup is a reasonable initial baseline, with an additional backup before schema changes. Define the actual recovery point and recovery time objectives from the hosting provider's capabilities rather than promising them in advance.
 
 ## 4. Restore drill
 
-Restore only into a newly created, empty database. The script verifies the checksum and refuses to run when the target's `public` schema already contains tables, views or sequences.
+Restore only into a newly created, empty database. The script requires exactly one well-formed SHA-256 checksum line, verifies the archive listing, and refuses to run when the target's `public` schema contains relations, routines or user-defined types.
 
 ```sh
 DATABASE_URL='postgresql://…' ./scripts/restore-postgres.sh /secure/backups/moonbyte-YYYYMMDDTHHMMSSZ.dump --confirm-empty-database
@@ -65,6 +68,7 @@ Use a database with the same supported PostgreSQL major version as the source. K
 - [ ] Provision PostgreSQL with TLS, restricted network access, backups and a named owner.
 - [ ] Configure scheduled off-host backups and alert on failures.
 - [ ] Restore a backup into a new empty database and measure recovery.
+- [x] CI backup/restore round-trip against an isolated PostgreSQL 17 database, including malformed-checksum and non-empty-target refusal tests.
 - [ ] Verify Terms/Privacy consent, prefix and slash commands, game buttons, restart recovery, guild isolation and account deletion in Discord.
 - [ ] Review legal documents, data processors, retention, support contact and incident process before inviting public users.
 
