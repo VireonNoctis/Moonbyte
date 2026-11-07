@@ -714,7 +714,11 @@ mod postgres_tests {
         .expect("read crafting quest progress");
         assert_eq!(crafting_quest, (String::from("completed"), 1, 1));
         assert_eq!(
-            wayfarer.snapshot(&player_id).await.expect("Wayfarer after crafting").active_days,
+            wayfarer
+                .snapshot(&player_id)
+                .await
+                .expect("Wayfarer after crafting")
+                .active_days,
             1,
             "a successful craft contributes to the same count-up journey day"
         );
