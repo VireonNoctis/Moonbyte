@@ -17,10 +17,11 @@ checksum_file="$backup_file.sha256"
 temporary_file="$(mktemp "$backup_dir/.moonbyte-backup.XXXXXX")"
 temporary_checksum="$(mktemp "$backup_dir/.moonbyte-checksum.XXXXXX")"
 published=false
+published_archive=false
 
 cleanup() {
     rm -f -- "$temporary_file" "$temporary_checksum"
-    if [[ "$published" != true ]]; then
+    if [[ "$published" != true && "$published_archive" == true ]]; then
         rm -f -- "$backup_file" "$checksum_file"
     fi
 }
@@ -43,6 +44,7 @@ checksum="$(cat "$temporary_checksum")"
 
 chmod 600 "$temporary_file" "$temporary_checksum"
 mv -- "$temporary_file" "$backup_file"
+published_archive=true
 mv -- "$temporary_checksum" "$checksum_file"
 published=true
 
