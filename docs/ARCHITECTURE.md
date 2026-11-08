@@ -1,239 +1,124 @@
 # Moonbyte Architecture
 
-- Status: Rust workspace, configuration bootstrap, Discord command adapters, a first transport-independent game/session slice, and a presentation-only Next.js catalogue foundation implemented; PostgreSQL-backed session persistence and restart recovery are implemented; player/profile persistence, live game API, Activity handshake, and authoritative visual rendering remain unimplemented.
-- Last updated: 2026-10-31.
+> Technical source of truth. Live product behavior is listed in [Implementation Map](IMPLEMENTATION.md).
 
-This document describes intended boundaries and constraints. It must be revised to match the implementation as it is built; do not treat planned components as existing services.
+## System boundary
 
-## 1. Technology baseline
+Moonbyte is one Rust application whose required player surface is Discord. Serenity/Poise translate Discord commands and interactions into application-service calls. The application services use PostgreSQL through SQLx. Game rules remain transport-independent; Discord does not calculate trusted outcomes or own player progress.
 
-| Concern | Selected technology |
-| --- | --- |
-| Language | Rust |
+```text
+Discord Gateway / Commands / Message Components
+                    |
+             Serenity + Poise
+                    |
+          Discord Adapter Layer
+                    |
+      Rust Application / Domain Services
+        |      |       |        |
+      Games  Players  World   Progression
+        |      |       |        |
+       PostgreSQL through SQLx
+```
+
+No separate web client, visual-library service, broker or microservice is required.
+
+## Technology baseline
+
+| Concern | Selection |
+|---|---|
+| Language | Rust 2024 |
 | Async runtime | Tokio |
 | Discord API | Serenity |
-| Command framework | Poise |
-| Persistent storage | PostgreSQL |
-| Database access | SQLx with PostgreSQL support only |
-| Visual library | Next.js + React + TypeScript |
-| Discord Activity bridge | Official Discord Embedded App SDK |
-| Logging and diagnostics | Structured tracing |
-| Art pipeline | Original pixel-art source assets and cached rendered output |
+| Commands | Poise |
+| Database | PostgreSQL |
+| Database access | SQLx, PostgreSQL driver |
+| Presentation | Discord messages, embeds, buttons, select menus and modals |
+| Art | Original full-colour pixel art and custom emoji where useful |
 
-Poise is built on Serenity and supports prefix and slash commands from shared command definitions. Serenity manages Discord Gateway connections and supports sharding. Tokio is the async runtime. The executable uses Tokio, Serenity through Poise, and a committed dependency lockfile. The command adapter now exposes a game catalogue, start/join/action/session/leave operations in addition to help, about, ping and privacy. Four game modules run without Discord types. The session runtime loads and mutates versioned JSONB session snapshots in PostgreSQL. Mutations use short row-locked transactions; game rules remain independent of Discord and database types. `visual-library/` contains a real Next.js app for browsing only the implemented catalogue; it deliberately does not duplicate authoritative game logic or claim to host live sessions.
+The checked-in toolchain file is authoritative. CI records the version used by the run. Keep the initial deployment to one supported bot process until duplicate interaction delivery, concurrent-load behavior and failover are proven.
 
-References: [Poise documentation](https://docs.rs/poise/latest/poise/), [Serenity documentation](https://docs.rs/serenity/latest/serenity/), [Tokio documentation](https://docs.rs/tokio/latest/tokio/).
+## Code layers and ownership
 
-## 2. Logical system
+- **Domain:** pure game rules, player progression rules, Atlas graph, route definitions and state transitions. No Serenity, Poise or SQLx types.
+- **Application/persistence:** player, game, wallet, inventory, quest, Atlas, Chronicle, Vault, guild and Expedition stores. PostgreSQL is authoritative.
+- **Discord adapter:** command parsing, identity/guild extraction, response formatting and component routing. All user input is untrusted.
+- **Composition root:** `src/main.rs` creates stores, registers commands, starts background retention work and owns graceful shutdown.
+- **Configuration:** environment variables are validated before database/gateway startup. Secret values are never printed.
 
-~~~mermaid
-flowchart TD
-    U[Discord users] --> D[Discord Gateway and interactions]
-    D --> A[Discord adapter: Serenity + Poise]
-    A --> C[Command and interaction handlers]
-    C --> S[Application services]
-    S --> G[Game registry and session runtime]
-    G --> R[Game rules and state machines]
-    S --> P[Player, guild, progression and privacy services]
-    G --> DB[(PostgreSQL)]
-    P --> DB
-    G --> V[Pixel-art renderer and asset cache]
-    V --> A
-    S --> O[Structured logs and metrics]
-~~~
+## Game session lifecycle
 
-The runtime should be one deployable bot process first. Separate services, queues, distributed caches, and multi-region infrastructure are not part of the initial architecture.
+1. Start a session or guild-scoped lobby.
+2. Persist the initial versioned JSONB snapshot.
+3. For each mutation, select the session row for update, decode and validate its state, check guild/participant/phase/turn constraints, apply the pure game rule and persist the new snapshot in a short transaction.
+4. Commit before sending or editing a Discord response.
+5. Reconstruct state from PostgreSQL after process restart. A session ID is a locator, never an authentication token.
+6. Expire waiting/active sessions after 24 hours without a successful mutation; one central cleanup task removes expired rows. Reads do not refresh expiry.
 
-## 3. Component boundaries
+Expedition runs have their own durable state machine and checkpoint history. Unlike ordinary game sessions, a paused Expedition has no attendance deadline and is not removed for inactivity.
 
-| Component | Responsibility | Must not own |
-| --- | --- | --- |
-| Discord adapter | Gateway events, prefix/slash parsing, interaction acknowledgements, message edits, buttons, menus, modals. | Game rules or direct SQL queries. |
-| Application services | Orchestrate start game, join lobby, submit action, finish game, update profile, export, and delete use cases. | Discord transport details. |
-| Game registry | Discover validated game definitions and metadata. | Persistent player data or gateway connections. |
-| Session manager | Create, find, authorise, transition, expire, and recover sessions. | Individual game's domain rules. |
-| Game modules | Rules, legal actions, state transitions, outcomes, and game-specific presentation data. | Directly sending Discord messages or bypassing session validation. |
-| Player/progression services | Profiles, statistics, achievements, inventory, and reward policy. | Guild-private configuration. |
-| Privacy service | Data inventory, export, deletion orchestration, retention requests, and privacy command responses. | Bypassing repositories or claiming deletion before it completes. |
-| Persistence layer | PostgreSQL repositories, versioned migrations, short transactions, JSONB state snapshots and expiry cleanup. | Discord API calls. |
-| Rendering layer | Convert game view models and assets into cached image output or frontend-ready view models. | Mutating game state. |
-| Visual library frontend | Next.js pages, React components, catalogue, lobbies, and Activity UI. | Authoritative rules, balances, permissions, or direct database access. |
-| Activity bridge | Embedded App SDK handshake and Discord client capabilities. | Owning player identity or trusted game state. |
-| Operations layer | Configuration, structured diagnostics, graceful shutdown, and health signals. | Game-specific decisions. |
+## PostgreSQL and consistency
 
-The primary dependency direction is from adapters toward application services and domain rules. Game logic must remain testable without a live Discord connection.
+- Ordered SQL migrations are recorded in `moonbyte_schema_migrations` and guarded by an advisory transaction lock at startup.
+- Session mutations use row-level locks and short transactions. Do not hold a transaction over Discord HTTP calls.
+- Game result, statistics, first-completion ledger credit and achievement changes commit with the completed session.
+- Atlas travel, first discovery, the matching Chronicle fragment, account-bound postcard and any authored material grant commit together; inventory writes are idempotent and retain the Atlas source ID.
+- A fixed recipe consumes source-backed inventory rows and inserts its account-bound output in one transaction. A per-player advisory lock serialises recipe attempts.
+- Expedition checkpoint history and each active participant's Atlas/Chronicle/inventory/Wayfarer effects are written in one transaction. Advancement locks every active participant's account in stable ID order before the run row, then rechecks party membership; leave and account deletion use the same user-to-run lock order.
+- Profile creation, game-session entry and account deletion share a per-player advisory lock and re-check both current policy versions inside the transaction. Game actions acquire participant locks in stable order before taking the session row; Expedition checkpoint actions acquire all active participant locks before the run row. Domain events cannot recreate deleted profiles.
+- Player JSON export runs every profile, consent, game, progress, wallet and ledger read through one read-only `REPEATABLE READ` transaction. The snapshot prevents a concurrent commit from producing mixed before/after records in one export.
+- Puzzle Vault mutations use the same per-player advisory lock as privacy deletion, row-lock the open run and commit each correct save stone atomically. Completion, Chronicle unlock, Wayfarer activity and the one-time keepsake share the final checkpoint transaction.
+- Quest reward claims use a unique player/date/objective key and an immutable ledger entry.
+- Guild settings use PostgreSQL notifications to invalidate per-process cache entries.
+- Guild Project contributions are inserted and aggregated inside the originating shared Expedition transaction. A project-row lock serialises join, leave and contribution; a unique `(project, run, checkpoint)` key prevents duplicate credit.
+- Guild Project membership is player-owned and belongs in inventory/export/deletion. Contribution rows deliberately omit contributor IDs; account deletion clears the Expedition actor reference while preserving anonymous server progress. Actual guild removal cascades the server-owned board.
+- State/content versions are explicit; unsupported persisted versions fail clearly instead of silently resetting.
 
-## 4. Game contract and lifecycle
+## Privacy and security boundaries
 
-Every game should provide a stable ID, display metadata, category, player limits, session mode, rules, initial state, validated actions, state transition function, view model, end conditions, results, and a versioned representation when state must be saved.
+- Every player-owned table has a clear owner and export/deletion path. Inventory records retain stable item IDs, quantity, source type, source reference and acquisition timestamp; export covers postcard, material, crafted-item and Vault-keepsake provenance, and account deletion removes all inventory rows. Vault run/checkpoint tables are included in private inventory, JSON export and deletion; incorrect guesses are never persisted.
+- Guild settings and project aggregates are server-owned, not player profile data. Project membership is personal and exportable/deletable; the board never exposes enrollee names. Guild permissions do not grant access to private player history.
+- Private profiles, statistics, quest state, inventory, Chronicle pages, Vault progress, rivalries and Expedition details are returned privately where required.
+- Raw message text is not persisted as analytics. Tokens, authorization headers, private payloads, quest seeds and unnecessary player identifiers are not logged.
+- No client-supplied score, winner, reward, currency balance or checkpoint is trusted.
+- Discord delivery failure never rolls back a committed game or Expedition state change; retry behavior must avoid duplicate effects.
 
-The platform owns the shared lifecycle:
+## Command presentation and input guidance
 
-~~~mermaid
-stateDiagram-v2
-    [*] --> Created
-    Created --> WaitingForPlayers
-    Created --> Active: solo start
-    WaitingForPlayers --> Active: lobby starts
-    WaitingForPlayers --> Expired: lobby timeout
-    Active --> Paused: supported interruption
-    Paused --> Active: resume
-    Active --> Completed: game ends
-    Active --> Aborted: permitted cancellation
-    Paused --> Aborted: cancellation
-    Completed --> [*]
-    Aborted --> [*]
-    Expired --> [*]
-~~~
+The Discord adapter owns response formatting without moving domain rules into Serenity/Poise. Substantial slash results use the shared `send_title_panel` helper to render a compact embed title and description; it is used by Craft, Tavern and Games. Active game boards use the game title in their embed while retaining native controls. Panel visibility is selected per command: Craft results are ephemeral for slash invocations and DM-delivered for prefix invocations in a server; browse panels are public and game boards remain visible to participants. Other prefix output retains normal message visibility. Use title panels for meaningful browse/workbench/board views, not every acknowledgement, and preserve private delivery for profile, inventory and other personal data. Finite command arguments use a conservative edit-distance suggestion helper for recipes, game IDs, Atlas destinations and finite action verbs. A suggestion is never an automatic correction and must not execute a command on the player's behalf.
 
-Every transition must be validated. Reject actions from non-members, the wrong player, stale interactions, duplicate submissions, and actions invalid for the current phase.
+## Discord command presentation
 
-## 5. Concurrency model
+Slash-command fields with finite choices use Poise autocomplete callbacks. Suggestions are built from the owning catalogue (crafting recipes, game definitions, Atlas locations) or the relevant fixed action vocabulary (including Vault actions and chamber IDs), filtered against the partial text and capped at Discord's 25-choice/100-character limits. Craft labels include the output and ingredients, but values are canonical recipe IDs; the handler also accepts the exact display title for prefix convenience. Autocomplete is discovery only and never performs a craft, travel, Vault entry/solve, quest or social action.
 
-The product is event-driven, not frame-driven.
-- Tokio handles Discord networking, asynchronous storage operations, and coordination.
-- Incoming interactions become validated game actions; state changes only on meaningful events.
-- Use bounded channels and explicit backpressure for internal queues.
-- Scope synchronisation to an individual session or resource. Avoid one global mutex for all games.
-- Never hold a lock or transaction across a Discord HTTP request.
-- Never block Tokio worker threads with CPU-heavy rendering or synchronous I/O.
-- Use cancellation tokens/timeouts for sessions and shutdown paths.
-- Do not create a busy polling loop for every idle session. Use event deadlines or a central expiry scheduler.
-- Use per-session tasks only where they simplify ownership and lifecycle.
-- Treat rate limits and interaction expiry as normal control flow.
+The self-only Player Card is a read-model composition of Profile, game statistics, Achievements, Wayfarer/Companion, Rivalry, Chronicle, Inventory and Vault services. The Vault command uses the same title-panel helper, with a separate optional title field so prefix solve answers remain canonical and unmodified. It does not duplicate their state or initialise Atlas progress as a side effect. Public and guild-facing profile projections remain deferred until their visibility and sharing contracts are implemented.
 
-A slow game or render must not stall unrelated sessions. Isolate CPU-heavy rendering from async I/O workers and cache output by stable render inputs.
+Substantial browse and overview responses use a shared embed title-panel builder. Relevant slash commands expose an optional `title` string; matching prefix commands accept trailing title text after required arguments. The adapter removes duplicate leading Markdown headings, escapes user-supplied titles to prevent mentions/Markdown injection, normalises whitespace and respects Discord's title/description limits. Player-owned slash views and active-session lists use ephemeral embeds; prefix invocations in a server are sent by DM. Public catalogues keep their intended visibility. The title changes presentation only and cannot alter a recipe, destination, player record or game outcome. Expedition catalogue/status panels reuse the same standard visual treatment without changing their multi-part argument grammar.
 
-## 6. Persistence: PostgreSQL
+Finite closed-vocabulary inputs use conservative suggestion text. A close match is shown as a hint; Moonbyte does not silently replace a recipe, game, Atlas destination, Vault action or chamber ID. Incorrect Vault answers return authored hints without storing the submitted answer.
 
-PostgreSQL is Moonbyte's persistent system of record. SQLx is compiled with its PostgreSQL driver only; SQLite and ScyllaDB are not part of the runtime.
+## Discord components
 
-The first migration creates a monotonic session-ID sequence, a schema migration ledger, a game_sessions table with stable ID, game ID, optional guild ID, lifecycle phase, state version, action count, JSONB session snapshot, timestamps and expiry, plus indexes for expiry and guild/phase queries.
+Tic-tac-toe, Connect Four and Memory Match boards expose numbered native Discord buttons. Each custom ID binds the session ID, expected action count and a bounded game-specific input. The global interaction handler rechecks current consent, server command-channel policy, participant identity, guild scope and session state before forwarding the input to the same GameRuntime used by text commands. If the action count has advanced, the old board is refreshed from PostgreSQL without applying the move. Terminal controls are disabled. Word Scramble remains text-answer driven. The existing text command route remains available as an accessible fallback.
 
-Every session mutation runs inside a short database transaction. Mutating actions select the session row FOR UPDATE, deserialize and validate domain state, serialize the new versioned snapshot, update the row and commit before the Discord adapter sends a response. A rejected action drops the transaction without persisting a partial state change. Session reads verify participant and guild scope.
+## Logging, shutdown and operations
 
-The initial retention rule expires a session after 24 hours without a successful mutation. One central task removes expired rows every 15 minutes; the runtime also refuses to read or mutate an expired row. Do not retain expired snapshots indefinitely.
+The runtime uses `tracing` with an environment filter and a compact formatter. The default filter enables Moonbyte application events at info level and keeps Serenity/SQLx comparatively quiet. Events cover process startup/stopping, configuration progress, database readiness, gateway startup/stopping, shutdown signals, expired-session cleanup and guild cleanup.
 
-The current supported deployment remains one bot process with one PostgreSQL database. PostgreSQL row locking provides atomic per-session mutations, but do not claim multi-instance production support until Discord interaction idempotency, duplicate delivery, process failover, pool sizing and concurrent load tests are complete.
+Log fields are deliberately minimised: no Discord user or guild identifiers, raw messages, private payloads, token, database URL or secret quest/fairness seeds are emitted. Production operators should avoid enabling verbose SQLx query logging because database diagnostics may expose sensitive values.
 
-Backup, restore, managed-database selection, connection-secret provisioning and production encryption-at-rest configuration remain operator/deployment work. Never log the connection URL or claim that selecting PostgreSQL automatically proves encryption at rest.
+The runtime handles Ctrl-C on all supported platforms and SIGTERM on Unix, then requests all Discord shards to shut down. Process exit drops background tasks and the SQLx pool cleanly.
 
-Likely future data groups include player profiles, settings, guild settings, results, achievements, inventory, quest progress, ledger entries and privacy-operation metadata. Add each through reviewed migrations and update the privacy inventory before enabling the feature.
-## 7. Discord command and interaction adapter
+The current supported deployment is single-process. Production readiness still requires database backup/restore automation, monitoring/alerts, secret rotation, capacity/load testing, interaction duplicate-delivery handling and a rehearsed recovery procedure. PostgreSQL/hosting encryption-at-rest properties must be verified with the operator; the application does not claim them by default.
 
-Default prefix: **.** Poise should expose shared command definitions as prefix and slash commands where appropriate.
+## Verification
 
-Prefix commands require Discord's Message Content privileged intent. Enable it in developer settings and request it in code. Request only intents the implementation needs.
+Run:
 
-Interaction rules:
-- Acknowledge or defer interactions before Discord's response deadline.
-- Edit an existing game message for state changes where possible instead of flooding channels.
-- Use ephemeral responses for private information, exports, and validation feedback where supported.
-- Check that the clicking user's identity and permissions match the action.
-- Treat deleted messages, expired interactions, user departure, and API errors as recoverable failure paths.
-- Keep public multiplayer boards separate from personal inventory and profile details.
+```bash
+python3 scripts/validate.py
+cargo fmt --all -- --check
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
+```
 
-Reference: [Discord Gateway intents](https://discord.com/developers/docs/topics/gateway#privileged-intents).
-
-## 8. Privacy service and data boundaries
-
-The privacy service should provide overview, data inventory, private export, confirmed deletion, and guild-configuration deletion for authorised administrators.
-
-- Repositories must expose explicit user-owned data queries so export/deletion cannot silently omit a table.
-- Deletion must be one coordinated, auditable operation with idempotent retries.
-- A deletion confirmation must be bound to the requesting Discord user and expire.
-- Do not store export files permanently. Generate them on demand and deliver them privately.
-- Ensure logs record operation outcome and correlation metadata, not export contents or deleted values.
-- Retention cleanup must be implemented as bounded, observable jobs.
-- Guild-scoped configuration and server-only records must remain isolated by guild ID.
-- Tests must prove that a user's data cannot be retrieved by another user and one guild cannot inspect another guild's records.
-
-See [PRIVACY.md](PRIVACY.md) for data categories, purposes, retention targets, and encryption limitations.
-
-## 9. Pixel-art rendering
-
-Pixel art is a first-class part of the product.
-- Maintain an original art direction and documented palette per game/world.
-- Store source assets in a predictable, licensed asset directory.
-- Prefer reusable sprite sheets and atlases over duplicated one-off images.
-- Separate source sprites from runtime render output.
-- Cache render results by game, state version, theme, and relevant viewport inputs.
-- Re-render only when visible state changes.
-- Keep dimensions and file sizes suitable for Discord.
-- Ensure visual state is also conveyed through text or accessible labels; colour alone must not encode critical information.
-
-Do not commit generated caches. Do not use third-party assets unless their licence allows the intended distribution.
-
-## 10. Visual library and Discord Activity boundary
-
-The visual library is a separate **Next.js + React + TypeScript** application. It can run as a normal HTTPS web app and, where configured, as a Discord Activity embedded in the Discord client.
-
-- Use Discord's official Embedded App SDK for Activity handshake and supported client integration.
-- Keep Discord-native bot commands and ordinary embeds available as the baseline/fallback interface.
-- The frontend requests authorised view models and sends intent/action requests to the Rust application API.
-- The Rust backend validates the Discord identity/session context, guild, membership, permissions, game phase, and turn ownership for every state-changing action.
-- Never trust client-side validation, client-supplied balances, client-supplied item ownership, or client-generated game outcomes.
-- Do not expose the bot token, database URL/credentials, server seed before reveal, or backend credentials to browser code.
-- Use HTTPS, strict origin/CORS policy, secure session handling, Content Security Policy appropriate to Discord Activity hosting, and bounded API requests.
-- Treat Activity startup, reload, participant changes, and disconnects as normal lifecycle events. The backend remains authoritative if the frontend reloads.
-- Do not duplicate game rules in TypeScript. Share schemas/types where useful, but keep game outcomes and state transitions in Rust.
-
-Official references: [Discord Activities](https://discord.com/developers/docs/activities/overview) and [Embedded App SDK](https://discord.com/developers/docs/developer-tools/embedded-app-sdk).
-
-## 11. Security and trust boundaries
-
-- Discord user and guild identifiers are untrusted until checked against interaction context.
-- Authorise every action server-side.
-- Check session ownership, membership, current turn, and guild scope for every mutation.
-- Validate string lengths, enum values, numeric ranges, and payload sizes before persistence or rendering.
-- Apply command and game-action rate limits per user and guild.
-- Treat external API responses and imported legacy data as untrusted.
-- Keep secrets in environment variables or deployment secret stores.
-- Avoid logging raw message content, tokens, private export contents, or unnecessary user data.
-- Make profile deletion and retention explicit.
-
-## 12. Reliability and observability
-
-Initial operational signals:
-- Gateway connection and reconnect state.
-- Command and interaction success/failure counts.
-- Active sessions and transitions by game.
-- Session timeout and recovery counts.
-- PostgreSQL query latency, pool saturation, migration version and expired-session cleanup.
-- Render duration and cache hit rate.
-- Rate-limit and interaction-expiry errors.
-- Privacy export/deletion outcomes and retention-job status, without logging the data itself.
-
-Use structured logs with correlation identifiers for command and session flows. Do not log secrets or full user-generated message content.
-
-Shutdown should stop new session creation, cancel or drain active work within a defined policy, persist resumable state, close the database pool, and exit. Startup should validate configuration and migrations before accepting play.
-
-## 13. Fairness transcript boundary
-
-Random outcomes requiring verification use the commit–reveal protocol in [FAIRNESS.md](FAIRNESS.md). Generate secrets using OS-backed CSPRNG entropy; use SHA-512 only as the commitment hash and documented derivation primitive. Store append-only transcript events, do not permit hidden rerolls, and make aborts verifiable. The web UI may display verification state but cannot generate or certify results.
-
-The economy ledger, Bazaar transactions, and Vault rewards are deterministic and cannot depend on a random draw.
-
-## 14. Scaling policy
-
-1. Start with one bot process, one PostgreSQL database, and bounded connection-pool concurrency.
-2. Measure latency, database contention, memory use, and active-session volume.
-3. Optimise query plans, cache repeated renders, and reduce redundant Discord edits.
-4. Use Serenity's supported sharding when required by Discord's operational limits.
-5. Consider separate workers or a different persistence topology only when measurements show a concrete bottleneck.
-
-Do not distribute the system merely to appear enterprise-grade.
-
-
-## 15. Current implementation snapshot
-
-The current playable slice is deliberately small and honest about its limits:
-
-- Rust domain rules implement Tic-tac-toe, Connect Four, Memory Match and Word Scramble.
-- `GameRuntime` uses PostgreSQL as the durable source of truth. Start, join, action, read, active-session listing and leave operations use the versioned JSONB session snapshot.
-- Mutations use short row-locked transactions; reads and active-session listings enforce participant and guild/DM scope.
-- Poise exposes the implemented operations as shared prefix and slash commands, including `.sessions` for the requester's 10 most recently updated active sessions in the current scope.
-- Session IDs are generated from a PostgreSQL sequence and survive process restarts. They are references, not authentication credentials.
-- Player profiles, achievements, inventory, economy, privacy export/deletion, durable interaction idempotency and the live web game API remain unimplemented.
-
-This is a functional vertical slice for domain rules, Discord commands, PostgreSQL persistence and single-process restart recovery—not yet a production-ready multi-instance deployment. The next gate is player/profile persistence, end-to-end privacy workflows, idempotent Discord interaction handling and concurrent-session load tests.
+These checks do not replace a live Discord smoke test, production backup/restore rehearsal or multi-instance certification.

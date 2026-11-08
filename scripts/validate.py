@@ -15,7 +15,6 @@ CONFIG_FILES = (
     ".vscode/settings.json",
 )
 WORKFLOW_DIR = Path(".github/workflows")
-ACTION_REFERENCE = re.compile(r"^[0-9a-fA-F]{40}$")
 
 
 def validate_json_files() -> list[str]:

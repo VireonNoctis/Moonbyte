@@ -4,7 +4,7 @@ use sqlx::{PgPool, Postgres, Transaction};
 
 use super::{
     engine::{GameAction, GameError},
-    model::{GameKind, GameSession, SessionSnapshot},
+    model::{GameKind, GamePhase, GameSession, SessionSnapshot},
 };
 
 /// Database-backed session operations. Each mutation is committed atomically
@@ -20,6 +20,8 @@ pub enum GameRuntimeError {
     Database(sqlx::Error),
     Serialization(serde_json::Error),
     UnsupportedStateVersion(i16),
+    StaleAction,
+    PlayerNotReady,
 }
 
 impl fmt::Display for GameRuntimeError {
@@ -36,6 +38,12 @@ impl fmt::Display for GameRuntimeError {
                     "Stored game state version {version} is not supported."
                 )
             }
+            Self::StaleAction => {
+                formatter.write_str("That game board is out of date. Refresh it before moving.")
+            }
+            Self::PlayerNotReady => {
+                formatter.write_str("Your player profile or current policy acceptance is no longer available. Review the current Terms and Privacy Policy before starting or continuing a game.")
+            }
         }
     }
 }
@@ -46,7 +54,7 @@ impl std::error::Error for GameRuntimeError {
             Self::Domain(error) => Some(error),
             Self::Database(error) => Some(error),
             Self::Serialization(error) => Some(error),
-            Self::UnsupportedStateVersion(_) => None,
+            Self::UnsupportedStateVersion(_) | Self::StaleAction | Self::PlayerNotReady => None,
         }
     }
 }
@@ -82,7 +90,14 @@ impl GameRuntime {
             return Err(GameError::WrongGuild.into());
         }
 
+        #[cfg(test)]
+        crate::profile::create_test_player(self.pool.clone(), player_id, "Game Tester")
+            .await
+            .expect("register an explicitly-consented game test player");
+
         let mut transaction = self.pool.begin().await?;
+        lock_player(&mut transaction, player_id).await?;
+        require_current_player(&mut transaction, player_id).await?;
         let sequence: i64 = sqlx::query_scalar("SELECT nextval('moonbyte_session_id_seq')")
             .fetch_one(&mut *transaction)
             .await?;
@@ -113,7 +128,14 @@ impl GameRuntime {
         player_id: &str,
         guild_id: Option<&str>,
     ) -> Result<SessionSnapshot, GameRuntimeError> {
+        #[cfg(test)]
+        crate::profile::create_test_player(self.pool.clone(), player_id, "Game Tester")
+            .await
+            .expect("register an explicitly-consented joining test player");
+
         let mut transaction = self.pool.begin().await?;
+        lock_player(&mut transaction, player_id).await?;
+        require_current_player(&mut transaction, player_id).await?;
         let mut session = load_for_update(&mut transaction, session_id).await?;
         session.join(player_id, guild_id)?;
         persist_locked(&mut transaction, &session).await?;
@@ -128,10 +150,75 @@ impl GameRuntime {
         guild_id: Option<&str>,
         input: &str,
     ) -> Result<SessionSnapshot, GameRuntimeError> {
+        self.act_with_version(session_id, player_id, guild_id, input, None)
+            .await
+    }
+
+    /// Apply an interaction only if its displayed board version is still current.
+    /// The comparison runs after the row lock is acquired, closing the race
+    /// between the Discord preflight read and concurrent component deliveries.
+    pub async fn act_at_version(
+        &self,
+        session_id: &str,
+        player_id: &str,
+        guild_id: Option<&str>,
+        input: &str,
+        expected_action_count: u32,
+    ) -> Result<SessionSnapshot, GameRuntimeError> {
+        self.act_with_version(
+            session_id,
+            player_id,
+            guild_id,
+            input,
+            Some(expected_action_count),
+        )
+        .await
+    }
+
+    async fn act_with_version(
+        &self,
+        session_id: &str,
+        player_id: &str,
+        guild_id: Option<&str>,
+        input: &str,
+        expected_action_count: Option<u32>,
+    ) -> Result<SessionSnapshot, GameRuntimeError> {
         let mut transaction = self.pool.begin().await?;
+        // Read participants without locking the session, then acquire all per-player
+        // deletion locks in stable order before taking the session row. This matches
+        // account deletion's lock order and prevents writes into deleted profiles.
+        let players_json: Option<String> = sqlx::query_scalar(
+            "SELECT (session_state -> 'players')::text FROM game_sessions \
+             WHERE session_id = $1 AND expires_at > now()",
+        )
+        .bind(normalise_session_id(session_id))
+        .fetch_optional(&mut *transaction)
+        .await?;
+        let players_json = players_json.ok_or(GameError::NotJoinable)?;
+        let mut locked_player_ids: Vec<String> = serde_json::from_str(&players_json)?;
+        locked_player_ids.sort();
+        locked_player_ids.dedup();
+        if locked_player_ids.is_empty() {
+            return Err(GameError::NotJoinable.into());
+        }
+        for id in &locked_player_ids {
+            lock_player(&mut transaction, id).await?;
+            require_current_player(&mut transaction, id).await?;
+        }
+
         let mut session = load_for_update(&mut transaction, session_id).await?;
+        let mut current_player_ids = session.snapshot().players;
+        current_player_ids.sort();
+        current_player_ids.dedup();
+        if current_player_ids != locked_player_ids {
+            return Err(GameRuntimeError::StaleAction);
+        }
         if session.guild_id() != guild_id {
             return Err(GameError::WrongGuild.into());
+        }
+        if expected_action_count.is_some_and(|expected| session.snapshot().action_count != expected)
+        {
+            return Err(GameRuntimeError::StaleAction);
         }
         let action = GameAction::parse(session.game(), input)?;
         session.act(player_id, action)?;
@@ -211,6 +298,48 @@ impl GameRuntime {
     }
 }
 
+async fn lock_player(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
+        .bind(player_id)
+        .execute(&mut **transaction)
+        .await?;
+    Ok(())
+}
+
+async fn require_current_player(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), GameRuntimeError> {
+    let current_consent: bool = sqlx::query_scalar(
+        "SELECT EXISTS (
+            SELECT 1 FROM user_consents
+            WHERE discord_user_id = $1
+              AND terms_version = $2
+              AND privacy_version = $3
+        )",
+    )
+    .bind(player_id)
+    .bind(crate::consent::TERMS_VERSION)
+    .bind(crate::consent::PRIVACY_VERSION)
+    .fetch_one(&mut **transaction)
+    .await?;
+    let profile_exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS (
+            SELECT 1 FROM player_profiles WHERE discord_user_id = $1
+        )",
+    )
+    .bind(player_id)
+    .fetch_one(&mut **transaction)
+    .await?;
+    if !current_consent || !profile_exists {
+        return Err(GameRuntimeError::PlayerNotReady);
+    }
+    Ok(())
+}
+
 async fn load_for_update(
     transaction: &mut Transaction<'_, Postgres>,
     session_id: &str,
@@ -253,6 +382,86 @@ async fn persist_locked(
     if result.rows_affected() != 1 {
         return Err(GameError::NotJoinable.into());
     }
+
+    // Persist a completed result and update each participant's aggregate stats
+    // in the same transaction as the final game-state snapshot.
+    if snapshot.phase == GamePhase::Completed {
+        let winner = snapshot.winner.as_deref();
+        let outcome = if winner.is_some() {
+            "won"
+        } else if snapshot.game.requires_opponent() {
+            "draw"
+        } else {
+            "completed"
+        };
+        let player_ids = serde_json::to_string(&snapshot.players)?;
+        let inserted = sqlx::query(
+            "INSERT INTO game_results \
+             (session_id, game_id, outcome, winner_player_id, player_ids, action_count) \
+             VALUES ($1, $2, $3, $4, $5::jsonb, $6) \
+             ON CONFLICT (session_id) DO NOTHING",
+        )
+        .bind(&snapshot.id)
+        .bind(snapshot.game.definition().id)
+        .bind(outcome)
+        .bind(winner)
+        .bind(player_ids)
+        .bind(i64::from(snapshot.action_count))
+        .execute(&mut **transaction)
+        .await?
+        .rows_affected()
+            == 1;
+
+        if inserted {
+            for player_id in &snapshot.players {
+                let games_won = if winner == Some(player_id.as_str()) {
+                    1_i64
+                } else {
+                    0_i64
+                };
+                let draws = if outcome == "draw" { 1_i64 } else { 0_i64 };
+                sqlx::query(
+                    "INSERT INTO player_game_stats \
+                     (discord_user_id, game_id, games_played, games_won, draws) \
+                     VALUES ($1, $2, 1, $3, $4) \
+                     ON CONFLICT (discord_user_id, game_id) DO UPDATE SET \
+                         games_played = player_game_stats.games_played + 1, \
+                         games_won = player_game_stats.games_won + EXCLUDED.games_won, \
+                         draws = player_game_stats.draws + EXCLUDED.draws, \
+                         updated_at = now()",
+                )
+                .bind(player_id)
+                .bind(snapshot.game.definition().id)
+                .bind(games_won)
+                .bind(draws)
+                .execute(&mut **transaction)
+                .await?;
+
+                crate::wallet::award_first_game_completion(
+                    transaction,
+                    player_id,
+                    snapshot.game.definition().id,
+                    &snapshot.id,
+                )
+                .await?;
+                crate::achievement::award_for_player_completion(
+                    transaction,
+                    player_id,
+                    &snapshot.id,
+                )
+                .await?;
+                crate::wayfarer::record_game_completion(
+                    transaction,
+                    player_id,
+                    snapshot.game.definition().id,
+                    games_won == 1,
+                )
+                .await?;
+            }
+
+            crate::wayfarer::record_rivalry_match(transaction, &snapshot.players, winner).await?;
+        }
+    }
     Ok(())
 }
 
@@ -279,6 +488,136 @@ mod tests {
             .await
             .expect("PostgreSQL must be available and migrations must apply");
         GameRuntime::new(database.pool())
+    }
+
+    #[tokio::test]
+    async fn completed_games_write_results_and_stats_once() {
+        let runtime = runtime().await;
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos();
+        let player_id = format!("stats-{nonce}");
+        let session = runtime
+            .start(GameKind::WordScramble, &player_id, None)
+            .await
+            .expect("start word scramble");
+        let completed = runtime
+            .act(&session.id, &player_id, None, "orbit")
+            .await
+            .expect("solve word scramble");
+        assert_eq!(completed.phase, GamePhase::Completed);
+        assert_eq!(completed.winner.as_deref(), Some(player_id.as_str()));
+
+        let stats: (i64, i64, i64) = sqlx::query_as(
+            "SELECT games_played, games_won, draws FROM player_game_stats \
+             WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read player stats");
+        assert_eq!(stats, (1, 1, 0));
+
+        let achievement_ids: Vec<String> = sqlx::query_scalar(
+            "SELECT achievement_id FROM player_achievements \
+             WHERE discord_user_id = $1 ORDER BY achievement_id",
+        )
+        .bind(&player_id)
+        .fetch_all(&runtime.pool)
+        .await
+        .expect("read initial achievements");
+        assert_eq!(achievement_ids, ["first_clear", "first_victory"]);
+
+        let wallet: (i64, i64) = sqlx::query_as(
+            "SELECT balance, \
+             (SELECT count(*) FROM wallet_ledger_entries WHERE discord_user_id = $1) \
+             FROM player_wallets WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read first-completion wallet");
+        assert_eq!(wallet, (crate::wallet::FIRST_COMPLETION_REWARD, 1));
+
+        let result_count: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM game_results WHERE session_id = $1")
+                .bind(&session.id)
+                .fetch_one(&runtime.pool)
+                .await
+                .expect("read game result");
+        assert_eq!(result_count, 1);
+
+        assert!(matches!(
+            runtime.act(&session.id, &player_id, None, "orbit").await,
+            Err(GameRuntimeError::Domain(GameError::NotActive))
+        ));
+        let after_retry: (i64, i64, i64) = sqlx::query_as(
+            "SELECT games_played, games_won, draws FROM player_game_stats \
+             WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read stats after duplicate action");
+        assert_eq!(after_retry, (1, 1, 0));
+        let wallet_after_retry: i64 =
+            sqlx::query_scalar("SELECT balance FROM player_wallets WHERE discord_user_id = $1")
+                .bind(&player_id)
+                .fetch_one(&runtime.pool)
+                .await
+                .expect("read wallet after duplicate action");
+        assert_eq!(wallet_after_retry, crate::wallet::FIRST_COMPLETION_REWARD);
+        let achievements_after_retry: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM player_achievements WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read achievements after duplicate action");
+        assert_eq!(achievements_after_retry, 2);
+    }
+
+    #[tokio::test]
+    async fn repeated_game_completions_do_not_repeat_first_completion_currency() {
+        let runtime = runtime().await;
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos();
+        let player_id = format!("wallet-{nonce}");
+
+        for _ in 0..2 {
+            let session = runtime
+                .start(GameKind::WordScramble, &player_id, None)
+                .await
+                .expect("start another word scramble");
+            runtime
+                .act(&session.id, &player_id, None, "orbit")
+                .await
+                .expect("complete word scramble");
+        }
+
+        let wallet: (i64, i64) = sqlx::query_as(
+            "SELECT balance, \
+             (SELECT count(*) FROM wallet_ledger_entries WHERE discord_user_id = $1) \
+             FROM player_wallets WHERE discord_user_id = $1",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read wallet after repeated completions");
+        assert_eq!(wallet, (crate::wallet::FIRST_COMPLETION_REWARD, 1));
+
+        let stats: i64 = sqlx::query_scalar(
+            "SELECT games_played FROM player_game_stats \
+             WHERE discord_user_id = $1 AND game_id = 'word-scramble'",
+        )
+        .bind(&player_id)
+        .fetch_one(&runtime.pool)
+        .await
+        .expect("read repeat-completion stats");
+        assert_eq!(stats, 2);
     }
 
     #[tokio::test]
@@ -520,6 +859,36 @@ mod tests {
             Err(GameRuntimeError::Domain(GameError::NotActive))
         ));
     }
+    #[tokio::test]
+    async fn concurrent_button_actions_with_the_same_version_apply_once() {
+        let runtime = runtime().await;
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos();
+        let player_id = format!("cv-{nonce}");
+        let session = runtime
+            .start(GameKind::MemoryMatch, &player_id, None)
+            .await
+            .expect("start memory match");
+
+        let (first, second) = tokio::join!(
+            runtime.act_at_version(&session.id, &player_id, None, "1", 0),
+            runtime.act_at_version(&session.id, &player_id, None, "2", 0)
+        );
+        assert_eq!(first.is_ok() as usize + second.is_ok() as usize, 1);
+        assert!(
+            matches!(first, Err(GameRuntimeError::StaleAction))
+                || matches!(second, Err(GameRuntimeError::StaleAction))
+        );
+
+        let snapshot = runtime
+            .get(&session.id, &player_id, None)
+            .await
+            .expect("read final memory match state");
+        assert_eq!(snapshot.action_count, 1);
+    }
+
     #[tokio::test]
     async fn concurrent_duplicate_moves_are_serialized_by_the_session_row_lock() {
         let runtime = runtime().await;

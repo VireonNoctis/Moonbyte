@@ -62,11 +62,26 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
+      - name: Check operational shell scripts
+        run: bash -n scripts/backup-postgres.sh scripts/restore-postgres.sh
+
+      - name: Report Rust compiler version
+        run: rustc --version --verbose
+
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
 
       - name: Test Rust workspace against PostgreSQL
         run: cargo test --workspace --locked
+
+      - name: Verify PostgreSQL backup and restore round-trip
+        run: |
+          docker run --rm --network host \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e MOONBYTE_RESTORE_TEST_DATABASE_URL="${DATABASE_URL%/*}/moonbyte_restore_test" \
+            postgres:17-alpine sh -ec 'apk add --no-cache bash >/dev/null && bash scripts/test-backup-restore.sh'
 
       - name: Check Rust code with Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
