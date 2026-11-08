@@ -13,7 +13,7 @@
 | Prefix | `.` by default; per-guild override supported |
 | Storage | PostgreSQL through SQLx |
 | Deployment contract | One supported bot process with PostgreSQL |
-| Schema | Ordered migrations through `0017_wayfarer_cross_system_activities.sql` |
+| Schema | Ordered migrations through `0018_glasswater_expedition_route.sql` |
 | Player interface | Discord-native commands and messages; numbered board buttons for Tic-tac-toe, Connect Four and Memory Match |
 | Toolchain | Pinned in `rust-toolchain.toml` |
 

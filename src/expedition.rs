@@ -293,9 +293,7 @@ impl ExpeditionStore {
             .fetch_optional(&mut *tx)
             .await?
             .ok_or(ExpeditionError::RunNotFound)?;
-        if !route_definition(&route_id)
-            .is_some_and(|route| route.version == content_version)
-        {
+        if !route_definition(&route_id).is_some_and(|route| route.version == content_version) {
             return Err(ExpeditionError::UnknownRoute);
         }
         if !shared || saved_guild.as_deref() != Some(guild) {
@@ -622,9 +620,7 @@ struct RunRow {
     checkpoint_index: i16,
     row_version: i64,
 }
-fn ensure_supported_route(
-    row: &RunRow,
-) -> Result<&'static RouteDefinition, ExpeditionError> {
+fn ensure_supported_route(row: &RunRow) -> Result<&'static RouteDefinition, ExpeditionError> {
     route_definition(&row.route_id)
         .filter(|route| route.version == row.content_version)
         .ok_or(ExpeditionError::UnknownRoute)
@@ -884,16 +880,30 @@ mod tests {
                     .iter()
                     .find(|location| location.id == pair[1].location_id)
                     .expect("known route destination");
-                assert!(from.routes_to.contains(&to.id), "{} route edge missing", route.id);
-                assert!(to.routes_to.contains(&from.id), "{} route edge is not reciprocal", route.id);
+                assert!(
+                    from.routes_to.contains(&to.id),
+                    "{} route edge missing",
+                    route.id
+                );
+                assert!(
+                    to.routes_to.contains(&from.id),
+                    "{} route edge is not reciprocal",
+                    route.id
+                );
             }
         }
     }
 
     #[test]
     fn route_registry_rejects_unknown_ids_and_pins_each_content_version() {
-        assert_eq!(route_definition(ROUTE_ID).map(|route| route.version), Some(1));
-        assert_eq!(route_definition(GLASSWATER_ROUTE_ID).map(|route| route.version), Some(1));
+        assert_eq!(
+            route_definition(ROUTE_ID).map(|route| route.version),
+            Some(1)
+        );
+        assert_eq!(
+            route_definition(GLASSWATER_ROUTE_ID).map(|route| route.version),
+            Some(1)
+        );
         assert!(route_definition("unknown-road").is_none());
     }
 
@@ -1217,7 +1227,13 @@ mod tests {
         assert_eq!(glasswater.route_id, GLASSWATER_ROUTE_ID);
         assert_eq!(glasswater.route_title, "The Glasswater Crossing");
         store
-            .advance(&outsider_id, None, glasswater.run_id, "glasswater-pier", "survey")
+            .advance(
+                &outsider_id,
+                None,
+                glasswater.run_id,
+                "glasswater-pier",
+                "survey",
+            )
             .await
             .expect("survey Glasswater Pier");
         let chart = store
@@ -1242,10 +1258,12 @@ mod tests {
             .await
             .expect("complete Glasswater Crossing");
         assert_eq!(completed_crossing.state, "completed");
-        assert!(!store
-            .has_completed_lantern_road(&outsider_id)
-            .await
-            .expect("Glasswater does not count as a Lantern Road archive record"));
+        assert!(
+            !store
+                .has_completed_lantern_road(&outsider_id)
+                .await
+                .expect("Glasswater does not count as a Lantern Road archive record")
+        );
         let crossing_history: Vec<String> = sqlx::query_scalar(
             "SELECT checkpoint_id FROM expedition_checkpoint_history
              WHERE expedition_run_id = $1 ORDER BY checkpoint_index",
