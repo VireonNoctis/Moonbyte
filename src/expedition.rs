@@ -445,7 +445,7 @@ impl ExpeditionStore {
         if next.id != expected {
             return Err(ExpeditionError::StaleCheckpoint);
         }
-        validate_checkpoint_choice(next, choice)?;
+        validate_checkpoint_choice(&next, choice)?;
         let previous = route
             .checkpoints
             .get(next_index - 1)
@@ -847,7 +847,10 @@ fn safe_prefix(prefix: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{ExpeditionError, LANTERN_ROAD, ROUTE_ID, validate_choice};
+    use super::{
+        ExpeditionError, EXPEDITION_ROUTES, GLASSWATER_CROSSING, GLASSWATER_ROUTE_ID,
+        LANTERN_ROAD, ROUTE_ID, route_definition, validate_checkpoint_choice, validate_choice,
+    };
     use crate::atlas::LOCATION_CATALOGUE;
 
     #[test]
