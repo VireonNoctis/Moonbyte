@@ -916,15 +916,15 @@ mod tests {
             .iter()
             .find(|checkpoint| checkpoint.id == "glasswater-star-chart")
             .expect("Glasswater clue exists");
-        assert_eq!(validate_checkpoint_choice(chart, "west"), Ok(()));
-        assert_eq!(
+        assert!(matches!(validate_checkpoint_choice(chart, "west"), Ok(())));
+        assert!(matches!(
             validate_checkpoint_choice(chart, "east"),
             Err(ExpeditionError::IncorrectAnswer)
-        );
-        assert_eq!(
+        ));
+        assert!(matches!(
             validate_checkpoint_choice(chart, "north"),
             Err(ExpeditionError::InvalidChoice)
-        );
+        ));
     }
 
     #[test]
