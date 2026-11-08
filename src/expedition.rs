@@ -740,6 +740,7 @@ fn validate_checkpoint_choice(
     Ok(())
 }
 
+#[cfg(test)]
 fn validate_choice(index: usize, choice: &str) -> Result<(), ExpeditionError> {
     let checkpoint = LANTERN_ROAD
         .get(index)
