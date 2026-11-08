@@ -1402,9 +1402,8 @@ mod tests {
 
         let deletion_profiles = profiles.clone();
         let deletion_player = player_id.clone();
-        let deletion = tokio::spawn(async move {
-            deletion_profiles.delete_account(&deletion_player).await
-        });
+        let deletion =
+            tokio::spawn(async move { deletion_profiles.delete_account(&deletion_player).await });
         wait_for_expedition_lock_waiters(&pool, lock_key, 1).await;
 
         let stale_store = store.clone();
