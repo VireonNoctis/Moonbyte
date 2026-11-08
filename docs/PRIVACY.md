@@ -201,7 +201,7 @@ The private JSON export includes Wayfarer activity dates, daily quest history, S
 
 ## 12. Lantern Road Expedition records
 
-Expedition state is held in three PostgreSQL tables: expedition_runs, expedition_participants and expedition_checkpoint_history. Export format v10 includes only the requester's membership and shared checkpoint history, with a completed_by_you boolean rather than other participants' identities. The run does not expire automatically. A player deletion removes that player's participation, transfers the host to the earliest remaining active participant where possible, cancels an active run if nobody remains active, and removes the run when no participant records remain. The transaction locks affected runs before locking the player's Atlas state, matching the checkpoint transaction's lock order.
+Expedition state is held in three PostgreSQL tables: expedition_runs, expedition_participants and expedition_checkpoint_history. Export format v10 includes only the requester's membership and shared checkpoint history, with a completed_by_you boolean rather than other participants' identities. The run does not expire automatically. A player deletion removes that player's participation, transfers the host to the earliest remaining active participant where possible, cancels an active run if nobody remains active, and removes the run when no participant records remain. The transaction locks affected runs before locking the player's Atlas state, matching checkpoint advancement's stable per-participant advisory-lock → run-row → Atlas-row order. A stale checkpoint command queued behind deletion re-reads the run after acquiring those account locks and cannot recreate player progress.
 
 ## 13. Mosslight Resonance Puzzle Vault records
 

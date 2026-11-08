@@ -165,6 +165,7 @@ pub enum ExpeditionError {
     NotHost,
     PartyFull,
     StaleCheckpoint,
+    PartyChanged,
     InvalidChoice,
     IncorrectAnswer,
     UnknownRoute,
@@ -188,6 +189,7 @@ impl fmt::Display for ExpeditionError {
             Self::NotHost => f.write_str("Only the current host can start or cancel this group run."),
             Self::PartyFull => f.write_str("An Expedition supports at most four participants."),
             Self::StaleCheckpoint => f.write_str("That checkpoint is no longer next. Refresh the run status before advancing."),
+            Self::PartyChanged => f.write_str("The party changed while this checkpoint was being prepared. Refresh the Expedition and try again."),
             Self::InvalidChoice => f.write_str("That choice is not available at this checkpoint."),
             Self::IncorrectAnswer => f.write_str("That clue does not match this route. Nothing advanced; review the checkpoint and try again."),
             Self::UnknownRoute => f.write_str("This run refers to an unknown route or checkpoint."),
@@ -426,6 +428,30 @@ impl ExpeditionStore {
         choice: &str,
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
+        // Checkpoint advancement writes Atlas, Chronicle, inventory and Wayfarer
+        // records for every active participant. Lock their accounts in stable ID
+        // order before the run row, matching account deletion's user -> run order.
+        let run_exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM expedition_runs WHERE expedition_run_id = $1)",
+        )
+        .bind(id)
+        .fetch_one(&mut *tx)
+        .await?;
+        if !run_exists {
+            return Err(ExpeditionError::RunNotFound);
+        }
+        let protected_members: Vec<String> = sqlx::query_scalar(
+            "SELECT discord_user_id FROM expedition_participants WHERE expedition_run_id = $1 AND is_active ORDER BY discord_user_id ASC",
+        )
+        .bind(id)
+        .fetch_all(&mut *tx)
+        .await?;
+        if !protected_members.iter().any(|member| member == player) {
+            return Err(ExpeditionError::NotActiveParticipant);
+        }
+        for member in &protected_members {
+            lock_player(&mut tx, member).await?;
+        }
         let row = lock_run(&mut tx, id).await?;
         let route = ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
@@ -433,6 +459,11 @@ impl ExpeditionStore {
             return Err(ExpeditionError::NotActive);
         }
         let members = active_members(&mut tx, id).await?;
+        let mut current_members = members.clone();
+        current_members.sort_unstable();
+        if current_members != protected_members {
+            return Err(ExpeditionError::PartyChanged);
+        }
         if !members.iter().any(|m| m == player) {
             return Err(ExpeditionError::NotActiveParticipant);
         }
@@ -550,6 +581,8 @@ impl ExpeditionStore {
         id: i64,
     ) -> Result<Snapshot, ExpeditionError> {
         let mut tx = self.pool.begin().await?;
+        // Keep membership changes in the same user -> run lock order as deletion.
+        lock_player(&mut tx, player).await?;
         let row = lock_run(&mut tx, id).await?;
         ensure_supported_route(&row)?;
         scope(&row.guild_id, guild)?;
@@ -941,6 +974,30 @@ mod tests {
         ));
     }
 
+    async fn wait_for_expedition_lock_waiters(
+        pool: &sqlx::PgPool,
+        lock_key: i64,
+        expected_waiters: i64,
+    ) {
+        tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            loop {
+                let waiters: i64 = sqlx::query_scalar(
+                    "SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND classid = (($1::bigint >> 32) & 4294967295)::oid AND objid = ($1::bigint & 4294967295)::oid AND objsubid = 1 AND NOT granted",
+                )
+                .bind(lock_key)
+                .fetch_one(pool)
+                .await
+                .expect("inspect Expedition account-lock waiters");
+                if waiters >= expected_waiters {
+                    return;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("Expedition operations queued behind the held account lock");
+    }
+
     #[tokio::test]
     async fn shared_lantern_road_is_transactional_private_and_deletable() {
         use std::time::{SystemTime, UNIX_EPOCH};
@@ -1295,5 +1352,113 @@ mod tests {
             .delete_account(&outsider_id)
             .await
             .expect("remove test observer and second-route history");
+    }
+
+    #[tokio::test]
+    async fn checkpoint_advancement_waits_for_member_deletion_before_writing_progress() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        use crate::{atlas::AtlasStore, database::Database, profile::ProfileStore};
+
+        let database_url = std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL must point to the CI PostgreSQL service");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("connect and migrate PostgreSQL");
+        let pool = database.pool();
+        let profiles = ProfileStore::new(pool.clone());
+        let atlas = AtlasStore::new(pool.clone());
+        let store = super::ExpeditionStore::new(pool.clone());
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock after epoch")
+            .as_nanos();
+        let player_id = format!("exp-delete-race-{nonce}");
+
+        crate::profile::create_test_player(pool.clone(), &player_id, "Expedition Deletion")
+            .await
+            .expect("create a consented player");
+        atlas
+            .snapshot(&player_id)
+            .await
+            .expect("initialise Atlas starting point");
+        let run = store
+            .start(&player_id, None, false)
+            .await
+            .expect("start a solo Expedition");
+
+        let lock_key: i64 =
+            sqlx::query_scalar("SELECT hashtextextended('moonbyte:user:' || $1, 0)")
+                .bind(&player_id)
+                .fetch_one(&pool)
+                .await
+                .expect("derive the per-player advisory lock key");
+        let mut blocker = pool.begin().await.expect("begin account-lock blocker");
+        sqlx::query("SELECT pg_advisory_xact_lock($1)")
+            .bind(lock_key)
+            .execute(&mut *blocker)
+            .await
+            .expect("hold the account advisory lock");
+
+        let deletion_profiles = profiles.clone();
+        let deletion_player = player_id.clone();
+        let deletion = tokio::spawn(async move {
+            deletion_profiles.delete_account(&deletion_player).await
+        });
+        wait_for_expedition_lock_waiters(&pool, lock_key, 1).await;
+
+        let stale_store = store.clone();
+        let stale_player = player_id.clone();
+        let stale_run_id = run.run_id;
+        let advancement = tokio::spawn(async move {
+            stale_store
+                .advance(
+                    &stale_player,
+                    None,
+                    stale_run_id,
+                    "mosslight-grove",
+                    "inspect",
+                )
+                .await
+        });
+        wait_for_expedition_lock_waiters(&pool, lock_key, 2).await;
+
+        blocker
+            .commit()
+            .await
+            .expect("release the queued account operations");
+        let deletion = deletion
+            .await
+            .expect("join account deletion")
+            .expect("complete account deletion");
+        assert!(deletion.profile_removed);
+        assert_eq!(deletion.expedition_runs_removed, 1);
+
+        let advancement = advancement
+            .await
+            .expect("join stale Expedition advancement");
+        assert!(
+            matches!(advancement, Err(super::ExpeditionError::RunNotFound)),
+            "the queued checkpoint must re-read the run after deletion commits"
+        );
+        assert!(
+            profiles
+                .get(&player_id)
+                .await
+                .expect("inspect deleted profile")
+                .is_none()
+        );
+        let remaining: (i64, i64, i64, i64) = sqlx::query_as(
+            "SELECT
+                (SELECT count(*) FROM player_atlas_discoveries WHERE discord_user_id = $1),
+                (SELECT count(*) FROM player_archive_fragments WHERE discord_user_id = $1),
+                (SELECT count(*) FROM player_inventory_items WHERE discord_user_id = $1),
+                (SELECT count(*) FROM player_wayfarer_days WHERE discord_user_id = $1)",
+        )
+        .bind(&player_id)
+        .fetch_one(&pool)
+        .await
+        .expect("inspect account-owned progression after deletion");
+        assert_eq!(remaining, (0, 0, 0, 0));
     }
 }
