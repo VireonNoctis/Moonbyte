@@ -848,8 +848,8 @@ fn safe_prefix(prefix: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        ExpeditionError, EXPEDITION_ROUTES, GLASSWATER_CROSSING, GLASSWATER_ROUTE_ID,
-        LANTERN_ROAD, ROUTE_ID, route_definition, validate_checkpoint_choice, validate_choice,
+        EXPEDITION_ROUTES, ExpeditionError, GLASSWATER_CROSSING, GLASSWATER_ROUTE_ID, LANTERN_ROAD,
+        ROUTE_ID, route_definition, validate_checkpoint_choice, validate_choice,
     };
     use crate::atlas::LOCATION_CATALOGUE;
 
