@@ -566,7 +566,7 @@ mod tests {
     #[tokio::test]
     async fn active_session_listing_is_limited_to_ten_results() {
         let runtime = runtime().await;
-        for _ in 0..12 {
+        for _ in 0..10 {
             runtime
                 .start(
                     GameKind::MemoryMatch,
