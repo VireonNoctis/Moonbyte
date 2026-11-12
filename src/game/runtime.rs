@@ -503,7 +503,11 @@ mod tests {
         }
 
         let lobby = runtime
-            .start(GameKind::TicTacToe, "session-capacity-lobby-owner", Some(guild))
+            .start(
+                GameKind::TicTacToe,
+                "session-capacity-lobby-owner",
+                Some(guild),
+            )
             .await
             .expect("create waiting lobby");
         assert!(matches!(
@@ -512,11 +516,7 @@ mod tests {
         ));
 
         let unchanged = runtime
-            .get(
-                &lobby.id,
-                "session-capacity-lobby-owner",
-                Some(guild),
-            )
+            .get(&lobby.id, "session-capacity-lobby-owner", Some(guild))
             .await
             .expect("read lobby after rejected join");
         assert_eq!(unchanged.phase.to_string(), "waiting for players");
