@@ -96,6 +96,7 @@ pub enum GameError {
     AlreadyMatched,
     AlreadyGuessed,
     SamePosition,
+    SessionLimitReached,
     RuntimeUnavailable,
 }
 
@@ -126,6 +127,9 @@ impl std::fmt::Display for GameError {
                 "You already tried that answer. It does not use another attempt."
             }
             Self::SamePosition => "Choose a different second position.",
+            Self::SessionLimitReached => {
+                "You already have 10 active sessions in this server or DM scope. Finish or leave one before starting or joining another."
+            }
             Self::RuntimeUnavailable => "The game runtime is temporarily unavailable. Try again.",
         })
     }

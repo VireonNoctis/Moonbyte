@@ -3,6 +3,7 @@
 - Status: Implemented Rust domain, Discord adapter, PostgreSQL session persistence and restart recovery.
 - Persistence: PostgreSQL JSONB snapshots with row-locked mutation transactions and versioned schema.
 - Retention: Sessions expire after 24 hours without a successful mutation; expired rows are centrally deleted every 15 minutes.
+- Capacity: Each player can hold at most 10 active or waiting sessions per guild or DM scope. Starts and joins serialize on a per-player PostgreSQL advisory transaction lock before checking the limit.
 - Authority: Rust owns game rules, participants, phases, turn order and outcomes.
 
 This document describes the implementation that currently exists. It is intentionally narrower than the World Loom product specification.
@@ -20,8 +21,8 @@ Memory Match currently uses a fixed starter arrangement so the first implementat
 
 ## Session lifecycle
 
-1. Start: a solo game enters Active; a two-player game enters WaitingForPlayers. A PostgreSQL sequence generates durable session IDs.
-2. Join: the first distinct player from the same guild fills the two-player lobby.
+1. Start: a solo game enters Active; a two-player game enters WaitingForPlayers. A PostgreSQL sequence generates durable session IDs. The owner must be below the 10-session active/waiting cap for that guild or DM scope.
+2. Join: the first distinct player from the same guild fills the two-player lobby, provided the joining player is below the same scoped cap.
 3. Act: the runtime selects the row for update, validates phase, guild scope, participant membership, turn owner, action range and game-specific legal move, then commits the new snapshot.
 4. Complete: game rules produce a winner, draw or completed solo result; the final session snapshot is persisted.
 5. Leave: any participant may end an unfinished session; the resulting phase is persisted.
@@ -49,7 +50,7 @@ The migration runner serialises concurrent process startup with a PostgreSQL adv
 
 ## Error and abuse handling
 
-The runtime rejects unknown games, malformed or out-of-range actions, occupied cells, full columns, already-matched positions, repeated positions, duplicate Word Scramble answers, wrong turns, non-members, incorrect guild context, non-joinable lobbies and actions after a session ends or expires. Duplicate answers are compared case-insensitively and do not consume an attempt. A rejected domain action is not persisted and does not advance the action count. The runtime does not accept client-supplied winner, score, balance or completion fields.
+The runtime rejects unknown games, malformed or out-of-range actions, occupied cells, full columns, already-matched positions, repeated positions, duplicate Word Scramble answers, wrong turns, non-members, incorrect guild context, non-joinable lobbies, starts/joins beyond the 10 active-session cap per player and scope, and actions after a session ends or expires. Duplicate answers are compared case-insensitively and do not consume an attempt. A rejected domain action is not persisted and does not advance the action count. The runtime does not accept client-supplied winner, score, balance or completion fields.
 
 ## Tests
 

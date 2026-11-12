@@ -83,6 +83,8 @@ impl GameRuntime {
         }
 
         let mut transaction = self.pool.begin().await?;
+        lock_player_for_session_capacity(&mut transaction, player_id).await?;
+        ensure_active_session_capacity(&mut transaction, player_id, guild_id).await?;
         let sequence: i64 = sqlx::query_scalar("SELECT nextval('moonbyte_session_id_seq')")
             .fetch_one(&mut *transaction)
             .await?;
@@ -114,8 +116,10 @@ impl GameRuntime {
         guild_id: Option<&str>,
     ) -> Result<SessionSnapshot, GameRuntimeError> {
         let mut transaction = self.pool.begin().await?;
+        lock_player_for_session_capacity(&mut transaction, player_id).await?;
         let mut session = load_for_update(&mut transaction, session_id).await?;
         session.join(player_id, guild_id)?;
+        ensure_active_session_capacity(&mut transaction, player_id, guild_id).await?;
         persist_locked(&mut transaction, &session).await?;
         transaction.commit().await?;
         Ok(session.snapshot())
@@ -209,6 +213,42 @@ impl GameRuntime {
         transaction.commit().await?;
         Ok(session.snapshot())
     }
+}
+
+const MAX_ACTIVE_SESSIONS_PER_PLAYER: i64 = 10;
+
+async fn lock_player_for_session_capacity(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('moonbyte:user:' || $1, 0))")
+        .bind(player_id)
+        .execute(&mut **transaction)
+        .await?;
+    Ok(())
+}
+
+async fn ensure_active_session_capacity(
+    transaction: &mut Transaction<'_, Postgres>,
+    player_id: &str,
+    guild_id: Option<&str>,
+) -> Result<(), GameRuntimeError> {
+    let active_sessions: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM game_sessions \
+         WHERE expires_at > now() \
+           AND phase IN ('waiting for players', 'active') \
+           AND guild_id IS NOT DISTINCT FROM $2 \
+           AND (session_state -> 'players') @> jsonb_build_array($1::text)",
+    )
+    .bind(player_id)
+    .bind(guild_id)
+    .fetch_one(&mut **transaction)
+    .await?;
+
+    if active_sessions >= MAX_ACTIVE_SESSIONS_PER_PLAYER {
+        return Err(GameError::SessionLimitReached.into());
+    }
+    Ok(())
 }
 
 async fn load_for_update(
@@ -406,6 +446,121 @@ mod tests {
             .expect("list DM sessions");
         assert_eq!(dm_sessions.len(), 1);
         assert_eq!(dm_sessions[0].id, dm_session.id);
+    }
+
+    #[tokio::test]
+    async fn active_session_capacity_is_scoped_and_released_after_leave() {
+        let runtime = runtime().await;
+        let player = "session-capacity-scope-player";
+        let guild = "session-capacity-scope-guild";
+        let mut sessions = Vec::new();
+
+        for _ in 0..10 {
+            sessions.push(
+                runtime
+                    .start(GameKind::MemoryMatch, player, Some(guild))
+                    .await
+                    .expect("start within active-session capacity"),
+            );
+        }
+
+        assert!(matches!(
+            runtime
+                .start(GameKind::MemoryMatch, player, Some(guild))
+                .await,
+            Err(GameRuntimeError::Domain(GameError::SessionLimitReached))
+        ));
+
+        runtime
+            .leave(&sessions[0].id, player, Some(guild))
+            .await
+            .expect("leaving a session releases one slot");
+        runtime
+            .start(GameKind::MemoryMatch, player, Some(guild))
+            .await
+            .expect("start after a slot is released");
+        runtime
+            .start(GameKind::MemoryMatch, player, Some("another-guild"))
+            .await
+            .expect("capacity is independent per guild");
+        runtime
+            .start(GameKind::MemoryMatch, player, None)
+            .await
+            .expect("DM sessions have their own capacity scope");
+    }
+
+    #[tokio::test]
+    async fn joining_respects_the_joiners_active_session_capacity() {
+        let runtime = runtime().await;
+        let guest = "session-capacity-join-guest";
+        let guild = "session-capacity-join-guild";
+
+        for _ in 0..10 {
+            runtime
+                .start(GameKind::MemoryMatch, guest, Some(guild))
+                .await
+                .expect("fill guest active-session capacity");
+        }
+
+        let lobby = runtime
+            .start(GameKind::TicTacToe, "session-capacity-lobby-owner", Some(guild))
+            .await
+            .expect("create waiting lobby");
+        assert!(matches!(
+            runtime.join(&lobby.id, guest, Some(guild)).await,
+            Err(GameRuntimeError::Domain(GameError::SessionLimitReached))
+        ));
+
+        let unchanged = runtime
+            .get(
+                &lobby.id,
+                "session-capacity-lobby-owner",
+                Some(guild),
+            )
+            .await
+            .expect("read lobby after rejected join");
+        assert_eq!(unchanged.phase.to_string(), "waiting for players");
+        assert_eq!(unchanged.players.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn concurrent_starts_cannot_exceed_active_session_capacity() {
+        let runtime = runtime().await;
+        let mut starts = Vec::new();
+
+        for _ in 0..12 {
+            let runtime = runtime.clone();
+            starts.push(tokio::spawn(async move {
+                runtime
+                    .start(
+                        GameKind::MemoryMatch,
+                        "session-capacity-concurrent-player",
+                        Some("session-capacity-concurrent-guild"),
+                    )
+                    .await
+            }));
+        }
+
+        let mut started = 0;
+        let mut limited = 0;
+        for task in starts {
+            match task.await.expect("join session-start task") {
+                Ok(_) => started += 1,
+                Err(GameRuntimeError::Domain(GameError::SessionLimitReached)) => limited += 1,
+                Err(error) => panic!("unexpected session-start error: {error}"),
+            }
+        }
+
+        assert_eq!(started, 10);
+        assert_eq!(limited, 2);
+        let active = runtime
+            .list_active_for_player(
+                "session-capacity-concurrent-player",
+                Some("session-capacity-concurrent-guild"),
+            )
+            .await
+            .expect("list sessions after concurrent starts");
+        assert_eq!(active.len(), 10);
     }
 
     #[tokio::test]

@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes four Rust game modules: Tic-tac-toe, Connect Four, Memory Match and Word Scramble. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. Profiles, progression, Vaults, Bazaar and the live visual-game API remain implementation work.
+**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes four Rust game modules: Tic-tac-toe, Connect Four, Memory Match and Word Scramble. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. Each player can hold at most 10 active or waiting sessions per guild or DM scope; concurrent starts and joins are serialized against that limit. Profiles, progression, Vaults, Bazaar and the live visual-game API remain implementation work.
 
 ## The vision
 

@@ -13,8 +13,8 @@
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
 | .privacy | /privacy | Explains current PostgreSQL session storage and unavailable persistent privacy controls. |
 | .games | /games | Lists four playable games, player counts and controls. |
-| .play <game> | /play | Starts a solo game or creates a two-player lobby. |
-| .join <session> | /join | Joins an open two-player lobby in its originating server. |
+| .play <game> | /play | Starts a solo game or creates a two-player lobby, subject to the 10 active-session cap per player per guild/DM scope. |
+| .join <session> | /join | Joins an open two-player lobby in its originating server, subject to the same per-player cap. |
 | .action <session> <input> | /action | Submits a game-specific action after participant, guild, phase and turn validation. |
 | .session <session> | /session | Reads the current snapshot of a session in which the requester participates. |
 | .sessions | /sessions | Lists up to 10 most recently updated, non-expired sessions the requester participates in, scoped to the current guild or DMs. |
@@ -45,7 +45,7 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 ## Runtime and privacy boundary
 
-Active session state is stored in PostgreSQL. The JSONB snapshot includes the game state, participant Discord IDs, optional guild ID, lifecycle phase and action count; mutations are committed transactionally with a row lock. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants. An inactive session expires after 24 hours and is removed by the central cleanup task.
+Active session state is stored in PostgreSQL. The JSONB snapshot includes the game state, participant Discord IDs, optional guild ID, lifecycle phase and action count; mutations are committed transactionally with a row lock. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants. Each player can have at most 10 active or waiting sessions per guild or DM scope; starts and joins serialize on a per-player advisory transaction lock so concurrent requests cannot exceed the cap. Completed, abandoned and expired sessions do not count. An inactive session expires after 24 hours and is removed by the central cleanup task.
 
 The privacy command is informational only. Player profiles, inventory, progression, a complete stored-data inventory, private export and confirmed deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
 
