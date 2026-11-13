@@ -512,12 +512,7 @@ mod tests {
             .await
             .expect("another player's completed session");
         runtime
-            .act(
-                &other_player.id,
-                "history-other",
-                Some(guild),
-                "orbit",
-            )
+            .act(&other_player.id, "history-other", Some(guild), "orbit")
             .await
             .expect("complete another player's session");
 
