@@ -507,10 +507,19 @@ mod tests {
             .start(GameKind::MemoryMatch, player, Some(guild))
             .await
             .expect("active guild session");
-        runtime
-            .start(GameKind::MemoryMatch, "history-other", Some(guild))
+        let other_player = runtime
+            .start(GameKind::WordScramble, "history-other", Some(guild))
             .await
-            .expect("another player's active session");
+            .expect("another player's completed session");
+        runtime
+            .act(
+                &other_player.id,
+                "history-other",
+                Some(guild),
+                "orbit",
+            )
+            .await
+            .expect("complete another player's session");
 
         let other_guild = runtime
             .start(GameKind::WordScramble, player, Some("other-history-guild"))
