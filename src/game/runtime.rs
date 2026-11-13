@@ -543,9 +543,11 @@ mod tests {
         assert!(guild_history.iter().any(|session| {
             session.id == completed.id && session.phase.to_string() == "completed"
         }));
-        assert!(guild_history.iter().any(|session| {
-            session.id == ended.id && session.phase.to_string() == "ended"
-        }));
+        assert!(
+            guild_history
+                .iter()
+                .any(|session| { session.id == ended.id && session.phase.to_string() == "ended" })
+        );
         assert!(!guild_history.iter().any(|session| {
             session.id == active.id || session.id == other_guild.id || session.id == dm.id
         }));

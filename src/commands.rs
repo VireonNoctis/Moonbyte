@@ -200,8 +200,10 @@ pub async fn history(ctx: Context<'_>) -> Result<(), Error> {
         .await?;
 
     if sessions.is_empty() {
-        ctx.say(format!("You don't have any recent finished sessions in {scope}."))
-            .await?;
+        ctx.say(format!(
+            "You don't have any recent finished sessions in {scope}."
+        ))
+        .await?;
         return Ok(());
     }
 
