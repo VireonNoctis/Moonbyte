@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime does not yet persist player profiles, inventories or a complete game-results history. The `.privacy` command does not provide a complete data inventory, export or deletion flow. These limited facts describe this code slice only; broader commitments must be verified before production release.
+These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime does not yet persist player profiles, inventories or a separate long-term game-results history. The `.history` command can display up to 10 completed or ended session snapshots to their participants within the existing 24-hour inactivity window. The `.privacy` command does not provide a complete data inventory, export or deletion flow. These limited facts describe this code slice only; broader commitments must be verified before production release.
 
 ## 2. Data Moonbyte needs
 
@@ -41,7 +41,7 @@ The planned bot may process or store these categories when the relevant feature 
 
 Moonbyte should not require Lunar account linking, an email address, real name, or separate website account.
 
-The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. They are stored in PostgreSQL JSONB plus indexed metadata columns. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart and expire after 24 hours without a successful mutation.
+The currently persisted session fields are the session reference, game ID, player Discord IDs, optional guild ID, phase, serialised board/game state, action count, short result text and timestamps. They are stored in PostgreSQL JSONB plus indexed metadata columns. Raw Discord message content is not saved as an analytics transcript. Sessions recover after restart and expire after 24 hours without a successful mutation. `.history` reads only the existing participant- and guild-scoped session records; it does not extend retention or create a separate results record.
 
 ## 3. Message and interaction content
 
@@ -58,7 +58,7 @@ Discord independently processes data under its own policies. Moonbyte cannot con
 
 ## 4. Permitted purposes
 
-Data use is limited to delivering commands and games, maintaining active sessions and recovery, saving requested progress and statistics, maintaining guild settings and optional leaderboards, preventing abuse, debugging reliability through minimised diagnostics, and fulfilling the player's own export/deletion request.
+Data use is limited to delivering commands and games, maintaining sessions and recovery, showing recent finished sessions to their participants, saving requested progress and statistics, maintaining guild settings and optional leaderboards, preventing abuse, debugging reliability through minimised diagnostics, and fulfilling the player's own export/deletion request.
 
 We do not use this data for ad targeting, data brokerage, profiling unrelated to gameplay, or AI model training.
 

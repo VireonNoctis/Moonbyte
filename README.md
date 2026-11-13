@@ -65,6 +65,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |
 | `.sessions` / `/sessions` | Implemented | List your 10 most recently updated active sessions in this server or DM scope. |
+| `.history` / `/history` | Implemented | List up to 10 recent completed or ended sessions still inside the 24-hour inactivity window, scoped to this server or DMs. |
 | `.leave <session>` / `/leave` | Implemented | End a session you participate in. |
 | `.daily` / `/daily` | Planned | Open the optional daily challenge. |
 | `.profile` / `/profile` | Planned | View a player profile and statistics. |
@@ -95,7 +96,7 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - Profile export and deletion controls are part of the planned product, not an afterthought.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions to PostgreSQL, including their board state and participant/guild scope. It does not yet persist player profiles, inventories or a complete game-results history. Data inventory, export and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions to PostgreSQL, including their board state and participant/guild scope. It does not yet persist player profiles, inventories or a separate long-term game-results history; .history reads finished session snapshots only while they remain inside the existing 24-hour inactivity window. Data inventory, export and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
 
 ## Technology decisions
 
@@ -135,7 +136,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, result history, progression and privacy export/deletion remain future work.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first four game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, long-term result history, progression and privacy export/deletion remain future work; .history only exposes finished session snapshots during the existing 24-hour retention window.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 

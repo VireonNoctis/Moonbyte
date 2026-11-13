@@ -29,6 +29,7 @@ Memory Match currently uses a fixed starter arrangement so the first implementat
 6. Read: the runtime loads from PostgreSQL and only exposes a snapshot to a participant in the matching guild context.
 7. Recover: a new GameRuntime instance can read the same session after the old process/runtime is gone, until its inactivity expiry.
 8. Discover: `.sessions` lists up to 10 non-expired waiting/active sessions for the requester in the current guild or DM scope. The query filters PostgreSQL JSONB participant membership and rechecks visibility in the Rust domain before returning snapshots.
+9. History: `.history` lists up to 10 non-expired completed or ended sessions for the requester in the current guild or DM scope. It applies the same participant and visibility checks and uses the existing 24-hour inactivity window; there is no separate long-term results store.
 
 A session ID is a reference, not a security credential. Access still requires participant identity and guild scope. Reads do not extend the 24-hour inactivity window; successful mutations do.
 

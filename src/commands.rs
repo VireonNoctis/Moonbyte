@@ -185,6 +185,48 @@ pub async fn sessions(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(prefix_command, slash_command)]
+pub async fn history(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let guild_id = ctx.guild_id().map(|id| id.to_string());
+    let scope = if guild_id.is_some() {
+        "this server"
+    } else {
+        "your DMs"
+    };
+    let sessions = ctx
+        .data()
+        .games()
+        .list_recent_finished_for_player(&player_id, guild_id.as_deref())
+        .await?;
+
+    if sessions.is_empty() {
+        ctx.say(format!("You don't have any recent finished sessions in {scope}."))
+            .await?;
+        return Ok(());
+    }
+
+    let entries = sessions
+        .iter()
+        .map(|snapshot| {
+            format!(
+                "• **{}** · `{}` · {}\n  {}",
+                snapshot.game.definition().name,
+                snapshot.id,
+                snapshot.phase,
+                snapshot.last_result
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+
+    ctx.say(format!(
+        "**Your recent finished sessions in {scope}**\n\n{entries}\n\nShowing up to 10 sessions still inside the 24-hour inactivity window."
+    ))
+    .await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, slash_command)]
 pub async fn leave(
     ctx: Context<'_>,
     #[description = "The session ID"] session_id: String,
@@ -213,6 +255,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         action(),
         session(),
         sessions(),
+        history(),
         leave(),
     ]
 }
@@ -234,7 +277,8 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
          {safe_prefix}action <session> <input> / /action — submit a legal game action\n\
          {safe_prefix}session <session> / /session — inspect your own session\n\
-         {safe_prefix}sessions / /sessions — list your active sessions here\n\
+         {safe_prefix}sessions / /sessions — list your active sessions here\\n\\
+         {safe_prefix}history / /history — list your recent finished sessions here\n\
          {safe_prefix}leave <session> / /leave — end a session you joined\n\n\
          Multiplayer sessions are scoped to their originating server. The current \
          session state is stored in PostgreSQL and expires after 24 hours of inactivity."
@@ -247,7 +291,7 @@ Moonbyte processes Discord interactions to run commands and games. Active game s
 are stored in PostgreSQL, including session state, Discord participant IDs, optional \
 guild scope, phase, and action counts. Sessions are scoped to their originating server \
 and expire after 24 hours without activity. Raw message histories are not stored as \
-analytics. Player profiles, inventories, and game-history features are not connected.\n\n\
+analytics. Player profiles, inventories, lifetime game history, export, and deletion are not connected. The .history command only lists finished sessions still inside the existing 24-hour inactivity window.\n\n\
 Discord independently processes interactions under its own policies. Moonbyte cannot \
 control Discord's retention. PostgreSQL does not by itself prove encryption at rest, and \
 this project does not claim end-to-end encryption.\n\n\
@@ -273,6 +317,7 @@ mod tests {
             ".action <session> <input> / /action",
             ".session <session> / /session",
             ".sessions / /sessions",
+            ".history / /history",
             ".leave <session> / /leave",
         ] {
             assert!(message.contains(command), "missing help entry: {command}");

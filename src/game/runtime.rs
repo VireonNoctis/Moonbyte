@@ -197,6 +197,37 @@ impl GameRuntime {
         Ok(snapshots)
     }
 
+    /// List the requester's non-expired completed or ended sessions in the current scope.
+    /// The JSONB participant predicate is repeated by a domain-level visibility check.
+    pub async fn list_recent_finished_for_player(
+        &self,
+        player_id: &str,
+        guild_id: Option<&str>,
+    ) -> Result<Vec<SessionSnapshot>, GameRuntimeError> {
+        let stored: Vec<(i16, String)> = sqlx::query_as(
+            "SELECT state_version, session_state::text FROM game_sessions \
+             WHERE expires_at > now() \
+               AND phase IN ('completed', 'ended') \
+               AND guild_id IS NOT DISTINCT FROM $2 \
+               AND (session_state -> 'players') @> jsonb_build_array($1::text) \
+             ORDER BY updated_at DESC, session_id ASC \
+             LIMIT 10",
+        )
+        .bind(player_id)
+        .bind(guild_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut snapshots = Vec::with_capacity(stored.len());
+        for (version, state_json) in stored {
+            let session = decode_session(version, &state_json)?;
+            if session.is_visible_to(player_id, guild_id) {
+                snapshots.push(session.snapshot());
+            }
+        }
+        Ok(snapshots)
+    }
+
     pub async fn leave(
         &self,
         session_id: &str,
@@ -446,6 +477,85 @@ mod tests {
             .expect("list DM sessions");
         assert_eq!(dm_sessions.len(), 1);
         assert_eq!(dm_sessions[0].id, dm_session.id);
+    }
+
+    #[tokio::test]
+    async fn recent_finished_sessions_are_participant_and_scope_filtered() {
+        let runtime = runtime().await;
+        let player = "history-owner";
+        let guild = "history-guild";
+
+        let completed = runtime
+            .start(GameKind::WordScramble, player, Some(guild))
+            .await
+            .expect("completed guild session");
+        runtime
+            .act(&completed.id, player, Some(guild), "orbit")
+            .await
+            .expect("complete Word Scramble");
+
+        let ended = runtime
+            .start(GameKind::MemoryMatch, player, Some(guild))
+            .await
+            .expect("ended guild session");
+        runtime
+            .leave(&ended.id, player, Some(guild))
+            .await
+            .expect("end Memory Match");
+
+        let active = runtime
+            .start(GameKind::MemoryMatch, player, Some(guild))
+            .await
+            .expect("active guild session");
+        runtime
+            .start(GameKind::MemoryMatch, "history-other", Some(guild))
+            .await
+            .expect("another player's active session");
+
+        let other_guild = runtime
+            .start(GameKind::WordScramble, player, Some("other-history-guild"))
+            .await
+            .expect("other-guild session");
+        runtime
+            .act(
+                &other_guild.id,
+                player,
+                Some("other-history-guild"),
+                "orbit",
+            )
+            .await
+            .expect("complete other-guild session");
+
+        let dm = runtime
+            .start(GameKind::WordScramble, player, None)
+            .await
+            .expect("DM session");
+        runtime
+            .act(&dm.id, player, None, "orbit")
+            .await
+            .expect("complete DM session");
+
+        let guild_history = runtime
+            .list_recent_finished_for_player(player, Some(guild))
+            .await
+            .expect("list guild history");
+        assert_eq!(guild_history.len(), 2);
+        assert!(guild_history.iter().any(|session| {
+            session.id == completed.id && session.phase.to_string() == "completed"
+        }));
+        assert!(guild_history.iter().any(|session| {
+            session.id == ended.id && session.phase.to_string() == "ended"
+        }));
+        assert!(!guild_history.iter().any(|session| {
+            session.id == active.id || session.id == other_guild.id || session.id == dm.id
+        }));
+
+        let dm_history = runtime
+            .list_recent_finished_for_player(player, None)
+            .await
+            .expect("list DM history");
+        assert_eq!(dm_history.len(), 1);
+        assert_eq!(dm_history[0].id, dm.id);
     }
 
     #[tokio::test]
