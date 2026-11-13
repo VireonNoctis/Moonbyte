@@ -51,16 +51,10 @@ jobs:
           toolchain: stable
           components: clippy, rustfmt
 
-      - name: Resolve and generate the committed dependency lock
-        run: cargo generate-lockfile
-
-      - name: Upload resolved Cargo.lock for commit
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: moonbyte-cargo-lock
-          path: Cargo.lock
-          if-no-files-found: error
-          retention-days: 3
+      - name: Verify the committed dependency lockfile
+        run: |
+          test -f Cargo.lock
+          git ls-files --error-unmatch Cargo.lock
 
       - name: Check Rust formatting
         run: cargo fmt --all -- --check

@@ -24,6 +24,8 @@ Moonbyte is a separate Rust Discord bot. Lunar is a source of audited game conce
 6. Run formatting, linting, tests, and builds relevant to the change.
 7. Review the complete diff for unrelated edits and secrets.
 
+CI validates the committed `Cargo.lock` with Cargo's `--locked` mode. Do not regenerate or replace the lockfile during validation.
+
 ## Quality expectations
 
 - Rust code is formatted with rustfmt and passes Clippy without unexplained warnings.

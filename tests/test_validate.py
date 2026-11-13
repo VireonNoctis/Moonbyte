@@ -61,5 +61,20 @@ class ActionPinValidationTests(unittest.TestCase):
         self.assertEqual(validate_action_pins(ROOT), [])
 
 
+
+class CargoLockPolicyTests(unittest.TestCase):
+    def test_ci_uses_the_committed_lockfile_without_regenerating_it(self):
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("git ls-files --error-unmatch Cargo.lock", workflow)
+        self.assertIn("cargo test --workspace --locked", workflow)
+        self.assertIn(
+            "cargo clippy --workspace --all-targets --locked -- -D warnings",
+            workflow,
+        )
+        self.assertNotIn("cargo generate-lockfile", workflow)
+        self.assertNotIn("Upload resolved Cargo.lock", workflow)
+
 if __name__ == "__main__":
     unittest.main()
