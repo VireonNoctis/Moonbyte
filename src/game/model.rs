@@ -186,11 +186,11 @@ impl ConnectFourState {
     fn render(&self) -> String {
         let mut out = String::new();
         for row in (0..6).rev() {
-            for col in 0..7 {
+            for (col, column) in self.columns.iter().enumerate() {
                 if col > 0 {
                     out.push(' ');
                 }
-                out.push(match self.columns[col][row] {
+                out.push(match column[row] {
                     0 => '·',
                     1 => 'X',
                     _ => 'O',
@@ -479,8 +479,28 @@ impl fmt::Display for GameKind {
 
 #[cfg(test)]
 mod tests {
-    use super::{GameKind, GameSession, WordScrambleState};
+    use super::{ConnectFourState, GameKind, GameSession, WordScrambleState};
     use crate::game::engine::{GameAction, GameError};
+
+    #[test]
+    fn connect_four_render_preserves_column_order_and_bottom_row() {
+        let mut state = ConnectFourState::default();
+        state.columns[0][0] = 1;
+        state.columns[1][0] = 2;
+
+        let expected = [
+            "· · · · · · ·",
+            "· · · · · · ·",
+            "· · · · · · ·",
+            "· · · · · · ·",
+            "· · · · · · ·",
+            "X O · · · · ·",
+            "1 2 3 4 5 6 7",
+        ]
+        .join("\n");
+
+        assert_eq!(state.render(), expected);
+    }
 
     #[test]
     fn legacy_word_scramble_snapshots_default_guess_history() {
