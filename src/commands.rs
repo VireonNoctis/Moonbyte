@@ -277,7 +277,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
          {safe_prefix}action <session> <input> / /action — submit a legal game action\n\
          {safe_prefix}session <session> / /session — inspect your own session\n\
-         {safe_prefix}sessions / /sessions — list your active sessions here\\n\\
+         {safe_prefix}sessions / /sessions — list your active sessions here\n\
          {safe_prefix}history / /history — list your recent finished sessions here\n\
          {safe_prefix}leave <session> / /leave — end a session you joined\n\n\
          Multiplayer sessions are scoped to their originating server. The current \
