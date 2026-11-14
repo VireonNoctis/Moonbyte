@@ -885,9 +885,7 @@ mod tests {
             .expect("expired sessions must release capacity before periodic cleanup");
 
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-        let database = Database::connect(&database_url)
-            .await
-            .expect("database");
+        let database = Database::connect(&database_url).await.expect("database");
         let removed = database
             .remove_expired_sessions()
             .await
