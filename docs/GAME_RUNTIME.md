@@ -55,7 +55,7 @@ The runtime rejects unknown games, malformed or out-of-range actions, occupied c
 
 ## Tests
 
-Pure domain tests cover parser bounds, win detection, invalid moves, game completion and bounded attempts. PostgreSQL-backed runtime tests cover distinct durable IDs, guild-scoped lobby joins, DM multiplayer rejection, private session reads, membership and turn ownership, transactional rejection, leave/completion and runtime reconstruction against persisted state. CI starts an isolated PostgreSQL service for these tests.
+Pure domain tests cover parser bounds, win detection, invalid moves, game completion and bounded attempts. PostgreSQL-backed runtime tests cover distinct durable IDs, guild-scoped lobby joins, DM multiplayer rejection, private session reads, membership and turn ownership, transactional rejection, leave/completion, runtime reconstruction, expired-session read/list exclusion, capacity release before scheduled cleanup, and retention deletion. CI starts an isolated PostgreSQL service for these tests.
 
 These are automated tests, not a Discord live-guild smoke test, multi-process load test, backup/restore rehearsal, or production deployment certification.
 

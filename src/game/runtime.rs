@@ -818,27 +818,92 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn expired_sessions_are_removed_by_the_retention_cleanup() {
+    async fn expired_sessions_are_hidden_and_release_capacity_before_retention_cleanup() {
         let runtime = runtime().await;
-        let session = runtime
-            .start(GameKind::WordScramble, "owner", None)
-            .await
-            .expect("start");
+        let player = "retention-expiry-owner";
+        let guild = "retention-expiry-guild";
 
-        sqlx::query("UPDATE game_sessions SET expires_at = now() - interval '1 second' WHERE session_id = $1")
-            .bind(&session.id)
+        let finished = runtime
+            .start(GameKind::WordScramble, player, Some(guild))
+            .await
+            .expect("finished session");
+        runtime
+            .act(&finished.id, player, Some(guild), "orbit")
+            .await
+            .expect("complete Word Scramble");
+
+        let mut active = Vec::new();
+        for _ in 0..10 {
+            active.push(
+                runtime
+                    .start(GameKind::MemoryMatch, player, Some(guild))
+                    .await
+                    .expect("start active session"),
+            );
+        }
+
+        let mut expired_ids = Vec::with_capacity(active.len() + 1);
+        expired_ids.push(finished.id.clone());
+        expired_ids.extend(active.iter().map(|session| session.id.clone()));
+
+        for session_id in &expired_ids {
+            sqlx::query(
+                "UPDATE game_sessions SET expires_at = now() - interval '1 second' WHERE session_id = $1",
+            )
+            .bind(session_id)
             .execute(&runtime.pool)
             .await
             .expect("expire the test session");
+        }
 
-        let database = Database::connect(&std::env::var("DATABASE_URL").expect("DATABASE_URL"))
-            .await
-            .expect("database");
-        assert!(database.remove_expired_sessions().await.expect("cleanup") >= 1);
         assert!(matches!(
-            runtime.get(&session.id, "owner", None).await,
+            runtime.get(&active[0].id, player, Some(guild)).await,
             Err(GameRuntimeError::Domain(GameError::NotJoinable))
         ));
+        assert!(matches!(
+            runtime.get(&finished.id, player, Some(guild)).await,
+            Err(GameRuntimeError::Domain(GameError::NotJoinable))
+        ));
+        assert!(
+            runtime
+                .list_active_for_player(player, Some(guild))
+                .await
+                .expect("list active sessions")
+                .is_empty()
+        );
+        assert!(
+            runtime
+                .list_recent_finished_for_player(player, Some(guild))
+                .await
+                .expect("list finished sessions")
+                .is_empty()
+        );
+
+        runtime
+            .start(GameKind::MemoryMatch, player, Some(guild))
+            .await
+            .expect("expired sessions must release capacity before periodic cleanup");
+
+        let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
+        let database = Database::connect(&database_url)
+            .await
+            .expect("database");
+        let removed = database
+            .remove_expired_sessions()
+            .await
+            .expect("retention cleanup");
+        assert!(removed >= expired_ids.len() as u64);
+
+        for session_id in &expired_ids {
+            let exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS (SELECT 1 FROM game_sessions WHERE session_id = $1)",
+            )
+            .bind(session_id)
+            .fetch_one(&runtime.pool)
+            .await
+            .expect("check cleaned session");
+            assert!(!exists, "expired session {session_id} should be removed");
+        }
     }
 
     #[tokio::test]
