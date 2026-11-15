@@ -5,8 +5,65 @@ use crate::{
     Data, Error,
     game::{GameKind, GamePhase},
 };
+use poise::serenity_prelude::CreateMessage;
 
 type Context<'a> = poise::Context<'a, Data, Error>;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum PrivateResponseRoute {
+    EphemeralInteraction,
+    DirectMessage,
+    ExistingPrivateChannel,
+}
+
+fn private_response_route(is_application: bool, in_guild: bool) -> PrivateResponseRoute {
+    match (is_application, in_guild) {
+        (true, _) => PrivateResponseRoute::EphemeralInteraction,
+        (false, true) => PrivateResponseRoute::DirectMessage,
+        (false, false) => PrivateResponseRoute::ExistingPrivateChannel,
+    }
+}
+
+fn private_delivery_notice(delivered: bool) -> &'static str {
+    if delivered {
+        "I sent your session details in a DM."
+    } else {
+        "I couldn't DM you. Enable direct messages from this server and try again."
+    }
+}
+
+/// Keep player-specific session snapshots and listings out of shared guild channels.
+async fn send_private(ctx: Context<'_>, message: String) -> Result<(), Error> {
+    let route = private_response_route(
+        matches!(&ctx, poise::Context::Application(_)),
+        ctx.guild_id().is_some(),
+    );
+
+    match (ctx, route) {
+        (poise::Context::Application(application), PrivateResponseRoute::EphemeralInteraction) => {
+            application
+                .send(poise::CreateReply::default().content(message).ephemeral(true))
+                .await?;
+        }
+        (poise::Context::Prefix(prefix), PrivateResponseRoute::DirectMessage) => {
+            let delivered = prefix
+                .author()
+                .direct_message(
+                    prefix.serenity_context(),
+                    CreateMessage::new().content(message),
+                )
+                .await
+                .is_ok();
+            prefix.say(private_delivery_notice(delivered)).await?;
+        }
+        (poise::Context::Prefix(prefix), PrivateResponseRoute::ExistingPrivateChannel) => {
+            prefix.say(message).await?;
+        }
+        _ => unreachable!("private response route must match its Poise context"),
+    }
+
+    Ok(())
+}
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
@@ -138,8 +195,7 @@ pub async fn session(
         .games()
         .get(&session_id, &player_id, guild_id.as_deref())
         .await?;
-    ctx.say(snapshot.render()).await?;
-    Ok(())
+    send_private(ctx, snapshot.render()).await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -158,9 +214,11 @@ pub async fn sessions(ctx: Context<'_>) -> Result<(), Error> {
         .await?;
 
     if sessions.is_empty() {
-        ctx.say(format!("You don't have any active sessions in {scope}."))
-            .await?;
-        return Ok(());
+        return send_private(
+            ctx,
+            format!("You don't have any active sessions in {scope}."),
+        )
+        .await;
     }
 
     let entries = sessions
@@ -177,11 +235,13 @@ pub async fn sessions(ctx: Context<'_>) -> Result<(), Error> {
         .collect::<Vec<_>>()
         .join("\n\n");
 
-    ctx.say(format!(
-        "**Your active sessions in {scope}**\n\n{entries}\n\nUse `session <id>` to inspect a board or `action <id> <input>` to play. Showing up to 10 most recently updated sessions."
-    ))
-    .await?;
-    Ok(())
+    send_private(
+        ctx,
+        format!(
+            "**Your active sessions in {scope}**\n\n{entries}\n\nUse `session <id>` to inspect a board or `action <id> <input>` to play. Showing up to 10 most recently updated sessions."
+        ),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -200,11 +260,11 @@ pub async fn history(ctx: Context<'_>) -> Result<(), Error> {
         .await?;
 
     if sessions.is_empty() {
-        ctx.say(format!(
-            "You don't have any recent finished sessions in {scope}."
-        ))
-        .await?;
-        return Ok(());
+        return send_private(
+            ctx,
+            format!("You don't have any recent finished sessions in {scope}."),
+        )
+        .await;
     }
 
     let entries = sessions
@@ -221,11 +281,13 @@ pub async fn history(ctx: Context<'_>) -> Result<(), Error> {
         .collect::<Vec<_>>()
         .join("\n\n");
 
-    ctx.say(format!(
-        "**Your recent finished sessions in {scope}**\n\n{entries}\n\nShowing up to 10 sessions still inside the 24-hour inactivity window."
-    ))
-    .await?;
-    Ok(())
+    send_private(
+        ctx,
+        format!(
+            "**Your recent finished sessions in {scope}**\n\n{entries}\n\nShowing up to 10 sessions still inside the 24-hour inactivity window."
+        ),
+    )
+    .await
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -304,6 +366,34 @@ overview is not a deletion request.";
 #[cfg(test)]
 mod tests {
     use super::help_message;
+
+    #[test]
+    fn private_session_responses_use_a_private_transport_for_each_context() {
+        assert_eq!(
+            super::private_response_route(true, true),
+            super::PrivateResponseRoute::EphemeralInteraction
+        );
+        assert_eq!(
+            super::private_response_route(true, false),
+            super::PrivateResponseRoute::EphemeralInteraction
+        );
+        assert_eq!(
+            super::private_response_route(false, true),
+            super::PrivateResponseRoute::DirectMessage
+        );
+        assert_eq!(
+            super::private_response_route(false, false),
+            super::PrivateResponseRoute::ExistingPrivateChannel
+        );
+    }
+
+    #[test]
+    fn failed_private_delivery_notice_does_not_expose_session_details() {
+        let notice = super::private_delivery_notice(false);
+        assert!(notice.contains("Enable direct messages"));
+        assert!(!notice.contains("MB-"));
+        assert!(!notice.contains("session details"));
+    }
 
     #[test]
     fn help_lists_only_commands_registered_in_this_build() {

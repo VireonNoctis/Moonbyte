@@ -16,12 +16,14 @@
 | .play <game> | /play | Starts a solo game or creates a two-player lobby, subject to the 10 active-session cap per player per guild/DM scope. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server, subject to the same per-player cap. |
 | .action <session> <input> | /action | Submits a game-specific action after participant, guild, phase and turn validation. |
-| .session <session> | /session | Reads the current snapshot of a session in which the requester participates. |
-| .sessions | /sessions | Lists up to 10 most recently updated, non-expired active sessions the requester participates in, scoped to the current guild or DMs. |
-| .history | /history | Lists up to 10 non-expired completed or ended sessions the requester participated in, scoped to the current guild or DMs. |
+| .session <session> | /session | Privately reads the current snapshot of a session in which the requester participates. |
+| .sessions | /sessions | Privately lists up to 10 most recently updated, non-expired active sessions the requester participates in, scoped to the current guild or DMs. |
+| .history | /history | Privately lists up to 10 non-expired completed or ended sessions the requester participated in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
 
 All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
+
+Session snapshots, active-session lists and recent history are never posted with their contents in a shared guild channel. Slash invocations receive ephemeral responses. Prefix invocations in a guild deliver the details by DM and post only a generic delivery notice; prefix invocations in DMs reply in that already-private channel. If DMs are blocked, the bot posts a generic retry notice without exposing session details.
 
 ## Game controls
 
