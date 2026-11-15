@@ -42,7 +42,11 @@ async fn send_private(ctx: Context<'_>, message: String) -> Result<(), Error> {
     match (ctx, route) {
         (poise::Context::Application(application), PrivateResponseRoute::EphemeralInteraction) => {
             application
-                .send(poise::CreateReply::default().content(message).ephemeral(true))
+                .send(
+                    poise::CreateReply::default()
+                        .content(message)
+                        .ephemeral(true),
+                )
                 .await?;
         }
         (poise::Context::Prefix(prefix), PrivateResponseRoute::DirectMessage) => {
