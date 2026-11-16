@@ -376,7 +376,7 @@ overview is not a deletion request.";
 
 #[cfg(test)]
 mod tests {
-    use super::{help_message, PRIVACY_OVERVIEW};
+    use super::{PRIVACY_OVERVIEW, help_message};
 
     #[test]
     fn private_session_responses_use_a_private_transport_for_each_context() {
