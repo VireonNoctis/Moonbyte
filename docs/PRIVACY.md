@@ -2,7 +2,7 @@
 
 - Policy owner: Moonbyte maintainers.
 - Status: Intended product policy; active sessions are persisted in PostgreSQL, but persistent player profiles and privacy export/deletion controls are not implemented.
-- Last updated: 2026-10-31.
+- Last updated: 2026-11-16.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
 ## 1. Our stance
@@ -49,6 +49,8 @@ Discord sends interaction data to the bot so it can process commands and game ac
 
 - Prefix commands require Discord's Message Content privileged intent. When enabled, the bot parses prefix and arguments in memory.
 - Slash commands deliver structured interaction payloads.
+- In a guild, `.play`, `.join`, `.action`, and `.leave` post game boards or results in the invoking channel so participants can play together. Members who can view that channel can see those responses and may see the command invocation itself. Use a DM for solo play that should not appear in a shared server channel.
+- `.session`, `.sessions`, and `.history` keep player-specific session details private: slash responses are ephemeral, guild-prefix details are delivered by DM with only a generic channel notice, and DM-prefix responses stay in the existing private channel. A failed DM never falls back to posting session details publicly.
 - A game input such as a guess, quiz answer, or move may be stored as part of active game state when necessary to validate or resume that game.
 - Raw messages must not be retained as a general-purpose transcript or analytics stream.
 - Logs must not contain raw command bodies, message content, tokens, authorization headers, private export contents, or unnecessary user data.

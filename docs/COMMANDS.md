@@ -23,7 +23,9 @@
 
 All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
 
-Session snapshots, active-session lists and recent history are never posted with their contents in a shared guild channel. Slash invocations receive ephemeral responses. Prefix invocations in a guild deliver the details by DM and post only a generic delivery notice; prefix invocations in DMs reply in that already-private channel. If DMs are blocked, the bot posts a generic retry notice without exposing session details.
+Session inspection and listing commands (`.session`, `.sessions`, `.history`) keep player-specific details out of shared guild channels. Slash invocations receive ephemeral responses. Guild-prefix invocations deliver the details by DM and post only a generic delivery notice; DM-prefix invocations reply in that already-private channel. If DMs are blocked, the bot posts a generic retry notice without exposing session details.
+
+Gameplay commands (`.play`, `.join`, `.action`, `.leave`) post game boards or results in the invoking channel so participants can play together. In a guild, members with access to that channel can see those responses and may see the command invocation itself. Use a DM for solo play that should not appear in a shared server channel.
 
 ## Game controls
 

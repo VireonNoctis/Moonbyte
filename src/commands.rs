@@ -32,7 +32,7 @@ fn private_delivery_notice(delivered: bool) -> &'static str {
     }
 }
 
-/// Keep player-specific session snapshots and listings out of shared guild channels.
+/// Keep player-specific session inspection and listing responses out of shared guild channels.
 async fn send_private(ctx: Context<'_>, message: String) -> Result<(), Error> {
     let route = private_response_route(
         matches!(&ctx, poise::Context::Application(_)),
@@ -360,6 +360,13 @@ are stored in PostgreSQL, including session state, Discord participant IDs, opti
 guild scope, phase, and action counts. Sessions are scoped to their originating server \
 and expire after 24 hours without activity. Raw message histories are not stored as \
 analytics. Player profiles, inventories, lifetime game history, export, and deletion are not connected. The .history command only lists finished sessions still inside the existing 24-hour inactivity window.\n\n\
+**Channel visibility:** In a guild, .play, .join, .action, and .leave post game boards or \
+results in the invoking channel. Members who can view that channel can see those \
+responses and may see the command invocation itself. Use a DM for solo play you do not \
+want shown in a shared server channel. .session, .sessions, and .history keep session \
+details private: slash responses are ephemeral, guild-prefix requests deliver details \
+by DM, and prefix requests in DMs reply in that private channel. If a DM fails, the bot \
+does not post session details publicly.\n\n\
 Discord independently processes interactions under its own policies. Moonbyte cannot \
 control Discord's retention. PostgreSQL does not by itself prove encryption at rest, and \
 this project does not claim end-to-end encryption.\n\n\
@@ -369,7 +376,7 @@ overview is not a deletion request.";
 
 #[cfg(test)]
 mod tests {
-    use super::help_message;
+    use super::{help_message, PRIVACY_OVERVIEW};
 
     #[test]
     fn private_session_responses_use_a_private_transport_for_each_context() {
@@ -397,6 +404,14 @@ mod tests {
         assert!(notice.contains("Enable direct messages"));
         assert!(!notice.contains("MB-"));
         assert!(!notice.contains("session details"));
+    }
+
+    #[test]
+    fn privacy_overview_discloses_gameplay_visibility_and_private_session_reads() {
+        assert!(PRIVACY_OVERVIEW.contains("post game boards or"));
+        assert!(PRIVACY_OVERVIEW.contains("Use a DM for solo play"));
+        assert!(PRIVACY_OVERVIEW.contains("slash responses are ephemeral"));
+        assert!(PRIVACY_OVERVIEW.contains("does not post session details publicly"));
     }
 
     #[test]
