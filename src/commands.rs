@@ -122,9 +122,29 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
         })
         .collect::<Vec<_>>()
         .join("\n\n");
-    ctx.say(format!("**Moonbyte Game Library**\n\n{entries}"))
-        .await?;
+    ctx.say(format!(
+        "**Moonbyte Game Library**\n\n{entries}\n\nUse `.rules <game>` or `/rules` for full instructions."
+    ))
+    .await?;
     Ok(())
+}
+
+#[poise::command(prefix_command, slash_command)]
+pub async fn rules(
+    ctx: Context<'_>,
+    #[description = "A game ID or name, such as connect-four"] game: String,
+) -> Result<(), Error> {
+    let game = GameKind::parse(&game)?;
+    ctx.say(game_rules_message(game)).await?;
+    Ok(())
+}
+
+fn game_rules_message(game: GameKind) -> String {
+    let definition = game.definition();
+    format!(
+        "**{} — How to play**\n{}\n\n**Controls**\n{}\n\nStart with `.play {}` or `/play` using game `{}`.",
+        definition.name, definition.rules, definition.controls, definition.id, definition.id
+    )
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -318,6 +338,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         ping(),
         privacy(),
         games(),
+        rules(),
         play(),
         join(),
         action(),
@@ -341,6 +362,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}ping / /ping — check responsiveness and uptime\n\
          {safe_prefix}privacy / /privacy — read the current privacy overview\n\
          {safe_prefix}games / /games — browse the playable library\n\
+         {safe_prefix}rules <game> / /rules — read a game's rules and controls\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
          {safe_prefix}join <session> / /join — join an open lobby in this server\n\
          {safe_prefix}action <session> <input> / /action — submit a legal game action\n\
@@ -376,7 +398,7 @@ overview is not a deletion request.";
 
 #[cfg(test)]
 mod tests {
-    use super::{PRIVACY_OVERVIEW, help_message};
+    use super::{GameKind, PRIVACY_OVERVIEW, game_rules_message, help_message};
 
     #[test]
     fn private_session_responses_use_a_private_transport_for_each_context() {
@@ -423,6 +445,7 @@ mod tests {
             ".ping / /ping",
             ".privacy / /privacy",
             ".games / /games",
+            ".rules <game> / /rules",
             ".play <game> / /play",
             ".join <session> / /join",
             ".action <session> <input> / /action",
@@ -434,6 +457,39 @@ mod tests {
             assert!(message.contains(command), "missing help entry: {command}");
         }
         assert!(message.contains("expires after 24 hours of inactivity"));
+    }
+
+    #[test]
+    fn game_rules_include_catalogue_rules_and_controls_for_every_playable_game() {
+        for game in GameKind::ALL {
+            let definition = game.definition();
+            let message = game_rules_message(game);
+            assert!(
+                !definition.rules.trim().is_empty(),
+                "missing rules for {}",
+                definition.id
+            );
+            assert!(
+                !definition.controls.trim().is_empty(),
+                "missing controls for {}",
+                definition.id
+            );
+            assert!(
+                message.contains(definition.rules),
+                "missing rules for {}",
+                definition.id
+            );
+            assert!(
+                message.contains(definition.controls),
+                "missing controls for {}",
+                definition.id
+            );
+            assert!(
+                message.contains(definition.id),
+                "missing start identifier for {}",
+                definition.id
+            );
+        }
     }
 
     #[test]

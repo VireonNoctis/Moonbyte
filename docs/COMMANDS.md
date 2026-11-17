@@ -13,6 +13,7 @@
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
 | .privacy | /privacy | Explains current PostgreSQL session storage and unavailable persistent privacy controls. |
 | .games | /games | Lists four playable games, player counts and controls. |
+| .rules <game> | /rules | Shows the selected game's implemented rules and controls before play. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby, subject to the 10 active-session cap per player per guild/DM scope. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server, subject to the same per-player cap. |
 | .action <session> <input> | /action | Submits a game-specific action after participant, guild, phase and turn validation. |
@@ -21,7 +22,7 @@
 | .history | /history | Privately lists up to 10 non-expired completed or ended sessions the requester participated in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
 
-All commands use shared Rust handlers for prefix and slash invocation. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
+All commands use shared Rust handlers for prefix and slash invocation. Use `.rules <game>` or `/rules` to read the implemented rules and controls before starting a game. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
 
 Session inspection and listing commands (`.session`, `.sessions`, `.history`) keep player-specific details out of shared guild channels. Slash invocations receive ephemeral responses. Guild-prefix invocations deliver the details by DM and post only a generic delivery notice; DM-prefix invocations reply in that already-private channel. If DMs are blocked, the bot posts a generic retry notice without exposing session details.
 

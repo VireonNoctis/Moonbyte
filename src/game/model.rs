@@ -27,6 +27,7 @@ impl GameKind {
                 description: "A two-player strategy game on a 3×3 board.",
                 players: "2 players",
                 controls: "Use .action <session> <row>,<column> with 1-based coordinates.",
+                rules: "Take turns placing X or O in an empty square. The first player to make a line of three horizontally, vertically, or diagonally wins. If all nine squares are filled without a line of three, the game is a draw.",
             },
             Self::ConnectFour => GameDefinition {
                 id: "connect-four",
@@ -34,6 +35,7 @@ impl GameKind {
                 description: "Drop discs into seven columns and connect four in a row.",
                 players: "2 players",
                 controls: "Use .action <session> <column> with a column from 1 to 7.",
+                rules: "Take turns dropping a disc into one of seven columns. Each disc falls to the lowest open space. Connect four of your discs horizontally, vertically, or diagonally to win. If the board fills without a connected four, the game is a draw.",
             },
             Self::MemoryMatch => GameDefinition {
                 id: "memory-match",
@@ -41,6 +43,7 @@ impl GameKind {
                 description: "Find four pairs by remembering where each symbol appears.",
                 players: "1 player",
                 controls: "Use .action <session> <position> with a position from 1 to 8.",
+                rules: "Reveal two positions at a time on the 2×4 board. Matching pairs stay visible. When the two positions do not match, both remain visible until your next reveal. Find all four pairs to complete the game. The starter layout is fixed and is not shuffled.",
             },
             Self::WordScramble => GameDefinition {
                 id: "word-scramble",
@@ -48,6 +51,7 @@ impl GameKind {
                 description: "Reconstruct an original five-letter word from its scrambled letters.",
                 players: "1 player",
                 controls: "Use .action <session> <answer> with 1–32 ASCII letters.",
+                rules: "Rearrange BITOR into the hidden five-letter word. You have three distinct guesses; a repeated guess does not consume an attempt. Guesses are case-insensitive and accept 1–32 ASCII letters. The answer is revealed when all attempts are used.",
             },
         }
     }
@@ -72,6 +76,7 @@ pub struct GameDefinition {
     pub description: &'static str,
     pub players: &'static str,
     pub controls: &'static str,
+    pub rules: &'static str,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
