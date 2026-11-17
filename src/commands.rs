@@ -464,8 +464,16 @@ mod tests {
         for game in GameKind::ALL {
             let definition = game.definition();
             let message = game_rules_message(game);
-            assert!(!definition.rules.trim().is_empty(), "missing rules for {}", definition.id);
-            assert!(!definition.controls.trim().is_empty(), "missing controls for {}", definition.id);
+            assert!(
+                !definition.rules.trim().is_empty(),
+                "missing rules for {}",
+                definition.id
+            );
+            assert!(
+                !definition.controls.trim().is_empty(),
+                "missing controls for {}",
+                definition.id
+            );
             assert!(
                 message.contains(definition.rules),
                 "missing rules for {}",
