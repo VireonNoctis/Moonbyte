@@ -1,5 +1,6 @@
 use super::model::{
-    ConnectFourState, GameKind, GameState, MemoryMatchState, TicTacToeState, WordScrambleState,
+    ConnectFourState, GameKind, GameState, MemoryMatchState, SequenceRecallState, TicTacToeState,
+    WordScrambleState,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -8,6 +9,8 @@ pub enum GameAction {
     ConnectFourDrop { column: usize },
     MemoryReveal { position: usize },
     WordAnswer { answer: String },
+    SequenceHide,
+    SequenceAnswer { values: Vec<u8> },
 }
 
 pub(super) fn is_valid_word_guess(value: &str) -> bool {
@@ -67,6 +70,31 @@ impl GameAction {
                 Ok(Self::WordAnswer {
                     answer: answer.to_owned(),
                 })
+            }
+            GameKind::SequenceRecall => {
+                let input = input.trim();
+                if input.eq_ignore_ascii_case("hide") {
+                    return Ok(Self::SequenceHide);
+                }
+
+                let mut values = Vec::new();
+                for part in input.split(',') {
+                    if values.len() >= 8 {
+                        return Err(GameError::InvalidAction);
+                    }
+                    let value = part
+                        .trim()
+                        .parse::<u8>()
+                        .map_err(|_| GameError::InvalidAction)?;
+                    if !(1..=4).contains(&value) {
+                        return Err(GameError::InvalidAction);
+                    }
+                    values.push(value - 1);
+                }
+                if values.is_empty() {
+                    return Err(GameError::InvalidAction);
+                }
+                Ok(Self::SequenceAnswer { values })
             }
         }
     }
@@ -155,6 +183,7 @@ pub(super) fn apply_action(
         (GameState::WordScramble(state), GameAction::WordAnswer { answer }) => {
             apply_word_scramble(state, answer)
         }
+        (GameState::SequenceRecall(state), action) => apply_sequence_recall(state, action),
         _ => Err(GameError::InvalidAction),
     }
 }
@@ -326,9 +355,130 @@ fn apply_word_scramble(
     })
 }
 
+
+fn apply_sequence_recall(
+    state: &mut SequenceRecallState,
+    action: GameAction,
+) -> Result<GameResolution, GameError> {
+    match action {
+        GameAction::SequenceHide if state.showing => {
+            state.showing = false;
+            Ok(GameResolution {
+                winner_index: None,
+                is_draw: false,
+                is_complete: false,
+                message: "Pattern hidden. Repeat the full sequence in order using values 1–4.",
+            })
+        }
+        GameAction::SequenceAnswer { values } if !state.showing => {
+            let level = usize::from(state.level);
+            if !(2..=state.sequence.len()).contains(&level)
+                || values.len() != level
+                || values.iter().any(|value| *value > 3)
+            {
+                return Err(GameError::InvalidAction);
+            }
+
+            state.showing = true;
+            if values.as_slice() != &state.sequence[..level] {
+                return Ok(GameResolution {
+                    winner_index: None,
+                    is_draw: false,
+                    is_complete: true,
+                    message: "Incorrect sequence. The pattern is revealed above; this session is complete.",
+                });
+            }
+
+            if level == state.sequence.len() {
+                return Ok(GameResolution {
+                    winner_index: None,
+                    is_draw: false,
+                    is_complete: true,
+                    message: "Perfect recall. You completed all eight levels.",
+                });
+            }
+
+            state.level += 1;
+            Ok(GameResolution {
+                winner_index: None,
+                is_draw: false,
+                is_complete: false,
+                message: "Correct. Memorise the longer pattern, then hide it to continue.",
+            })
+        }
+        _ => Err(GameError::InvalidAction),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+
+    #[test]
+    fn sequence_recall_parser_validates_hide_and_symbol_lists() {
+        assert_eq!(
+            GameAction::parse(GameKind::SequenceRecall, " HIDE "),
+            Ok(GameAction::SequenceHide)
+        );
+        assert_eq!(
+            GameAction::parse(GameKind::SequenceRecall, "1, 3"),
+            Ok(GameAction::SequenceAnswer { values: vec![0, 2] })
+        );
+
+        for invalid in ["", "0", "5", "1,,2", "1,2,3,4,5,6,7,8,9", "hide,1"] {
+            assert_eq!(
+                GameAction::parse(GameKind::SequenceRecall, invalid),
+                Err(GameError::InvalidAction),
+                "unexpectedly accepted {invalid:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn sequence_recall_requires_hide_before_answer_and_ends_on_wrong_sequence() {
+        let mut state =
+            GameState::SequenceRecall(SequenceRecallState::for_session("MB-000000"));
+        assert_eq!(
+            apply_action(
+                &mut state,
+                0,
+                GameAction::SequenceAnswer { values: vec![0, 2] }
+            ),
+            Err(GameError::InvalidAction)
+        );
+
+        apply_action(&mut state, 0, GameAction::SequenceHide).expect("hide");
+        let GameState::SequenceRecall(recall) = &state else {
+            panic!("expected Sequence Recall state");
+        };
+        assert!(!recall.showing);
+
+        let correct = apply_action(
+            &mut state,
+            0,
+            GameAction::SequenceAnswer { values: vec![0, 2] },
+        )
+        .expect("correct answer");
+        assert!(!correct.is_complete);
+        let GameState::SequenceRecall(recall) = &state else {
+            panic!("expected Sequence Recall state");
+        };
+        assert_eq!(recall.level, 3);
+        assert!(recall.showing);
+
+        apply_action(&mut state, 0, GameAction::SequenceHide).expect("hide longer pattern");
+        let incorrect = apply_action(
+            &mut state,
+            0,
+            GameAction::SequenceAnswer {
+                values: vec![3, 3, 3],
+            },
+        )
+        .expect("incorrect answer ends the game");
+        assert!(incorrect.is_complete);
+        assert!(incorrect.winner_index.is_none());
+    }
 
     #[test]
     fn command_parser_rejects_out_of_range_and_malformed_actions() {

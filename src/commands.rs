@@ -79,7 +79,7 @@ pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
 pub async fn about(ctx: Context<'_>) -> Result<(), Error> {
     let message = format!(
         "Moonbyte v{} — a colourful world of games inside Discord.\n\n\
-         This build includes four playable games, guild-scoped multiplayer lobbies, \
+         This build includes five playable games, guild-scoped multiplayer lobbies, \
          turn validation, private session reads and explicit leave controls. Sessions \
          are persisted in PostgreSQL and expire after 24 hours of inactivity; player \
          profiles, progression, Vaults and the Bazaar are not connected yet.",
@@ -150,7 +150,7 @@ fn game_rules_message(game: GameKind) -> String {
 #[poise::command(prefix_command, slash_command)]
 pub async fn play(
     ctx: Context<'_>,
-    #[description = "tic-tac-toe, connect-four, memory-match, or word-scramble"] game: String,
+    #[description = "tic-tac-toe, connect-four, memory-match, word-scramble, or sequence-recall"] game: String,
 ) -> Result<(), Error> {
     let game = GameKind::parse(&game)?;
     let player_id = ctx.author().id.to_string();
@@ -193,7 +193,7 @@ pub async fn join(
 pub async fn action(
     ctx: Context<'_>,
     #[description = "The session ID"] session_id: String,
-    #[description = "Tic-tac-toe: row,column; Connect Four: column; Memory: position; Word Scramble: answer"]
+    #[description = "Use the shown controls; Sequence Recall accepts hide or comma-separated values 1–4."]
     input: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();

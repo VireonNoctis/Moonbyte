@@ -10,14 +10,16 @@ pub enum GameKind {
     ConnectFour,
     MemoryMatch,
     WordScramble,
+    SequenceRecall,
 }
 
 impl GameKind {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::TicTacToe,
         Self::ConnectFour,
         Self::MemoryMatch,
         Self::WordScramble,
+        Self::SequenceRecall,
     ];
     pub const fn definition(self) -> GameDefinition {
         match self {
@@ -53,6 +55,14 @@ impl GameKind {
                 controls: "Use .action <session> <answer> with 1–32 ASCII letters.",
                 rules: "Rearrange BITOR into the hidden five-letter word. You have three distinct guesses; a repeated guess does not consume an attempt. Guesses are case-insensitive and accept 1–32 ASCII letters. The answer is revealed when all attempts are used.",
             },
+            Self::SequenceRecall => GameDefinition {
+                id: "sequence-recall",
+                name: "Sequence Recall",
+                description: "Memorise a growing four-symbol pattern, then repeat it.",
+                players: "1 player",
+                controls: "Use .action <session> hide, then submit the full pattern with comma-separated values 1–4.",
+                rules: "Memorise the pattern shown at each level, then use hide to conceal it. Repeat the full pattern in order with values 1–4 separated by commas. Each correct answer adds one symbol; an incorrect answer ends the session. Complete all eight levels to finish. Sessions rotate through four authored patterns selected deterministically from the session ID; outcomes are not random or fairness-certified.",
+            },
         }
     }
     pub const fn requires_opponent(self) -> bool {
@@ -64,6 +74,7 @@ impl GameKind {
             "connect-four" | "connect4" | "c4" => Ok(Self::ConnectFour),
             "memory-match" | "memory" => Ok(Self::MemoryMatch),
             "word-scramble" | "scramble" => Ok(Self::WordScramble),
+            "sequence-recall" | "sequence" | "recall" => Ok(Self::SequenceRecall),
             _ => Err(GameError::UnknownGame),
         }
     }
@@ -104,22 +115,26 @@ pub(super) enum GameState {
     ConnectFour(ConnectFourState),
     MemoryMatch(MemoryMatchState),
     WordScramble(WordScrambleState),
+    SequenceRecall(SequenceRecallState),
 }
 
 impl GameState {
-    fn new(kind: GameKind) -> Self {
+    fn new(kind: GameKind, session_id: &str) -> Self {
         match kind {
             GameKind::TicTacToe => Self::TicTacToe(TicTacToeState::default()),
             GameKind::ConnectFour => Self::ConnectFour(ConnectFourState::default()),
             GameKind::MemoryMatch => Self::MemoryMatch(MemoryMatchState::default()),
             GameKind::WordScramble => Self::WordScramble(WordScrambleState::default()),
+            GameKind::SequenceRecall => {
+                Self::SequenceRecall(SequenceRecallState::for_session(session_id))
+            }
         }
     }
     pub(super) fn current_player_index(&self) -> usize {
         match self {
             Self::TicTacToe(s) => usize::from(s.current_player),
             Self::ConnectFour(s) => usize::from(s.current_player),
-            Self::MemoryMatch(_) | Self::WordScramble(_) => 0,
+            Self::MemoryMatch(_) | Self::WordScramble(_) | Self::SequenceRecall(_) => 0,
         }
     }
     fn render(&self) -> String {
@@ -128,6 +143,7 @@ impl GameState {
             Self::ConnectFour(s) => s.render(),
             Self::MemoryMatch(s) => s.render(),
             Self::WordScramble(s) => s.render(),
+            Self::SequenceRecall(s) => s.render(),
         }
     }
 }
@@ -322,6 +338,66 @@ impl WordScrambleState {
     }
 }
 
+
+const SEQUENCE_RECALL_PATTERNS: [[u8; 8]; 4] = [
+    [0, 2, 1, 3, 2, 0, 3, 1],
+    [3, 1, 0, 2, 1, 3, 2, 0],
+    [1, 3, 2, 0, 3, 1, 0, 2],
+    [2, 0, 3, 1, 0, 2, 1, 3],
+];
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub(super) struct SequenceRecallState {
+    pub(super) sequence: [u8; 8],
+    pub(super) level: u8,
+    pub(super) showing: bool,
+}
+
+impl SequenceRecallState {
+    pub(super) fn for_session(session_id: &str) -> Self {
+        let session_number = session_id
+            .rsplit('-')
+            .next()
+            .and_then(|suffix| suffix.parse::<u64>().ok())
+            .unwrap_or(0);
+        let pattern_index =
+            (session_number % SEQUENCE_RECALL_PATTERNS.len() as u64) as usize;
+
+        Self {
+            sequence: SEQUENCE_RECALL_PATTERNS[pattern_index],
+            level: 2,
+            showing: true,
+        }
+    }
+
+    fn render(&self) -> String {
+        const SYMBOLS: [char; 4] = ['◆', '●', '▲', '■'];
+        let length = usize::from(self.level).min(self.sequence.len());
+        let pattern = if self.showing {
+            self.sequence[..length]
+                .iter()
+                .map(|value| {
+                    SYMBOLS
+                        .get(usize::from(*value))
+                        .copied()
+                        .unwrap_or('?')
+                        .to_string()
+                })
+                .collect::<Vec<_>>()
+                .join(" ")
+        } else {
+            String::from("hidden")
+        };
+        let instruction = if self.showing {
+            "Memorise the pattern, then use .action <session> hide."
+        } else {
+            "Pattern hidden. Repeat the full sequence with comma-separated values 1–4."
+        };
+
+        format!("Level {}/8\nPattern: {}\n{}", self.level, pattern, instruction)
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GameSession {
     id: String,
@@ -342,13 +418,14 @@ impl GameSession {
         } else {
             GamePhase::Active
         };
+        let state = GameState::new(game, &id);
         Self {
             id,
             game,
             guild_id,
             players: vec![owner_id],
             phase,
-            state: GameState::new(game),
+            state,
             winner: None,
             action_count: 0,
             last_result: String::from("Session created."),
@@ -557,4 +634,62 @@ mod tests {
         );
         assert_eq!(session.snapshot(), before);
     }
+
+    #[test]
+    fn sequence_recall_hides_and_progresses_through_session_snapshots() {
+        let mut session = GameSession::create(
+            String::from("MB-000000"),
+            GameKind::SequenceRecall,
+            String::from("player"),
+            None,
+        );
+        let alternate = GameSession::create(
+            String::from("MB-000001"),
+            GameKind::SequenceRecall,
+            String::from("other-player"),
+            None,
+        );
+        assert_ne!(session.snapshot().board, alternate.snapshot().board);
+        assert!(session.snapshot().board.contains("Pattern: ◆ ▲"));
+
+        assert_eq!(
+            session.act(
+                "player",
+                GameAction::SequenceAnswer { values: vec![0, 2] }
+            ),
+            Err(GameError::InvalidAction)
+        );
+        session
+            .act("player", GameAction::SequenceHide)
+            .expect("hide the pattern");
+        let hidden = session.snapshot();
+        assert!(hidden.board.contains("Pattern: hidden"));
+        assert!(!hidden.board.contains("◆"));
+
+        session
+            .act(
+                "player",
+                GameAction::SequenceAnswer { values: vec![0, 2] }
+            )
+            .expect("repeat the correct sequence");
+        let next_level = session.snapshot();
+        assert!(next_level.board.contains("Level 3/8"));
+        assert!(next_level.board.contains("Pattern: ◆ ▲ ●"));
+
+        session
+            .act("player", GameAction::SequenceHide)
+            .expect("hide the longer pattern");
+        session
+            .act(
+                "player",
+                GameAction::SequenceAnswer {
+                    values: vec![3, 3, 3],
+                },
+            )
+            .expect("an incorrect sequence completes the session");
+        let finished = session.snapshot();
+        assert_eq!(finished.phase, super::GamePhase::Completed);
+        assert!(finished.board.contains("Pattern: ◆ ▲ ●"));
+    }
+
 }

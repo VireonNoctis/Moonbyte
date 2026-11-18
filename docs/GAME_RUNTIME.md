@@ -15,9 +15,9 @@ This document describes the implementation that currently exists. It is intentio
 | tic-tac-toe | Two players | 3×3 board, legal placement, occupied-cell rejection, turn order, horizontal/vertical/diagonal wins and draw detection. |
 | connect-four | Two players | Seven columns, six rows, gravity-based placement, full-column rejection, four-direction win detection and draw detection. |
 | memory-match | Solo | Eight positions, four fixed pairs, duplicate/matched-position rejection and completion after all pairs are found. |
-| word-scramble | Solo | One original five-letter starter puzzle, case-insensitive answer checking, three bounded attempts, and persisted duplicate-guess rejection that does not consume an attempt. |
+| word-scramble | Solo | One original five-letter starter puzzle, case-insensitive answer checking, three bounded attempts, and persisted duplicate-guess rejection that does not consume an attempt. |\n| sequence-recall | Solo | Eight progressive levels, four authored patterns selected by session ID, explicit hide-before-answer phase, exact-length input and terminal failure on an incorrect sequence. |
 
-Memory Match currently uses a fixed starter arrangement so the first implementation does not imply an unverified random shuffle. Word Scramble currently contains one starter puzzle. Neither limitation should be described as a complete production content catalogue.
+Memory Match currently uses a fixed starter arrangement so the first implementation does not imply an unverified random shuffle. Word Scramble currently contains one starter puzzle. Sequence Recall rotates through four authored patterns selected deterministically by session ID; it does not use random generation or claim fairness certification. These limitations should not be described as a complete production content catalogue.
 
 ## Session lifecycle
 
@@ -37,7 +37,7 @@ A session ID is a reference, not a security credential. Access still requires pa
 
 The initial migration creates a schema migration ledger, a PostgreSQL sequence for session IDs and a game_sessions table. Each row stores a stable session ID, game ID, optional guild ID, lifecycle phase, state schema version, action count, JSONB snapshot containing game state and player membership, timestamps and an inactivity expiry.
 
-Every mutating operation runs in a short SQL transaction. Session rows are selected FOR UPDATE, state is deserialised and validated by the transport-independent domain, then a new JSONB snapshot is written and the transaction commits. Word Scramble guess history is persisted in the snapshot; the new field defaults to an empty list when older version-1 snapshots are loaded. Rejected domain actions are not persisted. No database transaction is held across Discord HTTP calls.
+Every mutating operation runs in a short SQL transaction. Session rows are selected FOR UPDATE, state is deserialised and validated by the transport-independent domain, then a new JSONB snapshot is written and the transaction commits. Word Scramble guess history is persisted in the snapshot; the new field defaults to an empty list when older version-1 snapshots are loaded. Sequence Recall persists its authored pattern, current level and visibility phase in the same version-1 snapshot; existing game variants remain unchanged. Rejected domain actions are not persisted. No database transaction is held across Discord HTTP calls.
 
 The migration runner serialises concurrent process startup with a PostgreSQL advisory transaction lock. One central Tokio cleanup task removes expired rows every 15 minutes; expired rows are also excluded from read and mutation queries. Backup/restore, production database provisioning and deployment encryption-at-rest remain operator responsibilities.
 
@@ -51,11 +51,11 @@ The migration runner serialises concurrent process startup with a PostgreSQL adv
 
 ## Error and abuse handling
 
-The runtime rejects unknown games, malformed or out-of-range actions, occupied cells, full columns, already-matched positions, repeated positions, duplicate Word Scramble answers, wrong turns, non-members, incorrect guild context, non-joinable lobbies, starts/joins beyond the 10 active-session cap per player and scope, and actions after a session ends or expires. Duplicate answers are compared case-insensitively and do not consume an attempt. A rejected domain action is not persisted and does not advance the action count. The runtime does not accept client-supplied winner, score, balance or completion fields.
+The runtime rejects unknown games, malformed or out-of-range actions, occupied cells, full columns, already-matched positions, repeated positions, duplicate Word Scramble answers, invalid Sequence Recall phases and sequence lengths, wrong turns, non-members, incorrect guild context, non-joinable lobbies, starts/joins beyond the 10 active-session cap per player and scope, and actions after a session ends or expires. Duplicate answers are compared case-insensitively and do not consume an attempt. A rejected domain action is not persisted and does not advance the action count. The runtime does not accept client-supplied winner, score, balance or completion fields.
 
 ## Tests
 
-Pure domain tests cover parser bounds, win detection, invalid moves, game completion and bounded attempts. PostgreSQL-backed runtime tests cover distinct durable IDs, guild-scoped lobby joins, DM multiplayer rejection, private session reads, membership and turn ownership, transactional rejection, leave/completion, runtime reconstruction, expired-session read/list exclusion, capacity release before scheduled cleanup, and retention deletion. CI starts an isolated PostgreSQL service for these tests.
+Pure domain tests cover parser bounds, win detection, invalid moves, game completion, bounded attempts and Sequence Recall hide/reveal progression. PostgreSQL-backed runtime tests cover distinct durable IDs, guild-scoped lobby joins, DM multiplayer rejection, private session reads, membership and turn ownership, transactional rejection, leave/completion, runtime reconstruction, expired-session read/list exclusion, capacity release before scheduled cleanup, and retention deletion. CI starts an isolated PostgreSQL service for these tests.
 
 These are automated tests, not a Discord live-guild smoke test, multi-process load test, backup/restore rehearsal, or production deployment certification.
 

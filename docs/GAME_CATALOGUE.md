@@ -1,6 +1,6 @@
 # Moonbyte Game Catalogue
 
-- Status: **Approved product catalogue with a first implemented slice.** The four titles in the implementation snapshot below are runnable; the rest remain approved candidates, not implemented merely by being listed.
+- Status: **Approved product catalogue with a first implemented slice.** The five titles in the implementation snapshot below are runnable; the rest remain approved candidates, not implemented merely by being listed.
 - The catalogue contains **39 unique approved new-game titles**. Minesweeper and Mastermind are intentionally cross-listed in two categories but have one canonical implementation each.
 - The two standard Lunar baseline games, **Akinator** and **8-ball**, remain inherited baseline experiences and were not part of the new-game approval list.
 - Release in polished, tested groups. Approval of the catalogue is not a promise that every title ships in the first release.
@@ -155,15 +155,15 @@ A game enters the public catalogue only when:
 
 ## 10. Current implementation snapshot
 
-The Rust runtime currently implements these four catalogue entries:
+The Rust runtime currently implements these five catalogue entries:
 
 | Stable ID | Catalogue entry | Current status |
 | --- | --- | --- |
 | tic-tac-toe | Multiplayer: Tic-tac-toe | Implemented: two-player guild lobby, legal moves, turn order, wins and draws. |
 | connect-four | Multiplayer: Connect Four | Implemented: two-player guild lobby, column gravity, full-column checks, four-in-a-row and draws. |
 | memory-match | Original mini-games: Memory Match | Implemented starter: solo eight-position fixed layout with four pairs. |
-| word-scramble | Original mini-games: Word Scramble | Implemented starter: one original five-letter puzzle with three attempts. |
+| word-scramble | Original mini-games: Word Scramble | Implemented starter: one original five-letter puzzle with three attempts. |\n| sequence-recall | Original mini-games: Sequence Recall | Implemented: solo eight-level recall game with four authored patterns, explicit hide/reveal phases and exact-sequence validation. |
 
-All four game types use durable PostgreSQL session snapshots and can be recovered after a process restart. Player profiles, leaderboards and economy integration are not implemented. Memory Match's starter layout is fixed; the randomised/seeded content pipeline described in FAIRNESS.md is not implemented. Word Scramble currently contains one puzzle rather than a curated word pack.
+All five game types use durable PostgreSQL session snapshots and can be recovered after a process restart. Player profiles, leaderboards and economy integration are not implemented. Memory Match's starter layout is fixed; the randomised/seeded content pipeline described in FAIRNESS.md is not implemented. Word Scramble currently contains one puzzle rather than a curated word pack. Sequence Recall rotates through four authored patterns based on the durable session ID; it is deterministic, not random.
 
 The remaining catalogue entries keep their existing proposed status until each has code, rule tests, command/interaction adapters, accessibility review and the appropriate persistence/privacy coverage.
