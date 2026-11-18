@@ -477,11 +477,9 @@ mod tests {
         assert!(incorrect.winner_index.is_none());
     }
 
-
     #[test]
-    fn sequence_recall_completes_after_all_eight_levels() {
-        let mut state =
-            GameState::SequenceRecall(SequenceRecallState::for_session("MB-000000"));
+    fn sequence_recall_completes_after_all_eight_levels {
+        let mut state = GameState::SequenceRecall(SequenceRecallState::for_session("MB-000000"));
 
         for level in 2..=8 {
             apply_action(&mut state, 0, GameAction::SequenceHide).expect("hide pattern");
@@ -489,12 +487,8 @@ mod tests {
                 GameState::SequenceRecall(recall) => recall.sequence[..level].to_vec(),
                 _ => panic!("expected Sequence Recall state"),
             };
-            let result = apply_action(
-                &mut state,
-                0,
-                GameAction::SequenceAnswer { values },
-            )
-            .expect("repeat the full pattern");
+            let result = apply_action(&mut state, 0, GameAction::SequenceAnswer { values })
+                .expect("repeat the full pattern");
             assert_eq!(result.is_complete, level == 8);
         }
     }
