@@ -478,7 +478,7 @@ mod tests {
     }
 
     #[test]
-    fn sequence_recall_completes_after_all_eight_levels {
+    fn sequence_recall_completes_after_all_eight_levels() {
         let mut state = GameState::SequenceRecall(SequenceRecallState::for_session("MB-000000"));
 
         for level in 2..=8 {
