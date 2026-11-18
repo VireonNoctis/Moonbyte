@@ -355,7 +355,6 @@ fn apply_word_scramble(
     })
 }
 
-
 fn apply_sequence_recall(
     state: &mut SequenceRecallState,
     action: GameAction,
@@ -414,7 +413,6 @@ fn apply_sequence_recall(
 mod tests {
     use super::*;
 
-
     #[test]
     fn sequence_recall_parser_validates_hide_and_symbol_lists() {
         assert_eq!(
@@ -437,8 +435,7 @@ mod tests {
 
     #[test]
     fn sequence_recall_requires_hide_before_answer_and_ends_on_wrong_sequence() {
-        let mut state =
-            GameState::SequenceRecall(SequenceRecallState::for_session("MB-000000"));
+        let mut state = GameState::SequenceRecall(SequenceRecallState::for_session("MB-000000"));
         assert_eq!(
             apply_action(
                 &mut state,
@@ -478,6 +475,28 @@ mod tests {
         .expect("incorrect answer ends the game");
         assert!(incorrect.is_complete);
         assert!(incorrect.winner_index.is_none());
+    }
+
+
+    #[test]
+    fn sequence_recall_completes_after_all_eight_levels() {
+        let mut state =
+            GameState::SequenceRecall(SequenceRecallState::for_session("MB-000000"));
+
+        for level in 2..=8 {
+            apply_action(&mut state, 0, GameAction::SequenceHide).expect("hide pattern");
+            let values = match &state {
+                GameState::SequenceRecall(recall) => recall.sequence[..level].to_vec(),
+                _ => panic!("expected Sequence Recall state"),
+            };
+            let result = apply_action(
+                &mut state,
+                0,
+                GameAction::SequenceAnswer { values },
+            )
+            .expect("repeat the full pattern");
+            assert_eq!(result.is_complete, level == 8);
+        }
     }
 
     #[test]

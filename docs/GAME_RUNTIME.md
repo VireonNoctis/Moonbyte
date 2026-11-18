@@ -15,7 +15,8 @@ This document describes the implementation that currently exists. It is intentio
 | tic-tac-toe | Two players | 3×3 board, legal placement, occupied-cell rejection, turn order, horizontal/vertical/diagonal wins and draw detection. |
 | connect-four | Two players | Seven columns, six rows, gravity-based placement, full-column rejection, four-direction win detection and draw detection. |
 | memory-match | Solo | Eight positions, four fixed pairs, duplicate/matched-position rejection and completion after all pairs are found. |
-| word-scramble | Solo | One original five-letter starter puzzle, case-insensitive answer checking, three bounded attempts, and persisted duplicate-guess rejection that does not consume an attempt. |\n| sequence-recall | Solo | Eight progressive levels, four authored patterns selected by session ID, explicit hide-before-answer phase, exact-length input and terminal failure on an incorrect sequence. |
+| word-scramble | Solo | One original five-letter starter puzzle, case-insensitive answer checking, three bounded attempts, and persisted duplicate-guess rejection that does not consume an attempt. |
+| sequence-recall | Solo | Eight progressive levels, four authored patterns selected by session ID, explicit hide-before-answer phase, exact-length input and terminal failure on an incorrect sequence. |
 
 Memory Match currently uses a fixed starter arrangement so the first implementation does not imply an unverified random shuffle. Word Scramble currently contains one starter puzzle. Sequence Recall rotates through four authored patterns selected deterministically by session ID; it does not use random generation or claim fairness certification. These limitations should not be described as a complete production content catalogue.
 

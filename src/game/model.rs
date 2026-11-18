@@ -338,7 +338,6 @@ impl WordScrambleState {
     }
 }
 
-
 const SEQUENCE_RECALL_PATTERNS: [[u8; 8]; 4] = [
     [0, 2, 1, 3, 2, 0, 3, 1],
     [3, 1, 0, 2, 1, 3, 2, 0],
@@ -360,8 +359,7 @@ impl SequenceRecallState {
             .next()
             .and_then(|suffix| suffix.parse::<u64>().ok())
             .unwrap_or(0);
-        let pattern_index =
-            (session_number % SEQUENCE_RECALL_PATTERNS.len() as u64) as usize;
+        let pattern_index = (session_number % SEQUENCE_RECALL_PATTERNS.len() as u64) as usize;
 
         Self {
             sequence: SEQUENCE_RECALL_PATTERNS[pattern_index],
@@ -394,7 +392,10 @@ impl SequenceRecallState {
             "Pattern hidden. Repeat the full sequence with comma-separated values 1–4."
         };
 
-        format!("Level {}/8\nPattern: {}\n{}", self.level, pattern, instruction)
+        format!(
+            "Level {}/8\nPattern: {}\n{}",
+            self.level, pattern, instruction
+        )
     }
 }
 
@@ -653,10 +654,7 @@ mod tests {
         assert!(session.snapshot().board.contains("Pattern: ◆ ▲"));
 
         assert_eq!(
-            session.act(
-                "player",
-                GameAction::SequenceAnswer { values: vec![0, 2] }
-            ),
+            session.act("player", GameAction::SequenceAnswer { values: vec![0, 2] }),
             Err(GameError::InvalidAction)
         );
         session
@@ -667,10 +665,7 @@ mod tests {
         assert!(!hidden.board.contains("◆"));
 
         session
-            .act(
-                "player",
-                GameAction::SequenceAnswer { values: vec![0, 2] }
-            )
+            .act("player", GameAction::SequenceAnswer { values: vec![0, 2] })
             .expect("repeat the correct sequence");
         let next_level = session.snapshot();
         assert!(next_level.board.contains("Level 3/8"));

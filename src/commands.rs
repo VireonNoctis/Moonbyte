@@ -150,7 +150,8 @@ fn game_rules_message(game: GameKind) -> String {
 #[poise::command(prefix_command, slash_command)]
 pub async fn play(
     ctx: Context<'_>,
-    #[description = "tic-tac-toe, connect-four, memory-match, word-scramble, or sequence-recall"] game: String,
+    #[description = "tic-tac-toe, connect-four, memory-match, word-scramble, or sequence-recall"]
+    game: String,
 ) -> Result<(), Error> {
     let game = GameKind::parse(&game)?;
     let player_id = ctx.author().id.to_string();

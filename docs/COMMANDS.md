@@ -35,11 +35,14 @@ Gameplay commands (`.play`, `.join`, `.action`, `.leave`) post game boards or re
 | Tic-tac-toe | tic-tac-toe | 1-based row,column, for example 2,3 |
 | Connect Four | connect-four | 1-based column from 1 to 7 |
 | Memory Match | memory-match | 1-based position from 1 to 8 |
-| Word Scramble | word-scramble | Answer text; the current starter puzzle is BITOR → ORBIT |\n| Sequence Recall | sequence-recall | Use `hide`, then repeat the full pattern with comma-separated values 1–4. |
+| Word Scramble | word-scramble | Answer text; the current starter puzzle is BITOR → ORBIT |
+| Sequence Recall | sequence-recall | Use `hide`, then repeat the full pattern with comma-separated values 1–4. |
 
 Tic-tac-toe and Connect Four create lobbies for two players. A second participant must join from the same Discord server. Solo games start immediately. Session reads and session listings are restricted to participants. `.sessions` and `.history` only list sessions from the current guild, or solo sessions in DMs; they do not search other servers. `.history` uses the existing 24-hour inactivity retention window and does not create a separate long-term results store.
 
-Sequence Recall uses four authored patterns selected deterministically from the session ID; patterns are not random or fairness-certified.\n\n## Discord setup
+Sequence Recall uses four authored patterns selected deterministically from the session ID; patterns are not random or fairness-certified.
+
+## Discord setup
 
 1. Set DISCORD_TOKEN in the process environment. Never commit the token.
 2. Invite the application with bot and applications.commands OAuth scopes.
