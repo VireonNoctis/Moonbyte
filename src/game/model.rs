@@ -686,5 +686,4 @@ mod tests {
         assert_eq!(finished.phase, super::GamePhase::Completed);
         assert!(finished.board.contains("Pattern: ◆ ▲ ●"));
     }
-
 }
