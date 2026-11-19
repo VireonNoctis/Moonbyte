@@ -42,7 +42,7 @@ Every listed title is a candidate, not a promise that it already exists. The cat
 
 ## Visual Library
 
-The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the four implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
+The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the five implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
 
 - Discord Activity integration using the official Embedded App SDK remains planned and is not yet implemented.
 - A normal HTTPS browser fallback remains available for catalogue discovery and supported views.

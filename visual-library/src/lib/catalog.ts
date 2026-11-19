@@ -67,6 +67,19 @@ export const games: GameDefinition[] = [
     palette: "mint",
     implemented: true,
   },
+  {
+    id: "sequence-recall",
+    name: "Sequence Recall",
+    description: "Memorise a growing four-symbol pattern, then repeat it.",
+    category: "Memory",
+    players: "1 player",
+    duration: "2–5 min",
+    command: ".play sequence-recall",
+    controls: "Use .action <session> hide, then repeat the full pattern with comma-separated values 1–4.",
+    glyph: "◆",
+    palette: "lilac",
+    implemented: true,
+  },
 ];
 
 export const categories = ["All games", "Strategy", "Memory", "Wordplay"] as const;

@@ -62,6 +62,43 @@ class ActionPinValidationTests(unittest.TestCase):
 
 
 
+
+validate_visual_catalogue = VALIDATOR["validate_visual_catalogue"]
+
+
+class VisualCatalogueValidationTests(unittest.TestCase):
+    def write_fixture(
+        self, root: Path, rust_ids: list[str], catalogue_ids: list[str]
+    ) -> None:
+        model = root / "src" / "game" / "model.rs"
+        catalogue = root / "visual-library" / "src" / "lib" / "catalog.ts"
+        model.parent.mkdir(parents=True)
+        catalogue.parent.mkdir(parents=True)
+        model.write_text(
+            "\n".join(f'GameDefinition {{ id: "{game_id}" }}' for game_id in rust_ids),
+            encoding="utf-8",
+        )
+        catalogue.write_text(
+            "\n".join(f'    id: "{game_id}",' for game_id in catalogue_ids),
+            encoding="utf-8",
+        )
+
+    def test_committed_visual_catalogue_matches_rust_game_definitions(self):
+        self.assertEqual(validate_visual_catalogue(ROOT), [])
+
+    def test_missing_extra_and_duplicate_game_ids_are_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_fixture(root, ["alpha", "beta"], ["alpha", "alpha", "gamma"])
+            errors = validate_visual_catalogue(root)
+
+        self.assertTrue(any("duplicate game IDs: alpha" in error for error in errors))
+        self.assertTrue(
+            any("missing implemented game IDs: beta" in error for error in errors)
+        )
+        self.assertTrue(any("unknown game IDs: gamma" in error for error in errors))
+
+
 class CargoLockPolicyTests(unittest.TestCase):
     def test_ci_uses_the_committed_lockfile_without_regenerating_it(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(

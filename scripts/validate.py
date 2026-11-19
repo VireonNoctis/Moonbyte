@@ -80,6 +80,69 @@ def validate_action_pins(root: Path = ROOT) -> list[str]:
 
     return errors
 
+
+
+def validate_visual_catalogue(root: Path = ROOT) -> list[str]:
+    """Ensure the visual catalogue mirrors the implemented Rust game IDs."""
+    visual_root = root / "visual-library"
+    if not visual_root.exists():
+        return []
+
+    model_path = root / "src" / "game" / "model.rs"
+    catalogue_path = visual_root / "src" / "lib" / "catalog.ts"
+
+    try:
+        model_content = model_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        return [f"src/game/model.rs: cannot read game definitions ({exc})"]
+
+    try:
+        catalogue_content = catalogue_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        return [f"visual-library/src/lib/catalog.ts: cannot read catalogue ({exc})"]
+
+    rust_ids = re.findall(r'\bid:\s*"([^"]+)"', model_content)
+    catalogue_ids = re.findall(
+        r'^\s*id:\s*"([^"]+)"', catalogue_content, re.MULTILINE
+    )
+    errors: list[str] = []
+
+    if not rust_ids:
+        errors.append("src/game/model.rs: no game IDs found in game definitions")
+    if not catalogue_ids:
+        errors.append("visual-library/src/lib/catalog.ts: no game IDs found")
+
+    rust_duplicates = sorted(
+        {game_id for game_id in rust_ids if rust_ids.count(game_id) > 1}
+    )
+    catalogue_duplicates = sorted(
+        {game_id for game_id in catalogue_ids if catalogue_ids.count(game_id) > 1}
+    )
+    if rust_duplicates:
+        errors.append(
+            f"src/game/model.rs: duplicate game IDs: {', '.join(rust_duplicates)}"
+        )
+    if catalogue_duplicates:
+        errors.append(
+            "visual-library/src/lib/catalog.ts: duplicate game IDs: "
+            + ", ".join(catalogue_duplicates)
+        )
+
+    missing = sorted(set(rust_ids) - set(catalogue_ids))
+    extra = sorted(set(catalogue_ids) - set(rust_ids))
+    if missing:
+        errors.append(
+            "visual-library/src/lib/catalog.ts: missing implemented game IDs: "
+            + ", ".join(missing)
+        )
+    if extra:
+        errors.append(
+            "visual-library/src/lib/catalog.ts: unknown game IDs: " + ", ".join(extra)
+        )
+
+    return errors
+
+
 def validate_atlas() -> list[str]:
     """Validate the connected Moonbyte World Loom design graph."""
     errors: list[str] = []
@@ -198,6 +261,7 @@ def validate_atlas() -> list[str]:
 def main() -> int:
     errors = validate_json_files()
     errors.extend(validate_action_pins())
+    errors.extend(validate_visual_catalogue())
     errors.extend(validate_atlas())
 
     if errors:
