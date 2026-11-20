@@ -80,6 +80,20 @@ export const games: GameDefinition[] = [
     palette: "lilac",
     implemented: true,
   },
+
+  {
+    id: "2048",
+    name: "2048",
+    description: "Slide tiles, combine matching numbers, and work toward 2048.",
+    category: "Strategy",
+    players: "1 player",
+    duration: "3–8 min",
+    command: ".play 2048",
+    controls: "Slide with up, down, left, or right. W/A/S/D also work.",
+    glyph: "2048",
+    palette: "sun",
+    implemented: true,
+  },
 ];
 
 export const categories = ["All games", "Strategy", "Memory", "Wordplay"] as const;
