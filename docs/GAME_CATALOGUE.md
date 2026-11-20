@@ -23,7 +23,6 @@ Other Lunar features are migration candidates only after source, dependency, pri
 1. **Memory Match** — flip symbols and find matching pairs.
 2. **Word Scramble** — solve scrambled words using curated, age-appropriate word lists.
 3. **Sequence Recall** — repeat progressively longer visual or audio-free sequences.
-4. **2048** — combine matching numbered tiles on a 4×4 board using directional moves.
 4. **Minesweeper** — reveal safe cells, mark suspected hazards, and solve the board.
 5. **2048** — combine matching numbered tiles to reach the target.
 6. **Hangman** — solve a word through limited letter guesses; use inclusive, non-graphic presentation.
