@@ -1,7 +1,8 @@
 use super::model::{
     ConnectFourState, GameKind, GameState, MemoryMatchState, SequenceRecallState, TicTacToeState,
-    WordScrambleState,
+    TwentyFortyEightState, WordScrambleState,
 };
+use rand::{RngCore, rngs::OsRng};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum GameAction {
@@ -11,6 +12,15 @@ pub enum GameAction {
     WordAnswer { answer: String },
     SequenceHide,
     SequenceAnswer { values: Vec<u8> },
+    TwentyFortyEightMove { direction: MoveDirection },
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MoveDirection {
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
 pub(super) fn is_valid_word_guess(value: &str) -> bool {
@@ -96,6 +106,16 @@ impl GameAction {
                 }
                 Ok(Self::SequenceAnswer { values })
             }
+            GameKind::TwentyFortyEight => {
+                let direction = match input.trim().to_ascii_lowercase().as_str() {
+                    "up" | "w" => MoveDirection::Up,
+                    "down" | "s" => MoveDirection::Down,
+                    "left" | "a" => MoveDirection::Left,
+                    "right" | "d" => MoveDirection::Right,
+                    _ => return Err(GameError::InvalidAction),
+                };
+                Ok(Self::TwentyFortyEightMove { direction })
+            }
         }
     }
 }
@@ -126,6 +146,8 @@ pub enum GameError {
     SamePosition,
     SessionLimitReached,
     RuntimeUnavailable,
+    RandomnessUnavailable,
+    ScoreOverflow,
 }
 
 impl std::fmt::Display for GameError {
@@ -159,6 +181,12 @@ impl std::fmt::Display for GameError {
                 "You already have 10 active sessions in this server or DM scope. Finish or leave one before starting or joining another."
             }
             Self::RuntimeUnavailable => "The game runtime is temporarily unavailable. Try again.",
+            Self::RandomnessUnavailable => {
+                "Secure randomness is temporarily unavailable. No move was saved; try again."
+            }
+            Self::ScoreOverflow => {
+                "The game score exceeded its supported range. No move was saved."
+            }
         })
     }
 }
@@ -169,6 +197,16 @@ pub(super) fn apply_action(
     state: &mut GameState,
     player_index: usize,
     action: GameAction,
+) -> Result<GameResolution, GameError> {
+    let mut rng = OsRng;
+    apply_action_with_rng(state, player_index, action, &mut rng)
+}
+
+fn apply_action_with_rng<R: RngCore>(
+    state: &mut GameState,
+    player_index: usize,
+    action: GameAction,
+    rng: &mut R,
 ) -> Result<GameResolution, GameError> {
     match (state, action) {
         (GameState::TicTacToe(state), GameAction::TicTacToeMove { row, column }) => {
@@ -184,8 +222,110 @@ pub(super) fn apply_action(
             apply_word_scramble(state, answer)
         }
         (GameState::SequenceRecall(state), action) => apply_sequence_recall(state, action),
+        (GameState::TwentyFortyEight(state), GameAction::TwentyFortyEightMove { direction }) => {
+            apply_twenty_forty_eight(state, direction, rng)
+        }
         _ => Err(GameError::InvalidAction),
     }
+}
+
+fn merge_line(values: [u16; 4]) -> Result<([u16; 4], u64), GameError> {
+    let compact: Vec<u16> = values.into_iter().filter(|tile| *tile != 0).collect();
+    let mut merged = Vec::with_capacity(4);
+    let mut score = 0_u64;
+    let mut index = 0;
+
+    while index < compact.len() {
+        if index + 1 < compact.len() && compact[index] == compact[index + 1] {
+            let value = compact[index]
+                .checked_mul(2)
+                .ok_or(GameError::ScoreOverflow)?;
+            score = score
+                .checked_add(u64::from(value))
+                .ok_or(GameError::ScoreOverflow)?;
+            merged.push(value);
+            index += 2;
+        } else {
+            merged.push(compact[index]);
+            index += 1;
+        }
+    }
+
+    let mut result = [0_u16; 4];
+    for (index, value) in merged.into_iter().enumerate() {
+        result[index] = value;
+    }
+    Ok((result, score))
+}
+
+fn apply_twenty_forty_eight<R: RngCore>(
+    state: &mut TwentyFortyEightState,
+    direction: MoveDirection,
+    rng: &mut R,
+) -> Result<GameResolution, GameError> {
+    let mut next = state.clone();
+    let mut gained_score = 0_u64;
+
+    for line_index in 0..4 {
+        let mut line = [0_u16; 4];
+        for offset in 0..4 {
+            let (row, column) = match direction {
+                MoveDirection::Left => (line_index, offset),
+                MoveDirection::Right => (line_index, 3 - offset),
+                MoveDirection::Up => (offset, line_index),
+                MoveDirection::Down => (3 - offset, line_index),
+            };
+            line[offset] = next.board[row][column];
+        }
+
+        let (merged, line_score) = merge_line(line)?;
+        gained_score = gained_score
+            .checked_add(line_score)
+            .ok_or(GameError::ScoreOverflow)?;
+
+        for offset in 0..4 {
+            let (row, column) = match direction {
+                MoveDirection::Left => (line_index, offset),
+                MoveDirection::Right => (line_index, 3 - offset),
+                MoveDirection::Up => (offset, line_index),
+                MoveDirection::Down => (3 - offset, line_index),
+            };
+            next.board[row][column] = merged[offset];
+        }
+    }
+
+    if next.board == state.board {
+        return Err(GameError::InvalidAction);
+    }
+
+    next.score = next
+        .score
+        .checked_add(gained_score)
+        .ok_or(GameError::ScoreOverflow)?;
+
+    if next.board.iter().flatten().any(|tile| *tile >= 2048) {
+        *state = next;
+        return Ok(GameResolution {
+            winner_index: Some(0),
+            is_draw: false,
+            is_complete: true,
+            message: "2048 reached. The game is complete.",
+        });
+    }
+
+    next.spawn_tile(rng)?;
+    let is_complete = !next.has_moves();
+    *state = next;
+    Ok(GameResolution {
+        winner_index: None,
+        is_draw: false,
+        is_complete,
+        message: if is_complete {
+            "No legal moves remain. The game is complete."
+        } else {
+            "Tiles shifted."
+        },
+    })
 }
 
 fn apply_tic_tac_toe(
@@ -711,6 +851,91 @@ mod tests {
             };
             assert_eq!(scramble.attempts_left, 2 - index as u8);
             assert_eq!(result.is_complete, index == 2);
+        }
+    }
+
+    #[test]
+    fn twenty_forty_eight_merges_each_pair_once_and_scores_the_result() {
+        assert_eq!(
+            merge_line([2, 2, 2, 2]).expect("merge line"),
+            ([4, 4, 0, 0], 8)
+        );
+        assert_eq!(
+            merge_line([2, 2, 4, 0]).expect("merge line"),
+            ([4, 4, 0, 0], 4)
+        );
+    }
+
+    #[test]
+    fn twenty_forty_eight_move_spawns_one_tile_and_updates_score() {
+        let mut state = TwentyFortyEightState::default();
+        state.board[0] = [2, 2, 0, 0];
+        let mut rng = rand::rngs::mock::StepRng::new(0, 1);
+
+        let result = apply_twenty_forty_eight(&mut state, MoveDirection::Left, &mut rng)
+            .expect("valid left move");
+
+        assert_eq!(state.score, 4);
+        assert_eq!(state.board[0][0], 4);
+        assert_eq!(
+            state
+                .board
+                .iter()
+                .flatten()
+                .filter(|tile| **tile != 0)
+                .count(),
+            2
+        );
+        assert!(!result.is_complete);
+    }
+
+    #[test]
+    fn twenty_forty_eight_rejects_moves_that_do_not_change_the_board() {
+        let mut state = TwentyFortyEightState::default();
+        let before = state.clone();
+        let mut rng = rand::rngs::mock::StepRng::new(0, 1);
+
+        assert_eq!(
+            apply_twenty_forty_eight(&mut state, MoveDirection::Left, &mut rng),
+            Err(GameError::InvalidAction)
+        );
+        assert_eq!(state, before);
+    }
+
+    #[test]
+    fn twenty_forty_eight_completes_when_a_move_reaches_2048() {
+        let mut state = TwentyFortyEightState::default();
+        state.board[0] = [1024, 1024, 0, 0];
+        let mut rng = rand::rngs::mock::StepRng::new(0, 1);
+
+        let result = apply_twenty_forty_eight(&mut state, MoveDirection::Left, &mut rng)
+            .expect("winning move");
+
+        assert!(result.is_complete);
+        assert_eq!(result.winner_index, Some(0));
+        assert_eq!(state.board[0][0], 2048);
+        assert_eq!(state.score, 2048);
+    }
+
+    #[test]
+    fn twenty_forty_eight_parser_accepts_directions_and_rejects_other_input() {
+        assert_eq!(
+            GameAction::parse(GameKind::TwentyFortyEight, "left"),
+            Ok(GameAction::TwentyFortyEightMove {
+                direction: MoveDirection::Left
+            })
+        );
+        assert_eq!(
+            GameAction::parse(GameKind::TwentyFortyEight, "W"),
+            Ok(GameAction::TwentyFortyEightMove {
+                direction: MoveDirection::Up
+            })
+        );
+        for invalid in ["", "north", "upward", "left,right", "@everyone"] {
+            assert_eq!(
+                GameAction::parse(GameKind::TwentyFortyEight, invalid),
+                Err(GameError::InvalidAction)
+            );
         }
     }
 }
