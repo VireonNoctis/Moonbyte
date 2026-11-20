@@ -17,6 +17,7 @@ This document describes the implementation that currently exists. It is intentio
 | memory-match | Solo | Eight positions, four fixed pairs, duplicate/matched-position rejection and completion after all pairs are found. |
 | word-scramble | Solo | One original five-letter starter puzzle, case-insensitive answer checking, three bounded attempts, and persisted duplicate-guess rejection that does not consume an attempt. |
 | sequence-recall | Solo | Eight progressive levels, four authored patterns selected by session ID, explicit hide-before-answer phase, exact-length input and terminal failure on an incorrect sequence. |
+| 2048 | Solo | 4×4 board, directional slides, single-merge-per-move rules, score tracking, OS-backed random tile placement, 2048 completion and no-legal-moves termination. |
 
 Memory Match currently uses a fixed starter arrangement so the first implementation does not imply an unverified random shuffle. Word Scramble currently contains one starter puzzle. Sequence Recall rotates through four authored patterns selected deterministically by session ID; it does not use random generation or claim fairness certification. These limitations should not be described as a complete production content catalogue.
 

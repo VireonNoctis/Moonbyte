@@ -19,7 +19,7 @@ Open the local URL printed by Next.js. Use `npm run typecheck` and `npm run buil
 
 ## Current behavior
 
-- Responsive catalogue of the five games implemented in the Rust bot runtime.
+- Responsive catalogue of the six games implemented in the Rust bot runtime.
 - Search and category filters.
 - Accessible controls disclosure and reduced-motion support.
 - Copyable Discord play commands.

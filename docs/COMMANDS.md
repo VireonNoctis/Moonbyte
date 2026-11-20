@@ -12,7 +12,7 @@
 | .about | /about | Shows the application version and current implementation boundaries. |
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
 | .privacy | /privacy | Explains current PostgreSQL session storage and unavailable persistent privacy controls. |
-| .games | /games | Lists five playable games, player counts and controls. |
+| .games | /games | Lists six playable games, player counts and controls. |
 | .rules <game> | /rules | Shows the selected game's implemented rules and controls before play. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby, subject to the 10 active-session cap per player per guild/DM scope. |
 | .join <session> | /join | Joins an open two-player lobby in its originating server, subject to the same per-player cap. |
@@ -37,6 +37,7 @@ Gameplay commands (`.play`, `.join`, `.action`, `.leave`) post game boards or re
 | Memory Match | memory-match | 1-based position from 1 to 8 |
 | Word Scramble | word-scramble | Answer text; the current starter puzzle is BITOR → ORBIT |
 | Sequence Recall | sequence-recall | Use `hide`, then repeat the full pattern with comma-separated values 1–4. |
+| 2048 | 2048 | Slide tiles with `up`, `down`, `left`, or `right` (`w`, `s`, `a`, `d` also work). |
 
 Tic-tac-toe and Connect Four create lobbies for two players. A second participant must join from the same Discord server. Solo games start immediately. Session reads and session listings are restricted to participants. `.sessions` and `.history` only list sessions from the current guild, or solo sessions in DMs; they do not search other servers. `.history` uses the existing 24-hour inactivity retention window and does not create a separate long-term results store.
 

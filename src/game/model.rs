@@ -1,5 +1,6 @@
 use std::fmt;
 
+use rand::{RngCore, rngs::OsRng};
 use serde::{Deserialize, Serialize};
 
 use super::engine::{GameAction, GameError, apply_action, is_valid_word_guess};
@@ -11,15 +12,17 @@ pub enum GameKind {
     MemoryMatch,
     WordScramble,
     SequenceRecall,
+    TwentyFortyEight,
 }
 
 impl GameKind {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 6] = [
         Self::TicTacToe,
         Self::ConnectFour,
         Self::MemoryMatch,
         Self::WordScramble,
         Self::SequenceRecall,
+        Self::TwentyFortyEight,
     ];
     pub const fn definition(self) -> GameDefinition {
         match self {
@@ -63,6 +66,14 @@ impl GameKind {
                 controls: "Use .action <session> hide, then submit the full pattern with comma-separated values 1–4.",
                 rules: "Memorise the pattern shown at each level, then use hide to conceal it. Repeat the full pattern in order with values 1–4 separated by commas. Each correct answer adds one symbol; an incorrect answer ends the session. Complete all eight levels to finish. Sessions rotate through four authored patterns selected deterministically from the session ID; outcomes are not random or fairness-certified.",
             },
+            Self::TwentyFortyEight => GameDefinition {
+                id: "2048",
+                name: "2048",
+                description: "Slide numbered tiles, combine matches, and build toward 2048.",
+                players: "1 player",
+                controls: "Use .action <session> up, down, left, or right. W/A/S/D also work.",
+                rules: "Slide every tile in one direction. Matching adjacent values merge once per move and add their value to your score. A new 2 tile appears after each valid move; a 4 tile appears one time in ten. Reach 2048 to complete the game, or continue until no legal moves remain. Initial and spawned tiles use operating-system-backed randomness. This score-only game has no public fairness transcript.",
+            },
         }
     }
     pub const fn requires_opponent(self) -> bool {
@@ -75,6 +86,7 @@ impl GameKind {
             "memory-match" | "memory" => Ok(Self::MemoryMatch),
             "word-scramble" | "scramble" => Ok(Self::WordScramble),
             "sequence-recall" | "sequence" | "recall" => Ok(Self::SequenceRecall),
+            "2048" | "twenty-forty-eight" | "twentyfortyeight" => Ok(Self::TwentyFortyEight),
             _ => Err(GameError::UnknownGame),
         }
     }
@@ -116,11 +128,12 @@ pub(super) enum GameState {
     MemoryMatch(MemoryMatchState),
     WordScramble(WordScrambleState),
     SequenceRecall(SequenceRecallState),
+    TwentyFortyEight(TwentyFortyEightState),
 }
 
 impl GameState {
-    fn new(kind: GameKind, session_id: &str) -> Self {
-        match kind {
+    fn new(kind: GameKind, session_id: &str) -> Result<Self, GameError> {
+        Ok(match kind {
             GameKind::TicTacToe => Self::TicTacToe(TicTacToeState::default()),
             GameKind::ConnectFour => Self::ConnectFour(ConnectFourState::default()),
             GameKind::MemoryMatch => Self::MemoryMatch(MemoryMatchState::default()),
@@ -128,13 +141,17 @@ impl GameState {
             GameKind::SequenceRecall => {
                 Self::SequenceRecall(SequenceRecallState::for_session(session_id))
             }
-        }
+            GameKind::TwentyFortyEight => Self::TwentyFortyEight(TwentyFortyEightState::new()?),
+        })
     }
     pub(super) fn current_player_index(&self) -> usize {
         match self {
             Self::TicTacToe(s) => usize::from(s.current_player),
             Self::ConnectFour(s) => usize::from(s.current_player),
-            Self::MemoryMatch(_) | Self::WordScramble(_) | Self::SequenceRecall(_) => 0,
+            Self::MemoryMatch(_)
+            | Self::WordScramble(_)
+            | Self::SequenceRecall(_)
+            | Self::TwentyFortyEight(_) => 0,
         }
     }
     fn render(&self) -> String {
@@ -144,6 +161,7 @@ impl GameState {
             Self::MemoryMatch(s) => s.render(),
             Self::WordScramble(s) => s.render(),
             Self::SequenceRecall(s) => s.render(),
+            Self::TwentyFortyEight(s) => s.render(),
         }
     }
 }
@@ -399,6 +417,99 @@ impl SequenceRecallState {
     }
 }
 
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+pub(super) struct TwentyFortyEightState {
+    pub(super) board: [[u16; 4]; 4],
+    pub(super) score: u64,
+}
+
+impl TwentyFortyEightState {
+    fn new() -> Result<Self, GameError> {
+        let mut rng = OsRng;
+        Self::new_with_rng(&mut rng)
+    }
+
+    fn new_with_rng<R: RngCore>(rng: &mut R) -> Result<Self, GameError> {
+        let mut state = Self::default();
+        state.spawn_tile(rng)?;
+        state.spawn_tile(rng)?;
+        Ok(state)
+    }
+
+    pub(super) fn spawn_tile<R: RngCore>(&mut self, rng: &mut R) -> Result<(), GameError> {
+        let empty: Vec<(usize, usize)> = self
+            .board
+            .iter()
+            .enumerate()
+            .flat_map(|(row, cells)| {
+                cells
+                    .iter()
+                    .enumerate()
+                    .filter_map(move |(column, tile)| (*tile == 0).then_some((row, column)))
+            })
+            .collect();
+
+        if empty.is_empty() {
+            return Ok(());
+        }
+
+        let index = random_below(rng, empty.len() as u64)? as usize;
+        let (row, column) = empty[index];
+        self.board[row][column] = if random_below(rng, 10)? == 0 { 4 } else { 2 };
+        Ok(())
+    }
+
+    pub(super) fn has_moves(&self) -> bool {
+        for row in 0..4 {
+            for column in 0..4 {
+                let tile = self.board[row][column];
+                if tile == 0
+                    || (column + 1 < 4 && tile == self.board[row][column + 1])
+                    || (row + 1 < 4 && tile == self.board[row + 1][column])
+                {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    fn render(&self) -> String {
+        let mut output = format!("Score: {}\n\x60\x60\x60text\n", self.score);
+        for row in &self.board {
+            output.push('|');
+            for tile in row {
+                let value = if *tile == 0 {
+                    String::from("·")
+                } else {
+                    tile.to_string()
+                };
+                output.push_str(&format!("{value:>5}|"));
+            }
+            output.push('\n');
+        }
+        output.push_str("\x60\x60\x60");
+        output
+    }
+}
+
+fn random_below<R: RngCore>(rng: &mut R, upper: u64) -> Result<u64, GameError> {
+    if upper == 0 {
+        return Err(GameError::InvalidAction);
+    }
+
+    let threshold = upper.wrapping_neg() % upper;
+    loop {
+        let mut bytes = [0_u8; 8];
+        rng.try_fill_bytes(&mut bytes)
+            .map_err(|_| GameError::RandomnessUnavailable)?;
+        let value = u64::from_le_bytes(bytes);
+        if value >= threshold {
+            return Ok(value % upper);
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GameSession {
     id: String,
@@ -413,14 +524,19 @@ pub struct GameSession {
 }
 
 impl GameSession {
-    pub fn create(id: String, game: GameKind, owner_id: String, guild_id: Option<String>) -> Self {
+    pub fn create(
+        id: String,
+        game: GameKind,
+        owner_id: String,
+        guild_id: Option<String>,
+    ) -> Result<Self, GameError> {
         let phase = if game.requires_opponent() {
             GamePhase::WaitingForPlayers
         } else {
             GamePhase::Active
         };
-        let state = GameState::new(game, &id);
-        Self {
+        let state = GameState::new(game, &id)?;
+        Ok(Self {
             id,
             game,
             guild_id,
@@ -430,7 +546,7 @@ impl GameSession {
             winner: None,
             action_count: 0,
             last_result: String::from("Session created."),
-        }
+        })
     }
     pub fn game(&self) -> GameKind {
         self.game
@@ -562,8 +678,26 @@ impl fmt::Display for GameKind {
 
 #[cfg(test)]
 mod tests {
-    use super::{ConnectFourState, GameKind, GameSession, WordScrambleState};
+    use super::{
+        ConnectFourState, GameKind, GameSession, TwentyFortyEightState, WordScrambleState,
+    };
     use crate::game::engine::{GameAction, GameError};
+
+    #[test]
+    fn twenty_forty_eight_sessions_start_with_two_valid_tiles() {
+        let mut rng = rand::rngs::mock::StepRng::new(1, 1);
+        let state = TwentyFortyEightState::new_with_rng(&mut rng).expect("create 2048 state");
+        let tiles: Vec<u16> = state
+            .board
+            .iter()
+            .flatten()
+            .copied()
+            .filter(|tile| *tile != 0)
+            .collect();
+        assert_eq!(tiles.len(), 2);
+        assert!(tiles.iter().all(|tile| *tile == 2 || *tile == 4));
+        assert!(state.has_moves());
+    }
 
     #[test]
     fn connect_four_render_preserves_column_order_and_bottom_row() {
@@ -613,7 +747,8 @@ mod tests {
             GameKind::WordScramble,
             String::from("player"),
             None,
-        );
+        )
+        .expect("create session");
         session
             .act(
                 "player",
@@ -643,13 +778,15 @@ mod tests {
             GameKind::SequenceRecall,
             String::from("player"),
             None,
-        );
+        )
+        .expect("create session");
         let alternate = GameSession::create(
             String::from("MB-000001"),
             GameKind::SequenceRecall,
             String::from("other-player"),
             None,
-        );
+        )
+        .expect("create session");
         assert_ne!(session.snapshot().board, alternate.snapshot().board);
         assert!(session.snapshot().board.contains("Pattern: ◆ ▲"));
 
