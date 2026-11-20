@@ -417,19 +417,10 @@ impl SequenceRecallState {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 pub(super) struct TwentyFortyEightState {
     pub(super) board: [[u16; 4]; 4],
     pub(super) score: u64,
-}
-
-impl Default for TwentyFortyEightState {
-    fn default() -> Self {
-        Self {
-            board: [[0; 4]; 4],
-            score: 0,
-        }
-    }
 }
 
 impl TwentyFortyEightState {

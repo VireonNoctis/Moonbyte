@@ -268,14 +268,14 @@ fn apply_twenty_forty_eight<R: RngCore>(
 
     for line_index in 0..4 {
         let mut line = [0_u16; 4];
-        for offset in 0..4 {
+        for (offset, value) in line.iter_mut().enumerate() {
             let (row, column) = match direction {
                 MoveDirection::Left => (line_index, offset),
                 MoveDirection::Right => (line_index, 3 - offset),
                 MoveDirection::Up => (offset, line_index),
                 MoveDirection::Down => (3 - offset, line_index),
             };
-            line[offset] = next.board[row][column];
+            *value = next.board[row][column];
         }
 
         let (merged, line_score) = merge_line(line)?;
@@ -283,14 +283,14 @@ fn apply_twenty_forty_eight<R: RngCore>(
             .checked_add(line_score)
             .ok_or(GameError::ScoreOverflow)?;
 
-        for offset in 0..4 {
+        for (offset, value) in merged.into_iter().enumerate() {
             let (row, column) = match direction {
                 MoveDirection::Left => (line_index, offset),
                 MoveDirection::Right => (line_index, 3 - offset),
                 MoveDirection::Up => (offset, line_index),
                 MoveDirection::Down => (3 - offset, line_index),
             };
-            next.board[row][column] = merged[offset];
+            next.board[row][column] = value;
         }
     }
 
