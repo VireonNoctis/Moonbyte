@@ -90,7 +90,7 @@ impl GameRuntime {
             .await?;
         let id = format!("MB-{sequence:06}");
         let session =
-            GameSession::create(id, game, player_id.to_owned(), guild_id.map(str::to_owned));
+            GameSession::create(id, game, player_id.to_owned(), guild_id.map(str::to_owned))?;
         let snapshot = session.snapshot();
         let state_json = serde_json::to_string(&session)?;
 

@@ -10,7 +10,7 @@ Moonbyte is a **Gaming Bot**. It has its own Rust codebase, game engine, storage
 
 ## Project status
 
-**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes five Rust game modules: Tic-tac-toe, Connect Four, Memory Match, Word Scramble and Sequence Recall. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. Each player can hold at most 10 active or waiting sessions per guild or DM scope; concurrent starts and joins are serialized against that limit. Profiles, progression, Vaults, Bazaar and the live visual-game API remain implementation work.
+**First durable game-runtime slice implemented.** Moonbyte connects through Tokio, Serenity and Poise, and includes six Rust game modules: Tic-tac-toe, Connect Four, Memory Match, Word Scramble, Sequence Recall and 2048. Rules remain transport-independent; multiplayer lobbies are guild-scoped; participants, turn ownership and legal actions are validated. Session state is stored in PostgreSQL with transactional updates, versioned JSONB snapshots, restart recovery, and 24-hour inactivity expiry. Each player can hold at most 10 active or waiting sessions per guild or DM scope; concurrent starts and joins are serialized against that limit. Profiles, progression, Vaults, Bazaar and the live visual-game API remain implementation work.
 
 ## The vision
 
@@ -42,7 +42,7 @@ Every listed title is a candidate, not a promise that it already exists. The cat
 
 ## Visual Library
 
-The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the five implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
+The visual library now has a first **Next.js + React + TypeScript** catalogue foundation under `visual-library/`: responsive game cards, search/category filters, accessible rules disclosure, and copyable Discord commands for the six implemented games. It is a presentation-only browser fallback—not yet a live game client or Discord Activity.
 
 - Discord Activity integration using the official Embedded App SDK remains planned and is not yet implemented.
 - A normal HTTPS browser fallback remains available for catalogue discovery and supported views.
@@ -59,7 +59,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
 | `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
-| `.games` / `/games` | Implemented | Browse the five currently playable games and their controls. |
+| `.games` / `/games` | Implemented | Browse the six currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
 | `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
@@ -136,7 +136,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first five game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, long-term result history, progression and privacy export/deletion remain future work; .history only exposes finished session snapshots during the existing 24-hour retention window.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first six game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, long-term result history, progression and privacy export/deletion remain future work; .history only exposes finished session snapshots during the existing 24-hour retention window.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
