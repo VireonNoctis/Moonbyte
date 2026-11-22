@@ -3,7 +3,7 @@ name: Temporary visual-library lockfile bootstrap
 on:
   push:
     branches:
-      - automation/moonbyte-lockfile-bootstrap-2026-11-22
+      - automation/moonbyte-lockfile-bootstrap-v2-2026-11-22
 
 permissions:
   contents: read
