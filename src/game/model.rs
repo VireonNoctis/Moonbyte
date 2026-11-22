@@ -754,8 +754,8 @@ impl fmt::Display for GameKind {
 #[cfg(test)]
 mod tests {
     use super::{
-        ConnectFourState, GameKind, GameSession, MinesweeperState, TwentyFortyEightState,
-        WordScrambleState,
+        ConnectFourState, GameKind, GameSession, MinesweeperState, MINESWEEPER_SIZE,
+        TwentyFortyEightState, WordScrambleState,
     };
     use crate::game::engine::{GameAction, GameError};
 
@@ -879,10 +879,16 @@ mod tests {
 
     #[test]
     fn minesweeper_render_hides_mines_until_the_session_ends() {
-        let mut state = MinesweeperState::default();
-        state.mines_placed = true;
-        state.board[0][0] = 9;
-        state.flagged[0][0] = true;
+        let mut board = [[0; MINESWEEPER_SIZE]; MINESWEEPER_SIZE];
+        board[0][0] = 9;
+        let mut flagged = [[false; MINESWEEPER_SIZE]; MINESWEEPER_SIZE];
+        flagged[0][0] = true;
+        let mut state = MinesweeperState {
+            board,
+            flagged,
+            mines_placed: true,
+            ..MinesweeperState::default()
+        };
 
         let active = state.render();
         assert_eq!(active.lines().count(), 9);

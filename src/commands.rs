@@ -190,12 +190,9 @@ pub async fn join(
     Ok(())
 }
 
-#[poise::command(prefix_command, slash_command)]
-pub async fn action(
+async fn submit_action(
     ctx: Context<'_>,
-    #[description = "The session ID"] session_id: String,
-    #[description = "Use the shown controls; Minesweeper uses reveal/flag row,column; Sequence Recall uses hide or comma-separated values 1–4."]
-    #[rest]
+    session_id: String,
     input: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
@@ -207,6 +204,31 @@ pub async fn action(
         .await?;
     ctx.say(snapshot.render()).await?;
     Ok(())
+}
+
+#[poise::command(prefix_command)]
+async fn action_prefix(
+    ctx: Context<'_>,
+    session_id: String,
+    #[rest] input: String,
+) -> Result<(), Error> {
+    submit_action(ctx, session_id, input).await
+}
+
+#[poise::command(slash_command, rename = "action")]
+async fn action_slash(
+    ctx: Context<'_>,
+    #[description = "The session ID"] session_id: String,
+    #[description = "Use the shown controls; Minesweeper uses reveal/flag row,column; Sequence Recall uses hide or comma-separated values 1–4."]
+    input: String,
+) -> Result<(), Error> {
+    submit_action(ctx, session_id, input).await
+}
+
+pub fn action() -> poise::Command<Data, Error> {
+    let mut command = action_slash();
+    command.prefix_action = action_prefix().prefix_action;
+    command
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -436,6 +458,14 @@ mod tests {
         assert!(PRIVACY_OVERVIEW.contains("Use a DM for solo play"));
         assert!(PRIVACY_OVERVIEW.contains("slash responses are ephemeral"));
         assert!(PRIVACY_OVERVIEW.contains("does not post session details publicly"));
+    }
+
+    #[test]
+    fn action_command_exposes_prefix_and_slash_handlers() {
+        let command = super::action();
+        assert_eq!(command.name.as_ref(), "action");
+        assert!(command.prefix_action.is_some());
+        assert!(command.slash_action.is_some());
     }
 
     #[test]

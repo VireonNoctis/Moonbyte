@@ -420,16 +420,16 @@ fn populate_minesweeper_counts(board: &mut [[u8; MINESWEEPER_SIZE]; MINESWEEPER_
                 continue;
             }
 
-            let mut adjacent_mines = 0_u8;
-            for adjacent_row in row.saturating_sub(1)..=(row + 1).min(MINESWEEPER_SIZE - 1) {
-                for adjacent_column in
-                    column.saturating_sub(1)..=(column + 1).min(MINESWEEPER_SIZE - 1)
-                {
-                    if board[adjacent_row][adjacent_column] == 9 {
-                        adjacent_mines += 1;
-                    }
-                }
-            }
+            let row_start = row.saturating_sub(1);
+            let row_end = (row + 1).min(MINESWEEPER_SIZE - 1);
+            let column_start = column.saturating_sub(1);
+            let column_end = (column + 1).min(MINESWEEPER_SIZE - 1);
+            let adjacent_mines = board[row_start..=row_end]
+                .iter()
+                .flat_map(|adjacent_row| adjacent_row[column_start..=column_end].iter())
+                .filter(|value| **value == 9)
+                .count() as u8;
+
             board[row][column] = adjacent_mines;
         }
     }
@@ -828,13 +828,15 @@ mod tests {
     fn minesweeper_zero_reveal_flood_fills_and_completes_the_board() {
         use rand::rngs::mock::StepRng;
 
-        let mut minesweeper = MinesweeperState::default();
-        minesweeper.mines_placed = true;
-        for column in 0..MINESWEEPER_SIZE {
-            minesweeper.board[MINESWEEPER_SIZE - 1][column] = 9;
-        }
-        minesweeper.board[MINESWEEPER_SIZE - 2][MINESWEEPER_SIZE - 2] = 9;
-        minesweeper.board[MINESWEEPER_SIZE - 2][MINESWEEPER_SIZE - 1] = 9;
+        let mut board = [[0; MINESWEEPER_SIZE]; MINESWEEPER_SIZE];
+        board[MINESWEEPER_SIZE - 1].fill(9);
+        board[MINESWEEPER_SIZE - 2][MINESWEEPER_SIZE - 2] = 9;
+        board[MINESWEEPER_SIZE - 2][MINESWEEPER_SIZE - 1] = 9;
+        let mut minesweeper = MinesweeperState {
+            board,
+            mines_placed: true,
+            ..MinesweeperState::default()
+        };
         populate_minesweeper_counts(&mut minesweeper.board);
 
         let mut state = GameState::Minesweeper(minesweeper);
@@ -862,9 +864,13 @@ mod tests {
     fn minesweeper_mine_hit_ends_the_session() {
         use rand::rngs::mock::StepRng;
 
-        let mut minesweeper = MinesweeperState::default();
-        minesweeper.mines_placed = true;
-        minesweeper.board[0][0] = 9;
+        let mut board = [[0; MINESWEEPER_SIZE]; MINESWEEPER_SIZE];
+        board[0][0] = 9;
+        let minesweeper = MinesweeperState {
+            board,
+            mines_placed: true,
+            ..MinesweeperState::default()
+        };
         let mut state = GameState::Minesweeper(minesweeper);
         let mut rng = StepRng::new(100, 1);
 
