@@ -63,7 +63,7 @@ export default function HomePage() {
             <div className="eyebrow"><span>02</span> THE CURRENT LINE-UP</div>
             <h2 id="library-title">Choose your <em>next move.</em></h2>
           </div>
-          <p>Six games are playable in the Discord bot today. This library shows what is implemented—not a mock catalogue of future promises.</p>
+          <p>Seven games are playable in the Discord bot today. This library shows what is implemented—not a mock catalogue of future promises.</p>
         </div>
         <GameLibrary />
       </section>

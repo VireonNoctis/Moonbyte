@@ -1,6 +1,7 @@
 use super::model::{
-    ConnectFourState, GameKind, GameState, MemoryMatchState, SequenceRecallState, TicTacToeState,
-    TwentyFortyEightState, WordScrambleState,
+    random_below, ConnectFourState, GameKind, GameState, MemoryMatchState, MinesweeperState,
+    SequenceRecallState, TicTacToeState, TwentyFortyEightState, WordScrambleState,
+    MINESWEEPER_MINE_COUNT, MINESWEEPER_SIZE,
 };
 use rand::{RngCore, rngs::OsRng};
 
@@ -9,6 +10,8 @@ pub enum GameAction {
     TicTacToeMove { row: usize, column: usize },
     ConnectFourDrop { column: usize },
     MemoryReveal { position: usize },
+    MinesweeperReveal { row: usize, column: usize },
+    MinesweeperFlag { row: usize, column: usize },
     WordAnswer { answer: String },
     SequenceHide,
     SequenceAnswer { values: Vec<u8> },
@@ -71,6 +74,44 @@ impl GameAction {
                 Ok(Self::MemoryReveal {
                     position: position - 1,
                 })
+            }
+            GameKind::Minesweeper => {
+                let mut parts = input.split_whitespace();
+                let operation = parts.next().ok_or(GameError::InvalidAction)?;
+                let coordinates = parts.next().ok_or(GameError::InvalidAction)?;
+                if parts.next().is_some() {
+                    return Err(GameError::InvalidAction);
+                }
+
+                let mut coordinates = coordinates.split(',').map(str::trim);
+                let row = coordinates
+                    .next()
+                    .ok_or(GameError::InvalidAction)?
+                    .parse::<usize>()
+                    .map_err(|_| GameError::InvalidAction)?;
+                let column = coordinates
+                    .next()
+                    .ok_or(GameError::InvalidAction)?
+                    .parse::<usize>()
+                    .map_err(|_| GameError::InvalidAction)?;
+                if coordinates.next().is_some()
+                    || !(1..=MINESWEEPER_SIZE).contains(&row)
+                    || !(1..=MINESWEEPER_SIZE).contains(&column)
+                {
+                    return Err(GameError::InvalidAction);
+                }
+
+                match operation.to_ascii_lowercase().as_str() {
+                    "reveal" => Ok(Self::MinesweeperReveal {
+                        row: row - 1,
+                        column: column - 1,
+                    }),
+                    "flag" => Ok(Self::MinesweeperFlag {
+                        row: row - 1,
+                        column: column - 1,
+                    }),
+                    _ => Err(GameError::InvalidAction),
+                }
             }
             GameKind::WordScramble => {
                 let answer = input.trim();
@@ -144,6 +185,8 @@ pub enum GameError {
     AlreadyMatched,
     AlreadyGuessed,
     SamePosition,
+    CellAlreadyRevealed,
+    CellFlagged,
     SessionLimitReached,
     RuntimeUnavailable,
     RandomnessUnavailable,
@@ -177,6 +220,8 @@ impl std::fmt::Display for GameError {
                 "You already tried that answer. It does not use another attempt."
             }
             Self::SamePosition => "Choose a different second position.",
+            Self::CellAlreadyRevealed => "That cell is already revealed.",
+            Self::CellFlagged => "That cell is flagged. Remove the flag before revealing it.",
             Self::SessionLimitReached => {
                 "You already have 10 active sessions in this server or DM scope. Finish or leave one before starting or joining another."
             }
@@ -217,6 +262,12 @@ fn apply_action_with_rng<R: RngCore>(
         }
         (GameState::MemoryMatch(state), GameAction::MemoryReveal { position }) => {
             apply_memory_match(state, position)
+        }
+        (GameState::Minesweeper(state), GameAction::MinesweeperReveal { row, column }) => {
+            apply_minesweeper_reveal(state, row, column, rng)
+        }
+        (GameState::Minesweeper(state), GameAction::MinesweeperFlag { row, column }) => {
+            apply_minesweeper_flag(state, row, column)
         }
         (GameState::WordScramble(state), GameAction::WordAnswer { answer }) => {
             apply_word_scramble(state, answer)
@@ -324,6 +375,166 @@ fn apply_twenty_forty_eight<R: RngCore>(
             "No legal moves remain. The game is complete."
         } else {
             "Tiles shifted."
+        },
+    })
+}
+
+fn place_minesweeper_mines<R: RngCore>(
+    state: &mut MinesweeperState,
+    safe_row: usize,
+    safe_column: usize,
+    rng: &mut R,
+) -> Result<(), GameError> {
+    let mut candidates = Vec::with_capacity(MINESWEEPER_SIZE * MINESWEEPER_SIZE - 1);
+    for row in 0..MINESWEEPER_SIZE {
+        for column in 0..MINESWEEPER_SIZE {
+            if row != safe_row || column != safe_column {
+                candidates.push((row, column));
+            }
+        }
+    }
+
+    // Select all mine positions before mutating state so an entropy failure leaves the
+    // unstarted board unchanged. random_below uses rejection sampling without modulo bias.
+    for index in 0..MINESWEEPER_MINE_COUNT {
+        let remaining = (candidates.len() - index) as u64;
+        let selected = index + random_below(rng, remaining)? as usize;
+        candidates.swap(index, selected);
+    }
+
+    let mut board = [[0_u8; MINESWEEPER_SIZE]; MINESWEEPER_SIZE];
+    for (row, column) in candidates.into_iter().take(MINESWEEPER_MINE_COUNT) {
+        board[row][column] = 9;
+    }
+    populate_minesweeper_counts(&mut board);
+
+    state.board = board;
+    state.mines_placed = true;
+    Ok(())
+}
+
+fn populate_minesweeper_counts(board: &mut [[u8; MINESWEEPER_SIZE]; MINESWEEPER_SIZE]) {
+    for row in 0..MINESWEEPER_SIZE {
+        for column in 0..MINESWEEPER_SIZE {
+            if board[row][column] == 9 {
+                continue;
+            }
+
+            let mut adjacent_mines = 0_u8;
+            for adjacent_row in row.saturating_sub(1)..=(row + 1).min(MINESWEEPER_SIZE - 1) {
+                for adjacent_column in
+                    column.saturating_sub(1)..=(column + 1).min(MINESWEEPER_SIZE - 1)
+                {
+                    if board[adjacent_row][adjacent_column] == 9 {
+                        adjacent_mines += 1;
+                    }
+                }
+            }
+            board[row][column] = adjacent_mines;
+        }
+    }
+}
+
+fn apply_minesweeper_flag(
+    state: &mut MinesweeperState,
+    row: usize,
+    column: usize,
+) -> Result<GameResolution, GameError> {
+    if row >= MINESWEEPER_SIZE || column >= MINESWEEPER_SIZE {
+        return Err(GameError::InvalidAction);
+    }
+    if state.revealed[row][column] {
+        return Err(GameError::CellAlreadyRevealed);
+    }
+
+    state.flagged[row][column] = !state.flagged[row][column];
+    Ok(GameResolution {
+        winner_index: None,
+        is_draw: false,
+        is_complete: false,
+        message: if state.flagged[row][column] {
+            "Cell flagged."
+        } else {
+            "Flag removed."
+        },
+    })
+}
+
+fn apply_minesweeper_reveal<R: RngCore>(
+    state: &mut MinesweeperState,
+    row: usize,
+    column: usize,
+    rng: &mut R,
+) -> Result<GameResolution, GameError> {
+    if row >= MINESWEEPER_SIZE || column >= MINESWEEPER_SIZE {
+        return Err(GameError::InvalidAction);
+    }
+    if state.revealed[row][column] {
+        return Err(GameError::CellAlreadyRevealed);
+    }
+    if state.flagged[row][column] {
+        return Err(GameError::CellFlagged);
+    }
+    if !state.mines_placed {
+        place_minesweeper_mines(state, row, column, rng)?;
+    }
+
+    if state.board[row][column] == 9 {
+        state.lost = true;
+        return Ok(GameResolution {
+            winner_index: None,
+            is_draw: false,
+            is_complete: true,
+            message: "A mine was revealed. The session is complete.",
+        });
+    }
+
+    // Iterative flood fill keeps the call stack bounded and reveals the numbered border
+    // around each connected zero region. Flags are respected until the player removes them.
+    let mut pending = vec![(row, column)];
+    while let Some((current_row, current_column)) = pending.pop() {
+        if state.revealed[current_row][current_column]
+            || state.flagged[current_row][current_column]
+            || state.board[current_row][current_column] == 9
+        {
+            continue;
+        }
+
+        state.revealed[current_row][current_column] = true;
+        state.revealed_safe = state.revealed_safe.saturating_add(1);
+
+        if state.board[current_row][current_column] == 0 {
+            for next_row in
+                current_row.saturating_sub(1)..=(current_row + 1).min(MINESWEEPER_SIZE - 1)
+            {
+                for next_column in
+                    current_column.saturating_sub(1)..=(current_column + 1).min(MINESWEEPER_SIZE - 1)
+                {
+                    if !state.revealed[next_row][next_column]
+                        && !state.flagged[next_row][next_column]
+                        && state.board[next_row][next_column] != 9
+                    {
+                        pending.push((next_row, next_column));
+                    }
+                }
+            }
+        }
+    }
+
+    let safe_cells = MINESWEEPER_SIZE * MINESWEEPER_SIZE - MINESWEEPER_MINE_COUNT;
+    let complete = usize::from(state.revealed_safe) == safe_cells;
+    if complete {
+        state.won = true;
+    }
+
+    Ok(GameResolution {
+        winner_index: None,
+        is_draw: false,
+        is_complete: complete,
+        message: if complete {
+            "All safe cells revealed. You solved Minesweeper."
+        } else {
+            "Cell revealed."
         },
     })
 }
@@ -552,6 +763,160 @@ fn apply_sequence_recall(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn minesweeper_parser_validates_reveal_flag_and_coordinates() {
+        assert_eq!(
+            GameAction::parse(GameKind::Minesweeper, "reveal 1,8"),
+            Ok(GameAction::MinesweeperReveal { row: 0, column: 7 })
+        );
+        assert_eq!(
+            GameAction::parse(GameKind::Minesweeper, "flag 8,1"),
+            Ok(GameAction::MinesweeperFlag { row: 7, column: 0 })
+        );
+
+        for invalid in [
+            "",
+            "reveal",
+            "dig 1,1",
+            "reveal 0,1",
+            "reveal 1,9",
+            "flag 1",
+            "flag 1,2,3",
+            "reveal 1,2 extra",
+        ] {
+            assert_eq!(
+                GameAction::parse(GameKind::Minesweeper, invalid),
+                Err(GameError::InvalidAction),
+                "unexpectedly accepted {invalid:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn minesweeper_first_reveal_is_safe_and_places_exactly_ten_mines() {
+        use rand::rngs::mock::StepRng;
+
+        let mut state = GameState::Minesweeper(MinesweeperState::default());
+        let mut rng = StepRng::new(100, 1);
+        let result = apply_action_with_rng(
+            &mut state,
+            0,
+            GameAction::MinesweeperReveal { row: 0, column: 0 },
+            &mut rng,
+        )
+        .expect("first reveal");
+
+        let GameState::Minesweeper(minesweeper) = state else {
+            panic!("expected Minesweeper state");
+        };
+        let mine_count = minesweeper
+            .board
+            .iter()
+            .flatten()
+            .filter(|value| **value == 9)
+            .count();
+
+        assert!(minesweeper.mines_placed);
+        assert_eq!(mine_count, MINESWEEPER_MINE_COUNT);
+        assert_ne!(minesweeper.board[0][0], 9);
+        assert!(minesweeper.revealed[0][0]);
+        assert!(!result.is_complete);
+    }
+
+    #[test]
+    fn minesweeper_zero_reveal_flood_fills_and_completes_the_board() {
+        use rand::rngs::mock::StepRng;
+
+        let mut minesweeper = MinesweeperState::default();
+        minesweeper.mines_placed = true;
+        for column in 0..MINESWEEPER_SIZE {
+            minesweeper.board[MINESWEEPER_SIZE - 1][column] = 9;
+        }
+        minesweeper.board[MINESWEEPER_SIZE - 2][MINESWEEPER_SIZE - 2] = 9;
+        minesweeper.board[MINESWEEPER_SIZE - 2][MINESWEEPER_SIZE - 1] = 9;
+        populate_minesweeper_counts(&mut minesweeper.board);
+
+        let mut state = GameState::Minesweeper(minesweeper);
+        let mut rng = StepRng::new(100, 1);
+        let result = apply_action_with_rng(
+            &mut state,
+            0,
+            GameAction::MinesweeperReveal { row: 0, column: 0 },
+            &mut rng,
+        )
+        .expect("reveal empty region");
+
+        let GameState::Minesweeper(minesweeper) = state else {
+            panic!("expected Minesweeper state");
+        };
+        assert!(result.is_complete);
+        assert!(minesweeper.won);
+        assert_eq!(
+            usize::from(minesweeper.revealed_safe),
+            MINESWEEPER_SIZE * MINESWEEPER_SIZE - MINESWEEPER_MINE_COUNT
+        );
+    }
+
+    #[test]
+    fn minesweeper_mine_hit_ends_the_session() {
+        use rand::rngs::mock::StepRng;
+
+        let mut minesweeper = MinesweeperState::default();
+        minesweeper.mines_placed = true;
+        minesweeper.board[0][0] = 9;
+        let mut state = GameState::Minesweeper(minesweeper);
+        let mut rng = StepRng::new(100, 1);
+
+        let result = apply_action_with_rng(
+            &mut state,
+            0,
+            GameAction::MinesweeperReveal { row: 0, column: 0 },
+            &mut rng,
+        )
+        .expect("reveal mine");
+
+        let GameState::Minesweeper(minesweeper) = state else {
+            panic!("expected Minesweeper state");
+        };
+        assert!(result.is_complete);
+        assert!(minesweeper.lost);
+        assert!(!minesweeper.won);
+    }
+
+    #[test]
+    fn minesweeper_flags_toggle_and_prevent_revealing_until_removed() {
+        use rand::rngs::mock::StepRng;
+
+        let mut state = GameState::Minesweeper(MinesweeperState::default());
+        let mut rng = StepRng::new(100, 1);
+        let flag = GameAction::MinesweeperFlag { row: 1, column: 2 };
+        apply_action_with_rng(&mut state, 0, flag.clone(), &mut rng).expect("flag cell");
+
+        assert_eq!(
+            apply_action_with_rng(
+                &mut state,
+                0,
+                GameAction::MinesweeperReveal { row: 1, column: 2 },
+                &mut rng
+            ),
+            Err(GameError::CellFlagged)
+        );
+
+        apply_action_with_rng(&mut state, 0, flag.clone(), &mut rng).expect("remove flag");
+        apply_action_with_rng(
+            &mut state,
+            0,
+            GameAction::MinesweeperReveal { row: 1, column: 2 },
+            &mut rng,
+        )
+        .expect("reveal cell");
+
+        assert_eq!(
+            apply_action_with_rng(&mut state, 0, flag, &mut rng),
+            Err(GameError::CellAlreadyRevealed)
+        );
+    }
 
     #[test]
     fn sequence_recall_parser_validates_hide_and_symbol_lists() {

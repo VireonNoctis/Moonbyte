@@ -10,16 +10,18 @@ pub enum GameKind {
     TicTacToe,
     ConnectFour,
     MemoryMatch,
+    Minesweeper,
     WordScramble,
     SequenceRecall,
     TwentyFortyEight,
 }
 
 impl GameKind {
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 7] = [
         Self::TicTacToe,
         Self::ConnectFour,
         Self::MemoryMatch,
+        Self::Minesweeper,
         Self::WordScramble,
         Self::SequenceRecall,
         Self::TwentyFortyEight,
@@ -49,6 +51,15 @@ impl GameKind {
                 players: "1 player",
                 controls: "Use .action <session> <position> with a position from 1 to 8.",
                 rules: "Reveal two positions at a time on the 2×4 board. Matching pairs stay visible. When the two positions do not match, both remain visible until your next reveal. Find all four pairs to complete the game. The starter layout is fixed and is not shuffled.",
+            },
+
+            Self::Minesweeper => GameDefinition {
+                id: "minesweeper",
+                name: "Minesweeper",
+                description: "Solve an 8×8 minefield using number clues and careful reveals.",
+                players: "1 player",
+                controls: "Use .action <session> reveal <row>,<column> or flag <row>,<column> with coordinates 1–8. Repeat flag to remove it.",
+                rules: "The board contains ten hidden mines. Your first reveal is always safe. Numbers show adjacent mines; reveal every safe cell to win. Flags are optional markers and can be toggled off. Revealing a mine ends the session. Mine placement uses operating-system-backed randomness and is not fairness-certified.",
             },
             Self::WordScramble => GameDefinition {
                 id: "word-scramble",
@@ -84,6 +95,7 @@ impl GameKind {
             "tic-tac-toe" | "tictactoe" | "xo" => Ok(Self::TicTacToe),
             "connect-four" | "connect4" | "c4" => Ok(Self::ConnectFour),
             "memory-match" | "memory" => Ok(Self::MemoryMatch),
+            "minesweeper" | "mines" => Ok(Self::Minesweeper),
             "word-scramble" | "scramble" => Ok(Self::WordScramble),
             "sequence-recall" | "sequence" | "recall" => Ok(Self::SequenceRecall),
             "2048" | "twenty-forty-eight" | "twentyfortyeight" => Ok(Self::TwentyFortyEight),
@@ -126,6 +138,7 @@ pub(super) enum GameState {
     TicTacToe(TicTacToeState),
     ConnectFour(ConnectFourState),
     MemoryMatch(MemoryMatchState),
+    Minesweeper(MinesweeperState),
     WordScramble(WordScrambleState),
     SequenceRecall(SequenceRecallState),
     TwentyFortyEight(TwentyFortyEightState),
@@ -137,6 +150,7 @@ impl GameState {
             GameKind::TicTacToe => Self::TicTacToe(TicTacToeState::default()),
             GameKind::ConnectFour => Self::ConnectFour(ConnectFourState::default()),
             GameKind::MemoryMatch => Self::MemoryMatch(MemoryMatchState::default()),
+            GameKind::Minesweeper => Self::Minesweeper(MinesweeperState::default()),
             GameKind::WordScramble => Self::WordScramble(WordScrambleState::default()),
             GameKind::SequenceRecall => {
                 Self::SequenceRecall(SequenceRecallState::for_session(session_id))
@@ -149,6 +163,7 @@ impl GameState {
             Self::TicTacToe(s) => usize::from(s.current_player),
             Self::ConnectFour(s) => usize::from(s.current_player),
             Self::MemoryMatch(_)
+            | Self::Minesweeper(_)
             | Self::WordScramble(_)
             | Self::SequenceRecall(_)
             | Self::TwentyFortyEight(_) => 0,
@@ -159,6 +174,7 @@ impl GameState {
             Self::TicTacToe(s) => s.render(),
             Self::ConnectFour(s) => s.render(),
             Self::MemoryMatch(s) => s.render(),
+            Self::Minesweeper(s) => s.render(),
             Self::WordScramble(s) => s.render(),
             Self::SequenceRecall(s) => s.render(),
             Self::TwentyFortyEight(s) => s.render(),
@@ -311,6 +327,65 @@ impl MemoryMatchState {
             out.push(' ');
         }
         out
+    }
+}
+
+pub(super) const MINESWEEPER_SIZE: usize = 8;
+pub(super) const MINESWEEPER_MINE_COUNT: usize = 10;
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub(super) struct MinesweeperState {
+    pub(super) board: [[u8; MINESWEEPER_SIZE]; MINESWEEPER_SIZE],
+    pub(super) revealed: [[bool; MINESWEEPER_SIZE]; MINESWEEPER_SIZE],
+    pub(super) flagged: [[bool; MINESWEEPER_SIZE]; MINESWEEPER_SIZE],
+    pub(super) mines_placed: bool,
+    pub(super) lost: bool,
+    pub(super) won: bool,
+    pub(super) revealed_safe: u8,
+}
+
+impl Default for MinesweeperState {
+    fn default() -> Self {
+        Self {
+            board: [[0; MINESWEEPER_SIZE]; MINESWEEPER_SIZE],
+            revealed: [[false; MINESWEEPER_SIZE]; MINESWEEPER_SIZE],
+            flagged: [[false; MINESWEEPER_SIZE]; MINESWEEPER_SIZE],
+            mines_placed: false,
+            lost: false,
+            won: false,
+            revealed_safe: 0,
+        }
+    }
+}
+
+impl MinesweeperState {
+    fn render(&self) -> String {
+        let mut output = String::from("    1 2 3 4 5 6 7 8\n");
+        let show_mines = self.lost || self.won;
+
+        for row in 0..MINESWEEPER_SIZE {
+            output.push_str(&format!("{:>2} ", row + 1));
+            for column in 0..MINESWEEPER_SIZE {
+                let value = self.board[row][column];
+                let show_mine = show_mines && value == 9;
+                let symbol = if show_mine {
+                    '✹'
+                } else if self.flagged[row][column] && !self.revealed[row][column] {
+                    '⚑'
+                } else if !self.revealed[row][column] {
+                    '□'
+                } else if value == 0 {
+                    '·'
+                } else {
+                    char::from_digit(u32::from(value), 10).unwrap_or('?')
+                };
+                output.push(symbol);
+                output.push(' ');
+            }
+            output.push('\n');
+        }
+
+        output
     }
 }
 
@@ -493,7 +568,7 @@ impl TwentyFortyEightState {
     }
 }
 
-fn random_below<R: RngCore>(rng: &mut R, upper: u64) -> Result<u64, GameError> {
+pub(super) fn random_below<R: RngCore>(rng: &mut R, upper: u64) -> Result<u64, GameError> {
     if upper == 0 {
         return Err(GameError::InvalidAction);
     }
@@ -679,7 +754,8 @@ impl fmt::Display for GameKind {
 #[cfg(test)]
 mod tests {
     use super::{
-        ConnectFourState, GameKind, GameSession, TwentyFortyEightState, WordScrambleState,
+        ConnectFourState, GameKind, GameSession, MinesweeperState, TwentyFortyEightState,
+        WordScrambleState,
     };
     use crate::game::engine::{GameAction, GameError};
 
@@ -769,6 +845,54 @@ mod tests {
             Err(GameError::AlreadyGuessed)
         );
         assert_eq!(session.snapshot(), before);
+    }
+
+    #[test]
+    fn minesweeper_session_state_survives_serialization() {
+        let mut session = GameSession::create(
+            String::from("MB-MINES"),
+            GameKind::Minesweeper,
+            String::from("player"),
+            None,
+        )
+        .expect("create Minesweeper session");
+        session
+            .act("player", GameAction::MinesweeperFlag { row: 7, column: 7 })
+            .expect("flag a cell");
+        session
+            .act(
+                "player",
+                GameAction::MinesweeperReveal { row: 0, column: 0 },
+            )
+            .expect("place mines and reveal the first safe cell");
+
+        let encoded = serde_json::to_string(&session).expect("serialize session");
+        let restored: GameSession = serde_json::from_str(&encoded).expect("restore session");
+
+        assert_eq!(restored.snapshot(), session.snapshot());
+        assert_eq!(
+            serde_json::to_string(&restored).expect("serialize restored session"),
+            encoded
+        );
+        assert_eq!(GameKind::parse("mines"), Ok(GameKind::Minesweeper));
+    }
+
+    #[test]
+    fn minesweeper_render_hides_mines_until_the_session_ends() {
+        let mut state = MinesweeperState::default();
+        state.mines_placed = true;
+        state.board[0][0] = 9;
+        state.flagged[0][0] = true;
+
+        let active = state.render();
+        assert_eq!(active.lines().count(), 9);
+        assert!(active.contains('⚑'));
+        assert!(!active.contains('✹'));
+
+        state.lost = true;
+        let ended = state.render();
+        assert!(ended.contains('✹'));
+        assert!(!ended.contains('⚑'));
     }
 
     #[test]
