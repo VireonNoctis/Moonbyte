@@ -754,7 +754,7 @@ impl fmt::Display for GameKind {
 #[cfg(test)]
 mod tests {
     use super::{
-        ConnectFourState, GameKind, GameSession, MinesweeperState, MINESWEEPER_SIZE,
+        ConnectFourState, GameKind, GameSession, MINESWEEPER_SIZE, MinesweeperState,
         TwentyFortyEightState, WordScrambleState,
     };
     use crate::game::engine::{GameAction, GameError};

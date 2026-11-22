@@ -190,11 +190,7 @@ pub async fn join(
     Ok(())
 }
 
-async fn submit_action(
-    ctx: Context<'_>,
-    session_id: String,
-    input: String,
-) -> Result<(), Error> {
+async fn submit_action(ctx: Context<'_>, session_id: String, input: String) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
     let guild_id = ctx.guild_id().map(|id| id.to_string());
     let snapshot = ctx
