@@ -202,6 +202,8 @@ async fn submit_action(ctx: Context<'_>, session_id: String, input: String) -> R
     Ok(())
 }
 
+// Poise emits an unreachable fallback for the unused slash path of prefix-only commands.
+#[allow(unreachable_code)]
 #[poise::command(prefix_command)]
 async fn action_prefix(
     ctx: Context<'_>,
