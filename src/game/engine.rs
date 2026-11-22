@@ -1,7 +1,7 @@
 use super::model::{
-    random_below, ConnectFourState, GameKind, GameState, MemoryMatchState, MinesweeperState,
-    SequenceRecallState, TicTacToeState, TwentyFortyEightState, WordScrambleState,
-    MINESWEEPER_MINE_COUNT, MINESWEEPER_SIZE,
+    ConnectFourState, GameKind, GameState, MINESWEEPER_MINE_COUNT, MINESWEEPER_SIZE,
+    MemoryMatchState, MinesweeperState, SequenceRecallState, TicTacToeState, TwentyFortyEightState,
+    WordScrambleState, random_below,
 };
 use rand::{RngCore, rngs::OsRng};
 
@@ -507,8 +507,8 @@ fn apply_minesweeper_reveal<R: RngCore>(
             for next_row in
                 current_row.saturating_sub(1)..=(current_row + 1).min(MINESWEEPER_SIZE - 1)
             {
-                for next_column in
-                    current_column.saturating_sub(1)..=(current_column + 1).min(MINESWEEPER_SIZE - 1)
+                for next_column in current_column.saturating_sub(1)
+                    ..=(current_column + 1).min(MINESWEEPER_SIZE - 1)
                 {
                     if !state.revealed[next_row][next_column]
                         && !state.flagged[next_row][next_column]
