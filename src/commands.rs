@@ -194,7 +194,8 @@ pub async fn join(
 pub async fn action(
     ctx: Context<'_>,
     #[description = "The session ID"] session_id: String,
-    #[description = "Use the shown controls; Sequence Recall accepts hide or comma-separated values 1–4."]
+    #[description = "Use the shown controls; Minesweeper uses reveal/flag row,column; Sequence Recall uses hide or comma-separated values 1–4."]
+    #[rest]
     input: String,
 ) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();

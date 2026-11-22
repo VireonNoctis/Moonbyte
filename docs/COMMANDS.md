@@ -22,7 +22,9 @@
 | .history | /history | Privately lists up to 10 non-expired completed or ended sessions the requester participated in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
 
-All commands use shared Rust handlers for prefix and slash invocation. Use `.rules <game>` or `/rules` to read the implemented rules and controls before starting a game. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
+All commands use shared Rust handlers for prefix and slash invocation. Use `.rules <game>` or `/rules` to read the implemented rules and controls before starting a game.
+
+The prefix `.action` command consumes the full remaining input. For Minesweeper, use `.action <session> reveal 1,1` or `.action <session> flag 1,1`; `/action` accepts the same text in its `input` option. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
 
 Session inspection and listing commands (`.session`, `.sessions`, `.history`) keep player-specific details out of shared guild channels. Slash invocations receive ephemeral responses. Guild-prefix invocations deliver the details by DM and post only a generic delivery notice; DM-prefix invocations reply in that already-private channel. If DMs are blocked, the bot posts a generic retry notice without exposing session details.
 
