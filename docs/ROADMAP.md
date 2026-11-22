@@ -1,7 +1,7 @@
 # Moonbyte Roadmap
 
 - Status: In progress.
-- The Rust/Discord runtime, six playable game modules, PostgreSQL session persistence, versioned migration runner, row-locked state transitions and restart recovery are implemented. Player profiles, progression, production recovery operations and the live visual-game API remain.
+- The Rust/Discord runtime, seven playable game modules, PostgreSQL session persistence, versioned migration runner, row-locked state transitions and restart recovery are implemented. Player profiles, progression, production recovery operations and the live visual-game API remain.
 - This roadmap defines deliverables and exit criteria, not promised release dates.
 - A milestone is complete only when its acceptance criteria are met and documented.
 
@@ -52,7 +52,7 @@ Exit criteria:
 Deliverables:
 - [x] Stable game identifiers and metadata for the six starter games.
 - [x] In-process session lifecycle with start, join, action, read and leave operations.
-- [x] State-machine validation for the first six playable game modules.
+- [x] State-machine validation for the first seven playable game modules.
 - [x] Guild scope, participant membership and turn ownership checks.
 - [x] Durable session lifecycle and state-machine recovery with PostgreSQL.
 - Player identity and basic profiles.
@@ -63,7 +63,7 @@ Deliverables:
 - Discord interaction adapter with membership and permission checks.
 
 Exit criteria:
-- [x] Six test games run through the domain/runtime API without embedding Discord types in their rules.
+- [x] Seven test games run through the domain/runtime API without embedding Discord types in their rules.
 - [x] Invalid, occupied, wrong-turn, non-member and cross-guild actions are rejected.
 - [ ] Stale interaction tokens, durable idempotency and expiry are implemented.
 - [ ] A resumable session survives a bot restart.
@@ -101,6 +101,7 @@ Deliverables:
 
 First original games delivered:
 - [x] Memory Match.
+- [x] Minesweeper.
 - [x] Word Scramble.
 - [x] Sequence Recall.
 - [x] 2048.
@@ -272,6 +273,6 @@ Do not implement the full breadth at once. Release one connected, testable verti
 
 ## Current implementation increment — first playable runtime
 
-The current branch adds six real Rust game rules and a PostgreSQL-backed session runtime. The feature adapter exposes games, play, join, action, session, sessions and leave commands in prefix and slash form. The implementation includes participant-only reads and listings, originating-guild checks, turn validation, legal action parsing, win/draw detection and unit tests.
+The current branch adds seven real Rust game rules and a PostgreSQL-backed session runtime. The feature adapter exposes games, play, join, action, session, sessions and leave commands in prefix and slash form. The implementation includes participant-only reads and listings, originating-guild checks, turn validation, legal action parsing, win/draw detection and unit tests.
 
 This increment does **not** mark the full player platform complete. PostgreSQL migrations, versioned session snapshots, restart recovery and expiry are implemented; player identity and progression, privacy export/deletion, buttons and rich Activity views remain follow-up implementation gates.

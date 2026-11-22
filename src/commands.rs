@@ -150,7 +150,7 @@ fn game_rules_message(game: GameKind) -> String {
 #[poise::command(prefix_command, slash_command)]
 pub async fn play(
     ctx: Context<'_>,
-    #[description = "tic-tac-toe, connect-four, memory-match, word-scramble, sequence-recall, or 2048"]
+    #[description = "tic-tac-toe, connect-four, memory-match, minesweeper, word-scramble, sequence-recall, or 2048"]
     game: String,
 ) -> Result<(), Error> {
     let game = GameKind::parse(&game)?;
