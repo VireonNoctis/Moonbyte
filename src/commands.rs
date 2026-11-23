@@ -203,14 +203,19 @@ async fn submit_action(ctx: Context<'_>, session_id: String, input: String) -> R
 }
 
 // Poise emits an unreachable fallback for the unused slash path of prefix-only commands.
+// Keep the lint allowance around only the generated command wrapper.
 #[allow(unreachable_code)]
-#[poise::command(prefix_command)]
-async fn action_prefix(
-    ctx: Context<'_>,
-    session_id: String,
-    #[rest] input: String,
-) -> Result<(), Error> {
-    submit_action(ctx, session_id, input).await
+mod prefix_action_command {
+    use super::{Context, Error, submit_action};
+
+    #[poise::command(prefix_command)]
+    pub(super) async fn register_action(
+        ctx: Context<'_>,
+        session_id: String,
+        #[rest] input: String,
+    ) -> Result<(), Error> {
+        submit_action(ctx, session_id, input).await
+    }
 }
 
 #[poise::command(slash_command, rename = "action")]
@@ -225,7 +230,7 @@ async fn action_slash(
 
 pub fn action() -> poise::Command<Data, Error> {
     let mut command = action_slash();
-    command.prefix_action = action_prefix().prefix_action;
+    command.prefix_action = prefix_action_command::register_action().prefix_action;
     command
 }
 
