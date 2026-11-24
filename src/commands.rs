@@ -3,7 +3,7 @@
 
 use crate::{
     Data, Error,
-    game::{GameKind, GamePhase},
+    game::{GameKind, GamePhase, SessionDataInventory},
 };
 use poise::serenity_prelude::CreateMessage;
 
@@ -103,6 +103,28 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
 pub async fn privacy(ctx: Context<'_>) -> Result<(), Error> {
     ctx.say(PRIVACY_OVERVIEW).await?;
     Ok(())
+}
+
+#[poise::command(prefix_command, slash_command, rename = "privacy-data")]
+pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let inventory = ctx.data().games().data_inventory_for_player(&player_id).await?;
+    send_private(ctx, privacy_data_message(inventory)).await
+}
+
+fn privacy_data_message(inventory: SessionDataInventory) -> String {
+    format!(
+        "**Your Moonbyte data inventory**\n\n\
+         This live count covers your non-expired session records across all servers and DMs.\n\
+         - Active or waiting sessions: {}\n\
+         - Completed or ended sessions: {}\n\
+         - Total session records: {}\n\n\
+         Each record contains its session and game IDs, participant Discord IDs, optional guild scope, game-state snapshot, phase, action count, result text, and timestamps. Session records expire 24 hours after the last successful mutation; expired rows are excluded, and cleanup runs every 15 minutes.\n\n\
+         This is a count inventory, not a copy of your records. Player profiles, inventories, and a separate long-term results store are not implemented. Private export and confirmed account deletion are not available yet. Discord's own records are outside Moonbyte's control.",
+        inventory.active_sessions,
+        inventory.finished_sessions,
+        inventory.total_sessions()
+    )
 }
 
 #[poise::command(prefix_command, slash_command)]
@@ -364,6 +386,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         about(),
         ping(),
         privacy(),
+        privacy_data(),
         games(),
         rules(),
         play(),
@@ -388,6 +411,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}about / /about — describe this build\n\
          {safe_prefix}ping / /ping — check responsiveness and uptime\n\
          {safe_prefix}privacy / /privacy — read the current privacy overview\n\
+         {safe_prefix}privacy-data / /privacy-data — count your stored session records privately\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}rules <game> / /rules — read a game's rules and controls\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
@@ -419,13 +443,11 @@ does not post session details publicly.\n\n\
 Discord independently processes interactions under its own policies. Moonbyte cannot \
 control Discord's retention. PostgreSQL does not by itself prove encryption at rest, and \
 this project does not claim end-to-end encryption.\n\n\
-**Not implemented yet:** a complete stored-data inventory, private data export, and \
-confirmed account deletion. Do not post private personal data in public channels. This \
-overview is not a deletion request.";
+**Available now:** .privacy-data shows counts for your non-expired session records across all servers and DMs. It does not reveal record contents or provide an export. A complete record-level inventory, private data export, and confirmed account deletion are not implemented. Do not post private personal data in public channels. This overview is not a deletion request.";
 
 #[cfg(test)]
 mod tests {
-    use super::{GameKind, PRIVACY_OVERVIEW, game_rules_message, help_message};
+    use super::{GameKind, PRIVACY_OVERVIEW, SessionDataInventory, game_rules_message, help_message, privacy_data_message};
 
     #[test]
     fn private_session_responses_use_a_private_transport_for_each_context() {
@@ -464,6 +486,29 @@ mod tests {
     }
 
     #[test]
+    fn privacy_data_command_is_registered_for_prefix_and_slash() {
+        let command = super::privacy_data();
+        assert_eq!(command.name.as_ref(), "privacy-data");
+        assert!(command.prefix_action.is_some());
+        assert!(command.slash_action.is_some());
+    }
+
+    #[test]
+    fn privacy_data_inventory_explains_its_scope_and_limits() {
+        let message = privacy_data_message(SessionDataInventory {
+            active_sessions: 2,
+            finished_sessions: 3,
+        });
+        assert!(message.contains("Active or waiting sessions: 2"));
+        assert!(message.contains("Completed or ended sessions: 3"));
+        assert!(message.contains("Total session records: 5"));
+        assert!(message.contains("across all servers and DMs"));
+        assert!(message.contains("expired rows are excluded"));
+        assert!(message.contains("not a copy of your records"));
+        assert!(message.contains("confirmed account deletion are not available yet"));
+    }
+
+    #[test]
     fn action_command_exposes_prefix_and_slash_handlers() {
         let command = super::action();
         assert_eq!(command.name.as_ref(), "action");
@@ -479,6 +524,7 @@ mod tests {
             ".about / /about",
             ".ping / /ping",
             ".privacy / /privacy",
+            ".privacy-data / /privacy-data",
             ".games / /games",
             ".rules <game> / /rules",
             ".play <game> / /play",

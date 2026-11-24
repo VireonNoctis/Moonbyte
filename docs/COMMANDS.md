@@ -12,6 +12,7 @@
 | .about | /about | Shows the application version and current implementation boundaries. |
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
 | .privacy | /privacy | Explains current PostgreSQL session storage and unavailable persistent privacy controls. |
+| .privacy-data | /privacy-data | Privately counts the requester's non-expired session records across all guild and DM scopes. It does not export record contents. |
 | .games | /games | Lists seven playable games, player counts and controls. |
 | .rules <game> | /rules | Shows the selected game's implemented rules and controls before play. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby, subject to the 10 active-session cap per player per guild/DM scope. |
@@ -60,8 +61,8 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 Active session state is stored in PostgreSQL. The JSONB snapshot includes the game state, participant Discord IDs, optional guild ID, lifecycle phase and action count; mutations are committed transactionally with a row lock. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants. Each player can have at most 10 active or waiting sessions per guild or DM scope; starts and joins serialize on a per-player advisory transaction lock so concurrent requests cannot exceed the cap. Completed, abandoned and expired sessions do not count. An inactive session expires after 24 hours and is removed by the central cleanup task. `.history` reads up to 10 completed or ended snapshots before that same expiry.
 
-The privacy command is informational only. Player profiles, inventory, progression, a complete stored-data inventory, private export and confirmed deletion are not implemented. This command must not be treated as a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
+The `.privacy` command is an overview. `.privacy-data` privately counts non-expired session records for the requester across all guild and DM scopes and separates active/waiting from completed/ended records. It does not reveal record contents or provide an export. Player profiles, inventory, progression, a complete record-level inventory, private export and confirmed deletion are not implemented. Neither command is a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
 
 ## Planned command groups
 
-Profiles, collections, inventory, quests, parties, leaderboards, achievements, settings, the persistent Vault, Bazaar, privacy data/export/delete and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.
+Profiles, collections, inventory, quests, parties, leaderboards, achievements, settings, the persistent Vault, Bazaar, privacy export/delete and server administration remain planned. Add each only with complete validation, authorization, persistence, retention, recovery, tests and documentation.

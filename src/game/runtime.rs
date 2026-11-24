@@ -14,6 +14,19 @@ pub struct GameRuntime {
     pool: PgPool,
 }
 
+/// Counts the requester's retained game-session records across every guild and DM scope.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct SessionDataInventory {
+    pub active_sessions: i64,
+    pub finished_sessions: i64,
+}
+
+impl SessionDataInventory {
+    pub fn total_sessions(self) -> i64 {
+        self.active_sessions + self.finished_sessions
+    }
+}
+
 #[derive(Debug)]
 pub enum GameRuntimeError {
     Domain(GameError),
@@ -70,6 +83,24 @@ impl From<serde_json::Error> for GameRuntimeError {
 impl GameRuntime {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
+    }
+
+    /// Count non-expired session records for one player across all guild and DM scopes.
+    pub async fn data_inventory_for_player(
+        &self,
+        player_id: &str,
+    ) -> Result<SessionDataInventory, GameRuntimeError> {
+        let (active_sessions, finished_sessions): (i64, i64) = sqlx::query_as(
+            "SELECT COUNT(*) FILTER (WHERE phase IN ('waiting for players', 'active')), COUNT(*) FILTER (WHERE phase IN ('completed', 'ended')) FROM game_sessions WHERE expires_at > now() AND (session_state -> 'players') @> jsonb_build_array($1::text)",
+        )
+        .bind(player_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(SessionDataInventory {
+            active_sessions,
+            finished_sessions,
+        })
     }
 
     pub async fn start(
@@ -350,6 +381,56 @@ mod tests {
             .await
             .expect("PostgreSQL must be available and migrations must apply");
         GameRuntime::new(database.pool())
+    }
+
+    #[tokio::test]
+    async fn privacy_inventory_counts_only_the_requesters_non_expired_sessions_across_scopes() {
+        let runtime = runtime().await;
+        let suffix = format!(
+            "{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("clock after epoch")
+                .as_nanos()
+        );
+        let player = format!("privacy-inventory-{suffix}");
+        let other_player = format!("privacy-inventory-other-{suffix}");
+        let guild = format!("privacy-inventory-guild-{suffix}");
+
+        runtime
+            .start(GameKind::MemoryMatch, &player, Some(guild.as_str()))
+            .await
+            .expect("create active guild session");
+        let finished = runtime
+            .start(GameKind::WordScramble, &player, None)
+            .await
+            .expect("create DM session");
+        runtime
+            .act(&finished.id, &player, None, "orbit")
+            .await
+            .expect("finish DM session");
+        let expired = runtime
+            .start(GameKind::MemoryMatch, &player, None)
+            .await
+            .expect("create expired session fixture");
+        sqlx::query("UPDATE game_sessions SET expires_at = now() - interval '1 second' WHERE session_id = $1")
+            .bind(&expired.id)
+            .execute(&runtime.pool)
+            .await
+            .expect("expire session fixture");
+        runtime
+            .start(GameKind::MemoryMatch, &other_player, Some(guild.as_str()))
+            .await
+            .expect("create another player's session");
+
+        let inventory = runtime
+            .data_inventory_for_player(&player)
+            .await
+            .expect("read privacy inventory");
+        assert_eq!(inventory.active_sessions, 1);
+        assert_eq!(inventory.finished_sessions, 1);
+        assert_eq!(inventory.total_sessions(), 2);
     }
 
     #[tokio::test]

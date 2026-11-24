@@ -59,6 +59,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.about` / `/about` | Implemented | Describe Moonbyte and its current implementation boundary. |
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
 | `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
+| `.privacy-data` / `/privacy-data` | Implemented (limited) | Privately count the requester's non-expired session records across all servers and DMs. |
 | `.games` / `/games` | Implemented | Browse the seven currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
@@ -83,7 +84,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The current `.privacy` command is an overview only. It does not provide a complete data inventory, export, or deletion flow. Active session state is persisted to PostgreSQL and can be recovered after a restart; inactive sessions expire after 24 hours. See [Command reference](docs/COMMANDS.md) and [Game Runtime](docs/GAME_RUNTIME.md) for exact behavior and limitations.
+The `.privacy` command is an overview. `.privacy-data` privately counts the requester's non-expired session records across all servers and DMs; it does not reveal record contents or provide a complete record-level inventory. Private export and confirmed deletion remain unimplemented. Active session state is persisted to PostgreSQL and can be recovered after a restart; inactive sessions expire after 24 hours. See [Command reference](docs/COMMANDS.md) and [Game Runtime](docs/GAME_RUNTIME.md) for exact behavior and limitations.
 
 ## Privacy is a product feature
 
