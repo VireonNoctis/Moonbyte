@@ -108,7 +108,11 @@ pub async fn privacy(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, slash_command, rename = "privacy-data")]
 pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
     let player_id = ctx.author().id.to_string();
-    let inventory = ctx.data().games().data_inventory_for_player(&player_id).await?;
+    let inventory = ctx
+        .data()
+        .games()
+        .data_inventory_for_player(&player_id)
+        .await?;
     send_private(ctx, privacy_data_message(inventory)).await
 }
 
@@ -447,7 +451,10 @@ this project does not claim end-to-end encryption.\n\n\
 
 #[cfg(test)]
 mod tests {
-    use super::{GameKind, PRIVACY_OVERVIEW, SessionDataInventory, game_rules_message, help_message, privacy_data_message};
+    use super::{
+        GameKind, PRIVACY_OVERVIEW, SessionDataInventory, game_rules_message, help_message,
+        privacy_data_message,
+    };
 
     #[test]
     fn private_session_responses_use_a_private_transport_for_each_context() {
