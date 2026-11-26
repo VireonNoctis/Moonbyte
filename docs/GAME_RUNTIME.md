@@ -65,7 +65,7 @@ These are automated tests, not a Discord live-guild smoke test, multi-process lo
 ## Known gaps before the next release gate
 
 - Durable player identity, profiles, preferences, results, achievements, inventory and progression.
-- Privacy data inventory, private export, confirmed deletion and retention across all future user-owned tables.
+- Limited retained-session export is implemented; full profile export, confirmed deletion and retention coverage for future user-owned tables remain outstanding.
 - Interaction idempotency keys and protection against duplicate Discord delivery after a process crash.
 - Multi-instance deployment, reconnect behavior and concurrent load/soak testing.
 - Backup/restore automation, database monitoring and production secret provisioning.

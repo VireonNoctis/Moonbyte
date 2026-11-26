@@ -13,6 +13,7 @@
 | .ping | /ping | Confirms handler responsiveness and reports process uptime. It is not a network-latency measurement. |
 | .privacy | /privacy | Explains current PostgreSQL session storage and unavailable persistent privacy controls. |
 | .privacy-data | /privacy-data | Privately counts the requester's non-expired session records across all guild and DM scopes. It does not export record contents. |
+| .privacy-export | /privacy-export | Privately sends a JSON attachment containing the requester's non-expired session records across all scopes; other participants' Discord IDs are anonymised. Exports above 8 MiB are not sent or truncated. |
 | .games | /games | Lists seven playable games, player counts and controls. |
 | .rules <game> | /rules | Shows the selected game's implemented rules and controls before play. |
 | .play <game> | /play | Starts a solo game or creates a two-player lobby, subject to the 10 active-session cap per player per guild/DM scope. |
@@ -27,7 +28,7 @@ All commands use shared Rust handlers for prefix and slash invocation. Use `.rul
 
 The prefix `.action` command consumes the full remaining input. For Minesweeper, use `.action <session> reveal 1,1` or `.action <session> flag 1,1`; `/action` accepts the same text in its `input` option. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
 
-Session inspection and listing commands (`.session`, `.sessions`, `.history`) keep player-specific details out of shared guild channels. Slash invocations receive ephemeral responses. Guild-prefix invocations deliver the details by DM and post only a generic delivery notice; DM-prefix invocations reply in that already-private channel. If DMs are blocked, the bot posts a generic retry notice without exposing session details.
+Private session inspection/listing and export commands (`.session`, `.sessions`, `.history`, `.privacy-data`, `.privacy-export`) keep player-specific details out of shared guild channels. Slash invocations receive ephemeral responses. Guild-prefix invocations deliver the details by DM and post only a generic delivery notice; DM-prefix invocations reply in that already-private channel. If DMs are blocked, the bot posts a generic retry notice without exposing session details.
 
 Gameplay commands (`.play`, `.join`, `.action`, `.leave`) post game boards or results in the invoking channel so participants can play together. In a guild, members with access to that channel can see those responses and may see the command invocation itself. Use a DM for solo play that should not appear in a shared server channel.
 
@@ -61,7 +62,7 @@ The runtime requests only GUILDS, GUILD_MESSAGES and MESSAGE_CONTENT. The Messag
 
 Active session state is stored in PostgreSQL. The JSONB snapshot includes the game state, participant Discord IDs, optional guild ID, lifecycle phase and action count; mutations are committed transactionally with a row lock. Multiplayer lobbies require a guild context, sessions are bound to their originating guild, and session reads are limited to participants. Each player can have at most 10 active or waiting sessions per guild or DM scope; starts and joins serialize on a per-player advisory transaction lock so concurrent requests cannot exceed the cap. Completed, abandoned and expired sessions do not count. An inactive session expires after 24 hours and is removed by the central cleanup task. `.history` reads up to 10 completed or ended snapshots before that same expiry.
 
-The `.privacy` command is an overview. `.privacy-data` privately counts non-expired session records for the requester across all guild and DM scopes and separates active/waiting from completed/ended records. It does not reveal record contents or provide an export. Player profiles, inventory, progression, a complete record-level inventory, private export and confirmed deletion are not implemented. Neither command is a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
+The `.privacy` command is an overview. `.privacy-data` privately counts non-expired session records for the requester across all guild and DM scopes and separates active/waiting from completed/ended records. `.privacy-export` privately sends the complete retained session snapshots across those scopes as a JSON attachment. Other participants' Discord IDs are replaced with a neutral label; the export includes session state and retention timestamps. Exports above 8 MiB are rejected without truncation. Player profiles, inventory, progression, full profile inventory/export and confirmed deletion are not implemented. Neither command is a deletion request. Discord independently processes interactions under its own policies; Moonbyte makes no end-to-end-encryption or encryption-at-rest claim.
 
 ## Planned command groups
 

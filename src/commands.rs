@@ -5,7 +5,7 @@ use crate::{
     Data, Error,
     game::{GameKind, GamePhase, SessionDataInventory},
 };
-use poise::serenity_prelude::CreateMessage;
+use poise::serenity_prelude::{CreateAttachment, CreateMessage};
 
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -69,6 +69,61 @@ async fn send_private(ctx: Context<'_>, message: String) -> Result<(), Error> {
     Ok(())
 }
 
+async fn send_private_attachment(
+    ctx: Context<'_>,
+    message: String,
+    attachment: CreateAttachment,
+) -> Result<(), Error> {
+    let route = private_response_route(
+        matches!(&ctx, poise::Context::Application(_)),
+        ctx.guild_id().is_some(),
+    );
+
+    match (ctx, route) {
+        (poise::Context::Application(application), PrivateResponseRoute::EphemeralInteraction) => {
+            application
+                .send(
+                    poise::CreateReply::default()
+                        .content(message)
+                        .attachment(attachment)
+                        .ephemeral(true),
+                )
+                .await?;
+        }
+        (poise::Context::Prefix(prefix), PrivateResponseRoute::DirectMessage) => {
+            let delivered = prefix
+                .author()
+                .direct_message(
+                    prefix.serenity_context(),
+                    CreateMessage::new().content(message).add_file(attachment),
+                )
+                .await
+                .is_ok();
+            prefix.say(private_export_notice(delivered)).await?;
+        }
+        (poise::Context::Prefix(prefix), PrivateResponseRoute::ExistingPrivateChannel) => {
+            prefix
+                .author()
+                .direct_message(
+                    prefix.serenity_context(),
+                    CreateMessage::new().content(message).add_file(attachment),
+                )
+                .await?;
+        }
+        _ => unreachable!("private attachment route must match its Poise context"),
+    }
+
+    Ok(())
+}
+
+fn private_export_notice(delivered: bool) -> &'static str {
+    if delivered {
+        "I sent your private data export in a DM."
+    } else {
+        "I couldn't send the private export. Enable direct messages from this server and try again."
+    }
+}
+
 #[poise::command(prefix_command, slash_command)]
 pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
     ctx.say(help_message(ctx.data().prefix())).await?;
@@ -116,6 +171,34 @@ pub async fn privacy_data(ctx: Context<'_>) -> Result<(), Error> {
     send_private(ctx, privacy_data_message(inventory)).await
 }
 
+const MAX_PRIVATE_EXPORT_BYTES: usize = 8 * 1024 * 1024;
+
+#[poise::command(prefix_command, slash_command, rename = "privacy-export")]
+pub async fn privacy_export(ctx: Context<'_>) -> Result<(), Error> {
+    let player_id = ctx.author().id.to_string();
+    let export = ctx
+        .data()
+        .games()
+        .export_data_for_player(&player_id)
+        .await?;
+    let bytes = serde_json::to_vec_pretty(&export)?;
+
+    if bytes.len() > MAX_PRIVATE_EXPORT_BYTES {
+        return send_private(
+            ctx,
+            "Your retained-session export is too large for one private Discord attachment. No partial export was sent; contact the bot operator for help.".to_owned(),
+        )
+        .await;
+    }
+
+    let message = format!(
+        "Your private export contains {} non-expired session records across all guilds and DMs. Other participants' Discord IDs are replaced with a neutral label. This export covers only session data currently retained by Moonbyte; profiles, inventories, and lifetime records are not implemented.",
+        export.record_count
+    );
+    let attachment = CreateAttachment::bytes(bytes, "moonbyte-data-export.json");
+    send_private_attachment(ctx, message, attachment).await
+}
+
 fn privacy_data_message(inventory: SessionDataInventory) -> String {
     format!(
         "**Your Moonbyte data inventory**\n\n\
@@ -124,7 +207,7 @@ fn privacy_data_message(inventory: SessionDataInventory) -> String {
          - Completed or ended sessions: {}\n\
          - Total session records: {}\n\n\
          Each record contains its session and game IDs, participant Discord IDs, optional guild scope, game-state snapshot, phase, action count, result text, and timestamps. Session records expire 24 hours after the last successful mutation; expired rows are excluded, and cleanup runs every 15 minutes.\n\n\
-         This is a count inventory, not a copy of your records. Player profiles, inventories, and a separate long-term results store are not implemented. Private export and confirmed account deletion are not available yet. Discord's own records are outside Moonbyte's control.",
+         This is a count inventory, not a copy of your records. Use .privacy-export for a private JSON copy of your non-expired session records. Player profiles, inventories, and a separate long-term results store are not implemented; confirmed account deletion is not available yet. Discord's own records are outside Moonbyte's control.",
         inventory.active_sessions,
         inventory.finished_sessions,
         inventory.total_sessions()
@@ -391,6 +474,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         ping(),
         privacy(),
         privacy_data(),
+        privacy_export(),
         games(),
         rules(),
         play(),
@@ -416,6 +500,7 @@ fn help_message(prefix: &str) -> String {
          {safe_prefix}ping / /ping — check responsiveness and uptime\n\
          {safe_prefix}privacy / /privacy — read the current privacy overview\n\
          {safe_prefix}privacy-data / /privacy-data — count your stored session records privately\n\
+         {safe_prefix}privacy-export / /privacy-export — send a private copy of your retained session records\n\
          {safe_prefix}games / /games — browse the playable library\n\
          {safe_prefix}rules <game> / /rules — read a game's rules and controls\n\
          {safe_prefix}play <game> / /play — start a solo game or multiplayer lobby\n\
@@ -436,7 +521,7 @@ Moonbyte processes Discord interactions to run commands and games. Active game s
 are stored in PostgreSQL, including session state, Discord participant IDs, optional \
 guild scope, phase, and action counts. Sessions are scoped to their originating server \
 and expire after 24 hours without activity. Raw message histories are not stored as \
-analytics. Player profiles, inventories, lifetime game history, export, and deletion are not connected. The .history command only lists finished sessions still inside the existing 24-hour inactivity window.\n\n\
+analytics. A limited .privacy-export command sends non-expired session records privately; full profile export, inventories, lifetime history, and confirmed deletion are not implemented. The .history command only lists finished sessions still inside the existing 24-hour inactivity window.\n\n\
 **Channel visibility:** In a guild, .play, .join, .action, and .leave post game boards or \
 results in the invoking channel. Members who can view that channel can see those \
 responses and may see the command invocation itself. Use a DM for solo play you do not \
@@ -447,7 +532,7 @@ does not post session details publicly.\n\n\
 Discord independently processes interactions under its own policies. Moonbyte cannot \
 control Discord's retention. PostgreSQL does not by itself prove encryption at rest, and \
 this project does not claim end-to-end encryption.\n\n\
-**Available now:** .privacy-data shows counts for your non-expired session records across all servers and DMs. It does not reveal record contents or provide an export. A complete record-level inventory, private data export, and confirmed account deletion are not implemented. Do not post private personal data in public channels. This overview is not a deletion request.";
+**Available now:** .privacy-data shows counts for your non-expired session records across all servers and DMs. .privacy-export sends those retained session records as a private JSON attachment and replaces other participants' Discord IDs with a neutral label. Full profile/inventory export and confirmed account deletion are not implemented. Do not post private personal data in public channels. This overview is not a deletion request.";
 
 #[cfg(test)]
 mod tests {
@@ -490,12 +575,22 @@ mod tests {
         assert!(PRIVACY_OVERVIEW.contains("Use a DM for solo play"));
         assert!(PRIVACY_OVERVIEW.contains("slash responses are ephemeral"));
         assert!(PRIVACY_OVERVIEW.contains("does not post session details publicly"));
+        assert!(PRIVACY_OVERVIEW.contains(".privacy-export"));
+        assert!(PRIVACY_OVERVIEW.contains("confirmed deletion are not implemented"));
     }
 
     #[test]
     fn privacy_data_command_is_registered_for_prefix_and_slash() {
         let command = super::privacy_data();
         assert_eq!(command.name.as_ref(), "privacy-data");
+        assert!(command.prefix_action.is_some());
+        assert!(command.slash_action.is_some());
+    }
+
+    #[test]
+    fn privacy_export_command_is_registered_for_prefix_and_slash() {
+        let command = super::privacy_export();
+        assert_eq!(command.name.as_ref(), "privacy-export");
         assert!(command.prefix_action.is_some());
         assert!(command.slash_action.is_some());
     }
@@ -512,7 +607,8 @@ mod tests {
         assert!(message.contains("across all servers and DMs"));
         assert!(message.contains("expired rows are excluded"));
         assert!(message.contains("not a copy of your records"));
-        assert!(message.contains("confirmed account deletion are not available yet"));
+        assert!(message.contains(".privacy-export"));
+        assert!(message.contains("confirmed account deletion is not available yet"));
     }
 
     #[test]
@@ -532,6 +628,7 @@ mod tests {
             ".ping / /ping",
             ".privacy / /privacy",
             ".privacy-data / /privacy-data",
+            ".privacy-export / /privacy-export",
             ".games / /games",
             ".rules <game> / /rules",
             ".play <game> / /play",

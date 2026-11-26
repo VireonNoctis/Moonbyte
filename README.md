@@ -60,6 +60,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.ping` / `/ping` | Implemented | Confirm command responsiveness and show process uptime. |
 | `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
 | `.privacy-data` / `/privacy-data` | Implemented (limited) | Privately count the requester's non-expired session records across all servers and DMs. |
+| `.privacy-export` / `/privacy-export` | Implemented (limited) | Privately send a JSON export of non-expired session records; other participants' Discord IDs are anonymised. |
 | `.games` / `/games` | Implemented | Browse the seven currently playable games and their controls. |
 | `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
@@ -84,7 +85,7 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 
 Poise defines prefix and slash commands from shared Rust handlers. Global slash commands are registered at startup and may take up to an hour to appear everywhere. Prefix commands require the Discord Message Content privileged intent to be enabled for the application and requested by the bot. The current runtime requests only `GUILDS`, `GUILD_MESSAGES`, and `MESSAGE_CONTENT`.
 
-The `.privacy` command is an overview. `.privacy-data` privately counts the requester's non-expired session records across all servers and DMs; it does not reveal record contents or provide a complete record-level inventory. Private export and confirmed deletion remain unimplemented. Active session state is persisted to PostgreSQL and can be recovered after a restart; inactive sessions expire after 24 hours. See [Command reference](docs/COMMANDS.md) and [Game Runtime](docs/GAME_RUNTIME.md) for exact behavior and limitations.
+The `.privacy` command is an overview. `.privacy-data` privately counts the requester's non-expired session records across all servers and DMs. `.privacy-export` privately sends a JSON copy of those retained session records and anonymises other participants' Discord IDs. This is not a full profile inventory; confirmed deletion remains unimplemented. Active session state is persisted to PostgreSQL and can be recovered after a restart; inactive sessions expire after 24 hours. See [Command reference](docs/COMMANDS.md) and [Game Runtime](docs/GAME_RUNTIME.md) for exact behavior and limitations.
 
 ## Privacy is a product feature
 
@@ -94,10 +95,10 @@ Moonbyte's stance is **privacy by design and data minimisation**. We should coll
 - No AI training on player messages or game activity.
 - No raw message-content analytics. Prefix text is processed to identify the command and arguments, then discarded unless a specific game needs a value for its active session.
 - No cross-server exposure of guild settings or server-only leaderboards.
-- Profile export and deletion controls are part of the planned product, not an afterthought.
+- A limited retained-session export is implemented; complete profile export and deletion controls remain planned.
 - No blanket end-to-end-encryption claim: Discord and the bot must process commands and game actions for the bot to work. The bot's database is not considered end-to-end encrypted.
 
-Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions to PostgreSQL, including their board state and participant/guild scope. It does not yet persist player profiles, inventories or a separate long-term game-results history; .history reads finished session snapshots only while they remain inside the existing 24-hour inactivity window. Data inventory, export and deletion commands are not implemented; the policy remains a target that must be verified as storage and game features are added.
+Read the detailed [Privacy Policy and Data Practices](docs/PRIVACY.md). The current runtime persists active game sessions to PostgreSQL, including their board state and participant/guild scope. It does not yet persist player profiles, inventories or a separate long-term game-results history; .history reads finished session snapshots only while they remain inside the existing 24-hour inactivity window. A limited retained-session export is implemented, while complete profile inventory/export and confirmed deletion remain unimplemented; the policy must be verified as storage and game features are added.
 
 ## Technology decisions
 
@@ -137,7 +138,7 @@ Moonbyte will not implement gambling, betting, wagering, staking, paid random re
 
 ## Development status
 
-The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first seven game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, long-term result history, progression and privacy export/deletion remain future work; .history only exposes finished session snapshots during the existing 24-hour retention window.
+The repository contains a Rust 2024 workspace, committed lockfile, validated environment configuration, and a working Tokio/Serenity/Poise Discord runtime. Startup validates the Discord token, prefix and required PostgreSQL URL without printing secret values, connects to PostgreSQL, applies versioned migrations, then starts Discord and registers global slash commands. The first seven game rules and PostgreSQL-backed session lifecycle are implemented and covered by unit and database integration tests. Player profiles, long-term result history, progression and limited retained-session export is implemented; full profile export and deletion remain future work; .history only exposes finished session snapshots during the existing 24-hour retention window.
 
 Set configuration in the process environment before launching the executable with `cargo run --locked`. The `.env.example` file is a reference template; Moonbyte does not parse `.env` files automatically.
 
