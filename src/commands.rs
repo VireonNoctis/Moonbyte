@@ -5,7 +5,7 @@ use crate::{
     Data, Error,
     game::{GameKind, GamePhase, SessionDataInventory},
 };
-use poise::serenity_prelude::CreateMessage;
+use poise::serenity_prelude::{self as serenity, CreateMessage};
 
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -155,10 +155,39 @@ pub async fn games(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+fn matching_games(partial: &str) -> Vec<GameKind> {
+    let query = partial.trim().to_ascii_lowercase();
+    GameKind::ALL
+        .into_iter()
+        .filter(|kind| {
+            let definition = kind.definition();
+            definition.id.contains(&query)
+                || definition.name.to_ascii_lowercase().contains(&query)
+        })
+        .collect()
+}
+
+async fn autocomplete_game(
+    _ctx: Context<'_>,
+    partial: &str,
+) -> serenity::CreateAutocompleteResponse {
+    let choices = matching_games(partial)
+        .into_iter()
+        .map(|kind| {
+            let definition = kind.definition();
+            serenity::AutocompleteChoice::new(definition.name, definition.id)
+        })
+        .collect();
+
+    serenity::CreateAutocompleteResponse::new().set_choices(choices)
+}
+
 #[poise::command(prefix_command, slash_command)]
 pub async fn rules(
     ctx: Context<'_>,
-    #[description = "A game ID or name, such as connect-four"] game: String,
+    #[description = "A game ID or name, such as connect-four"]
+    #[autocomplete = "autocomplete_game"]
+    game: String,
 ) -> Result<(), Error> {
     let game = GameKind::parse(&game)?;
     ctx.say(game_rules_message(game)).await?;
@@ -176,7 +205,8 @@ fn game_rules_message(game: GameKind) -> String {
 #[poise::command(prefix_command, slash_command)]
 pub async fn play(
     ctx: Context<'_>,
-    #[description = "tic-tac-toe, connect-four, memory-match, minesweeper, word-scramble, sequence-recall, or 2048"]
+    #[description = "Choose one of the seven playable games"]
+    #[autocomplete = "autocomplete_game"]
     game: String,
 ) -> Result<(), Error> {
     let game = GameKind::parse(&game)?;
@@ -545,6 +575,15 @@ mod tests {
             assert!(message.contains(command), "missing help entry: {command}");
         }
         assert!(message.contains("expires after 24 hours of inactivity"));
+    }
+
+    #[test]
+    fn game_autocomplete_matches_canonical_names_and_ids_case_insensitively() {
+        assert_eq!(matching_games("mem"), vec![GameKind::MemoryMatch]);
+        assert_eq!(matching_games("CONNECT"), vec![GameKind::ConnectFour]);
+        assert_eq!(matching_games("2048"), vec![GameKind::TwentyFortyEight]);
+        assert_eq!(matching_games(""), GameKind::ALL.to_vec());
+        assert!(matching_games("not-a-game").is_empty());
     }
 
     #[test]

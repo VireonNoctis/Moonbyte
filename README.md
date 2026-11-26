@@ -61,7 +61,8 @@ The default prefix is a single period: **.**. Set `DEFAULT_PREFIX` to change it.
 | `.privacy` / `/privacy` | Implemented | Explain current data handling and privacy-control limitations. |
 | `.privacy-data` / `/privacy-data` | Implemented (limited) | Privately count the requester's non-expired session records across all servers and DMs. |
 | `.games` / `/games` | Implemented | Browse the seven currently playable games and their controls. |
-| `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby. |
+| `.rules <game>` / `/rules` | Implemented | Read a game’s rules and controls; slash input offers catalogue autocomplete. |
+| `.play <game>` / `/play` | Implemented | Start a solo game or create a two-player lobby; slash input offers catalogue autocomplete. |
 | `.join <session>` / `/join` | Implemented | Join a two-player lobby in the same Discord server. |
 | `.action <session> <input>` / `/action` | Implemented | Submit a validated move or answer. |
 | `.session <session>` / `/session` | Implemented | Inspect a session you participate in. |

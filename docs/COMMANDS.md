@@ -23,7 +23,7 @@
 | .history | /history | Privately lists up to 10 non-expired completed or ended sessions the requester participated in, scoped to the current guild or DMs. |
 | .leave <session> | /leave | Ends a session the requester participates in. |
 
-All commands use shared Rust handlers for prefix and slash invocation. Use `.rules <game>` or `/rules` to read the implemented rules and controls before starting a game.
+All commands use shared Rust handlers for prefix and slash invocation. Use `.rules <game>` or `/rules` to read the implemented rules and controls before starting a game. The `/play` and `/rules` game options offer case-insensitive autocomplete from the seven canonical catalogue names and IDs; prefix commands continue to accept the documented aliases.
 
 The prefix `.action` command consumes the full remaining input. For Minesweeper, use `.action <session> reveal 1,1` or `.action <session> flag 1,1`; `/action` accepts the same text in its `input` option. The help output lists only commands registered in this build; it does not advertise planned economy, profile or RPG features as working.
 
