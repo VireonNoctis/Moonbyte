@@ -1,8 +1,8 @@
 # Moonbyte Privacy Policy and Data Practices
 
 - Policy owner: Moonbyte maintainers.
-- Status: Intended product policy; a limited session-count inventory is implemented, while persistent player profiles and privacy export/deletion controls are not.
-- Last updated: 2026-11-24.
+- Status: Intended product policy; a limited session-count inventory and retained-session export are implemented, while persistent player profiles and confirmed deletion are not.
+- Last updated: 2026-11-27.
 - Review this document against the actual code, deployment, schema, logs, and service providers before public launch.
 
 ## 1. Our stance
@@ -22,7 +22,7 @@ Our commitments:
 - We keep guild-specific data scoped to the guild that created it.
 - We explain technical limits honestly and do not make unsupported encryption claims.
 
-These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime does not yet persist player profiles, inventories or a separate long-term game-results history. The `.history` command can display up to 10 completed or ended session snapshots to their participants within the existing 24-hour inactivity window. The `.privacy` command provides an overview. `.privacy-data` privately counts non-expired session records for the requesting Discord user across all guild and DM scopes, separating active/waiting from completed/ended records. It does not expose session contents or provide a complete record-level inventory, export or deletion flow. These limited facts describe this code slice only; broader commitments must be verified before production release.
+These are requirements for implementation. The current runtime stores active session records in PostgreSQL: session IDs, game IDs, Discord participant IDs, optional guild IDs, game state snapshots, phase, action count and expiry metadata. Sessions are recoverable after process restart and are removed after 24 hours without a successful mutation, subject to the 15-minute cleanup interval. The runtime does not yet persist player profiles, inventories or a separate long-term game-results history. The `.history` command can display up to 10 completed or ended session snapshots to their participants within the existing 24-hour inactivity window. The `.privacy` command provides an overview. `.privacy-data` privately counts non-expired session records for the requesting Discord user across all guild and DM scopes, separating active/waiting from completed/ended records. `.privacy-export` sends the requesting user a private JSON attachment containing all non-expired session snapshots in which they participate, with creation, update, and expiry timestamps. Other participants' Discord IDs are replaced with a neutral label. This is a retained-session export, not a full profile inventory; confirmed deletion remains unavailable. These limited facts describe this code slice only; broader commitments must be verified before production release.
 
 ## 2. Data Moonbyte needs
 
@@ -99,11 +99,12 @@ The .privacy prefix and /privacy slash commands provide:
 | --- | --- |
 | .privacy | Read a short privacy summary and open controls. |
 | .privacy-data | **Implemented (limited):** privately count the requester's non-expired session records across all guild and DM scopes. It does not expose record contents. |
-| .privacy export | Request a copy of the user's stored profile and game data. |
+| .privacy-export | **Implemented (limited):** privately send a JSON export of non-expired session snapshots across all scopes. Other participants' Discord IDs are anonymised; exports above 8 MiB are rejected without truncation. |
+| .privacy export | Future full-profile export; the implemented `.privacy-export` command covers retained session snapshots only. |
 | .privacy delete | Begin explicit, confirmed deletion of the user's Moonbyte profile data. |
 | .privacy server | Let an authorised server administrator inspect guild-specific configuration and deletion controls. |
 
-The current `.privacy-data` inventory is limited to counts from the session table; it is not a complete record-level export. User exports must be private and delivered only to the requesting user. If private delivery fails, the bot must not post the export publicly; it should explain the failure and allow a safe retry.
+The current `.privacy-data` inventory is limited to counts from the session table. The `.privacy-export` command exports only session records currently retained by the runtime; player profiles, inventories, and a separate lifetime-results store do not exist yet. Exports include the requester's own participant ID and replace other participants' Discord IDs with a neutral label. User exports are delivered only through an ephemeral slash response or a direct message. If private delivery fails, the bot must not post the export publicly; it posts only a generic retry notice in the originating guild channel. Exports larger than 8 MiB are rejected in full rather than truncated.
 
 ### Deletion flow
 

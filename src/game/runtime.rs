@@ -1,5 +1,6 @@
 use std::fmt;
 
+use serde::Serialize;
 use sqlx::{PgPool, Postgres, Transaction};
 
 use super::{
@@ -25,6 +26,24 @@ impl SessionDataInventory {
     pub fn total_sessions(self) -> i64 {
         self.active_sessions + self.finished_sessions
     }
+}
+
+/// A versioned export of the session records currently retained for one player.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub struct SessionDataExport {
+    pub schema_version: u32,
+    pub record_count: usize,
+    pub sessions: Vec<SessionDataExportRecord>,
+}
+
+/// One retained session and its database retention timestamps.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub struct SessionDataExportRecord {
+    pub state_version: i16,
+    pub created_at: String,
+    pub updated_at: String,
+    pub expires_at: String,
+    pub session_state: serde_json::Value,
 }
 
 #[derive(Debug)]
@@ -100,6 +119,48 @@ impl GameRuntime {
         Ok(SessionDataInventory {
             active_sessions,
             finished_sessions,
+        })
+    }
+
+    /// Export non-expired sessions in which the player is a participant, across all scopes.
+    /// Other participants' Discord IDs are anonymised before the export leaves the runtime.
+    pub async fn export_data_for_player(
+        &self,
+        player_id: &str,
+    ) -> Result<SessionDataExport, GameRuntimeError> {
+        let stored: Vec<(i16, String, String, String, String)> = sqlx::query_as(
+            "SELECT state_version, session_state::text, created_at::text, updated_at::text, expires_at::text \
+             FROM game_sessions \
+             WHERE expires_at > now() \
+               AND (session_state -> 'players') @> jsonb_build_array($1::text) \
+             ORDER BY created_at ASC, session_id ASC",
+        )
+        .bind(player_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut sessions = Vec::with_capacity(stored.len());
+        for (state_version, state_json, created_at, updated_at, expires_at) in stored {
+            let session = decode_session(state_version, &state_json)?;
+            if !session.is_visible_to(player_id, session.guild_id()) {
+                continue;
+            }
+
+            let mut session_state = serde_json::to_value(&session)?;
+            anonymise_export_participants(&mut session_state, player_id);
+            sessions.push(SessionDataExportRecord {
+                state_version,
+                created_at,
+                updated_at,
+                expires_at,
+                session_state,
+            });
+        }
+
+        Ok(SessionDataExport {
+            schema_version: 1,
+            record_count: sessions.len(),
+            sessions,
         })
     }
 
@@ -277,6 +338,34 @@ impl GameRuntime {
     }
 }
 
+fn anonymise_export_participants(session_state: &mut serde_json::Value, player_id: &str) {
+    let Some(object) = session_state.as_object_mut() else {
+        return;
+    };
+
+    if let Some(players) = object
+        .get_mut("players")
+        .and_then(serde_json::Value::as_array_mut)
+    {
+        for participant in players {
+            if participant.as_str() != Some(player_id) {
+                *participant = serde_json::Value::String("other participant".to_owned());
+            }
+        }
+    }
+
+    let winner_is_other = object
+        .get("winner")
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|winner| winner != player_id);
+    if winner_is_other {
+        object.insert(
+            "winner".to_owned(),
+            serde_json::Value::String("other participant".to_owned()),
+        );
+    }
+}
+
 const MAX_ACTIVE_SESSIONS_PER_PLAYER: i64 = 10;
 
 async fn lock_player_for_session_capacity(
@@ -431,6 +520,110 @@ mod tests {
         assert_eq!(inventory.active_sessions, 1);
         assert_eq!(inventory.finished_sessions, 1);
         assert_eq!(inventory.total_sessions(), 2);
+    }
+
+    #[tokio::test]
+    async fn privacy_export_includes_only_retained_requester_sessions_and_anonymises_other_players()
+    {
+        let runtime = runtime().await;
+        let suffix = format!(
+            "{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("clock after epoch")
+                .as_nanos()
+        );
+        let player = format!("privacy-export-{suffix}");
+        let guest = format!("privacy-export-guest-{suffix}");
+        let other_player = format!("privacy-export-other-{suffix}");
+        let guild = format!("privacy-export-guild-{suffix}");
+
+        let lobby = runtime
+            .start(GameKind::TicTacToe, &player, Some(&guild))
+            .await
+            .expect("create shared guild session");
+        runtime
+            .join(&lobby.id, &guest, Some(&guild))
+            .await
+            .expect("join shared guild session");
+
+        runtime
+            .act(&lobby.id, &player, Some(&guild), "1,1")
+            .await
+            .expect("owner makes the first move");
+        runtime
+            .act(&lobby.id, &guest, Some(&guild), "2,1")
+            .await
+            .expect("guest makes the second move");
+        runtime
+            .act(&lobby.id, &player, Some(&guild), "1,2")
+            .await
+            .expect("owner makes the third move");
+        runtime
+            .act(&lobby.id, &guest, Some(&guild), "2,2")
+            .await
+            .expect("guest makes the fourth move");
+        runtime
+            .act(&lobby.id, &player, Some(&guild), "3,3")
+            .await
+            .expect("owner makes the fifth move");
+        runtime
+            .act(&lobby.id, &guest, Some(&guild), "2,3")
+            .await
+            .expect("guest wins the shared game");
+
+        let finished = runtime
+            .start(GameKind::WordScramble, &player, None)
+            .await
+            .expect("create DM session");
+        runtime
+            .act(&finished.id, &player, None, "orbit")
+            .await
+            .expect("finish DM session");
+
+        let expired = runtime
+            .start(GameKind::MemoryMatch, &player, None)
+            .await
+            .expect("create expired session fixture");
+        sqlx::query(
+            "UPDATE game_sessions SET expires_at = now() - interval '1 second' WHERE session_id = $1",
+        )
+        .bind(&expired.id)
+        .execute(&runtime.pool)
+        .await
+        .expect("expire session fixture");
+
+        let other = runtime
+            .start(GameKind::MemoryMatch, &other_player, Some(&guild))
+            .await
+            .expect("create another player's session");
+
+        let export = runtime
+            .export_data_for_player(&player)
+            .await
+            .expect("export retained session data");
+        assert_eq!(export.schema_version, 1);
+        assert_eq!(export.record_count, 2);
+        assert_eq!(export.sessions.len(), 2);
+
+        let shared = export
+            .sessions
+            .iter()
+            .find(|record| record.session_state["id"] == lobby.id)
+            .expect("include the player's shared guild session");
+        assert_eq!(shared.session_state["players"][0], player);
+        assert_eq!(shared.session_state["players"][1], "other participant");
+        assert_eq!(shared.session_state["winner"], "other participant");
+        assert!(!shared.expires_at.is_empty());
+
+        let serialized = serde_json::to_string(&export).expect("serialise export");
+        assert!(serialized.contains(&finished.id));
+        assert!(!serialized.contains(&expired.id));
+        assert!(!serialized.contains(&other.id));
+        assert!(!serialized.contains(&guest));
+        assert!(!serialized.contains(&other_player));
+        assert!(serialized.contains("other participant"));
     }
 
     #[tokio::test]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a private JSON export for retained session records, anonymise other participants' Discord IDs (including a non-requesting winner), and reject attachments above 8 MiB without truncation.
+
 - Switch the persistence target from the superseded SQLite decision to PostgreSQL through SQLx (PostgreSQL driver only).
 - Add a versioned PostgreSQL migration runner, durable JSONB game-session snapshots, transactional row-locked mutations, restart recovery, 24-hour inactivity expiry and scheduled cleanup.
 - Add PostgreSQL-backed runtime integration tests and a CI PostgreSQL service.
